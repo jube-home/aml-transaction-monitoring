@@ -19,7 +19,7 @@ variations.
 
 # Documentation
 
-The [Jube documentation](https://jube-home.github.io/jube) is comprehensive and designed to cover all features, ensuring
+The [Jube documentation](https://jube-home.github.io/aml-transaction-monitoring) is comprehensive and designed to cover all features, ensuring
 there is no undocumented know-how. It adopts an **instructional style**, providing step-by-step explanations with
 extensive use of **screenshots** to guide users through each feature.
 
@@ -126,8 +126,8 @@ The default username \ password combination is Administrator \ Administrator, al
 changed on first login.
 
 A more comprehensive installation guide is available in
-the [Getting Started](https://jube-home.github.io/jube/GettingStarted/) of
-the [documentation](https://jube-home.github.io/jube).
+the [Getting Started](https://jube-home.github.io/aml-transaction-monitoring/GettingStarted) of
+the [documentation](https://jube-home.github.io/aml-transaction-monitoring).
 
 # Reporting Vulnerabilities
 
