@@ -11,6 +11,8 @@ organizations adapt to regulatory obligations based on **FATF guidelines** and t
 focused on AML, Jube also addresses other transaction monitoring use cases, leveraging similar methodologies with slight
 variations.
 
+⭐ Please consider giving this project a GitHub star, gratefully received, in advance.
+
 # Documentation
 
 The [Jube documentation](https://jube-home.github.io/aml-transaction-monitoring) is comprehensive and designed to cover all features, ensuring
