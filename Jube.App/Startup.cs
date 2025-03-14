@@ -247,7 +247,7 @@ namespace Jube.App
             Console.WriteLine(
                 @"If you are seeing this message it means that database migrations have completed and the database is fully configured with required Tables, Indexes and Constraints.");
             Console.WriteLine(@"");
-            Console.WriteLine(@"Comprehensive documentation is available via https://jube-home.github.io/jube.");
+            Console.WriteLine(@"Comprehensive documentation is available via https://github.com/jube-home/aml-transaction-monitoring.");
             Console.WriteLine(@"");
             Console.WriteLine(
                 @"Use a web browser (e.g. Chrome) to navigate to the user interface via default endpoint https://<ASPNETCORE_URLS Environment Variable>/ (for example https://127.0.0.1:5001/ given ASPNETCORE_URLS=https://127.0.0.1:5001/). The default user name \ password is 'Administrator' \ 'Administrator' but will need to be changed on first use.  Availability of the user interface may be a few moments after this messages as the Kestrel web server starts and endpoint routing is established.");

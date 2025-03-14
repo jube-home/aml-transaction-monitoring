@@ -34,7 +34,7 @@ Jube is not built to a Docker Hub image, instead an image will be built to the d
 With the prerequisites in place, Jube can be up and running in just a few minutes:
 
 ```shell
-git clone https://github.com/jube-home/jube.git
+git clone https://github.com/jube-home/aml-transaction-monitoring
 cd jube
 export DockerComposePostgresPassword="SuperSecretPasswordToChange"
 export DockerComposeJWTKey="IMPORTANT:_ChangeThisKey_~%pvif3KRo!3Mk|1oMC50TvAPi%{mUt<9"B&|>DP|GZy"YYWeVrNUqLQE}mz{L_UsingThisKeyIsDangerous"
@@ -58,7 +58,7 @@ Jube runs on commodity Linux. For running directly, there exists the following p
 Subject to prerequisites, Jube can be up and running in minutes:
 
 ```shell
-git clone https://github.com/jube-home/jube.git
+git clone https://github.com/jube-home/aml-transaction-monitoring
 cd jube/Jube.App
 export ConnectionString="Host=localhost;Port=5432;Database=postgres;Username=postgres;Password=SuperSecretPasswordToChange;Pooling=true;Minimum Pool Size=0;Maximum Pool Size=100;SSL Mode=Require;Trust Server Certificate=true;"
 export RedisConnectionString="localhost"

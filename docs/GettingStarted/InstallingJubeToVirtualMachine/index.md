@@ -12,7 +12,7 @@ parent: Getting Started
 Start by cloning the project from Github and changing to the executable directory:
 
 ```shell
-git clone https://github.com/jube-home/jube.git
+git clone https://github.com/jube-home/aml-transaction-monitoring
 cd jube/Jube.App
 ```
 

@@ -13,7 +13,7 @@ The README file in the head of the project provides for a Quickstart that assume
 databases and operating system dependencies:
 
 ```shell
-git clone https://github.com/jube-home/jube.git
+git clone https://github.com/jube-home/aml-transaction-monitoring
 cd jube/Jube.App
 export ConnectionString="Host=<host>;Port=<port>;Database=<defaultdb>;Username=<username>;Password=<password>;Pooling=true;Minimum Pool Size=0;Maximum Pool Size=100;SSL Mode=Require;Trust Server Certificate=true;"
 export RedisConnectionString="<host>:<port>,password=<password>"
