@@ -95,7 +95,7 @@ namespace Jube.App.Controllers.Session
 
                 var modelCompiled = repository.GetByGuid(guid);
                 if (modelCompiled == null) return NotFound();
-                await CheckRebuild(modelCompiled);
+                await CheckRebuild(modelCompiled).ConfigureAwait(false);
 
                 var postgres = new Postgres(_dynamicEnvironment.AppSettings("ConnectionString"));
                 var tokens = JsonConvert.DeserializeObject<List<object>>(modelCompiled.FilterTokens);
@@ -105,7 +105,7 @@ namespace Jube.App.Controllers.Session
 
                 var value = await postgres.ExecuteByOrderedParametersAsync(modelCompiled.SelectSqlSearch + " "
                     + modelCompiled.WhereSql
-                    + " " + modelCompiled.OrderSql, tokens);
+                    + " " + modelCompiled.OrderSql, tokens).ConfigureAwait(false);
 
                 sw.Stop();
 
@@ -133,7 +133,7 @@ namespace Jube.App.Controllers.Session
         private async Task<SessionCaseSearchCompiledSql> CheckRebuild(SessionCaseSearchCompiledSql modelCompiled)
         {
             if (modelCompiled.Rebuild == 1 && modelCompiled.RebuildDate != null)
-                return await CompileSql.Compile(_dbContext, modelCompiled, _userName);
+                return await CompileSql.Compile(_dbContext, modelCompiled, _userName).ConfigureAwait(false);
             return modelCompiled;
         }
 
@@ -148,7 +148,7 @@ namespace Jube.App.Controllers.Session
 
                 var modelCompiled = repository.GetByLast();
                 if (modelCompiled == null) return new SessionCaseSearchCompiledSqlDto { NotFound = true };
-                modelCompiled = await CheckRebuild(modelCompiled);
+                modelCompiled = await CheckRebuild(modelCompiled).ConfigureAwait(false);
 
                 return Ok(_mapper.Map<SessionCaseSearchCompiledSqlDto>(modelCompiled));
             }
@@ -169,12 +169,12 @@ namespace Jube.App.Controllers.Session
             {
                 if (!_permissionValidation.Validate(new[] { 1 }, true)) return Forbid();
 
-                var results = await _validator.ValidateAsync(model);
+                var results = await _validator.ValidateAsync(model).ConfigureAwait(false);
                 if (!results.IsValid) return BadRequest(results);
 
                 return Ok(_mapper.Map<SessionCaseSearchCompiledSqlDto>(await CompileSql.Compile(_dbContext,
                     _mapper.Map<SessionCaseSearchCompiledSql>(model),
-                    _userName)));
+                    _userName).ConfigureAwait(false)));
             }
             catch (Exception e)
             {

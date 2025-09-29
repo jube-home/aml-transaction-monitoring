@@ -34,7 +34,7 @@ public class CacheReferenceDate(
 
             await redisDatabase.HashSetAsync(redisKey, redisHSetKey,
                 referenceDate.ToUnixTimeMilliSeconds(),
-                When.Always, commandFlag);
+                When.Always, commandFlag).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -48,7 +48,7 @@ public class CacheReferenceDate(
         {
             var redisKey = $"ReferenceDate:{tenantRegistryId}";
             var redisHSetKey = $"{entityAnalysisModelGuid:N}";
-            var referenceDateTimestamp = (long)await redisDatabase.HashGetAsync(redisKey, redisHSetKey);
+            var referenceDateTimestamp = (long)await redisDatabase.HashGetAsync(redisKey, redisHSetKey).ConfigureAwait(false);
             return referenceDateTimestamp.FromUnixTimeMilliSeconds();
         }
         catch (Exception ex)

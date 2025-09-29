@@ -35,7 +35,7 @@ public class CacheAbstractionRepository(
             var redisKey = $"Abstraction:{tenantRegistryId}:{entityAnalysisModelGuid:N}:{searchKey}:{searchValue}";
             var redisHSetKey = $"{name}";
 
-            await redisDatabase.HashDeleteAsync(redisKey, redisHSetKey, commandFlag);
+            await redisDatabase.HashDeleteAsync(redisKey, redisHSetKey, commandFlag).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -54,7 +54,7 @@ public class CacheAbstractionRepository(
             var redisHSetKey = $"{name}";
 
             await redisDatabase.HashSetAsync(redisKey, redisHSetKey, value,
-                When.Always, commandFlag);
+                When.Always, commandFlag).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -70,7 +70,7 @@ public class CacheAbstractionRepository(
         {
             var redisKey = $"Abstraction:{tenantRegistryId}:{entityAnalysisModelGuid:N}:{searchKey}:{searchValue}";
             var redisHSetKey = $"{name}";
-            var redisValue = await redisDatabase.HashGetAsync(redisKey, redisHSetKey);
+            var redisValue = await redisDatabase.HashGetAsync(redisKey, redisHSetKey).ConfigureAwait(false);
 
             if (!redisValue.HasValue) return null;
             return (double)redisValue;
@@ -102,7 +102,7 @@ public class CacheAbstractionRepository(
                 var redisHSetKey =
                     $"{entityAnalysisModelIdAbstractionRuleNameSearchKeySearchValueRequest.AbstractionRuleName}";
 
-                var redisValue = await redisDatabase.HashGetAsync(redisKey, redisHSetKey);
+                var redisValue = await redisDatabase.HashGetAsync(redisKey, redisHSetKey).ConfigureAwait(false);
 
                 value.TryAdd(entityAnalysisModelIdAbstractionRuleNameSearchKeySearchValueRequest.AbstractionRuleName,
                     redisValue.HasValue ? (double)redisValue : 0);

@@ -37,7 +37,7 @@ public class CacheSanctionRepository(
             var redisKey = $"Sanction:{tenantRegistryId}:{entityAnalysisModelGuid:N}";
             var redisHSetKey = $"{multiPartString}:{distanceThreshold}";
 
-            var hashValue = await redisDatabase.HashGetAsync(redisKey, redisHSetKey);
+            var hashValue = await redisDatabase.HashGetAsync(redisKey, redisHSetKey).ConfigureAwait(false);
 
             if (!hashValue.HasValue) return null;
 
@@ -76,9 +76,9 @@ public class CacheSanctionRepository(
 
             var ms = new MemoryStream();
             await MessagePackSerializer.SerializeAsync(ms, sanction,
-                MessagePackSerializerOptionsHelper.StandardMessagePackSerializerWithCompressionOptions(false));
+                MessagePackSerializerOptionsHelper.StandardMessagePackSerializerWithCompressionOptions(false)).ConfigureAwait(false);
             await redisDatabase.HashSetAsync(redisKey, redisHSetKey, ms.ToArray(),
-                When.Always, commandFlag);
+                When.Always, commandFlag).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -92,7 +92,7 @@ public class CacheSanctionRepository(
     {
         try
         {
-            await InsertAsync(tenantRegistryId, entityAnalysisModelGuid, multiPartString, distanceThreshold, value);
+            await InsertAsync(tenantRegistryId, entityAnalysisModelGuid, multiPartString, distanceThreshold, value).ConfigureAwait(false);
         }
         catch (Exception ex)
         {

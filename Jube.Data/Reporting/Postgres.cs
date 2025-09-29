@@ -30,7 +30,7 @@ public class Postgres(string connectionString)
         var values = new Dictionary<string, string>();
         try
         {
-            await connection.OpenAsync();
+            await connection.OpenAsync().ConfigureAwait(false);
 
             var tableName = "Temp_" + Guid.NewGuid().ToString("N");
 
@@ -41,7 +41,7 @@ public class Postgres(string connectionString)
             foreach (var (key, value) in parameters.Where(parameter => sql.Contains("@" + parameter.Key)))
                 commandTempTable.Parameters.AddWithValue(key, value);
 
-            await commandTempTable.ExecuteNonQueryAsync();
+            await commandTempTable.ExecuteNonQueryAsync().ConfigureAwait(false);
 
             var introspectionSql = "SELECT attname, format_type(atttypid, atttypmod) AS type" +
                                    " FROM pg_attribute" +
@@ -54,24 +54,24 @@ public class Postgres(string connectionString)
             var command = new NpgsqlCommand(introspectionSql);
             command.Connection = connection;
 
-            var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
+            var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+            while (await reader.ReadAsync().ConfigureAwait(false))
                 values.Add(reader.GetValue(0).AsString(), reader.GetValue(1).AsString());
 
-            await reader.CloseAsync();
-            await reader.DisposeAsync();
-            await command.DisposeAsync();
+            await reader.CloseAsync().ConfigureAwait(false);
+            await reader.DisposeAsync().ConfigureAwait(false);
+            await command.DisposeAsync().ConfigureAwait(false);
         }
         catch
         {
-            await connection.CloseAsync();
-            await connection.DisposeAsync();
+            await connection.CloseAsync().ConfigureAwait(false);
+            await connection.DisposeAsync().ConfigureAwait(false);
             throw;
         }
         finally
         {
-            await connection.CloseAsync();
-            await connection.DisposeAsync();
+            await connection.CloseAsync().ConfigureAwait(false);
+            await connection.DisposeAsync().ConfigureAwait(false);
         }
 
         return values;
@@ -82,7 +82,7 @@ public class Postgres(string connectionString)
         var connection = new NpgsqlConnection(connectionString);
         try
         {
-            await connection.OpenAsync();
+            await connection.OpenAsync().ConfigureAwait(false);
 
             var command = new NpgsqlCommand(sql);
             command.Connection = connection;
@@ -90,18 +90,18 @@ public class Postgres(string connectionString)
             for (var i = 0; i < parameters.Count; i++)
                 command.Parameters.AddWithValue("@" + (i + 1), parameters[i]);
 
-            await command.PrepareAsync();
+            await command.PrepareAsync().ConfigureAwait(false);
         }
         catch
         {
-            await connection.CloseAsync();
-            await connection.DisposeAsync();
+            await connection.CloseAsync().ConfigureAwait(false);
+            await connection.DisposeAsync().ConfigureAwait(false);
             throw;
         }
         finally
         {
-            await connection.CloseAsync();
-            await connection.DisposeAsync();
+            await connection.CloseAsync().ConfigureAwait(false);
+            await connection.DisposeAsync().ConfigureAwait(false);
         }
     }
 
@@ -114,7 +114,7 @@ public class Postgres(string connectionString)
         var connection = new NpgsqlConnection(connectionString);
         try
         {
-            await connection.OpenAsync();
+            await connection.OpenAsync().ConfigureAwait(false);
 
             var tokens = JsonConvert.DeserializeObject<List<object>>(filterTokens);
             tokens.Add(entityAnalysisModelId);
@@ -132,25 +132,25 @@ public class Postgres(string connectionString)
 
             for (var i = 0; i < tokens.Count; i++) command.Parameters.AddWithValue("@" + (i + 1), tokens[i]);
 
-            await command.PrepareAsync();
+            await command.PrepareAsync().ConfigureAwait(false);
 
-            var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync()) value.Add(reader.GetValue(0).AsString());
+            var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+            while (await reader.ReadAsync().ConfigureAwait(false)) value.Add(reader.GetValue(0).AsString());
 
-            await reader.CloseAsync();
-            await reader.DisposeAsync();
-            await command.DisposeAsync();
+            await reader.CloseAsync().ConfigureAwait(false);
+            await reader.DisposeAsync().ConfigureAwait(false);
+            await command.DisposeAsync().ConfigureAwait(false);
         }
         catch
         {
-            await connection.CloseAsync();
-            await connection.DisposeAsync();
+            await connection.CloseAsync().ConfigureAwait(false);
+            await connection.DisposeAsync().ConfigureAwait(false);
             throw;
         }
         finally
         {
-            await connection.CloseAsync();
-            await connection.DisposeAsync();
+            await connection.CloseAsync().ConfigureAwait(false);
+            await connection.DisposeAsync().ConfigureAwait(false);
         }
 
         return value;
@@ -166,17 +166,17 @@ public class Postgres(string connectionString)
         var connection = new NpgsqlConnection(connectionString);
         try
         {
-            await connection.OpenAsync();
+            await connection.OpenAsync().ConfigureAwait(false);
 
             var command = new NpgsqlCommand(sql);
             command.Connection = connection;
             command.Parameters.AddWithValue("adjustedStartDate", adjustedStartDate);
             command.Parameters.AddWithValue("limit", limit);
             command.Parameters.AddWithValue("skip", skip);
-            await command.PrepareAsync();
+            await command.PrepareAsync().ConfigureAwait(false);
 
-            var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
+            var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 IDictionary<string, object> eo = new ExpandoObject();
                 for (var index = 0; index < reader.FieldCount; index++)
@@ -186,20 +186,20 @@ public class Postgres(string connectionString)
                 value.Add(eo);
             }
 
-            await reader.CloseAsync();
-            await reader.DisposeAsync();
-            await command.DisposeAsync();
+            await reader.CloseAsync().ConfigureAwait(false);
+            await reader.DisposeAsync().ConfigureAwait(false);
+            await command.DisposeAsync().ConfigureAwait(false);
         }
         catch
         {
-            await connection.CloseAsync();
-            await connection.DisposeAsync();
+            await connection.CloseAsync().ConfigureAwait(false);
+            await connection.DisposeAsync().ConfigureAwait(false);
             throw;
         }
         finally
         {
-            await connection.CloseAsync();
-            await connection.DisposeAsync();
+            await connection.CloseAsync().ConfigureAwait(false);
+            await connection.DisposeAsync().ConfigureAwait(false);
         }
 
         return value;
@@ -212,7 +212,7 @@ public class Postgres(string connectionString)
         var connection = new NpgsqlConnection(connectionString);
         try
         {
-            await connection.OpenAsync();
+            await connection.OpenAsync().ConfigureAwait(false);
 
             var command = new NpgsqlCommand(sql);
             command.Connection = connection;
@@ -220,10 +220,10 @@ public class Postgres(string connectionString)
             foreach (var (key, o) in parameters)
                 command.Parameters.AddWithValue("@" + key, o);
 
-            await command.PrepareAsync();
+            await command.PrepareAsync().ConfigureAwait(false);
 
-            var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
+            var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 IDictionary<string, object> eo = new ExpandoObject();
                 for (var index = 0; index < reader.FieldCount; index++)
@@ -233,20 +233,20 @@ public class Postgres(string connectionString)
                 value.Add(eo);
             }
 
-            await reader.CloseAsync();
-            await reader.DisposeAsync();
-            await command.DisposeAsync();
+            await reader.CloseAsync().ConfigureAwait(false);
+            await reader.DisposeAsync().ConfigureAwait(false);
+            await command.DisposeAsync().ConfigureAwait(false);
         }
         catch
         {
-            await connection.CloseAsync();
-            await connection.DisposeAsync();
+            await connection.CloseAsync().ConfigureAwait(false);
+            await connection.DisposeAsync().ConfigureAwait(false);
             throw;
         }
         finally
         {
-            await connection.CloseAsync();
-            await connection.DisposeAsync();
+            await connection.CloseAsync().ConfigureAwait(false);
+            await connection.DisposeAsync().ConfigureAwait(false);
         }
 
         return value;
@@ -259,7 +259,7 @@ public class Postgres(string connectionString)
         var connection = new NpgsqlConnection(connectionString);
         try
         {
-            await connection.OpenAsync();
+            await connection.OpenAsync().ConfigureAwait(false);
 
             var command = new NpgsqlCommand(sql);
             command.Connection = connection;
@@ -267,10 +267,10 @@ public class Postgres(string connectionString)
             for (var i = 0; i < parameters.Count; i++)
                 command.Parameters.AddWithValue("@" + (i + 1), parameters[i]);
 
-            await command.PrepareAsync();
+            await command.PrepareAsync().ConfigureAwait(false);
 
-            var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
+            var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+            while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 IDictionary<string, object> eo = new ExpandoObject();
                 for (var index = 0; index < reader.FieldCount; index++)
@@ -280,20 +280,20 @@ public class Postgres(string connectionString)
                 value.Add(eo);
             }
 
-            await reader.CloseAsync();
-            await reader.DisposeAsync();
-            await command.DisposeAsync();
+            await reader.CloseAsync().ConfigureAwait(false);
+            await reader.DisposeAsync().ConfigureAwait(false);
+            await command.DisposeAsync().ConfigureAwait(false);
         }
         catch
         {
-            await connection.CloseAsync();
-            await connection.DisposeAsync();
+            await connection.CloseAsync().ConfigureAwait(false);
+            await connection.DisposeAsync().ConfigureAwait(false);
             throw;
         }
         finally
         {
-            await connection.CloseAsync();
-            await connection.DisposeAsync();
+            await connection.CloseAsync().ConfigureAwait(false);
+            await connection.DisposeAsync().ConfigureAwait(false);
         }
 
         return value;

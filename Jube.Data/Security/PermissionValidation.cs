@@ -26,19 +26,19 @@ public class PermissionValidation
         PermissionValidationDto permissionValidationDto;
         try
         {
-            await connection.OpenAsync();
-            permissionValidationDto = await GetPermissionsFromDatabaseAsync(connection, userName);
+            await connection.OpenAsync().ConfigureAwait(false);
+            permissionValidationDto = await GetPermissionsFromDatabaseAsync(connection, userName).ConfigureAwait(false);
         }
         catch
         {
-            await connection.CloseAsync();
-            await connection.DisposeAsync();
+            await connection.CloseAsync().ConfigureAwait(false);
+            await connection.DisposeAsync().ConfigureAwait(false);
             throw;
         }
         finally
         {
-            await connection.CloseAsync();
-            await connection.DisposeAsync();
+            await connection.CloseAsync().ConfigureAwait(false);
+            await connection.DisposeAsync().ConfigureAwait(false);
         }
 
         return permissionValidationDto;
@@ -47,7 +47,7 @@ public class PermissionValidation
     public async Task<PermissionValidationDto> GetPermissionsAsync(DbContext dbContext, string userName)
     {
         var connection = (NpgsqlConnection)dbContext.Connection;
-        return await GetPermissionsFromDatabaseAsync(connection, userName);
+        return await GetPermissionsFromDatabaseAsync(connection, userName).ConfigureAwait(false);
     }
 
     private async Task<bool> LandlordAsync(NpgsqlConnection connection, string userName)
@@ -66,10 +66,10 @@ public class PermissionValidation
         var commandSqlLandlord = new NpgsqlCommand(sqlLandlord);
         commandSqlLandlord.Connection = connection;
         commandSqlLandlord.Parameters.AddWithValue("userName", userName);
-        await commandSqlLandlord.PrepareAsync();
+        await commandSqlLandlord.PrepareAsync().ConfigureAwait(false);
 
-        var readerLandlord = await commandSqlLandlord.ExecuteReaderAsync();
-        while (await readerLandlord.ReadAsync())
+        var readerLandlord = await commandSqlLandlord.ExecuteReaderAsync().ConfigureAwait(false);
+        while (await readerLandlord.ReadAsync().ConfigureAwait(false))
         {
             if (!readerLandlord.IsDBNull(0))
                 if (readerLandlord.GetValue(0).AsShort() == 1)
@@ -78,9 +78,9 @@ public class PermissionValidation
             break;
         }
 
-        await readerLandlord.CloseAsync();
-        await readerLandlord.DisposeAsync();
-        await readerLandlord.DisposeAsync();
+        await readerLandlord.CloseAsync().ConfigureAwait(false);
+        await readerLandlord.DisposeAsync().ConfigureAwait(false);
+        await readerLandlord.DisposeAsync().ConfigureAwait(false);
 
         return landlord;
     }
@@ -93,7 +93,7 @@ public class PermissionValidation
         var command = new NpgsqlCommand();
         command.Connection = connection;
 
-        permissionValidationDto.Landlord = await LandlordAsync(connection, userName);
+        permissionValidationDto.Landlord = await LandlordAsync(connection, userName).ConfigureAwait(false);
 
         if (permissionValidationDto.Landlord)
         {
@@ -120,14 +120,14 @@ public class PermissionValidation
             command.Parameters.AddWithValue("userName", userName);
         }
 
-        await command.PrepareAsync();
+        await command.PrepareAsync().ConfigureAwait(false);
 
-        var reader = await command.ExecuteReaderAsync();
-        while (await reader.ReadAsync()) permissionValidationDto.Permissions.Add(reader.GetValue(0).AsInt());
+        var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+        while (await reader.ReadAsync().ConfigureAwait(false)) permissionValidationDto.Permissions.Add(reader.GetValue(0).AsInt());
 
-        await reader.CloseAsync();
-        await reader.DisposeAsync();
-        await command.DisposeAsync();
+        await reader.CloseAsync().ConfigureAwait(false);
+        await reader.DisposeAsync().ConfigureAwait(false);
+        await command.DisposeAsync().ConfigureAwait(false);
 
         return permissionValidationDto;
     }

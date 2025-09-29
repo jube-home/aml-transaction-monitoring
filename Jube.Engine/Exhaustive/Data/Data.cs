@@ -39,7 +39,7 @@ public static class Extraction
 
         foreach (var json in
                  await postgres.ExecuteReturnOnlyJsonFromArchiveSampleAsync(entityAnalysisModelId, filterSql,
-                     filterTokens, 10000, mockData))
+                     filterTokens, 10000, mockData).ConfigureAwait(false))
         {
             var jObject = JObject.Parse(json);
 
@@ -102,7 +102,7 @@ public static class Extraction
         var postgres = new Postgres(dbContext.ConnectionString);
         var jsonList = await postgres.ExecuteReturnOnlyJsonFromArchiveSampleAsync(entityAnalysisModelId,
             "NOT (" + filterSql + ")",
-            filterTokens, 10000, mockData);
+            filterTokens, 10000, mockData).ConfigureAwait(false);
 
         ProcessJson(dbContext, tenantRegistryId, entityAnalysisModelId, mockData,
             out var variables, out var data, jsonList);

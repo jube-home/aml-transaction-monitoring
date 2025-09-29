@@ -58,7 +58,7 @@ public class GetByVisualisationRegistryDatasourceCommandExecutionQuery(
         {
             var postgres = new Postgres(connectionString);
             values = await postgres.ExecuteByNamedParametersAsync(visualisationRegistryDatasource.Command,
-                parametersByName);
+                parametersByName).ConfigureAwait(false);
         }
         catch (Exception ex)
         {

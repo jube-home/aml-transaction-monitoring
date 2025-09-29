@@ -73,7 +73,7 @@ namespace Jube.App.Controllers.Invoke
             {
                 if (!_dynamicEnvironment.AppSettings("EnablePublicInvokeController")
                         .Equals("True", StringComparison.OrdinalIgnoreCase))
-                    return await Task.FromResult<ActionResult>(Forbid());
+                    return await Task.FromResult<ActionResult>(Forbid()).ConfigureAwait(false);
 
                 timeout ??= 3000;
 
@@ -93,14 +93,15 @@ namespace Jube.App.Controllers.Invoke
                             _dynamicEnvironment.AppSettings("ConnectionString"),
                             _log);
 
-                        await cacheCallbackRepository.DeleteAsync(guid);
+                        await cacheCallbackRepository.DeleteAsync(guid).ConfigureAwait(false);
 
                         Response.ContentType = "application/json";
                         Response.ContentLength = value.Payload.Length;
-                        return await Task.FromResult<ActionResult>(Ok(value.Payload));
+                        return await Task.FromResult<ActionResult>(Ok(value.Payload)).ConfigureAwait(false);
                     }
 
-                    if (sw.ElapsedMilliseconds > timeout) return await Task.FromResult<ActionResult>(NotFound());
+                    if (sw.ElapsedMilliseconds > timeout)
+                        return await Task.FromResult<ActionResult>(NotFound()).ConfigureAwait(false);
 
                     spinWait.SpinOnce();
                 }
@@ -110,7 +111,7 @@ namespace Jube.App.Controllers.Invoke
                 _log.Error($"Callback Fetch: Has seen an error as {ex}. Returning 500.");
 
                 _engine.HttpCounterCallback += 1;
-                return await Task.FromResult<ActionResult>(StatusCode(500));
+                return await Task.FromResult<ActionResult>(StatusCode(500)).ConfigureAwait(false);
             }
         }
 
@@ -234,7 +235,7 @@ namespace Jube.App.Controllers.Invoke
                 _engine.HttpCounterModel += 1;
 
                 var ms = new MemoryStream();
-                await Request.Body.CopyToAsync(ms);
+                await Request.Body.CopyToAsync(ms).ConfigureAwait(false);
 
                 try
                 {
@@ -279,7 +280,7 @@ namespace Jube.App.Controllers.Invoke
 
                             await entityModelInvoke.ParseAndInvoke(entityAnalysisModel, ms, async,
                                 Request.ContentLength.Value,
-                                _pendingEntityInvoke);
+                                _pendingEntityInvoke).ConfigureAwait(false);
 
                             if (entityModelInvoke.InError) return BadRequest(entityModelInvoke.ErrorMessage);
 
@@ -332,7 +333,7 @@ namespace Jube.App.Controllers.Invoke
                 _engine.HttpCounterExhaustive += 1;
 
                 var ms = new MemoryStream();
-                await Request.Body.CopyToAsync(ms);
+                await Request.Body.CopyToAsync(ms).ConfigureAwait(false);
 
                 var guid = Request.RouteValues["guid"].AsString();
 
@@ -366,7 +367,7 @@ namespace Jube.App.Controllers.Invoke
                     return Forbid();
 
                 var ms = new MemoryStream();
-                await Request.Body.CopyToAsync(ms);
+                await Request.Body.CopyToAsync(ms).ConfigureAwait(false);
 
                 _log.Info("Example FraudScore Local Endpoint Recall:  Recall received.");
 

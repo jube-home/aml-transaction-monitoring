@@ -689,7 +689,7 @@ public class EntityAnalysisModelInvoke(
             }
             else
             {
-                await Start();
+                await Start().ConfigureAwait(false);
             }
 
             log.Info(
@@ -744,7 +744,7 @@ public class EntityAnalysisModelInvoke(
                     cacheTtlCounterEntryRepository));
                 pendingReadTasks.Add(
                     ExecuteAbstractionRulesWithSearchKeys(pendingWriteTasks));
-                await WaitReadTasks(pendingReadTasks);
+                await WaitReadTasks(pendingReadTasks).ConfigureAwait(false);
                 ExecuteAbstractionRulesWithoutSearchKeys();
                 ExecuteAbstractionCalculations();
                 ExecuteExhaustiveModels();
@@ -753,7 +753,7 @@ public class EntityAnalysisModelInvoke(
                     maxGatewayResponseElevation, pendingWriteTasks);
             }
 
-            await WaitWriteTasks(pendingWriteTasks);
+            await WaitWriteTasks(pendingWriteTasks).ConfigureAwait(false);
             WriteResponseJsonAndQueueAsynchronousResponseMessage(pendingWriteTasks);
         }
         catch (Exception ex)
@@ -788,7 +788,7 @@ public class EntityAnalysisModelInvoke(
             $"Entity Invoke: GUID {EntityAnalysisModelInstanceEntryPayloadStore.EntityAnalysisModelInstanceEntryGuid} " +
             $" is waiting for {pendingWriteTasks.Count} write tasks of which {pendingWriteTasks.Count(c => c.IsCompleted)} are completed.");
 
-        await Task.WhenAll(pendingWriteTasks.ToArray());
+        await Task.WhenAll(pendingWriteTasks.ToArray()).ConfigureAwait(false);
 
         EntityAnalysisModelInstanceEntryPayloadStore.ResponseTime.Add("JoinWriteTasks",
             (int)Stopwatch.ElapsedMilliseconds);
@@ -804,7 +804,7 @@ public class EntityAnalysisModelInvoke(
             $"Entity Invoke: GUID {EntityAnalysisModelInstanceEntryPayloadStore.EntityAnalysisModelInstanceEntryGuid} " +
             $" is waiting for {pendingReadTasks.Count} read tasks of which {pendingReadTasks.Count(c => c.IsCompleted)} are completed.");
 
-        await Task.WhenAll(pendingReadTasks.ToArray());
+        await Task.WhenAll(pendingReadTasks.ToArray()).ConfigureAwait(false);
 
         EntityAnalysisModelInstanceEntryPayloadStore.ResponseTime.Add("JoinReadTasks",
             (int)Stopwatch.ElapsedMilliseconds);
@@ -1809,7 +1809,7 @@ public class EntityAnalysisModelInvoke(
                             EntityAnalysisModel.TenantRegistryId,
                             EntityAnalysisModel.Guid, multiPartStringValue,
                             entityAnalysisModelSanction.Distance
-                        );
+                        ).ConfigureAwait(false);
 
                         log.Info(
                             $"Entity Invoke: GUID {EntityAnalysisModelInstanceEntryPayloadStore.EntityAnalysisModelInstanceEntryGuid} and model {EntityAnalysisModel.Id} has extracted multi part string name value as {multiPartStringValue} and has found sanction as {sanction != null}.");
@@ -2662,8 +2662,8 @@ public class EntityAnalysisModelInvoke(
                 $"Entity Invoke: GUID {EntityAnalysisModelInstanceEntryPayloadStore.EntityAnalysisModelInstanceEntryGuid} and model {EntityAnalysisModel.Id} Entity cache storage is not enabled so it cannot fetch anything relating to Abstraction Rules.");
         }
 
-        await Task.WhenAll(pendingExecutionThreads.ToArray());
-        await CalculateAbstractionRuleValuesOrLookupFromTheCache();
+        await Task.WhenAll(pendingExecutionThreads.ToArray()).ConfigureAwait(false);
+        await CalculateAbstractionRuleValuesOrLookupFromTheCache().ConfigureAwait(false);
 
         log.Info(
             $"Entity Invoke: GUID {EntityAnalysisModelInstanceEntryPayloadStore.EntityAnalysisModelInstanceEntryGuid} and model {EntityAnalysisModel.Id} all abstraction aggregation has finished, basic rules will now be processed.");
@@ -2719,7 +2719,7 @@ public class EntityAnalysisModelInvoke(
                 foreach (var abstractionRuleNameValue in await cacheAbstractionRepository
                              .Get(
                                  EntityAnalysisModel.TenantRegistryId, EntityAnalysisModel.Guid,
-                                 listEntityAnalysisModelIdAbstractionRuleNameSearchKeySearchValueRequest))
+                                 listEntityAnalysisModelIdAbstractionRuleNameSearchKeySearchValueRequest).ConfigureAwait(false))
                     AddComputedValuesToAbstractionRulePayload(abstractionRuleNameValue.Value, abstractionRule);
             }
             catch (Exception ex)
@@ -2774,7 +2774,7 @@ public class EntityAnalysisModelInvoke(
         {
             if (EntityAnalysisModel.EnableTtlCounter)
                 await Task.WhenAll(OnlineAggregationOfTtlCounters(cacheTtlCounterEntryRepository),
-                    OutOfProcessAggregationOfTtlCounters(cacheTtlCounterRepository));
+                    OutOfProcessAggregationOfTtlCounters(cacheTtlCounterRepository)).ConfigureAwait(false);
             else
                 log.Info(
                     $"Entity Invoke: GUID {EntityAnalysisModelInstanceEntryPayloadStore.EntityAnalysisModelInstanceEntryGuid} and model {EntityAnalysisModel.Id} TTL Counter cache storage is not enabled so it cannot fetch TTL Counter Aggregation.");
@@ -2803,7 +2803,7 @@ public class EntityAnalysisModelInvoke(
                         EntityAnalysisModel.Guid,
                         ttlCounter.Guid,
                         ttlCounter.TtlCounterDataName,
-                        CachePayloadDocumentStore[ttlCounter.TtlCounterDataName].AsString());
+                        CachePayloadDocumentStore[ttlCounter.TtlCounterDataName].AsString()).ConfigureAwait(false);
 
                 if (EntityAnalysisModelInstanceEntryPayloadStore.TtlCounter.TryAdd(ttlCounter.Name,
                         ttlCounterValue))
@@ -2892,7 +2892,7 @@ public class EntityAnalysisModelInvoke(
                             CachePayloadDocumentStore[ttlCounter.TtlCounterDataName].AsString(),
                             adjustedTtlCounterDate,
                             EntityAnalysisModelInstanceEntryPayloadStore.ReferenceDate
-                        );
+                        ).ConfigureAwait(false);
 
                     try
                     {

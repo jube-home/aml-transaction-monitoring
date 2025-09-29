@@ -66,7 +66,7 @@ namespace Jube.App.Controllers.Helper
         {
             if (!_permissionValidation.Validate(new[] { 30 })) return Forbid();
 
-            await _watcherHub.Groups.AddToGroupAsync(id, "Tenant_" + _tenantRegistryId);
+            await _watcherHub.Groups.AddToGroupAsync(id, "Tenant_" + _tenantRegistryId).ConfigureAwait(false);
 
             return Ok();
         }

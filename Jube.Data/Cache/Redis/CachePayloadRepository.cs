@@ -40,7 +40,7 @@ public class CachePayloadRepository(
             var ms = new MemoryStream();
             await MessagePackSerializer.SerializeAsync(ms, payload,
                 MessagePackSerializerOptionsHelper
-                    .ContractlessStandardResolverWithCompressionMessagePackSerializerOptions(true));
+                    .ContractlessStandardResolverWithCompressionMessagePackSerializerOptions(true)).ConfigureAwait(false);
 
             var keyPayload = $"Payload:{tenantRegistryId}:{entityAnalysisModelGuid:N}";
             var hSetKey = $"{entityAnalysisModelInstanceEntryGuid:N}";
@@ -55,7 +55,7 @@ public class CachePayloadRepository(
                     commandFlag)
             };
 
-            await Task.WhenAll(tasks.ToArray());
+            await Task.WhenAll(tasks.ToArray()).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -71,7 +71,7 @@ public class CachePayloadRepository(
         try
         {
             await InsertAsync(tenantRegistryId, entityAnalysisModelGuid, payload, referenceDate,
-                entityAnalysisModelInstanceEntryGuid);
+                entityAnalysisModelInstanceEntryGuid).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -90,7 +90,7 @@ public class CachePayloadRepository(
         var breakWhile = false;
         while (!breakWhile)
         {
-            var sortedSetEntries = await redisDatabase.SortedSetRangeByRankWithScoresAsync(redisKey, 0, limit);
+            var sortedSetEntries = await redisDatabase.SortedSetRangeByRankWithScoresAsync(redisKey, 0, limit).ConfigureAwait(false);
             if (sortedSetEntries.Length == 0)
             {
                 breakWhile = true;
@@ -115,7 +115,7 @@ public class CachePayloadRepository(
                     redisValuesToDelete.Count)
             };
 
-            await Task.WhenAll(tasks.ToArray());
+            await Task.WhenAll(tasks.ToArray()).ConfigureAwait(false);
         }
     }
 
@@ -128,7 +128,7 @@ public class CachePayloadRepository(
         {
             var redisKey = $"Payload:{tenantRegistryId}:{entityAnalysisModelGuid:N}:{key}:{value}";
             var sortedSetEntries =
-                (await redisDatabase.SortedSetRangeByRankWithScoresAsync(redisKey, 0, limit, Order.Descending))
+                (await redisDatabase.SortedSetRangeByRankWithScoresAsync(redisKey, 0, limit, Order.Descending).ConfigureAwait(false))
                 .Reverse();
 
             foreach (var redisValue in await redisDatabase.HashGetAsync(
@@ -136,7 +136,7 @@ public class CachePayloadRepository(
                          (from sortedSetEntry in sortedSetEntries
                              where sortedSetEntry.Element.ToString() !=
                                    entityInconsistentAnalysisModelInstanceEntryGuid.ToString("N")
-                             select sortedSetEntry.Element).ToArray()))
+                             select sortedSetEntry.Element).ToArray()).ConfigureAwait(false))
                 try
                 {
                     if (redisValue.HasValue)
@@ -167,7 +167,7 @@ public class CachePayloadRepository(
             var redisKey = $"Payload:{tenantRegistryId}:{entityAnalysisModelGuid:N}:{key}:{value}";
             var set = $"{entityAnalysisModelInstanceEntryGuid:N}";
             await redisDatabase.SortedSetAddAsync(redisKey, set, referenceDate.ToUnixTimeMilliSeconds(),
-                commandFlag);
+                commandFlag).ConfigureAwait(false);
         }
         catch (Exception ex)
         {

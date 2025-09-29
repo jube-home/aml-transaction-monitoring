@@ -15,7 +15,7 @@ public class GetArchiveDistinctEntryKeyValue(ILog log, string connectionString)
         var value = new List<string>();
         try
         {
-            await connection.OpenAsync();
+            await connection.OpenAsync().ConfigureAwait(false);
 
             var sql = "select distinct \"Json\" -> 'payload' ->> (@key)" +
                       " from \"Archive\" a inner join \"EntityAnalysisModel\" e on a.\"EntityAnalysisModelId\" = e.\"Id\"" +
@@ -29,16 +29,16 @@ public class GetArchiveDistinctEntryKeyValue(ILog log, string connectionString)
             command.Parameters.AddWithValue("dateFrom", dateFrom);
             command.Parameters.AddWithValue("dateTo", dateTo);
             command.Parameters.AddWithValue("entityAnalysisModelGuid", entityAnalysisModelGuid);
-            await command.PrepareAsync();
+            await command.PrepareAsync().ConfigureAwait(false);
 
-            var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
+            var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+            while (await reader.ReadAsync().ConfigureAwait(false))
                 if (!reader.IsDBNull(0))
                     value.Add(reader.GetValue(0).ToString());
 
-            await reader.CloseAsync();
-            await reader.DisposeAsync();
-            await command.DisposeAsync();
+            await reader.CloseAsync().ConfigureAwait(false);
+            await reader.DisposeAsync().ConfigureAwait(false);
+            await command.DisposeAsync().ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -46,8 +46,8 @@ public class GetArchiveDistinctEntryKeyValue(ILog log, string connectionString)
         }
         finally
         {
-            await connection.CloseAsync();
-            await connection.DisposeAsync();
+            await connection.CloseAsync().ConfigureAwait(false);
+            await connection.DisposeAsync().ConfigureAwait(false);
         }
 
         return value;
@@ -60,7 +60,7 @@ public class GetArchiveDistinctEntryKeyValue(ILog log, string connectionString)
         var value = new List<string>();
         try
         {
-            await connection.OpenAsync();
+            await connection.OpenAsync().ConfigureAwait(false);
 
             var sql = "select distinct \"Json\" -> 'payload' ->> (@key)" +
                       " from \"Archive\" a inner join \"EntityAnalysisModel\" e on a.\"EntityAnalysisModelId\" = e.\"Id\"" +
@@ -70,16 +70,16 @@ public class GetArchiveDistinctEntryKeyValue(ILog log, string connectionString)
             command.Connection = connection;
             command.Parameters.AddWithValue("entityAnalysisModelGuid", entityAnalysisModelGuid);
             command.Parameters.AddWithValue("key", key);
-            await command.PrepareAsync();
+            await command.PrepareAsync().ConfigureAwait(false);
 
-            var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
+            var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+            while (await reader.ReadAsync().ConfigureAwait(false))
                 if (!reader.IsDBNull(0))
                     value.Add(reader.GetValue(0).ToString());
 
-            await reader.CloseAsync();
-            await reader.DisposeAsync();
-            await command.DisposeAsync();
+            await reader.CloseAsync().ConfigureAwait(false);
+            await reader.DisposeAsync().ConfigureAwait(false);
+            await command.DisposeAsync().ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -87,8 +87,8 @@ public class GetArchiveDistinctEntryKeyValue(ILog log, string connectionString)
         }
         finally
         {
-            await connection.CloseAsync();
-            await connection.DisposeAsync();
+            await connection.CloseAsync().ConfigureAwait(false);
+            await connection.DisposeAsync().ConfigureAwait(false);
         }
 
         return value;

@@ -82,14 +82,14 @@ namespace Jube.App.Controllers.Query
                 var idParsedToInt = int.Parse(idFromRoute);
 
                 var ms = new MemoryStream();
-                await Request.Body.CopyToAsync(ms);
+                await Request.Body.CopyToAsync(ms).ConfigureAwait(false);
 
                 var payloadString = Encoding.UTF8.GetString(ms.ToArray());
                 var jArray = JsonConvert.DeserializeObject<JArray>(payloadString);
 
                 var parameters = new Dictionary<int, object>();
 
-                if (jArray == null) return Ok(await _query.ExecuteAsync(idParsedToInt, parameters));
+                if (jArray == null) return Ok(await _query.ExecuteAsync(idParsedToInt, parameters).ConfigureAwait(false));
 
                 foreach (var param in jArray)
                 {
@@ -136,7 +136,7 @@ namespace Jube.App.Controllers.Query
                         }
                 }
 
-                return Ok(await _query.ExecuteAsync(idParsedToInt, parameters));
+                return Ok(await _query.ExecuteAsync(idParsedToInt, parameters).ConfigureAwait(false));
             }
             catch (Exception e)
             {

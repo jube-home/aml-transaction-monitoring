@@ -675,7 +675,7 @@ public class Program
                     _log.Info(
                         $"Async Http Context Correlation: Found Async with guid of {payload.EntityAnalysisModelInstanceEntryPayloadStore.EntityAnalysisModelInstanceEntryGuid}.  Is about to start.");
 
-                    await payload.Start();
+                    await payload.Start().ConfigureAwait(false);
 
                     _log.Info(
                         $"Async Http Context Correlation: Finished Async with guid of {payload.EntityAnalysisModelInstanceEntryPayloadStore.EntityAnalysisModelInstanceEntryGuid}.");
@@ -1621,7 +1621,7 @@ public class Program
 
                                         await entityModelInvoke.ParseAndInvoke(entityAnalysisModel, inputStream, false,
                                             inputStream.Length,
-                                            null);
+                                            null).ConfigureAwait(false);
 
                                         _log.Info(
                                             $"AMQP Inbound: GUID payload {entityInstanceEntryPayloadStore.EntityAnalysisModelInstanceEntryGuid} matched for Requested Model GUID {entityAnalysisModelGuid}.  Has finished invoking the model,  will ACK on the AMQP.");
