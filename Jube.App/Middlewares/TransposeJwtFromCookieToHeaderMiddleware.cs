@@ -31,7 +31,7 @@ namespace Jube.App.Middlewares
             var cookie = context.Request.Cookies[authenticationCookieName];
             if (cookie != null) context.Request.Headers.Append("Authorization", "Bearer " + cookie);
 
-            await _next.Invoke(context);
+            await _next.Invoke(context).ConfigureAwait(false);
         }
     }
 }

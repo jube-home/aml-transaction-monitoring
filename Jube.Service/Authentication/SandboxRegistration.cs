@@ -63,10 +63,10 @@ public class SandboxRegistration(DbContext dbContext)
             insertVisualisationRegistryExampleVisualisationId, userRegistry.Name);
 
         await InsertVisualisationRegistryDatasourceExampleEmbeddedVisualisation(
-            insertVisualisationRegistryExampleEmbeddedVisualisation.Id, userRegistry.Name);
+            insertVisualisationRegistryExampleEmbeddedVisualisation.Id, userRegistry.Name).ConfigureAwait(false);
 
         await InsertVisualisationRegistryDatasourceExampleVisualisation(
-            insertVisualisationRegistryExampleVisualisationId, userRegistry.Name);
+            insertVisualisationRegistryExampleVisualisationId, userRegistry.Name).ConfigureAwait(false);
 
         var caseWorkflow = InsertCaseWorkflow(entityAnalysisModel.Id,
             insertVisualisationRegistryExampleEmbeddedVisualisation.Guid, userRegistry.Name);
@@ -1188,7 +1188,7 @@ public class SandboxRegistration(DbContext dbContext)
                                 "    }" + Environment.NewLine +
                                 "})" + Environment.NewLine,
             Guid = Guid.NewGuid()
-        });
+        }).ConfigureAwait(false);
 
         await visualisationRegistryDatasourceRepository.InsertWithValidationAsync(new VisualisationRegistryDatasource
         {
@@ -1241,7 +1241,7 @@ public class SandboxRegistration(DbContext dbContext)
                                 "    }" + Environment.NewLine +
                                 "})" + Environment.NewLine,
             Guid = Guid.NewGuid()
-        });
+        }).ConfigureAwait(false);
     }
 
     private async Task InsertVisualisationRegistryDatasourceExampleEmbeddedVisualisation(int visualisationRegistryId,
@@ -1285,7 +1285,7 @@ public class SandboxRegistration(DbContext dbContext)
                                 "    }" + Environment.NewLine +
                                 "})" + Environment.NewLine,
             Guid = Guid.NewGuid()
-        });
+        }).ConfigureAwait(false);
 
         await visualisationRegistryDatasourceRepository.InsertWithValidationAsync(new VisualisationRegistryDatasource
         {
@@ -1336,7 +1336,7 @@ public class SandboxRegistration(DbContext dbContext)
                                 "    }" + Environment.NewLine +
                                 "})" + Environment.NewLine,
             Guid = Guid.NewGuid()
-        });
+        }).ConfigureAwait(false);
     }
 
     private int InsertVisualisationRegistryExampleVisualisation(string userName)

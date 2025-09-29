@@ -35,7 +35,7 @@ public class CacheTtlCounterRepository(
             var redisHSetKey = $"{dataValue}";
 
             await redisDatabase.HashDecrementAsync(redisKey, redisHSetKey, decrement,
-                commandFlag);
+                commandFlag).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -51,7 +51,7 @@ public class CacheTtlCounterRepository(
             var redisKey =
                 $"TtlCounter:{tenantRegistryId}:{entityAnalysisModelGuid:N}:{entityAnalysisModelTtlCounterGuid:N}:{dataName}";
             var redisHSetKey = $"{dataValue}";
-            return (int)await redisDatabase.HashGetAsync(redisKey, redisHSetKey);
+            return (int)await redisDatabase.HashGetAsync(redisKey, redisHSetKey).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -72,7 +72,7 @@ public class CacheTtlCounterRepository(
             var redisHSetKey = $"{dataValue}";
 
             await redisDatabase.HashIncrementAsync(redisKey, redisHSetKey, increment,
-                commandFlag);
+                commandFlag).ConfigureAwait(false);
         }
         catch (Exception ex)
         {

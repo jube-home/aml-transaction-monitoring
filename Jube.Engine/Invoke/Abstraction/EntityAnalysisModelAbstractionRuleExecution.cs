@@ -64,7 +64,7 @@ public class Execute
                 AbstractionRuleGroupingKey,
                 CachePayloadDocument[AbstractionRuleGroupingKey].AsString(),
                 limit, EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid
-            );
+            ).ConfigureAwait(false);
 
             if (documents != null)
             {

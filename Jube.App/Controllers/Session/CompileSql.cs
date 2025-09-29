@@ -118,7 +118,7 @@ namespace Jube.App.Controllers.Session
             {
                 var postgres = new Postgres(dbContext.ConnectionString);
                 await postgres.PrepareAsync(model.SelectSqlSearch + " " + model.WhereSql + " " + model.OrderSql,
-                    filterRule.Tokens);
+                    filterRule.Tokens).ConfigureAwait(false);
                 model.Prepared = 1;
             }
             catch (Exception e)

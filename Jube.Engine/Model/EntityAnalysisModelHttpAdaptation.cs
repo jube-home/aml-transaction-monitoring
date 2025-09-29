@@ -63,12 +63,12 @@ public class EntityAnalysisModelHttpAdaptation
             Content = stringContent
         };
 
-        var task = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseContentRead);
+        var task = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseContentRead).ConfigureAwait(false);
 
         log.Info(
             $"R Plumber Hook: Has received data from {_uri} with status {task.StatusCode}.");
 
-        var valueString = await task.Content.ReadAsStringAsync();
+        var valueString = await task.Content.ReadAsStringAsync().ConfigureAwait(false);
 
         log.Info(
             $"R Plumber Hook: Has received data from {_uri} with payload {valueString}. The JSON decoration will now be removed.");

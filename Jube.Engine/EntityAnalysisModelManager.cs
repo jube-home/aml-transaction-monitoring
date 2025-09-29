@@ -202,7 +202,7 @@ public class EntityAnalysisModelManager
                 Log.Debug(
                     $"Cache Prune: For model {model.Id} the reference date will be looked up.");
 
-                var referenceDate = await cacheReferenceDate.GetReferenceDate(model.TenantRegistryId, model.Guid);
+                var referenceDate = await cacheReferenceDate.GetReferenceDate(model.TenantRegistryId, model.Guid).ConfigureAwait(false);
 
                 Log.Debug(
                     $"Cache Prune: For model {model.Id} the reference date for {model.ReferenceDateName} is {referenceDate}.  " +
@@ -219,7 +219,7 @@ public class EntityAnalysisModelManager
                 if (thresholdReferenceDatePayload == null) continue;
 
                 await cachePayload.DeleteByReferenceDate(model.TenantRegistryId, model.Guid,
-                    thresholdReferenceDatePayload.Value, limit);
+                    thresholdReferenceDatePayload.Value, limit).ConfigureAwait(false);
 
                 Log.Debug(
                     $"Cache Prune: For model {model.Id} deletion routine has returned in the Payload repository.");
@@ -229,7 +229,7 @@ public class EntityAnalysisModelManager
                     model.DistinctSearchKeys.Select(distinctSearchKey
                         => (distinctSearchKey.Key,
                             distinctSearchKey.Value.SearchKeyTtlInterval,
-                            distinctSearchKey.Value.SearchKeyTtlIntervalValue)).ToList());
+                            distinctSearchKey.Value.SearchKeyTtlIntervalValue)).ToList()).ConfigureAwait(false);
 
                 Log.Debug(
                     $"Cache Prune: For model {model.Id} deletion routine has returned in the Payload Latest " +
@@ -529,7 +529,7 @@ public class EntityAnalysisModelManager
                             StoreRuleCounterValues(dbContext);
                             SyncSuppression(dbContext);
                             SyncActivationRuleSuppression(dbContext);
-                            await StartupModelAsync(dbContext);
+                            await StartupModelAsync(dbContext).ConfigureAwait(false);
                             EntityModelsHasLoadedForStartup = true;
                         }
                     }
@@ -539,8 +539,8 @@ public class EntityAnalysisModelManager
                     }
                     finally
                     {
-                        await dbContext.CloseAsync();
-                        await dbContext.DisposeAsync();
+                        await dbContext.CloseAsync().ConfigureAwait(false);
+                        await dbContext.DisposeAsync().ConfigureAwait(false);
 
                         Log.Debug("Entity Start: Closing the database connection.");
 
@@ -5211,8 +5211,8 @@ public class EntityAnalysisModelManager
                         {
                             value.HasCheckedDatabaseForLastSearchKeyCacheDates = true;
 
-                            await dbContext.CloseAsync();
-                            await dbContext.DisposeAsync();
+                            await dbContext.CloseAsync().ConfigureAwait(false);
+                            await dbContext.DisposeAsync().ConfigureAwait(false);
                         }
                     }
                     else
@@ -5224,7 +5224,7 @@ public class EntityAnalysisModelManager
                     Log.Debug(
                         $"Entity Abstraction Rule Caching: Entity Model {key} is being started.");
 
-                    await value.AbstractionRuleCachingAsync();
+                    await value.AbstractionRuleCachingAsync().ConfigureAwait(false);
 
                     Log.Debug($"Entity Abstraction Rule Caching: Entity Model {key} has finished.");
                 }
@@ -5275,7 +5275,7 @@ public class EntityAnalysisModelManager
                                 $"Entity Reprocessing: Reprocessing instance {entityAnalysisModelRuleReprocessingInstance.EntityAnalysisModelsReprocessingRuleInstanceId} using created date.");
 
                             var documentsInitialCounts =
-                                await GetInitialCountsAsync(dbContext, modelKvp.Value.Guid);
+                                await GetInitialCountsAsync(dbContext, modelKvp.Value.Guid).ConfigureAwait(false);
 
                             var dateRangeAndCount = EstablishProcessingDateRange(
                                 entityAnalysisModelRuleReprocessingInstance,
@@ -5312,7 +5312,7 @@ public class EntityAnalysisModelManager
                                     await archiveDatabase.ExecuteReturnPayloadFromArchiveWithSkipLimitAsync(
                                         modelKvp.Value.ArchivePayloadSql, dateRangeAndCount.adjustedStartDate,
                                         processed,
-                                        limit);
+                                        limit).ConfigureAwait(false);
 
                                 if (documents.Count == 0) break;
 
@@ -5345,7 +5345,7 @@ public class EntityAnalysisModelManager
 
                                                 await InvokeReprocessingForDocument(modelKvp,
                                                     entityAnalysisModelRuleReprocessingInstance, processed,
-                                                    entry);
+                                                    entry).ConfigureAwait(false);
 
                                                 matched += 1;
                                             }
@@ -5423,8 +5423,8 @@ public class EntityAnalysisModelManager
                     Log.Info(
                         "Entity Reprocessing: Has finished a cycle and will now sleep for 20 seconds,  the database connection to Database will also be closed.");
 
-                    await dbContext.CloseAsync();
-                    await dbContext.DisposeAsync();
+                    await dbContext.CloseAsync().ConfigureAwait(false);
+                    await dbContext.DisposeAsync().ConfigureAwait(false);
 
                     Thread.Sleep(20000);
 
@@ -5484,7 +5484,7 @@ public class EntityAnalysisModelManager
         await FinaliseAndInvokeForReprocess(entityAnalysisModelRuleReprocessingInstance,
             entityInstanceEntryPayloadStore,
             modelKvp, cachePayloadDocumentStore, entityModelInvoke,
-            cachePayloadDocumentResponse, stopwatch);
+            cachePayloadDocumentResponse, stopwatch).ConfigureAwait(false);
     }
 
     private async Task FinaliseAndInvokeForReprocess(
@@ -5504,7 +5504,7 @@ public class EntityAnalysisModelManager
         entityAnalysisModelInvoke.EntityAnalysisModelInstanceEntryPayloadStore =
             entityAnalysisModelInstanceEntryPayloadStore;
         entityAnalysisModelInvoke.Reprocess = true;
-        await entityAnalysisModelInvoke.Start();
+        await entityAnalysisModelInvoke.Start().ConfigureAwait(false);
 
         Log.Info(
             $"Entity Reprocessing: Reprocessing instance {entityAnalysisModelRuleReprocessingInstance.EntityAnalysisModelsReprocessingRuleInstanceId} has completed the invoke.");
@@ -5695,7 +5695,7 @@ public class EntityAnalysisModelManager
         Guid entityAnalysisModelGuid)
     {
         var getArchiveRangeAndCountsQuery = new GetArchiveRangeAndCountsQuery(dbContext);
-        return await getArchiveRangeAndCountsQuery.Execute(entityAnalysisModelGuid);
+        return await getArchiveRangeAndCountsQuery.Execute(entityAnalysisModelGuid).ConfigureAwait(false);
     }
 
     private void GetEntityAnalysisModelRuleReprocessingInstance(DbContext dbContext,
@@ -6037,7 +6037,7 @@ public class EntityAnalysisModelManager
                     Log.Debug(
                         $"Entity TTL Counter Administration: Entity Model {key} is being started.");
 
-                    await value.TtlCounterServerAsync();
+                    await value.TtlCounterServerAsync().ConfigureAwait(false);
 
                     Log.Debug(
                         $"Entity TTL Counter Administration: Entity Model {key} has finished will wait for {JubeEnvironment.AppSettings("WaitTtlCounterDecrement")} milliseconds.");

@@ -33,7 +33,7 @@ public class GetArchiveRangeAndCountsQuery(DbContext dbContext)
                 Count = g.Count(),
                 Min = g.Min(q => q.ReferenceDate),
                 Max = g.Max(q => q.ReferenceDate)
-            }).FirstOrDefaultAsync();
+            }).FirstOrDefaultAsync().ConfigureAwait(false);
     }
 
     public class Dto

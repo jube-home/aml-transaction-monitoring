@@ -174,7 +174,7 @@ public class EntityAnalysisModel
                 var toDate = DateTime.Now;
                 var entityAnalysisModelsSearchKeyCalculationInstanceId =
                     InsertEntityAnalysisModelsSearchKeyCalculationInstances(dbContext, value, toDate);
-                var groupingValues = await GetDistinctListOfGroupingValuesAsync(value, toDate);
+                var groupingValues = await GetDistinctListOfGroupingValuesAsync(value, toDate).ConfigureAwait(false);
 
                 Log.Info(
                     $"Abstraction Rule Caching: For model {Id} and grouping key {key} has found {groupingValues.Count} grouping values.");
@@ -182,7 +182,7 @@ public class EntityAnalysisModel
                 UpdateEntityAnalysisModelsSearchKeyCalculationInstancesDistinctValues(dbContext,
                     entityAnalysisModelsSearchKeyCalculationInstanceId, groupingValues.Count);
 
-                var expires = await GetExpiredCacheKeysAsync(value);
+                var expires = await GetExpiredCacheKeysAsync(value).ConfigureAwait(false);
 
                 Log.Info(
                     $"Abstraction Rule Caching: For model {Id} and grouping key {key} has found {expires.Count} expires values.");
@@ -213,7 +213,7 @@ public class EntityAnalysisModel
                                 InsertEntityAnalysisModelsSearchKeyDistinctValueCalculationInstances(dbContext,
                                     entityAnalysisModelsSearchKeyCalculationInstanceId, groupingValue);
 
-                            var documents = await GetAllForKeyAsync(value, groupingValue);
+                            var documents = await GetAllForKeyAsync(value, groupingValue).ConfigureAwait(false);
 
                             UpdateEntityAnalysisModelsSearchKeyDistinctValueCalculationInstancesEntriesCount(
                                 dbContext, entityAnalysisModelsSearchKeyDistinctValueCalculationInstanceId,
@@ -245,7 +245,7 @@ public class EntityAnalysisModel
                                             entityInstanceEntryPayload);
 
                                         await UpsertOrDeleteSearchKeyCacheValueAsync(value, groupingValue,
-                                            abstractionRuleMatch, abstractionRule, abstractionValue);
+                                            abstractionRuleMatch, abstractionRule, abstractionValue).ConfigureAwait(false);
 
                                         if (EnableRdbmsArchive)
                                             ReplicateToDatabase(dbContext,
@@ -302,8 +302,8 @@ public class EntityAnalysisModel
         }
         finally
         {
-            await dbContext.CloseAsync();
-            await dbContext.DisposeAsync();
+            await dbContext.CloseAsync().ConfigureAwait(false);
+            await dbContext.DisposeAsync().ConfigureAwait(false);
         }
     }
 
@@ -409,7 +409,7 @@ public class EntityAnalysisModel
 
         var value = await FindCacheKeyValueEntryAsync(cacheAbstractionRepository,
             distinctSearchKey, groupingValue, abstractionRuleMatch, abstractionRule,
-            abstractionValue);
+            abstractionValue).ConfigureAwait(false);
 
         if (value == null)
         {
@@ -417,13 +417,13 @@ public class EntityAnalysisModel
                 await InsertSearchKeyCacheValue(cacheAbstractionRepository,
                     distinctSearchKey, groupingValue,
                     abstractionRuleMatch, abstractionRule,
-                    abstractionValue);
+                    abstractionValue).ConfigureAwait(false);
         }
         else
         {
             await UpdateOrDeleteSearchKeyCacheValue(cacheAbstractionRepository, distinctSearchKey, groupingValue,
                 abstractionRule,
-                abstractionValue);
+                abstractionValue).ConfigureAwait(false);
         }
     }
 
@@ -468,7 +468,7 @@ public class EntityAnalysisModel
                 $"Abstraction Rule Caching: For model {Id} and for Grouping Value {groupingValue} and Grouping Key {distinctSearchKey.SearchKey} for abstraction rule {abstractionRule.Name}  has returned aggregated value of {abstractionValue}.  The cache will be searched with the rule name {abstractionRule.Name}.  As the abstraction value is zero, it will be deleted to save storage.");
 
             await cacheAbstractionRepository.DeleteAsync(TenantRegistryId, Guid, distinctSearchKey.SearchKey,
-                groupingValue, abstractionRule.Name);
+                groupingValue, abstractionRule.Name).ConfigureAwait(false);
 
             Log.Info(
                 $"Abstraction Rule Caching: For model {Id} and for Grouping Value {groupingValue} and Grouping Key {distinctSearchKey.SearchKey} for abstraction rule {abstractionRule.Name}  has returned aggregated value of {abstractionValue}.  The cache will be searched with the rule name {abstractionRule.Name}.  As the abstraction value is zero, it has been deleted to save storage.");
@@ -479,7 +479,7 @@ public class EntityAnalysisModel
                 $"Abstraction Rule Caching: For model {Id} and for Grouping Value {groupingValue} and Grouping Key {distinctSearchKey.SearchKey} for abstraction rule {abstractionRule.Name}  has returned aggregated value of {abstractionValue}.  The cache will be searched with the rule name {abstractionRule.Name}.  As the abstraction value is not zero, it will be updated.");
 
             await cacheAbstractionRepository.UpsertAsync(TenantRegistryId, Guid, distinctSearchKey.SearchKey,
-                groupingValue, abstractionRule.Name, abstractionValue);
+                groupingValue, abstractionRule.Name, abstractionValue).ConfigureAwait(false);
 
             Log.Info(
                 $"Abstraction Rule Caching: For model {Id} and for Grouping Value {groupingValue} and Grouping Key {distinctSearchKey.SearchKey} for abstraction rule {abstractionRule.Name}  has returned aggregated value of {abstractionValue}.  The cache will be searched with the rule name {abstractionRule.Name}.  As the abstraction value is not zero, it has been updated.");
@@ -497,7 +497,7 @@ public class EntityAnalysisModel
             $"Abstraction Rule Caching: For model {Id} and for Grouping Value {groupingValue} and Grouping Key {distinctSearchKey.SearchKey} for abstraction rule {key}  has returned aggregated value of {abstractionValue}.  The cache will be searched with the rule name {abstractionRule.Name}. As there are no existing cache values, it will be inserted.");
 
         await cacheAbstractionRepository.UpsertAsync(TenantRegistryId, Guid, distinctSearchKey.SearchKey,
-            groupingValue, abstractionRule.Name, abstractionValue);
+            groupingValue, abstractionRule.Name, abstractionValue).ConfigureAwait(false);
 
         Log.Info(
             $"Abstraction Rule Caching: For model {Id} and for Grouping Value {groupingValue} and Grouping Key {distinctSearchKey.SearchKey} for abstraction rule {key}  has returned aggregated value of {abstractionValue}.  The cache will be searched with the rule name {abstractionRule.Name}.  As there are no existing cache values, it has been updated.");
@@ -510,7 +510,7 @@ public class EntityAnalysisModel
         double abstractionValue)
     {
         var value = await cacheAbstractionRepository.Get(
-            TenantRegistryId, Guid, abstractionRule.Name, distinctSearchKey.SearchKey, groupingValue);
+            TenantRegistryId, Guid, abstractionRule.Name, distinctSearchKey.SearchKey, groupingValue).ConfigureAwait(false);
 
         Log.Info(
             $"Abstraction Rule Caching: For model {Id} and for Grouping Value {groupingValue} and Grouping Key {distinctSearchKey.SearchKey} for abstraction rule {abstractionRuleMatch.Key}  has returned aggregated value of {abstractionValue}.  The cache has returned for rule name {abstractionRule.Name} with {value == null} null document.  An upsert will now take place.");
@@ -624,7 +624,7 @@ public class EntityAnalysisModel
         {
             values = await getArchiveSqlByKeyValueLimitQuery.Execute(
                 cachePayloadSql, distinctSearchKey.SearchKey,
-                groupingValue, "RANDOM()", distinctSearchKey.SearchKeyCacheFetchLimit);
+                groupingValue, "RANDOM()", distinctSearchKey.SearchKeyCacheFetchLimit).ConfigureAwait(false);
 
             Log.Info(
                 $"Abstraction Rule Caching: For model {Id} and grouping key {distinctSearchKey.SearchKey} retrieved grouping value {groupingValue} returning the top {distinctSearchKey.SearchKeyCacheFetchLimit} records for the grouping key.  There are {values.Count} ordered randomly.");
@@ -633,7 +633,7 @@ public class EntityAnalysisModel
         {
             values = await getArchiveSqlByKeyValueLimitQuery.Execute(
                 cachePayloadSql, distinctSearchKey.SearchKey,
-                groupingValue, "CreatedDate", distinctSearchKey.SearchKeyCacheFetchLimit);
+                groupingValue, "CreatedDate", distinctSearchKey.SearchKeyCacheFetchLimit).ConfigureAwait(false);
 
             Log.Info(
                 $"Abstraction Rule Caching: For model {Id} and grouping key {distinctSearchKey.SearchKey} retrieved grouping value {groupingValue} returning the top {distinctSearchKey.SearchKeyCacheFetchLimit} records for the grouping key.  There are {values.Count} ordered by CreatedDate desc.");
@@ -697,7 +697,7 @@ public class EntityAnalysisModel
 
         return await cachePayloadLatestRepository.GetDistinctKeysAsync(TenantRegistryId, Guid,
             distinctSearchKey.SearchKey,
-            deleteLineCacheKeys);
+            deleteLineCacheKeys).ConfigureAwait(false);
     }
 
     private ICachePayloadLatestRepository BuildCachePayloadLatestRepository()
@@ -728,7 +728,7 @@ public class EntityAnalysisModel
 
             value = await getArchiveDistinctEntryKeyValue.Execute(Guid,
                 distinctSearchKey.SearchKey,
-                LastAbstractionRuleCache[distinctSearchKey.SearchKey], toDate);
+                LastAbstractionRuleCache[distinctSearchKey.SearchKey], toDate).ConfigureAwait(false);
 
             LastAbstractionRuleCache[distinctSearchKey.SearchKey] = toDate;
 
@@ -740,7 +740,7 @@ public class EntityAnalysisModel
             Log.Info(
                 $"Abstraction Rule Caching: For model {Id} and grouping key {distinctSearchKey.SearchKey} has been set to a ready state and is now bringing back a distinct list of values for the grouping key.");
 
-            value = await getArchiveDistinctEntryKeyValue.Execute(Guid, distinctSearchKey.SearchKey);
+            value = await getArchiveDistinctEntryKeyValue.Execute(Guid, distinctSearchKey.SearchKey).ConfigureAwait(false);
 
             Log.Info(
                 $"Abstraction Rule Caching: For model {Id} Abstraction Rule Cache Last Entry Date All has been set to {toDate} and is has been updated to a collection for grouping key {distinctSearchKey.SearchKey}.");
@@ -819,7 +819,7 @@ public class EntityAnalysisModel
                     Log.Info(
                         $"TTL Counter Administration: has started for {Id} is about to process TTL Counter {ttlCounterWithinLoop.Name} and data name {ttlCounterWithinLoop.TtlCounterDataName}.");
 
-                    var referenceDate = await GetReferenceDate();
+                    var referenceDate = await GetReferenceDate().ConfigureAwait(false);
 
                     if (referenceDate.HasValue)
                     {
@@ -833,15 +833,15 @@ public class EntityAnalysisModel
 
                         var aggregateList = await GetExpiredTtlCounterCacheCountsAsync(
                             cacheTtlCounterEntryRepository, ttlCounterWithinLoop,
-                            adjustedTtlCounterDate);
+                            adjustedTtlCounterDate).ConfigureAwait(false);
 
                         foreach (var value in aggregateList)
                         {
-                            await DecrementTtlCounterCache(ttlCounterWithinLoop, value.DataValue, value.Value);
+                            await DecrementTtlCounterCache(ttlCounterWithinLoop, value.DataValue, value.Value).ConfigureAwait(false);
 
                             await DeleteTtlCounterEntryAsync(cacheTtlCounterEntryRepository, ttlCounterWithinLoop,
                                 value.DataValue,
-                                value.ReferenceDate);
+                                value.ReferenceDate).ConfigureAwait(false);
                         }
                     }
                     else
@@ -870,7 +870,7 @@ public class EntityAnalysisModel
     private async Task<DateTime?> GetReferenceDate()
     {
         ICacheReferenceDate cacheReferenceDate = new Redis.CacheReferenceDate(RedisDatabase, Log);
-        var referenceDate = await cacheReferenceDate.GetReferenceDate(TenantRegistryId, Guid);
+        var referenceDate = await cacheReferenceDate.GetReferenceDate(TenantRegistryId, Guid).ConfigureAwait(false);
         return referenceDate;
     }
 
@@ -887,7 +887,7 @@ public class EntityAnalysisModel
         var cacheTtlCounterRepository = BuildCacheTtlCounterRepository();
 
         await cacheTtlCounterRepository.DecrementTtlCounterCacheAsync(TenantRegistryId, Guid, ttlCounter.Guid,
-            ttlCounter.TtlCounterDataName, value, decrement);
+            ttlCounter.TtlCounterDataName, value, decrement).ConfigureAwait(false);
 
         Log.Info(
             $"TTL Counter Administration: has finished aggregation for {ttlCounter.Name} and Data Name {ttlCounter.TtlCounterDataName} and has also decremented value {value} by {decrement} in the TTL counter cache.  Will now use the same date criteria to delete the records from the entries table.");
@@ -901,7 +901,7 @@ public class EntityAnalysisModel
     {
         return await cacheTtlCounterEntryRepository.GetExpiredTtlCounterCacheCountsAsync(
             TenantRegistryId, Guid,
-            ttlCounter.Guid, ttlCounter.TtlCounterDataName, adjustedTtlCounterDate);
+            ttlCounter.Guid, ttlCounter.TtlCounterDataName, adjustedTtlCounterDate).ConfigureAwait(false);
     }
 
     private async Task DeleteTtlCounterEntryAsync(
@@ -911,7 +911,7 @@ public class EntityAnalysisModel
         DateTime referenceDate)
     {
         await cacheTtlCounterEntryRepository.DeleteAsync(TenantRegistryId, Guid,
-            ttlCounter.Guid, ttlCounter.TtlCounterDataName, dataValue, referenceDate);
+            ttlCounter.Guid, ttlCounter.TtlCounterDataName, dataValue, referenceDate).ConfigureAwait(false);
     }
 
     private DateTime GetAdjustedTtlCounterDate(EntityAnalysisModelTtlCounter ttlCounter, DateTime referenceDate)

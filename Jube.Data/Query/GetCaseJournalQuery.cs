@@ -63,9 +63,9 @@ public class GetCaseJournalQuery(DbContext dbContext, string user)
 
         var postgres = new Postgres(_connectionString);
 
-        await postgres.PrepareAsync(sql, tokens);
+        await postgres.PrepareAsync(sql, tokens).ConfigureAwait(false);
 
-        foreach (var record in await postgres.ExecuteByOrderedParametersAsync(sql, tokens))
+        foreach (var record in await postgres.ExecuteByOrderedParametersAsync(sql, tokens).ConfigureAwait(false))
         {
             var json = JObject.Parse(record["Json"].ToString());
 

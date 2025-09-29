@@ -69,7 +69,7 @@ namespace Jube.App.Controllers.Query
                 if (!_permissionValidation.Validate(new[] { 1 })) return Forbid();
 
                 return Ok(await _query.ExecuteAsync(drillName, drillValue, caseWorkflowGuid, limit,
-                    activationsOnly ? 1 : 0, responseElevation));
+                    activationsOnly ? 1 : 0, responseElevation).ConfigureAwait(false));
             }
             catch (Exception e)
             {

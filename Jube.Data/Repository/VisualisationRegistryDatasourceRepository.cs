@@ -96,7 +96,7 @@ public class VisualisationRegistryDatasourceRepository
         Dictionary<string, string> columns;
         try
         {
-            columns = await ValidateSeriesAsync(_dbContext, model.VisualisationRegistryId.Value, model.Command);
+            columns = await ValidateSeriesAsync(_dbContext, model.VisualisationRegistryId.Value, model.Command).ConfigureAwait(false);
         }
         catch (Exception e)
         {
@@ -108,7 +108,7 @@ public class VisualisationRegistryDatasourceRepository
         model.CreatedDate = DateTime.Now;
         model.Version = 1;
         model.Guid = Guid.NewGuid();
-        model.Id = await _dbContext.InsertWithInt32IdentityAsync(model);
+        model.Id = await _dbContext.InsertWithInt32IdentityAsync(model).ConfigureAwait(false);
 
         FillSeries(model.Id, columns);
 
@@ -122,7 +122,7 @@ public class VisualisationRegistryDatasourceRepository
         Dictionary<string, string> columns;
         try
         {
-            columns = await ValidateSeriesAsync(_dbContext, model.VisualisationRegistryId.Value, model.Command);
+            columns = await ValidateSeriesAsync(_dbContext, model.VisualisationRegistryId.Value, model.Command).ConfigureAwait(false);
         }
         catch (Exception e)
         {
@@ -143,7 +143,7 @@ public class VisualisationRegistryDatasourceRepository
         model.CreatedUser = _userName;
         model.CreatedDate = DateTime.Now;
 
-        await _dbContext.UpdateAsync(model);
+        await _dbContext.UpdateAsync(model).ConfigureAwait(false);
 
         var config = new MapperConfiguration(cfg =>
         {
@@ -154,7 +154,7 @@ public class VisualisationRegistryDatasourceRepository
         var audit = mapper.Map<EntityAnalysisModelDictionaryKvpVersion>(existing);
         audit.EntityAnalysisModelDictionaryKvpId = existing.Id;
 
-        await _dbContext.InsertAsync(audit);
+        await _dbContext.InsertAsync(audit).ConfigureAwait(false);
 
         FillSeries(model.Id, columns);
 
@@ -224,7 +224,7 @@ public class VisualisationRegistryDatasourceRepository
         }
 
         var postgres = new Postgres(dataConnection.ConnectionString);
-        return await postgres.IntrospectAsync(sql, parametersDefaultValues);
+        return await postgres.IntrospectAsync(sql, parametersDefaultValues).ConfigureAwait(false);
     }
 
     public void Delete(int id)

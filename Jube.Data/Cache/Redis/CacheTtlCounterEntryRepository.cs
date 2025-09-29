@@ -38,18 +38,18 @@ public class CacheTtlCounterEntryRepository(
             var redisKeyTtlCounter =
                 $"TtlCounter:{tenantRegistryId}:{entityAnalysisModelGuid:N}:{entityAnalysisModelTtlCounterGuid:N}:{dataName}";
 
-            foreach (var dataValue in await redisDatabase.HashKeysAsync(redisKeyTtlCounter))
+            foreach (var dataValue in await redisDatabase.HashKeysAsync(redisKeyTtlCounter).ConfigureAwait(false))
             {
                 var redisKeyTtlCounterEntry = $"TtlCounterEntry:{tenantRegistryId}" +
                                               $":{entityAnalysisModelGuid:N}:{entityAnalysisModelTtlCounterGuid:N}" +
                                               $":{dataName}:{dataValue}";
 
-                foreach (var keyTtlCounterEntry in await redisDatabase.HashKeysAsync(redisKeyTtlCounterEntry))
+                foreach (var keyTtlCounterEntry in await redisDatabase.HashKeysAsync(redisKeyTtlCounterEntry).ConfigureAwait(false))
                 {
                     var referenceDateTimestamp = long.Parse(keyTtlCounterEntry).FromUnixTimeMilliSeconds();
                     if (referenceDateTimestamp >= referenceDate) continue;
 
-                    var redisValue = await redisDatabase.HashGetAsync(redisKeyTtlCounterEntry, keyTtlCounterEntry);
+                    var redisValue = await redisDatabase.HashGetAsync(redisKeyTtlCounterEntry, keyTtlCounterEntry).ConfigureAwait(false);
                     if (redisValue.HasValue)
                         expired.Add(new ExpiredTtlCounterEntryDto
                         {
@@ -88,7 +88,7 @@ public class CacheTtlCounterEntryRepository(
             $"TtlCounterEntry:{tenantRegistryId}:{entityAnalysisModelGuid:N}" +
             $":{entityAnalysisModelTtlCounterGuid:N}:{dataName}:{dataValue}";
 
-        return (from hashEntry in await redisDatabase.HashGetAllAsync(redisKey)
+        return (from hashEntry in await redisDatabase.HashGetAllAsync(redisKey).ConfigureAwait(false)
             let referenceDateTimestamp = long.Parse(hashEntry.Name)
             where referenceDateTimestamp >= referenceDateFromTimestamp
                   && referenceDateTimestamp <= referenceDateToTimestamp
@@ -105,7 +105,7 @@ public class CacheTtlCounterEntryRepository(
             var redisHSetKey = $"{referenceDate.ToUnixTimeMilliSeconds()}";
 
             await redisDatabase.HashIncrementAsync(redisKey, redisHSetKey, increment,
-                commandFlag);
+                commandFlag).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -125,7 +125,7 @@ public class CacheTtlCounterEntryRepository(
             var redisHSetKey = $"{referenceDate.ToUnixTimeMilliSeconds()}";
 
             await redisDatabase.HashDeleteAsync(redisKey, redisHSetKey,
-                commandFlag);
+                commandFlag).ConfigureAwait(false);
         }
         catch (Exception ex)
         {

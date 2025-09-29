@@ -75,7 +75,7 @@ namespace Jube.App.Controllers.Query
             {
                 if (!_permissionValidation.Validate(new[] { 1 })) return Forbid();
 
-                var value = await _query.ExecuteAsync(guid);
+                var value = await _query.ExecuteAsync(guid).ConfigureAwait(false);
 
                 if (_query == null) return NotFound();
 

@@ -76,7 +76,7 @@ public class Training
 
                 if (exhaustiveSearchInstance != null)
                 {
-                    if (!await Execute(exhaustiveSearchInstance, dbContext))
+                    if (!await Execute(exhaustiveSearchInstance, dbContext).ConfigureAwait(false))
                         _log.Info(
                             $"Exhaustive Training: ExhaustiveSearchInstanceId:{exhaustiveSearchInstance.Id} has exited in an uncompleted state.");
                     else
@@ -102,8 +102,8 @@ public class Training
             {
                 _log.Info("Exhaustive Training: Finished and closing database context.");
 
-                await dbContext.CloseAsync();
-                await dbContext.DisposeAsync();
+                await dbContext.CloseAsync().ConfigureAwait(false);
+                await dbContext.DisposeAsync().ConfigureAwait(false);
             }
         }
     }
@@ -166,7 +166,7 @@ public class Training
                 exhaustiveSearchInstance.EntityAnalysisModelId,
                 exhaustiveSearchInstance.FilterSql,
                 exhaustiveSearchInstance.FilterTokens,
-                mockData);
+                mockData).ConfigureAwait(false);
 
             variables = getSampleDataResponse.Item1;
             data = getSampleDataResponse.Item2;
@@ -270,7 +270,7 @@ public class Training
                     exhaustiveSearchInstance.FilterSql,
                     exhaustiveSearchInstance.FilterTokens,
                     variables,
-                    mockData);
+                    mockData).ConfigureAwait(false);
 
             var repositoryExhaustiveSearchInstanceVariablesClassification =
                 new ExhaustiveSearchInstanceVariableClassificationRepository(dbContext);
@@ -364,7 +364,7 @@ public class Training
                 _seeded,
                 variables, data, outputs, dbContext, _log);
 
-            if (await supervised.Train())
+            if (await supervised.Train().ConfigureAwait(false))
             {
                 _log.Info(
                     $"Exhaustive Training: Finished training {exhaustiveSearchInstance.Id} " +

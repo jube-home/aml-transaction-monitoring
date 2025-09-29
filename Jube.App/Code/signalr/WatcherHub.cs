@@ -20,7 +20,7 @@ namespace Jube.App.Code.signalr
     {
         public async Task SendMessageAsync(string user, string message)
         {
-            await Clients.All.SendAsync("ReceiveMessage", user, message);
+            await Clients.All.SendAsync("ReceiveMessage", user, message).ConfigureAwait(false);
         }
     }
 }

@@ -56,7 +56,7 @@ public class GetCaseBySessionCaseSearchCompileQuery
 
         var value = await postgres.ExecuteByOrderedParametersAsync(modelCompiled.SelectSqlDisplay + " "
             + modelCompiled.WhereSql
-            + " " + modelCompiled.OrderSql + " limit 1", tokens);
+            + " " + modelCompiled.OrderSql + " limit 1", tokens).ConfigureAwait(false);
         sw.Stop();
 
         var modelInsert = new SessionCaseSearchCompiledSqlExecution

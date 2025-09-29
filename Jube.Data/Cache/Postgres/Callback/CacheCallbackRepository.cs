@@ -51,25 +51,25 @@ public class CacheCallbackRepository(
         var connection = new NpgsqlConnection(connectionString);
         try
         {
-            await connection.OpenAsync();
+            await connection.OpenAsync().ConfigureAwait(false);
 
             connection.Notification += (_, e)
                 => ManageDictionary(concurrentDictionary, e.Payload);
 
             await using (var cmd = new NpgsqlCommand("LISTEN callback", connection))
             {
-                await cmd.ExecuteNonQueryAsync();
+                await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
             }
 
-            while (true) await connection.WaitAsync();
+            while (true) await connection.WaitAsync().ConfigureAwait(false);
         }
         catch (Exception ex)
         {
             log.Error($"Cache SQL: Has created an exception as {ex}.");
         }
 
-        await connection.CloseAsync();
-        await connection.DisposeAsync();
+        await connection.CloseAsync().ConfigureAwait(false);
+        await connection.DisposeAsync().ConfigureAwait(false);
     }
 
     public async Task InsertAsync(byte[] json, Guid entityAnalysisModelInstanceEntryGuid)
@@ -77,14 +77,14 @@ public class CacheCallbackRepository(
         var connection = new NpgsqlConnection(connectionString);
         try
         {
-            await connection.OpenAsync();
+            await connection.OpenAsync().ConfigureAwait(false);
 
             var sqlNotify =
                 $"NOTIFY callback, '{entityAnalysisModelInstanceEntryGuid:N},{Encoding.UTF8.GetString(json)}'";
 
             var commandNotify = new NpgsqlCommand(sqlNotify);
             commandNotify.Connection = connection;
-            await commandNotify.ExecuteNonQueryAsync();
+            await commandNotify.ExecuteNonQueryAsync().ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -92,8 +92,8 @@ public class CacheCallbackRepository(
         }
         finally
         {
-            await connection.CloseAsync();
-            await connection.DisposeAsync();
+            await connection.CloseAsync().ConfigureAwait(false);
+            await connection.DisposeAsync().ConfigureAwait(false);
         }
     }
 
@@ -102,13 +102,13 @@ public class CacheCallbackRepository(
         var connection = new NpgsqlConnection(connectionString);
         try
         {
-            await connection.OpenAsync();
+            await connection.OpenAsync().ConfigureAwait(false);
 
             var sqlNotify = $"NOTIFY callback, '{entityAnalysisModelInstanceEntryGuid:N}'";
 
             var commandNotify = new NpgsqlCommand(sqlNotify);
             commandNotify.Connection = connection;
-            await commandNotify.ExecuteNonQueryAsync();
+            await commandNotify.ExecuteNonQueryAsync().ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -116,8 +116,8 @@ public class CacheCallbackRepository(
         }
         finally
         {
-            await connection.CloseAsync();
-            await connection.DisposeAsync();
+            await connection.CloseAsync().ConfigureAwait(false);
+            await connection.DisposeAsync().ConfigureAwait(false);
         }
     }
 }
