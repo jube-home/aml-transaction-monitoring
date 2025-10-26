@@ -11,47 +11,50 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using Jube.App.Code;
-using Jube.App.Dto;
-using Jube.Data.Context;
-using Jube.Engine.Helpers;
-using log4net;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-
 namespace Jube.App.Controllers.Repository
 {
+    using System;
+    using System.Collections.Generic;
+    using Code;
+    using Data.Context;
+    using Dto;
+    using DynamicEnvironment;
+    using log4net;
+    using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.AspNetCore.Mvc;
+
     [Route("api/[controller]")]
     [Produces("application/json")]
     [Authorize]
     public class CaseWorkflowPriorityController : Controller
     {
-        private readonly DbContext _dbContext;
-        private readonly ILog _log;
-        private readonly PermissionValidation _permissionValidation;
-        private readonly string _userName;
+        private readonly DbContext dbContext;
+        private readonly ILog log;
+        private readonly PermissionValidation permissionValidation;
+        private readonly string userName;
 
         public CaseWorkflowPriorityController(ILog log,
-            IHttpContextAccessor httpContextAccessor, DynamicEnvironment.DynamicEnvironment dynamicEnvironment)
+            IHttpContextAccessor httpContextAccessor, DynamicEnvironment dynamicEnvironment)
         {
             if (httpContextAccessor.HttpContext?.User.Identity != null)
-                _userName = httpContextAccessor.HttpContext.User.Identity.Name;
-            _log = log;
+            {
+                userName = httpContextAccessor.HttpContext.User.Identity.Name;
+            }
 
-            _dbContext =
+            this.log = log;
+
+            dbContext =
                 DataConnectionDbContext.GetDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
-            _permissionValidation = new PermissionValidation(_dbContext, _userName);
+            permissionValidation = new PermissionValidation(dbContext, userName);
         }
 
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                _dbContext.Close();
-                _dbContext.Dispose();
+                dbContext.Close();
+                dbContext.Dispose();
             }
 
             base.Dispose(disposing);
@@ -62,13 +65,19 @@ namespace Jube.App.Controllers.Repository
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 1 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        1
+                    }))
+                {
+                    return Forbid();
+                }
 
                 return Ok(CaseWorkflowPriorities());
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -78,13 +87,19 @@ namespace Jube.App.Controllers.Repository
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 1 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        1
+                    }))
+                {
+                    return Forbid();
+                }
 
                 return Ok(CaseWorkflowPriorities());
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -93,17 +108,17 @@ namespace Jube.App.Controllers.Repository
         {
             return new List<CaseWorkflowPriorityDto>
             {
-                new()
+                new CaseWorkflowPriorityDto
                 {
                     Id = 1,
                     Name = "High"
                 },
-                new()
+                new CaseWorkflowPriorityDto
                 {
                     Id = 2,
                     Name = "Medium"
                 },
-                new()
+                new CaseWorkflowPriorityDto
                 {
                     Id = 3,
                     Name = "Low"

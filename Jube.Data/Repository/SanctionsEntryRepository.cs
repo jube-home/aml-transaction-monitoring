@@ -11,38 +11,36 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System.Collections.Generic;
-using System.Linq;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB;
-
-namespace Jube.Data.Repository;
-
-public class SanctionsEntryRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Context;
+    using LinqToDB;
+    using Poco;
 
-    public SanctionsEntryRepository(DbContext dbContext)
+    public class SanctionsEntryRepository(DbContext dbContext)
     {
-        _dbContext = dbContext;
-    }
 
-    public IEnumerable<SanctionEntry> Get()
-    {
-        return _dbContext.SanctionEntry;
-    }
+        public IEnumerable<SanctionEntry> Get()
+        {
+            return dbContext.SanctionEntry;
+        }
 
-    public SanctionEntry Upsert(SanctionEntry model)
-    {
-        var existing =
-            _dbContext.SanctionEntry.FirstOrDefault(w =>
-                w.SanctionEntryHash == model.SanctionEntryHash
-                && w.SanctionEntrySourceId == model.SanctionEntrySourceId);
+        public SanctionEntry Upsert(SanctionEntry model)
+        {
+            var existing =
+                dbContext.SanctionEntry.FirstOrDefault(w =>
+                    w.SanctionEntryHash == model.SanctionEntryHash
+                    && w.SanctionEntrySourceId == model.SanctionEntrySourceId);
 
-        if (existing != null) return existing;
+            if (existing != null)
+            {
+                return existing;
+            }
 
-        model.Id = _dbContext.InsertWithInt32Identity(model);
-        return model;
+            model.Id = dbContext.InsertWithInt32Identity(model);
+            return model;
+        }
     }
 }

@@ -11,61 +11,62 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Jube.Data.Context;
-
-namespace Jube.Data.Query;
-
-public class GetEntityAnalysisModelSuppressionQuery
+namespace Jube.Data.Query
 {
-    private readonly DbContext _dbContext;
-    private readonly int _tenantRegistryId;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Context;
 
-    public GetEntityAnalysisModelSuppressionQuery(DbContext dbContext, string userName)
+    public class GetEntityAnalysisModelSuppressionQuery
     {
-        _dbContext = dbContext;
-        _tenantRegistryId = _dbContext.UserInTenant.Where(w => w.User == userName)
-            .Select(s => s.TenantRegistryId).FirstOrDefault();
-    }
+        private readonly DbContext dbContext;
+        private readonly int tenantRegistryId;
 
-    public IEnumerable<Dto> Execute(string suppressionKey, string suppressionKeyValue)
-    {
-        var suppressions = _dbContext.EntityAnalysisModelSuppression
-            .Where(w => w.SuppressionKey == suppressionKey && w.SuppressionKeyValue == suppressionKeyValue
-                                                           && (w.Deleted == 0 || w.Deleted == null)
-                                                           && w.EntityAnalysisModel.TenantRegistryId ==
-                                                           _tenantRegistryId)
-            .Select(s => s.EntityAnalysisModelGuid).ToList();
+        public GetEntityAnalysisModelSuppressionQuery(DbContext dbContext, string userName)
+        {
+            this.dbContext = dbContext;
+            tenantRegistryId = this.dbContext.UserInTenant.Where(w => w.User == userName)
+                .Select(s => s.TenantRegistryId).FirstOrDefault();
+        }
 
-        var models =
-            (from m in _dbContext.EntityAnalysisModel
-                join x in _dbContext.EntityAnalysisModelRequestXpath
-                    on m.Id equals x.EntityAnalysisModelId
-                where x.EnableSuppression == 1
-                      && (x.Deleted == 0 || x.Deleted == null)
-                      && (m.Deleted == 0 || m.Deleted == null)
-                      && m.TenantRegistryId == _tenantRegistryId
-                      && x.Name == suppressionKey
-                select m).Distinct().ToList();
+        public IEnumerable<Dto> Execute(string suppressionKey, string suppressionKeyValue)
+        {
+            var suppressions = dbContext.EntityAnalysisModelSuppression
+                .Where(w => w.SuppressionKey == suppressionKey && w.SuppressionKeyValue == suppressionKeyValue
+                                                               && (w.Deleted == 0 || w.Deleted == null)
+                                                               && w.EntityAnalysisModel.TenantRegistryId ==
+                                                               tenantRegistryId)
+                .Select(s => s.EntityAnalysisModelGuid).ToList();
 
-        var responses = models
-            .Select(model => new Dto
-            {
-                Name = model.Name,
-                EntityAnalysisModelGuid = model.Guid,
-                Suppression = suppressions.Contains(model.Guid)
-            }).ToList();
+            var models =
+                (from m in dbContext.EntityAnalysisModel
+                    join x in dbContext.EntityAnalysisModelRequestXpath
+                        on m.Id equals x.EntityAnalysisModelId
+                    where x.EnableSuppression == 1
+                          && (x.Deleted == 0 || x.Deleted == null)
+                          && (m.Deleted == 0 || m.Deleted == null)
+                          && m.TenantRegistryId == tenantRegistryId
+                          && x.Name == suppressionKey
+                    select m).Distinct().ToList();
 
-        return responses;
-    }
+            var responses = models
+                .Select(model => new Dto
+                {
+                    Name = model.Name,
+                    EntityAnalysisModelGuid = model.Guid,
+                    Suppression = suppressions.Contains(model.Guid)
+                }).ToList();
 
-    public class Dto
-    {
-        public string Name { get; set; }
+            return responses;
+        }
 
-        public Guid EntityAnalysisModelGuid { get; set; }
-        public bool Suppression { get; set; }
+        public class Dto
+        {
+            public string Name { get; set; }
+
+            public Guid EntityAnalysisModelGuid { get; set; }
+            public bool Suppression { get; set; }
+        }
     }
 }

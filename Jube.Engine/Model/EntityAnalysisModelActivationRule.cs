@@ -11,56 +11,58 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Reflection;
-using log4net;
-
-namespace Jube.Engine.Model;
-
-public class EntityAnalysisModelActivationRule
+namespace Jube.Engine.Model
 {
-    public delegate bool Match(Dictionary<string, object> data, Dictionary<string, int> ttlCounter,
-        Dictionary<string, double> abstraction,
-        Dictionary<string, double> httpAdaptation, 
-        Dictionary<string, double> exhaustiveAdaptation,
-        Dictionary<string, List<string>> list,
-        Dictionary<string, double> calculation,
-        Dictionary<string, double> sanctions, Dictionary<string, double> kvp, ILog log);
+    using System;
+    using System.Collections.Generic;
+    using System.Reflection;
+    using Dictionary;
+    using log4net;
 
-    public int Id { get; init; }
-    public bool Visible { get; set; }
-    public int RuleScriptTypeId { get; set; }
-    public string ActivationRuleScript { get; set; }
-    public string Name { get; set; }
-    public bool EnableCaseWorkflow { get; set; }
-    public Guid CaseWorkflowGuid { get; set; }
-    public Guid CaseWorkflowStatusGuid { get; set; }
-    public Assembly ActivationRuleCompile { get; set; }
-    public Match ActivationRuleCompileDelegate { get; set; }
-    public bool ResponsePayload { get; set; }
-    public bool EnableTtlCounter { get; set; }
-    public Guid EntityAnalysisModelTtlCounterGuid { get; set; }
-    public Guid EntityAnalysisModelGuidTtlCounter { get; set; }
-    public double ResponseElevation { get; set; }
-    public string ResponseElevationContent { get; set; }
-    public string ResponseElevationRedirect { get; set; }
-    public bool EnableReprocessing { get; set; }
-    public bool SendToActivationWatcher { get; set; }
-    public string ResponseElevationForeColor { get; set; }
-    public string ResponseElevationBackColor { get; set; }
-    public char BypassSuspendInterval { get; set; }
-    public int BypassSuspendValue { get; set; }
-    public double BypassSuspendSample { get; set; }
-    public int Counter { get; set; }
-    public double ActivationSample { get; set; }
-    public bool ReportTable { get; set; }
-    public bool EnableNotification { get; set; }
-    public int NotificationTypeId { get; set; }
-    public string NotificationDestination { get; set; }
-    public string NotificationSubject { get; set; }
-    public string NotificationBody { get; set; }
-    public string CaseKey { get; set; }
-    public bool EnableResponseElevation { get; set; }
-    public string ResponseElevationKey { get; set; }
+    public class EntityAnalysisModelActivationRule
+    {
+        public delegate bool Match(DictionaryNoBoxing data, PooledDictionary<string, int> ttlCounter,
+            PooledDictionary<string, double> abstraction,
+            PooledDictionary<string, double> httpAdaptation,
+            PooledDictionary<string, double> exhaustiveAdaptation,
+            Dictionary<string, List<string>> list,
+            PooledDictionary<string, double> calculation,
+            PooledDictionary<string, double> sanctions, PooledDictionary<string, double> kvp, ILog log);
+
+        public int Id { get; init; }
+        public bool Visible { get; set; }
+        public int RuleScriptTypeId { get; set; }
+        public string ActivationRuleScript { get; set; }
+        public string Name { get; set; }
+        public bool EnableCaseWorkflow { get; set; }
+        public Guid CaseWorkflowGuid { get; set; }
+        public Guid CaseWorkflowStatusGuid { get; set; }
+        public Assembly ActivationRuleCompile { get; set; }
+        public Match ActivationRuleCompileDelegate { get; set; }
+        public bool ResponsePayload { get; set; }
+        public bool EnableTtlCounter { get; set; }
+        public Guid EntityAnalysisModelTtlCounterGuid { get; set; }
+        public Guid EntityAnalysisModelGuidTtlCounter { get; set; }
+        public double ResponseElevation { get; set; }
+        public string ResponseElevationContent { get; set; }
+        public string ResponseElevationRedirect { get; set; }
+        public bool EnableReprocessing { get; set; }
+        public bool SendToActivationWatcher { get; set; }
+        public string ResponseElevationForeColor { get; set; }
+        public string ResponseElevationBackColor { get; set; }
+        public char BypassSuspendInterval { get; set; }
+        public int BypassSuspendValue { get; set; }
+        public double BypassSuspendSample { get; set; }
+        public int Counter { get; set; }
+        public double ActivationSample { get; set; }
+        public bool ReportTable { get; set; }
+        public bool EnableNotification { get; set; }
+        public int NotificationTypeId { get; set; }
+        public string NotificationDestination { get; set; }
+        public string NotificationSubject { get; set; }
+        public string NotificationBody { get; set; }
+        public string CaseKey { get; set; }
+        public bool EnableResponseElevation { get; set; }
+        public string ResponseElevationKey { get; set; }
+    }
 }

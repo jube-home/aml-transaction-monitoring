@@ -11,49 +11,52 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Net;
-using AutoMapper;
-using FluentValidation;
-using FluentValidation.Results;
-using Jube.App.Code;
-using Jube.App.Dto;
-using Jube.App.Validators;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using Jube.Data.Repository;
-using Jube.Engine.Helpers;
-using log4net;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-
 namespace Jube.App.Controllers.Repository
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Net;
+    using AutoMapper;
+    using Code;
+    using Data.Context;
+    using Data.Poco;
+    using Data.Repository;
+    using Dto;
+    using DynamicEnvironment;
+    using FluentValidation;
+    using FluentValidation.Results;
+    using log4net;
+    using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.AspNetCore.Mvc;
+    using Validators;
+
     [Route("api/[controller]")]
     [Produces("application/json")]
     [Authorize]
     public class EntityAnalysisModelActivationRuleSuppressionController : Controller
     {
-        private readonly DbContext _dbContext;
-        private readonly ILog _log;
-        private readonly IMapper _mapper;
-        private readonly PermissionValidation _permissionValidation;
-        private readonly EntityAnalysisModelActivationRuleSuppressionRepository _repository;
-        private readonly string _userName;
-        private readonly IValidator<EntityAnalysisModelActivationRuleSuppressionDto> _validator;
+        private readonly DbContext dbContext;
+        private readonly ILog log;
+        private readonly IMapper mapper;
+        private readonly PermissionValidation permissionValidation;
+        private readonly EntityAnalysisModelActivationRuleSuppressionRepository repository;
+        private readonly string userName;
+        private readonly IValidator<EntityAnalysisModelActivationRuleSuppressionDto> validator;
 
         public EntityAnalysisModelActivationRuleSuppressionController(ILog log,
-            IHttpContextAccessor httpContextAccessor, DynamicEnvironment.DynamicEnvironment dynamicEnvironment)
+            IHttpContextAccessor httpContextAccessor, DynamicEnvironment dynamicEnvironment)
         {
             if (httpContextAccessor.HttpContext?.User.Identity != null)
-                _userName = httpContextAccessor.HttpContext.User.Identity.Name;
-            _log = log;
+            {
+                userName = httpContextAccessor.HttpContext.User.Identity.Name;
+            }
 
-            _dbContext =
+            this.log = log;
+
+            dbContext =
                 DataConnectionDbContext.GetDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
-            _permissionValidation = new PermissionValidation(_dbContext, _userName);
+            permissionValidation = new PermissionValidation(dbContext, userName);
 
             var config = new MapperConfiguration(cfg =>
             {
@@ -65,17 +68,17 @@ namespace Jube.App.Controllers.Repository
                         List<EntityAnalysisModelActivationRuleSuppressionDto>>()
                     .ForMember("Item", opt => opt.Ignore());
             });
-            _mapper = new Mapper(config);
-            _repository = new EntityAnalysisModelActivationRuleSuppressionRepository(_dbContext, _userName);
-            _validator = new EntityAnalysisModelActivationRuleSuppressionDtoValidator();
+            mapper = new Mapper(config);
+            repository = new EntityAnalysisModelActivationRuleSuppressionRepository(dbContext, userName);
+            validator = new EntityAnalysisModelActivationRuleSuppressionDtoValidator();
         }
 
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                _dbContext.Close();
-                _dbContext.Dispose();
+                dbContext.Close();
+                dbContext.Dispose();
             }
 
             base.Dispose(disposing);
@@ -86,13 +89,19 @@ namespace Jube.App.Controllers.Repository
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 2 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        2
+                    }))
+                {
+                    return Forbid();
+                }
 
-                return Ok(_mapper.Map<List<EntityAnalysisModelActivationRuleSuppressionDto>>(_repository.Get()));
+                return Ok(mapper.Map<List<EntityAnalysisModelActivationRuleSuppressionDto>>(repository.Get()));
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -103,14 +112,20 @@ namespace Jube.App.Controllers.Repository
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 2 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        2
+                    }))
+                {
+                    return Forbid();
+                }
 
-                return Ok(_mapper.Map<List<EntityAnalysisModelActivationRuleSuppressionDto>>(
-                    _repository.GetByEntityAnalysisModelGuidOrderById(entityAnalysisModelGuid)));
+                return Ok(mapper.Map<List<EntityAnalysisModelActivationRuleSuppressionDto>>(
+                    repository.GetByEntityAnalysisModelGuidOrderById(entityAnalysisModelGuid)));
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -120,13 +135,19 @@ namespace Jube.App.Controllers.Repository
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 2 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        2
+                    }))
+                {
+                    return Forbid();
+                }
 
-                return Ok(_mapper.Map<EntityAnalysisModelActivationRuleSuppressionDto>(_repository.GetById(id)));
+                return Ok(mapper.Map<EntityAnalysisModelActivationRuleSuppressionDto>(repository.GetById(id)));
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -139,17 +160,25 @@ namespace Jube.App.Controllers.Repository
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 2 }, true)) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        2
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var results = _validator.Validate(model);
+                var results = validator.Validate(model);
                 if (results.IsValid)
-                    return Ok(_repository.Insert(_mapper.Map<EntityAnalysisModelActivationRuleSuppression>(model)));
+                {
+                    return Ok(repository.Insert(mapper.Map<EntityAnalysisModelActivationRuleSuppression>(model)));
+                }
 
                 return BadRequest(results);
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -162,11 +191,19 @@ namespace Jube.App.Controllers.Repository
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 2 }, true)) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        2
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var results = _validator.Validate(model);
+                var results = validator.Validate(model);
                 if (results.IsValid)
-                    return Ok(_repository.Update(_mapper.Map<EntityAnalysisModelActivationRuleSuppression>(model)));
+                {
+                    return Ok(repository.Update(mapper.Map<EntityAnalysisModelActivationRuleSuppression>(model)));
+                }
 
                 return BadRequest(results);
             }
@@ -176,7 +213,7 @@ namespace Jube.App.Controllers.Repository
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -187,9 +224,15 @@ namespace Jube.App.Controllers.Repository
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 2 }, true)) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        2
+                    }))
+                {
+                    return Forbid();
+                }
 
-                _repository.Delete(id);
+                repository.Delete(id);
                 return Ok();
             }
             catch (KeyNotFoundException)
@@ -198,7 +241,7 @@ namespace Jube.App.Controllers.Repository
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }

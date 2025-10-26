@@ -11,54 +11,78 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Fastenshtein;
-
-namespace Jube.Engine.Sanctions;
-
-public static class LevenshteinDistance
+namespace Jube.Engine.Sanctions
 {
-    public static List<SanctionEntryReturn> CheckMultipartString(string multiPartString, int distance,
-        Dictionary<int, SanctionEntryDto> sanctionsEntries)
+    using System;
+    using System.Collections.Concurrent;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Threading.Tasks;
+    using Fastenshtein;
+
+    public static class LevenshteinDistance
     {
-        var sanctionsEntriesReturn = new Dictionary<int, SanctionEntryReturn>();
-        var multiPartStrings = multiPartString.Split([" "], StringSplitOptions.RemoveEmptyEntries);
-        for (var i = 0; i < multiPartStrings.Length; i++) multiPartStrings[i] = Clean(multiPartStrings[i]);
+        public static List<SanctionEntryReturn> CheckMultipartString(string multiPartString, int distance,
+            Dictionary<int, SanctionEntryDto> sanctionsEntries)
+        {
+            var sanctionsEntriesReturn = new ConcurrentDictionary<int, SanctionEntryReturn>();
 
-        foreach (var (_, value) in sanctionsEntries.ToList())
-            for (var i = 0; i <= distance; i++)
+            if (String.IsNullOrWhiteSpace(multiPartString) || sanctionsEntries.Count == 0)
             {
-                var sanctionEntryMatches = (from multiPartStringElement in multiPartStrings.Distinct().ToArray()
-                    where value.SanctionElementValue.Distinct()
-                        .ToArray()
-                        .Select(sanctionPayloadString =>
-                            Levenshtein.Distance(multiPartStringElement, sanctionPayloadString))
-                        .Any(output => output <= i)
-                    select new SanctionEntryMatch { SanctionEntryDto = value }).ToList();
-
-                if (!multiPartStrings.Any()) continue;
-
-                if (sanctionEntryMatches.Count != multiPartStrings.Distinct().ToArray().Length) continue;
-
-                var match = new SanctionEntryReturn
-                {
-                    SanctionEntryDto = value,
-                    LevenshteinDistance = i
-                };
-                sanctionsEntriesReturn.TryAdd(match.SanctionEntryDto.SanctionEntryId, match);
+                return [];
             }
 
-        return sanctionsEntriesReturn.Values.ToList();
-    }
+            // Pre-clean and split the input string to unique parts
+            var multiPartStrings = multiPartString
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                .Select(Clean)
+                .Distinct()
+                .ToArray();
 
-    public static string Clean(string raw)
-    {
-        var value = raw;
-        value = value.Replace(",", "");
-        value = value.Replace(" ", "");
-        value = value.ToLower();
-        return value;
+            if (multiPartStrings.Length == 0)
+            {
+                return [];
+            }
+
+            Parallel.ForEach(sanctionsEntries.Values, entry =>
+            {
+                var sanctionValues = entry.SanctionElementValue
+                    .Select(Clean)
+                    .Distinct()
+                    .ToArray();
+
+                for (var dist = 0; dist <= distance; dist++)
+                {
+                    // All input words must have at least one close enough match in the entry values
+                    var allWordsMatch = multiPartStrings.All(inputPart =>
+                        sanctionValues.Any(sValue =>
+                            Levenshtein.Distance(inputPart, sValue) <= dist));
+
+                    if (!allWordsMatch)
+                    {
+                        continue;
+                    }
+                    
+                    sanctionsEntriesReturn.TryAdd(entry.SanctionEntryId,
+                        new SanctionEntryReturn
+                        {
+                            SanctionEntryDto = entry,
+                            LevenshteinDistance = dist
+                        });
+                    break;
+                }
+            });
+
+            return sanctionsEntriesReturn.Values.ToList();
+        }
+
+        public static string Clean(string raw)
+        {
+            var value = raw;
+            value = value.Replace(",", "");
+            value = value.Replace(" ", "");
+            value = value.ToLower();
+            return value;
+        }
     }
 }

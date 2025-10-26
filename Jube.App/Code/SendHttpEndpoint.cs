@@ -11,26 +11,33 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
-
 namespace Jube.App.Code
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Net.Http;
+    using System.Text;
+    using System.Threading.Tasks;
+    using Newtonsoft.Json;
+
     public class SendHttpEndpoint
     {
         public void Send(string httpEndpoint, byte httpEndpointTypeId, Dictionary<string, string> values)
         {
-            if (string.IsNullOrEmpty(httpEndpoint)) return;
+            if (String.IsNullOrEmpty(httpEndpoint))
+            {
+                return;
+            }
 
             var tokenization = new Tokenisation();
             var urlTokens = tokenization.ReturnTokens(httpEndpoint);
             var replacedUrl = httpEndpoint;
             foreach (var token in urlTokens)
             {
-                if (!values.ContainsKey(token)) continue;
+                if (!values.ContainsKey(token))
+                {
+                    continue;
+                }
 
                 var replaceToken = $"[@{token}@]";
                 replacedUrl = replacedUrl.Replace(replaceToken, values[token]);

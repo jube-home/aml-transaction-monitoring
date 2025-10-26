@@ -11,53 +11,48 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Linq;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB;
-
-namespace Jube.Data.Repository;
-
-public class EntityAnalysisModelSearchKeyDistinctValueCalculationInstanceRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
+    using System;
+    using System.Linq;
+    using Context;
+    using LinqToDB;
+    using Poco;
 
-    public EntityAnalysisModelSearchKeyDistinctValueCalculationInstanceRepository(DbContext dbContext)
+    public class EntityAnalysisModelSearchKeyDistinctValueCalculationInstanceRepository(DbContext dbContext)
     {
-        _dbContext = dbContext;
-    }
 
-    public EntityAnalysisModelSearchKeyDistinctValueCalculationInstance Insert(
-        EntityAnalysisModelSearchKeyDistinctValueCalculationInstance model)
-    {
-        model.Id = _dbContext.InsertWithInt32Identity(model);
-        return model;
-    }
+        public EntityAnalysisModelSearchKeyDistinctValueCalculationInstance Insert(
+            EntityAnalysisModelSearchKeyDistinctValueCalculationInstance model)
+        {
+            model.Id = dbContext.InsertWithInt32Identity(model);
+            return model;
+        }
 
-    public void UpdateEntriesCount(int id,
-        int entriesCount)
-    {
-        _dbContext.EntityAnalysisModelSearchKeyDistinctValueCalculationInstance
-            .Where(d => d.Id == id)
-            .Set(s => s.EntryCount, entriesCount)
-            .Set(s => s.EntryCountUpdatedDate, DateTime.Now)
-            .Update();
-    }
+        public void UpdateEntriesCount(int id,
+            int entriesCount)
+        {
+            dbContext.EntityAnalysisModelSearchKeyDistinctValueCalculationInstance
+                .Where(d => d.Id == id)
+                .Set(s => s.EntryCount, entriesCount)
+                .Set(s => s.EntryCountUpdatedDate, DateTime.Now)
+                .Update();
+        }
 
-    public void UpdateAbstractionRuleMatches(int id)
-    {
-        _dbContext.EntityAnalysisModelSearchKeyDistinctValueCalculationInstance
-            .Where(d => d.Id == id)
-            .Set(s => s.AbstractionRulesMatchesUpdatedDate, DateTime.Now)
-            .Update();
-    }
+        public void UpdateAbstractionRuleMatches(int id)
+        {
+            dbContext.EntityAnalysisModelSearchKeyDistinctValueCalculationInstance
+                .Where(d => d.Id == id)
+                .Set(s => s.AbstractionRulesMatchesUpdatedDate, DateTime.Now)
+                .Update();
+        }
 
-    public void UpdateCompleted(int id)
-    {
-        _dbContext.EntityAnalysisModelSearchKeyDistinctValueCalculationInstance
-            .Where(d => d.Id == id)
-            .Set(s => s.CompletedDate, DateTime.Now)
-            .Update();
+        public void UpdateCompleted(int id)
+        {
+            dbContext.EntityAnalysisModelSearchKeyDistinctValueCalculationInstance
+                .Where(d => d.Id == id)
+                .Set(s => s.CompletedDate, DateTime.Now)
+                .Update();
+        }
     }
 }

@@ -17,9 +17,9 @@ namespace Jube.App.Middlewares
 {
     public static class BuilderExtensions
     {
-        public static IApplicationBuilder UseTransposeJwtFromCookieToHeaderMiddleware(this IApplicationBuilder app)
+        public static void UseTransposeJwtFromCookieToHeaderMiddleware(this IApplicationBuilder app)
         {
-            return app.UseMiddleware<TransposeJwtFromCookieToHeaderMiddleware>();
+            app.UseMiddleware<TransposeJwtFromCookieToHeaderMiddleware>();
         }
     }
 }

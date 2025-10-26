@@ -13,33 +13,34 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124946)]
-public class AddEntityAnalysisModelSuppressionTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124946)]
+    public class AddEntityAnalysisModelSuppressionTableIndex : Migration
     {
-        Create.Table("EntityAnalysisModelSuppression")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
-            .WithColumn("CreatedDate").AsDateTime().Nullable()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("Version").AsInt32().Nullable()
-            .WithColumn("DeletedDate").AsDateTime().Nullable()
-            .WithColumn("DeletedUser").AsString().Nullable()
-            .WithColumn("Deleted").AsByte().Nullable()
-            .WithColumn("SuppressionKeyValue").AsString().Nullable()
-            .WithColumn("SuppressionKey").AsString().Nullable()
-            .WithColumn("InheritedId").AsInt32().Nullable();
+        public override void Up()
+        {
+            Create.Table("EntityAnalysisModelSuppression")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
+                .WithColumn("CreatedDate").AsDateTime().Nullable()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("Version").AsInt32().Nullable()
+                .WithColumn("DeletedDate").AsDateTime().Nullable()
+                .WithColumn("DeletedUser").AsString().Nullable()
+                .WithColumn("Deleted").AsByte().Nullable()
+                .WithColumn("SuppressionKeyValue").AsString().Nullable()
+                .WithColumn("SuppressionKey").AsString().Nullable()
+                .WithColumn("InheritedId").AsInt32().Nullable();
 
-        Create.Index().OnTable("EntityAnalysisModelSuppression")
-            .OnColumn("EntityAnalysisModelId").Ascending()
-            .OnColumn("Deleted").Ascending();
-    }
+            Create.Index().OnTable("EntityAnalysisModelSuppression")
+                .OnColumn("EntityAnalysisModelId").Ascending()
+                .OnColumn("Deleted").Ascending();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("EntityAnalysisModelSuppression");
+        public override void Down()
+        {
+            Delete.Table("EntityAnalysisModelSuppression");
+        }
     }
 }

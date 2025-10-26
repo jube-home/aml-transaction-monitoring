@@ -11,44 +11,37 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Text;
-using log4net;
-using Npgsql;
-
-namespace Jube.Data.Messaging;
-
-public class Messaging
+namespace Jube.Data.Messaging
 {
-    private readonly string _connectionString;
-    private readonly ILog _log;
+    using System;
+    using System.Text;
+    using log4net;
+    using Npgsql;
 
-    public Messaging(string connectionString, ILog log)
+    public class Messaging(string connectionString, ILog log)
     {
-        _connectionString = connectionString;
-        _log = log;
-    }
 
-    public void SendActivation(byte[] json)
-    {
-        var connection = new NpgsqlConnection(_connectionString);
-        try
+        public void SendActivation(byte[] json)
         {
-            connection.Open();
+            var connection = new NpgsqlConnection(connectionString);
+            try
+            {
+                connection.Open();
 
-            var sqlNotify = $"NOTIFY activation, '{Encoding.UTF8.GetString(json)}'";
+                var sqlNotify = $"NOTIFY activation, '{Encoding.UTF8.GetString(json)}'";
 
-            var commandNotify = new NpgsqlCommand(sqlNotify);
-            commandNotify.Connection = connection;
-            commandNotify.ExecuteNonQuery();
-        }
-        catch (Exception ex)
-        {
-            _log.Error($"Cache Activation Watcher: Has created an exception as {ex}.");
-        }
-        finally
-        {
-            connection.Close();
+                var commandNotify = new NpgsqlCommand(sqlNotify);
+                commandNotify.Connection = connection;
+                commandNotify.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                log.Error($"Cache Activation Watcher: Has created an exception as {ex}.");
+            }
+            finally
+            {
+                connection.Close();
+            }
         }
     }
 }

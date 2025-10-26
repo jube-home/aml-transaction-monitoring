@@ -30,7 +30,7 @@
         <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.10.9"/>
         <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="3.1.5"/>
         <PackageReference Include="RabbitMQ.Client" Version="6.2.1"/>
-        <PackageReference Include="StackExchange.Redis" Version="2.7.33"/>
+        <PackageReference Include="StackExchange.Redis" Version="2.9.32"/>
         <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="6.2.3"/>
         <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="6.2.3"/>
         <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.3.0"/>
@@ -66,6 +66,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\Jube.Cache\Jube.Cache.csproj"/>
         <ProjectReference Include="..\Jube.Data\Jube.Data.csproj"/>
         <ProjectReference Include="..\Jube.DynamicEnvironment\Jube.DynamicEnvironment.csproj"/>
         <ProjectReference Include="..\Jube.Engine\Jube.Engine.csproj"/>

@@ -13,27 +13,28 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124934)]
-public class AddEntityAnalysisModelInstanceTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124934)]
+    public class AddEntityAnalysisModelInstanceTableIndex : Migration
     {
-        Create.Table("EntityAnalysisModelInstance")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable()
-            .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
-            .WithColumn("EntityAnalysisInstanceGuid").AsGuid().Nullable()
-            .WithColumn("EntityAnalysisModelInstanceGuid").AsGuid().Nullable();
+        public override void Up()
+        {
+            Create.Table("EntityAnalysisModelInstance")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable()
+                .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
+                .WithColumn("EntityAnalysisInstanceGuid").AsGuid().Nullable()
+                .WithColumn("EntityAnalysisModelInstanceGuid").AsGuid().Nullable();
 
-        Create.Index().OnTable("EntityAnalysisModelInstance").OnColumn("EntityAnalysisModelId");
-        Create.Index().OnTable("EntityAnalysisModelInstance").OnColumn("EntityAnalysisInstanceGuid");
-        Create.Index().OnTable("EntityAnalysisModelInstance").OnColumn("EntityAnalysisModelInstanceGuid");
-    }
+            Create.Index().OnTable("EntityAnalysisModelInstance").OnColumn("EntityAnalysisModelId");
+            Create.Index().OnTable("EntityAnalysisModelInstance").OnColumn("EntityAnalysisInstanceGuid");
+            Create.Index().OnTable("EntityAnalysisModelInstance").OnColumn("EntityAnalysisModelInstanceGuid");
+        }
 
-    public override void Down()
-    {
-        Delete.Table("EntityAnalysisModelInstance");
+        public override void Down()
+        {
+            Delete.Table("EntityAnalysisModelInstance");
+        }
     }
 }

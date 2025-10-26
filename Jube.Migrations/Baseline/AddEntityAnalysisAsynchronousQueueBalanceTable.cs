@@ -13,24 +13,25 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124921)]
-public class AddEntityAnalysisAsynchronousQueueBalanceTable : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124921)]
+    public class AddEntityAnalysisAsynchronousQueueBalanceTable : Migration
     {
-        Create.Table("EntityAnalysisAsynchronousQueueBalance")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable()
-            .WithColumn("AsynchronousInvoke").AsInt32().Nullable()
-            .WithColumn("AsynchronousCallback").AsInt32().Nullable()
-            .WithColumn("AsynchronousCallbackTimeout").AsInt32().Nullable()
-            .WithColumn("Instance").AsString().Nullable();
-    }
+        public override void Up()
+        {
+            Create.Table("EntityAnalysisAsynchronousQueueBalance")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable()
+                .WithColumn("AsynchronousInvoke").AsInt32().Nullable()
+                .WithColumn("AsynchronousCallback").AsInt32().Nullable()
+                .WithColumn("AsynchronousCallbackTimeout").AsInt32().Nullable()
+                .WithColumn("Instance").AsString().Nullable();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("EntityAnalysisAsynchronousQueueBalance");
+        public override void Down()
+        {
+            Delete.Table("EntityAnalysisAsynchronousQueueBalance");
+        }
     }
 }

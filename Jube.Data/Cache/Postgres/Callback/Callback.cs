@@ -13,10 +13,11 @@
 
 using System;
 
-namespace Jube.Data.Cache.Postgres.Callback;
-
-public class Callback
+namespace Jube.Data.Cache.Postgres.Callback
 {
-    public DateTime CreatedDate;
-    public string Payload;
+    public class Callback
+    {
+        public DateTime CreatedDate;
+        public string Payload;
+    }
 }

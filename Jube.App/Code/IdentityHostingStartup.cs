@@ -21,7 +21,7 @@ namespace Jube.App.Code
     {
         public void Configure(IWebHostBuilder builder)
         {
-            builder.ConfigureServices((context, services) => {
+            builder.ConfigureServices((_, _) => {
             });
         }
     }

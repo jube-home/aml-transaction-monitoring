@@ -13,26 +13,27 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429125006)]
-public class AddExhaustiveSearchInstanceVariableMultiCollinearityTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429125006)]
+    public class AddExhaustiveSearchInstanceVariableMultiCollinearityTableIndex : Migration
     {
-        Create.Table("ExhaustiveSearchInstanceVariableMultiCollinearity")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("ExhaustiveSearchInstanceVariableId").AsInt32().Nullable()
-            .WithColumn("TestExhaustiveSearchInstanceVariableId").AsInt32().Nullable()
-            .WithColumn("Correlation").AsDouble().Nullable()
-            .WithColumn("CorrelationAbsRank").AsInt32().Nullable();
+        public override void Up()
+        {
+            Create.Table("ExhaustiveSearchInstanceVariableMultiCollinearity")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("ExhaustiveSearchInstanceVariableId").AsInt32().Nullable()
+                .WithColumn("TestExhaustiveSearchInstanceVariableId").AsInt32().Nullable()
+                .WithColumn("Correlation").AsDouble().Nullable()
+                .WithColumn("CorrelationAbsRank").AsInt32().Nullable();
 
-        Create.Index().OnTable("ExhaustiveSearchInstanceVariableMultiCollinearity")
-            .OnColumn("ExhaustiveSearchInstanceVariableId");
-    }
+            Create.Index().OnTable("ExhaustiveSearchInstanceVariableMultiCollinearity")
+                .OnColumn("ExhaustiveSearchInstanceVariableId");
+        }
 
-    public override void Down()
-    {
-        Delete.Table("ExhaustiveSearchInstanceVariableMultiCollinearity");
+        public override void Down()
+        {
+            Delete.Table("ExhaustiveSearchInstanceVariableMultiCollinearity");
+        }
     }
 }

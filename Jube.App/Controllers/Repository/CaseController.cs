@@ -11,53 +11,56 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Net;
-using AutoMapper;
-using FluentValidation;
-using FluentValidation.Results;
-using Jube.App.Code;
-using Jube.App.Dto;
-using Jube.App.Validators;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using Jube.Data.Repository;
-using Jube.Engine.Helpers;
-using log4net;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json.Linq;
-
 namespace Jube.App.Controllers.Repository
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Globalization;
+    using System.Net;
+    using AutoMapper;
+    using Code;
+    using Data.Context;
+    using Data.Poco;
+    using Data.Repository;
+    using Dto;
+    using DynamicEnvironment;
+    using FluentValidation;
+    using FluentValidation.Results;
+    using log4net;
+    using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.AspNetCore.Mvc;
+    using Newtonsoft.Json.Linq;
+    using Validators;
+
     [Route("api/[controller]")]
     [Produces("application/json")]
     [Authorize]
     public class CaseController : Controller
     {
-        private readonly DbContext _dbContext;
-        private readonly DynamicEnvironment.DynamicEnvironment _dynamicEnvironment;
-        private readonly ILog _log;
-        private readonly IMapper _mapper;
-        private readonly PermissionValidation _permissionValidation;
-        private readonly CaseRepository _repositoryCase;
-        private readonly CaseEventRepository _repositoryCaseEvent;
-        private readonly string _userName;
-        private readonly IValidator<CaseDto> _validator;
+        private readonly DbContext dbContext;
+        private readonly DynamicEnvironment dynamicEnvironment;
+        private readonly ILog log;
+        private readonly IMapper mapper;
+        private readonly PermissionValidation permissionValidation;
+        private readonly CaseRepository repositoryCase;
+        private readonly CaseEventRepository repositoryCaseEvent;
+        private readonly string userName;
+        private readonly IValidator<CaseDto> validator;
 
-        public CaseController(ILog log, DynamicEnvironment.DynamicEnvironment dynamicEnvironment
+        public CaseController(ILog log, DynamicEnvironment dynamicEnvironment
             , IHttpContextAccessor httpContextAccessor)
         {
             if (httpContextAccessor.HttpContext?.User.Identity != null)
-                _userName = httpContextAccessor.HttpContext.User.Identity.Name;
-            _log = log;
+            {
+                userName = httpContextAccessor.HttpContext.User.Identity.Name;
+            }
 
-            _dbContext =
+            this.log = log;
+
+            dbContext =
                 DataConnectionDbContext.GetDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
-            _permissionValidation = new PermissionValidation(_dbContext, _userName);
+            permissionValidation = new PermissionValidation(dbContext, userName);
 
             var config = new MapperConfiguration(cfg =>
             {
@@ -66,19 +69,19 @@ namespace Jube.App.Controllers.Repository
                 cfg.CreateMap<List<Case>, List<CaseDto>>()
                     .ForMember("Item", opt => opt.Ignore());
             });
-            _mapper = new Mapper(config);
-            _repositoryCase = new CaseRepository(_dbContext, _userName);
-            _repositoryCaseEvent = new CaseEventRepository(_dbContext, _userName);
-            _validator = new CaseDtoValidator();
-            _dynamicEnvironment = dynamicEnvironment;
+            mapper = new Mapper(config);
+            repositoryCase = new CaseRepository(dbContext, userName);
+            repositoryCaseEvent = new CaseEventRepository(dbContext, userName);
+            validator = new CaseDtoValidator();
+            this.dynamicEnvironment = dynamicEnvironment;
         }
 
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                _dbContext.Close();
-                _dbContext.Dispose();
+                dbContext.Close();
+                dbContext.Dispose();
             }
 
             base.Dispose(disposing);
@@ -89,13 +92,19 @@ namespace Jube.App.Controllers.Repository
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 1 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        1
+                    }))
+                {
+                    return Forbid();
+                }
 
-                return Ok(_mapper.Map<List<CaseDto>>(_repositoryCase.Get()));
+                return Ok(mapper.Map<List<CaseDto>>(repositoryCase.Get()));
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -106,14 +115,20 @@ namespace Jube.App.Controllers.Repository
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 1 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        1
+                    }))
+                {
+                    return Forbid();
+                }
 
-                return Ok(_mapper.Map<CaseDto>(
-                    _repositoryCase.GetById(id)));
+                return Ok(mapper.Map<CaseDto>(
+                    repositoryCase.GetById(id)));
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -125,16 +140,25 @@ namespace Jube.App.Controllers.Repository
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 1 }, true)) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        1
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var results = _validator.Validate(model);
-                if (results.IsValid) return Ok(_repositoryCase.Insert(_mapper.Map<Case>(model)));
+                var results = validator.Validate(model);
+                if (results.IsValid)
+                {
+                    return Ok(repositoryCase.Insert(mapper.Map<Case>(model)));
+                }
 
                 return BadRequest(results);
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -146,21 +170,31 @@ namespace Jube.App.Controllers.Repository
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 1 }, true)) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        1
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var results = _validator.Validate(model);
+                var results = validator.Validate(model);
 
-                if (!results.IsValid) return BadRequest(results);
+                if (!results.IsValid)
+                {
+                    return BadRequest(results);
+                }
 
-                var existing = _repositoryCase.GetById(model.Id);
+                var existing = repositoryCase.GetById(model.Id);
 
                 var caseEvents = new List<CaseEvent>();
 
                 if (existing.ClosedStatusId is 0 or 1 or 2)
+                {
                     switch (model.ClosedStatusId)
                     {
                         case 3:
-                            existing.ClosedUser = _userName;
+                            existing.ClosedUser = userName;
                             existing.ClosedDate = DateTime.Now;
 
                             caseEvents.Add(new CaseEvent
@@ -171,7 +205,7 @@ namespace Jube.App.Controllers.Repository
                                     CaseKeyValue = existing.CaseKeyValue,
                                     After = model.ClosedDate.ToString(CultureInfo.InvariantCulture),
                                     CreatedDate = existing.ClosedDate,
-                                    CreatedUser = _userName
+                                    CreatedUser = userName
                                 }
                             );
                             break;
@@ -185,7 +219,7 @@ namespace Jube.App.Controllers.Repository
                                     Before = existing.ClosedDate.ToString(),
                                     After = model.ClosedDate.ToString(CultureInfo.InvariantCulture),
                                     CreatedDate = DateTime.Now,
-                                    CreatedUser = _userName
+                                    CreatedUser = userName
                                 }
                             );
                             break;
@@ -199,12 +233,14 @@ namespace Jube.App.Controllers.Repository
                                     Before = existing.ClosedDate.ToString(),
                                     After = model.ClosedDate.ToString(CultureInfo.InvariantCulture),
                                     CreatedDate = DateTime.Now,
-                                    CreatedUser = _userName
+                                    CreatedUser = userName
                                 }
                             );
                             break;
                     }
+                }
                 else
+                {
                     switch (model.ClosedStatusId)
                     {
                         case 2:
@@ -217,7 +253,7 @@ namespace Jube.App.Controllers.Repository
                                     Before = existing.ClosedDate.ToString(),
                                     After = model.ClosedDate.ToString(CultureInfo.InvariantCulture),
                                     CreatedDate = DateTime.Now,
-                                    CreatedUser = _userName
+                                    CreatedUser = userName
                                 }
                             );
                             break;
@@ -231,15 +267,17 @@ namespace Jube.App.Controllers.Repository
                                     Before = existing.ClosedDate.ToString(),
                                     After = model.ClosedDate.ToString(CultureInfo.InvariantCulture),
                                     CreatedDate = DateTime.Now,
-                                    CreatedUser = _userName
+                                    CreatedUser = userName
                                 }
                             );
                             break;
                     }
+                }
 
                 existing.ClosedStatusId = model.ClosedStatusId;
 
                 if (existing.LockedUser != model.LockedUser)
+                {
                     caseEvents.Add(new CaseEvent
                         {
                             CaseEventTypeId = 14,
@@ -249,9 +287,10 @@ namespace Jube.App.Controllers.Repository
                             Before = existing.LockedUser,
                             After = model.LockedUser,
                             CreatedDate = DateTime.Now,
-                            CreatedUser = _userName
+                            CreatedUser = userName
                         }
                     );
+                }
 
                 existing.LockedUser = model.LockedUser;
 
@@ -266,12 +305,12 @@ namespace Jube.App.Controllers.Repository
                                 CaseKey = existing.CaseKey,
                                 CaseKeyValue = existing.CaseKeyValue,
                                 CreatedDate = DateTime.Now,
-                                CreatedUser = _userName
+                                CreatedUser = userName
                             }
                         );
 
                         existing.LockedDate = DateTime.Now;
-                        existing.LockedUser = _userName;
+                        existing.LockedUser = userName;
                     }
                     else
                     {
@@ -282,6 +321,7 @@ namespace Jube.App.Controllers.Repository
                 existing.Locked = (byte)(model.Locked ? 1 : 0);
 
                 if (existing.DiaryDate != model.DiaryDate)
+                {
                     caseEvents.Add(new CaseEvent
                         {
                             CaseEventTypeId = 10,
@@ -291,13 +331,15 @@ namespace Jube.App.Controllers.Repository
                             Before = existing.DiaryDate.ToString(),
                             After = model.DiaryDate.ToString(CultureInfo.InvariantCulture),
                             CreatedDate = DateTime.Now,
-                            CreatedUser = _userName
+                            CreatedUser = userName
                         }
                     );
+                }
 
                 existing.DiaryDate = model.DiaryDate;
 
                 if (existing.Diary is 0 or null)
+                {
                     if (model.Diary)
                     {
                         caseEvents.Add(new CaseEvent
@@ -307,12 +349,13 @@ namespace Jube.App.Controllers.Repository
                                 CaseKey = existing.CaseKey,
                                 CaseKeyValue = existing.LockedUser,
                                 CreatedDate = DateTime.Now,
-                                CreatedUser = _userName
+                                CreatedUser = userName
                             }
                         );
 
-                        existing.DiaryUser = _userName;
+                        existing.DiaryUser = userName;
                     }
+                }
 
                 existing.Diary = (byte)(model.Diary ? 1 : 0);
 
@@ -327,7 +370,7 @@ namespace Jube.App.Controllers.Repository
                             Before = existing.CaseWorkflowStatusGuid.ToString(),
                             After = model.CaseWorkflowStatusGuid.ToString(),
                             CreatedDate = DateTime.Now,
-                            CreatedUser = _userName
+                            CreatedUser = userName
                         }
                     );
 
@@ -337,11 +380,15 @@ namespace Jube.App.Controllers.Repository
 
                         var values = new Dictionary<string, string>();
                         foreach (var (key, value) in jObject)
+                        {
                             if (value != null)
+                            {
                                 values.Add(key, value.ToString());
+                            }
+                        }
 
                         var caseWorkflowStatusRepository =
-                            new CaseWorkflowStatusRepository(_dbContext, _userName);
+                            new CaseWorkflowStatusRepository(dbContext, userName);
 
                         var caseWorkflowStatus =
                             caseWorkflowStatusRepository.GetByGuid(model.CaseWorkflowStatusGuid);
@@ -351,7 +398,7 @@ namespace Jube.App.Controllers.Repository
                         {
                             if (caseWorkflowStatus.EnableNotification == 1)
                             {
-                                var notification = new Notification(_log, _dynamicEnvironment);
+                                var notification = new Notification(log, dynamicEnvironment);
                                 notification.Send(caseWorkflowStatus.NotificationTypeId ?? 1,
                                     caseWorkflowStatus.NotificationDestination,
                                     caseWorkflowStatus.NotificationSubject,
@@ -362,9 +409,11 @@ namespace Jube.App.Controllers.Repository
                             {
                                 var sendHttpEndpoint = new SendHttpEndpoint();
                                 if (caseWorkflowStatus.HttpEndpointTypeId != null)
+                                {
                                     sendHttpEndpoint.Send(caseWorkflowStatus.HttpEndpoint,
                                         caseWorkflowStatus.HttpEndpointTypeId.Value
                                         , values);
+                                }
                             }
                         }
                     }
@@ -373,6 +422,7 @@ namespace Jube.App.Controllers.Repository
                 existing.CaseWorkflowStatusGuid = model.CaseWorkflowStatusGuid;
 
                 if (existing.Rating != model.Rating)
+                {
                     caseEvents.Add(new CaseEvent
                         {
                             CaseEventTypeId = 11,
@@ -382,15 +432,16 @@ namespace Jube.App.Controllers.Repository
                             Before = existing.Rating.ToString(),
                             After = model.Rating.ToString(),
                             CreatedDate = DateTime.Now,
-                            CreatedUser = _userName
+                            CreatedUser = userName
                         }
                     );
+                }
 
                 existing.Rating = model.Rating;
 
-                existing = _repositoryCase.Update(existing);
+                existing = repositoryCase.Update(existing);
 
-                _repositoryCaseEvent.BulkInsert(caseEvents);
+                repositoryCaseEvent.BulkInsert(caseEvents);
 
                 return Ok(existing);
             }
@@ -400,7 +451,7 @@ namespace Jube.App.Controllers.Repository
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }

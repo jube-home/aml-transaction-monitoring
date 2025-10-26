@@ -11,62 +11,63 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Linq;
-using Jube.Data.Context;
-
-namespace Jube.Data.Query;
-
-public class GetExhaustiveSearchInstancePromotedTrialInstanceByLastActiveQuery
+namespace Jube.Data.Query
 {
-    private readonly DbContext _dbContext;
-    private readonly int? _tenantRegistryId;
+    using System;
+    using System.Linq;
+    using Context;
 
-    public GetExhaustiveSearchInstancePromotedTrialInstanceByLastActiveQuery(DbContext dbContext, string userName)
+    public class GetExhaustiveSearchInstancePromotedTrialInstanceByLastActiveQuery
     {
-        _dbContext = dbContext;
-        _tenantRegistryId = _dbContext.UserInTenant.Where(w => w.User == userName)
-            .Select(s => s.TenantRegistryId).FirstOrDefault();
-    }
+        private readonly DbContext dbContext;
+        private readonly int? tenantRegistryId;
 
-    public GetExhaustiveSearchInstancePromotedTrialInstanceByLastActiveQuery(DbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
+        public GetExhaustiveSearchInstancePromotedTrialInstanceByLastActiveQuery(DbContext dbContext, string userName)
+        {
+            this.dbContext = dbContext;
+            tenantRegistryId = this.dbContext.UserInTenant.Where(w => w.User == userName)
+                .Select(s => s.TenantRegistryId).FirstOrDefault();
+        }
 
-    public Dto Execute(
-        int exhaustiveSearchInstanceId)
-    {
-        var query = _dbContext
-            .ExhaustiveSearchInstancePromotedTrialInstance
-            .Where(w =>
-                w.Active == 1 && w.ExhaustiveSearchInstanceTrialInstance.ExhaustiveSearchInstance.Id ==
-                              exhaustiveSearchInstanceId
-                              && (w.ExhaustiveSearchInstanceTrialInstance.ExhaustiveSearchInstance
-                                      .EntityAnalysisModel.TenantRegistryId == _tenantRegistryId ||
-                                  !_tenantRegistryId.HasValue))
-            .OrderByDescending(o => o.Id)
-            .Select(s =>
-                new Dto
-                {
-                    Id = s.Id,
-                    Score = Math.Round(s.Score.Value, 2),
-                    CreatedDate = s.CreatedDate.Value,
-                    Json = s.Json,
-                    ExhaustiveSearchInstanceTrialInstanceId = s.ExhaustiveSearchInstanceTrialInstanceId.Value
-                }
-            )
-            .FirstOrDefault();
+        public GetExhaustiveSearchInstancePromotedTrialInstanceByLastActiveQuery(DbContext dbContext)
+        {
+            this.dbContext = dbContext;
+        }
 
-        return query;
-    }
+        public Dto Execute(
+            int exhaustiveSearchInstanceId)
+        {
+            var query = dbContext
+                .ExhaustiveSearchInstancePromotedTrialInstance
+                .Where(w =>
+                    w.Active == 1 && w.ExhaustiveSearchInstanceTrialInstance.ExhaustiveSearchInstance.Id ==
+                                  exhaustiveSearchInstanceId
+                                  && (w.ExhaustiveSearchInstanceTrialInstance.ExhaustiveSearchInstance
+                                          .EntityAnalysisModel.TenantRegistryId == tenantRegistryId ||
+                                      !tenantRegistryId.HasValue))
+                .OrderByDescending(o => o.Id)
+                .Select(s =>
+                    new Dto
+                    {
+                        Id = s.Id,
+                        Score = Math.Round(s.Score.Value, 2),
+                        CreatedDate = s.CreatedDate.Value,
+                        Json = s.Json,
+                        ExhaustiveSearchInstanceTrialInstanceId = s.ExhaustiveSearchInstanceTrialInstanceId.Value
+                    }
+                )
+                .FirstOrDefault();
 
-    public class Dto
-    {
-        public int Id { get; set; }
-        public int ExhaustiveSearchInstanceTrialInstanceId { get; set; }
-        public double Score { get; set; }
-        public string Json { get; set; }
-        public DateTime CreatedDate { get; set; }
+            return query;
+        }
+
+        public class Dto
+        {
+            public int Id { get; set; }
+            public int ExhaustiveSearchInstanceTrialInstanceId { get; set; }
+            public double Score { get; set; }
+            public string Json { get; set; }
+            public DateTime CreatedDate { get; set; }
+        }
     }
 }

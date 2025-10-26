@@ -11,9 +11,10 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-namespace Jube.Engine.Sanctions;
-
-public class SanctionEntryMatch
+namespace Jube.Engine.Sanctions
 {
-    public SanctionEntryDto SanctionEntryDto;
+    public class SanctionEntryMatch
+    {
+        public SanctionEntryDto SanctionEntryDto;
+    }
 }

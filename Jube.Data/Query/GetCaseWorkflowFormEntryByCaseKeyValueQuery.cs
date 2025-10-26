@@ -11,56 +11,49 @@
 * see <https://www.gnu.org/licenses/>.
 */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Jube.Data.Context;
-using LinqToDB;
-
-namespace Jube.Data.Query;
-
-public class GetCaseWorkflowFormEntryByCaseKeyValueQuery
+namespace Jube.Data.Query
 {
-    private readonly DbContext _dbContext;
-    private readonly string _userName;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Context;
+    using LinqToDB;
 
-    public GetCaseWorkflowFormEntryByCaseKeyValueQuery(DbContext dbContext, string user)
+    public class GetCaseWorkflowFormEntryByCaseKeyValueQuery(DbContext dbContext, string user)
     {
-        _dbContext = dbContext;
-        _userName = user;
-    }
 
-    public IEnumerable<Dto> Execute(string key, string value)
-    {
-        var query = from c in _dbContext.Case
-            from n in _dbContext.CaseWorkflowFormEntry.InnerJoin(w => w.CaseId == c.Id)
-            from a in _dbContext.CaseWorkflowForm.InnerJoin(w => w.Id == n.CaseWorkflowFormId)
-            from i in _dbContext.CaseWorkflow.InnerJoin(w => w.Guid == c.CaseWorkflowGuid)
-            from m in _dbContext.EntityAnalysisModel.InnerJoin(w =>
-                w.Id == i.EntityAnalysisModelId && (w.Deleted == 0 || w.Deleted == null))
-            from t in _dbContext.TenantRegistry.InnerJoin(w => w.Id == m.TenantRegistryId)
-            from u in _dbContext.UserInTenant.InnerJoin(w => w.TenantRegistryId == t.Id)
-            orderby c.Id descending
-            where c.CaseKey == key && c.CaseKeyValue == value && u.User == _userName
-            select new Dto
-            {
-                Id = n.Id,
-                CaseId = n.CaseId.GetValueOrDefault(),
-                CreatedDate = n.CreatedDate.GetValueOrDefault(),
-                CreatedUser = n.CreatedUser,
-                Name = a.Name
-            };
+        public IEnumerable<Dto> Execute(string key, string value)
+        {
+            var query = from c in dbContext.Case
+                from n in dbContext.CaseWorkflowFormEntry.InnerJoin(w => w.CaseId == c.Id)
+                from a in dbContext.CaseWorkflowForm.InnerJoin(w => w.Id == n.CaseWorkflowFormId)
+                from i in dbContext.CaseWorkflow.InnerJoin(w => w.Guid == c.CaseWorkflowGuid)
+                from m in dbContext.EntityAnalysisModel.InnerJoin(w =>
+                    w.Id == i.EntityAnalysisModelId && (w.Deleted == 0 || w.Deleted == null))
+                from t in dbContext.TenantRegistry.InnerJoin(w => w.Id == m.TenantRegistryId)
+                from u in dbContext.UserInTenant.InnerJoin(w => w.TenantRegistryId == t.Id)
+                orderby c.Id descending
+                where c.CaseKey == key && c.CaseKeyValue == value && u.User == user
+                select new Dto
+                {
+                    Id = n.Id,
+                    CaseId = n.CaseId.GetValueOrDefault(),
+                    CreatedDate = n.CreatedDate.GetValueOrDefault(),
+                    CreatedUser = n.CreatedUser,
+                    Name = a.Name
+                };
 
-        return query;
-    }
+            return query;
+        }
 
-    public class Dto
-    {
-        public int Id { get; set; }
-        public int CaseId { get; set; }
-        public DateTime CreatedDate { get; set; }
-        public string CreatedUser { get; set; }
-        public byte ResponseStatusId { get; set; }
-        public string Name { get; set; }
+        public class Dto
+        {
+            public int Id { get; set; }
+            public int CaseId { get; set; }
+            public DateTime CreatedDate { get; set; }
+            public string CreatedUser { get; set; }
+            public byte ResponseStatusId { get; set; }
+            public string Name { get; set; }
+        }
     }
 }

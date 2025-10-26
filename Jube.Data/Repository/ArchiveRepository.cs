@@ -11,52 +11,47 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB;
-using LinqToDB.Data;
-
-namespace Jube.Data.Repository;
-
-public class ArchiveRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Context;
+    using LinqToDB;
+    using LinqToDB.Data;
+    using Poco;
 
-    public ArchiveRepository(DbContext dbContext)
+    public class ArchiveRepository(DbContext dbContext)
     {
-        _dbContext = dbContext;
-    }
 
-    public Archive GetByEntityAnalysisModelInstanceEntryGuidAndEntityAnalysisModelId(Guid guid,
-        int entityAnalysisModelId)
-    {
-        return _dbContext.Archive.FirstOrDefault(w =>
-            w.EntityAnalysisModelInstanceEntryGuid == guid
-            && w.EntityAnalysisModelId == entityAnalysisModelId);
-    }
+        public Archive GetByEntityAnalysisModelInstanceEntryGuidAndEntityAnalysisModelId(Guid guid,
+            int entityAnalysisModelId)
+        {
+            return dbContext.Archive.FirstOrDefault(w =>
+                w.EntityAnalysisModelInstanceEntryGuid == guid
+                && w.EntityAnalysisModelId == entityAnalysisModelId);
+        }
 
-    public void Update(Archive model)
-    {
-        _dbContext.Update(model);
-    }
+        public void Update(Archive model)
+        {
+            dbContext.Update(model);
+        }
 
-    public void Insert(Archive model)
-    {
-        _dbContext.Insert(model);
-    }
+        public void Insert(Archive model)
+        {
+            dbContext.Insert(model);
+        }
 
-    public IEnumerable<string> GetJsonByEntityAnalysisModelIdRandomLimit(int entityAnalysisModelId, int limit)
-    {
-        return _dbContext.Archive
-            .Where(w => w.EntityAnalysisModelId == entityAnalysisModelId)
-            .OrderBy(o => o.EntityAnalysisModelInstanceEntryGuid).Select(s => s.Json).Take(limit);
-    }
+        public IEnumerable<string> GetJsonByEntityAnalysisModelIdRandomLimit(int entityAnalysisModelId, int limit)
+        {
+            return dbContext.Archive
+                .Where(w => w.EntityAnalysisModelId == entityAnalysisModelId)
+                .OrderBy(o => o.EntityAnalysisModelInstanceEntryGuid).Select(s => s.Json).Take(limit);
+        }
 
-    public void BulkCopy(List<Archive> models)
-    {
-        _dbContext.BulkCopy(models);
+        public void BulkCopy(List<Archive> models)
+        {
+            dbContext.BulkCopy(models);
+        }
     }
 }

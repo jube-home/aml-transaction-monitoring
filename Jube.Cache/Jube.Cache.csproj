@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>disable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="JetBrains.Annotations" Version="2025.2.2"/>
+        <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.0"/>
+        <PackageReference Include="StackExchange.Redis" Version="2.9.32"/>
+        <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="9.0.10"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Reference Include="log4net">
+            <HintPath>..\..\..\.nuget\packages\log4net\2.0.14\lib\netstandard2.0\log4net.dll</HintPath>
+        </Reference>
+        <Reference Include="MessagePack.Annotations">
+            <HintPath>..\..\..\.nuget\packages\messagepack.annotations\3.1.4\lib\netstandard2.0\MessagePack.Annotations.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Jube.Data\Jube.Data.csproj"/>
+        <ProjectReference Include="..\Jube.Dictionary\Jube.Dictionary.csproj"/>
+        <ProjectReference Include="..\Jube.Extensions\Jube.Extensions.csproj"/>
+    </ItemGroup>
+
+</Project>

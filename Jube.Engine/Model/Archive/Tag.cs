@@ -13,12 +13,13 @@
 
 using System;
 
-namespace Jube.Engine.Model.Archive;
-
-public class Tag
+namespace Jube.Engine.Model.Archive
 {
-    public string Name { get; set; }
-    public Guid EntityAnalysisModelInstanceEntryGuid { get; set; }
-    public int EntityAnalysisModelId { get; set; }
-    public string Value { get; set; }
+    public class Tag
+    {
+        public string Name { get; set; }
+        public Guid EntityAnalysisModelInstanceEntryGuid { get; set; }
+        public int EntityAnalysisModelId { get; set; }
+        public string Value { get; set; }
+    }
 }

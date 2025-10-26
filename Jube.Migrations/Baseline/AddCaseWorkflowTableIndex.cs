@@ -14,52 +14,53 @@
 using System;
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124917)]
-public class AddCaseWorkflowTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124917)]
+    public class AddCaseWorkflowTableIndex : Migration
     {
-        Create.Table("CaseWorkflow")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("Name").AsString().Nullable()
-            .WithColumn("TenantRegistryId").AsInt32().Nullable()
-            .WithColumn("CaseStatusId").AsInt32().Nullable()
-            .WithColumn("Active").AsByte().Nullable()
-            .WithColumn("Locked").AsByte().Nullable()
-            .WithColumn("EnableVisualisation").AsByte().Nullable()
-            .WithColumn("VisualisationRegistryId").AsInt32().Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("UpdatedDate").AsDateTime2().Nullable()
-            .WithColumn("UpdatedUser").AsString().Nullable()
-            .WithColumn("Deleted").AsByte().Nullable()
-            .WithColumn("DeletedUser").AsString().Nullable()
-            .WithColumn("DeletedDate").AsDateTime2().Nullable()
-            .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
-            .WithColumn("Version").AsInt32().Nullable()
-            .WithColumn("InheritedId").AsInt32().Nullable();
-
-        Create.Index().OnTable("CaseWorkflow")
-            .OnColumn("EntityAnalysisModelId").Ascending()
-            .OnColumn("Deleted").Ascending();
-
-        Insert.IntoTable("CaseWorkflow").Row(new
+        public override void Up()
         {
-            Name = "Detailed Account Financial Transactions Cases",
-            Active = 1,
-            Version = 1,
-            EntityAnalysisModelId = 1,
-            CreatedDate = DateTime.Now,
-            CreatedUser = "Administrator",
-            EnableVisualisation = 1,
-            VisualisationRegistryId = 2
-        });
-    }
+            Create.Table("CaseWorkflow")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("Name").AsString().Nullable()
+                .WithColumn("TenantRegistryId").AsInt32().Nullable()
+                .WithColumn("CaseStatusId").AsInt32().Nullable()
+                .WithColumn("Active").AsByte().Nullable()
+                .WithColumn("Locked").AsByte().Nullable()
+                .WithColumn("EnableVisualisation").AsByte().Nullable()
+                .WithColumn("VisualisationRegistryId").AsInt32().Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("UpdatedDate").AsDateTime2().Nullable()
+                .WithColumn("UpdatedUser").AsString().Nullable()
+                .WithColumn("Deleted").AsByte().Nullable()
+                .WithColumn("DeletedUser").AsString().Nullable()
+                .WithColumn("DeletedDate").AsDateTime2().Nullable()
+                .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
+                .WithColumn("Version").AsInt32().Nullable()
+                .WithColumn("InheritedId").AsInt32().Nullable();
 
-    public override void Down()
-    {
-        Delete.Table("CaseWorkflow");
+            Create.Index().OnTable("CaseWorkflow")
+                .OnColumn("EntityAnalysisModelId").Ascending()
+                .OnColumn("Deleted").Ascending();
+
+            Insert.IntoTable("CaseWorkflow").Row(new
+            {
+                Name = "Detailed Account Financial Transactions Cases",
+                Active = 1,
+                Version = 1,
+                EntityAnalysisModelId = 1,
+                CreatedDate = DateTime.Now,
+                CreatedUser = "Administrator",
+                EnableVisualisation = 1,
+                VisualisationRegistryId = 2
+            });
+        }
+
+        public override void Down()
+        {
+            Delete.Table("CaseWorkflow");
+        }
     }
 }

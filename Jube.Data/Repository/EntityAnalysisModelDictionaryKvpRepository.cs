@@ -11,149 +11,154 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using AutoMapper;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB;
-
-namespace Jube.Data.Repository;
-
-public class EntityAnalysisModelDictionaryKvpRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
-    private readonly int? _tenantRegistryId;
-    private readonly string _userName;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using AutoMapper;
+    using Context;
+    using LinqToDB;
+    using Poco;
 
-    public EntityAnalysisModelDictionaryKvpRepository(DbContext dbContext, string userName)
+    public class EntityAnalysisModelDictionaryKvpRepository
     {
-        _dbContext = dbContext;
-        _userName = userName;
-        _tenantRegistryId = _dbContext.UserInTenant.Where(w => w.User == _userName)
-            .Select(s => s.TenantRegistryId).FirstOrDefault();
-    }
+        private readonly DbContext dbContext;
+        private readonly int? tenantRegistryId;
+        private readonly string userName;
 
-    public EntityAnalysisModelDictionaryKvpRepository(DbContext dbContext, int tenantRegistryId)
-    {
-        _dbContext = dbContext;
-        _tenantRegistryId = tenantRegistryId;
-    }
-
-    public EntityAnalysisModelDictionaryKvpRepository(DbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
-
-    public IEnumerable<EntityAnalysisModelDictionaryKvp> Get()
-    {
-        return _dbContext.EntityAnalysisModelDictionaryKvp
-            .Where(w =>
-                w.EntityAnalysisModelDictionary.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId ||
-                !_tenantRegistryId.HasValue);
-    }
-
-    public EntityAnalysisModelDictionaryKvp GetByIdKvpKey(int id, string key)
-    {
-        return _dbContext.EntityAnalysisModelDictionaryKvp.FirstOrDefault(w =>
-            (w.EntityAnalysisModelDictionary.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId ||
-             !_tenantRegistryId.HasValue)
-            && w.EntityAnalysisModelDictionaryId == id && w.KvpKey == key
-            && (w.Deleted == 0 || w.Deleted == null));
-    }
-
-    public IEnumerable<EntityAnalysisModelDictionaryKvp> GetByEntityAnalysisModelDictionaryIdOrderById(
-        int entityAnalysisModelDictionaryId)
-    {
-        return _dbContext.EntityAnalysisModelDictionaryKvp
-            .Where(w =>
-                (w.EntityAnalysisModelDictionary.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId ||
-                 !_tenantRegistryId.HasValue)
-                && (w.EntityAnalysisModelDictionary.EntityAnalysisModel.Deleted == 0 ||
-                    w.EntityAnalysisModelDictionary.EntityAnalysisModel.Deleted == null)
-                && w.EntityAnalysisModelDictionaryId == entityAnalysisModelDictionaryId &&
-                (w.Deleted == 0 || w.Deleted == null))
-            .OrderBy(o => o.Id);
-    }
-
-    public EntityAnalysisModelDictionaryKvp GetById(int id)
-    {
-        return _dbContext.EntityAnalysisModelDictionaryKvp.FirstOrDefault(w =>
-            (w.EntityAnalysisModelDictionary.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId ||
-             !_tenantRegistryId.HasValue)
-            && w.EntityAnalysisModelDictionaryId == id && (w.Deleted == 0 || w.Deleted == null));
-    }
-
-    public EntityAnalysisModelDictionaryKvp Insert(EntityAnalysisModelDictionaryKvp model)
-    {
-        model.CreatedUser = _userName ?? model.CreatedUser;
-        model.Guid = model.Guid == Guid.Empty ? Guid.NewGuid() : model.Guid;
-        model.CreatedDate = DateTime.Now;
-        model.Version = 1;
-        model.Id = _dbContext.InsertWithInt32Identity(model);
-        return model;
-    }
-
-    public EntityAnalysisModelDictionaryKvp
-        Update(EntityAnalysisModelDictionaryKvp model)
-    {
-        var existing = _dbContext.EntityAnalysisModelDictionaryKvp
-            .FirstOrDefault(w => w.Id == model.Id
-                                 && w.EntityAnalysisModelDictionary.EntityAnalysisModel.TenantRegistryId ==
-                                 _tenantRegistryId
-                                 && (w.Deleted == 0 || w.Deleted == null));
-
-        if (existing == null) throw new KeyNotFoundException();
-
-        model.Version = existing.Version + 1;
-        model.Guid = existing.Guid;
-        model.CreatedUser = _userName;
-        model.CreatedDate = DateTime.Now;
-
-        _dbContext.Update(model);
-
-        var config = new MapperConfiguration(cfg =>
+        public EntityAnalysisModelDictionaryKvpRepository(DbContext dbContext, string userName)
         {
-            cfg.CreateMap<EntityAnalysisModelDictionaryKvp, EntityAnalysisModelDictionaryKvpVersion>();
-        });
-        var mapper = new Mapper(config);
+            this.dbContext = dbContext;
+            this.userName = userName;
+            tenantRegistryId = this.dbContext.UserInTenant.Where(w => w.User == this.userName)
+                .Select(s => s.TenantRegistryId).FirstOrDefault();
+        }
 
-        var audit = mapper.Map<EntityAnalysisModelDictionaryKvpVersion>(existing);
-        audit.EntityAnalysisModelDictionaryKvpId = existing.Id;
+        public EntityAnalysisModelDictionaryKvpRepository(DbContext dbContext, int tenantRegistryId)
+        {
+            this.dbContext = dbContext;
+            this.tenantRegistryId = tenantRegistryId;
+        }
 
-        _dbContext.Insert(audit);
+        public EntityAnalysisModelDictionaryKvpRepository(DbContext dbContext)
+        {
+            this.dbContext = dbContext;
+        }
 
-        return model;
-    }
+        public IEnumerable<EntityAnalysisModelDictionaryKvp> Get()
+        {
+            return dbContext.EntityAnalysisModelDictionaryKvp
+                .Where(w =>
+                    w.EntityAnalysisModelDictionary.EntityAnalysisModel.TenantRegistryId == tenantRegistryId ||
+                    !tenantRegistryId.HasValue);
+        }
 
-    public void Delete(int id)
-    {
-        var records = _dbContext.EntityAnalysisModelDictionaryKvp
-            .Where(d =>
-                (d.EntityAnalysisModelDictionary.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId ||
-                 !_tenantRegistryId.HasValue)
-                && d.Id == id
-                && (d.Deleted == 0 || d.Deleted == null))
-            .Set(s => s.Deleted, Convert.ToByte(1))
-            .Set(s => s.DeletedDate, DateTime.Now)
-            .Set(s => s.DeletedUser, _userName)
-            .Update();
+        public EntityAnalysisModelDictionaryKvp GetByIdKvpKey(int id, string key)
+        {
+            return dbContext.EntityAnalysisModelDictionaryKvp.FirstOrDefault(w =>
+                (w.EntityAnalysisModelDictionary.EntityAnalysisModel.TenantRegistryId == tenantRegistryId ||
+                 !tenantRegistryId.HasValue)
+                && w.EntityAnalysisModelDictionaryId == id && w.KvpKey == key
+                && (w.Deleted == 0 || w.Deleted == null));
+        }
 
-        if (records == 0) throw new KeyNotFoundException();
-    }
+        public IEnumerable<EntityAnalysisModelDictionaryKvp> GetByEntityAnalysisModelDictionaryIdOrderById(
+            int entityAnalysisModelDictionaryId)
+        {
+            return dbContext.EntityAnalysisModelDictionaryKvp
+                .Where(w =>
+                    (w.EntityAnalysisModelDictionary.EntityAnalysisModel.TenantRegistryId == tenantRegistryId ||
+                     !tenantRegistryId.HasValue)
+                    && (w.EntityAnalysisModelDictionary.EntityAnalysisModel.Deleted == 0 ||
+                        w.EntityAnalysisModelDictionary.EntityAnalysisModel.Deleted == null)
+                    && w.EntityAnalysisModelDictionaryId == entityAnalysisModelDictionaryId &&
+                    (w.Deleted == 0 || w.Deleted == null))
+                .OrderBy(o => o.Id);
+        }
 
-    public void DeleteByTenantRegistryId(int tenantRegistryId, int importId)
-    {
-        var records = _dbContext.EntityAnalysisModelDictionaryKvp
-            .Where(d =>
-                (d.EntityAnalysisModelDictionary.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId ||
-                 !_tenantRegistryId.HasValue)
-                && d.EntityAnalysisModelDictionary.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
-                && (d.Deleted == 0 || d.Deleted == null))
-            .Set(s => s.ImportId, importId)
-            .Set(s => s.Deleted, Convert.ToByte(1))
-            .Set(s => s.DeletedDate, DateTime.Now)
-            .Update();
+        public EntityAnalysisModelDictionaryKvp GetById(int id)
+        {
+            return dbContext.EntityAnalysisModelDictionaryKvp.FirstOrDefault(w =>
+                (w.EntityAnalysisModelDictionary.EntityAnalysisModel.TenantRegistryId == tenantRegistryId ||
+                 !tenantRegistryId.HasValue)
+                && w.EntityAnalysisModelDictionaryId == id && (w.Deleted == 0 || w.Deleted == null));
+        }
+
+        public EntityAnalysisModelDictionaryKvp Insert(EntityAnalysisModelDictionaryKvp model)
+        {
+            model.CreatedUser = userName ?? model.CreatedUser;
+            model.Guid = model.Guid == Guid.Empty ? Guid.NewGuid() : model.Guid;
+            model.CreatedDate = DateTime.Now;
+            model.Version = 1;
+            model.Id = dbContext.InsertWithInt32Identity(model);
+            return model;
+        }
+
+        public EntityAnalysisModelDictionaryKvp
+            Update(EntityAnalysisModelDictionaryKvp model)
+        {
+            var existing = dbContext.EntityAnalysisModelDictionaryKvp
+                .FirstOrDefault(w => w.Id == model.Id
+                                     && w.EntityAnalysisModelDictionary.EntityAnalysisModel.TenantRegistryId ==
+                                     tenantRegistryId
+                                     && (w.Deleted == 0 || w.Deleted == null));
+
+            if (existing == null)
+            {
+                throw new KeyNotFoundException();
+            }
+
+            model.Version = existing.Version + 1;
+            model.Guid = existing.Guid;
+            model.CreatedUser = userName;
+            model.CreatedDate = DateTime.Now;
+
+            dbContext.Update(model);
+
+            var config = new MapperConfiguration(cfg =>
+            {
+                cfg.CreateMap<EntityAnalysisModelDictionaryKvp, EntityAnalysisModelDictionaryKvpVersion>();
+            });
+            var mapper = new Mapper(config);
+
+            var audit = mapper.Map<EntityAnalysisModelDictionaryKvpVersion>(existing);
+            audit.EntityAnalysisModelDictionaryKvpId = existing.Id;
+
+            dbContext.Insert(audit);
+
+            return model;
+        }
+
+        public void Delete(int id)
+        {
+            var records = dbContext.EntityAnalysisModelDictionaryKvp
+                .Where(d =>
+                    (d.EntityAnalysisModelDictionary.EntityAnalysisModel.TenantRegistryId == tenantRegistryId ||
+                     !tenantRegistryId.HasValue)
+                    && d.Id == id
+                    && (d.Deleted == 0 || d.Deleted == null))
+                .Set(s => s.Deleted, Convert.ToByte(1))
+                .Set(s => s.DeletedDate, DateTime.Now)
+                .Set(s => s.DeletedUser, userName)
+                .Update();
+
+            if (records == 0)
+            {
+                throw new KeyNotFoundException();
+            }
+        }
+
+        public void DeleteByTenantRegistryIdOutsideOfInstance(int tenantRegistryIdOutsideOfInstance, int importId)
+        {
+            dbContext.EntityAnalysisModelDictionaryKvp
+                .Where(d =>
+                    d.EntityAnalysisModelDictionary.EntityAnalysisModel.TenantRegistryId == tenantRegistryIdOutsideOfInstance
+                    && (d.Deleted == 0 || d.Deleted == null))
+                .Set(s => s.ImportId, importId)
+                .Set(s => s.Deleted, Convert.ToByte(1))
+                .Set(s => s.DeletedDate, DateTime.Now)
+                .Update();
+        }
     }
 }

@@ -11,60 +11,45 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Linq;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB;
-
-namespace Jube.Data.Repository;
-
-public class ExhaustiveSearchInstancePromotedTrialInstanceSensitivityRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
-    private readonly int? _tenantRegistryId;
+    using System;
+    using System.Linq;
+    using Context;
+    using LinqToDB;
+    using Poco;
 
-    public ExhaustiveSearchInstancePromotedTrialInstanceSensitivityRepository(DbContext dbContext)
+    public class ExhaustiveSearchInstancePromotedTrialInstanceSensitivityRepository(DbContext dbContext)
     {
-        _dbContext = dbContext;
-    }
 
-    public ExhaustiveSearchInstancePromotedTrialInstanceSensitivityRepository(DbContext dbContext, int tenantRegistryId)
-    {
-        _dbContext = dbContext;
-        _tenantRegistryId = tenantRegistryId;
-    }
+        public ExhaustiveSearchInstancePromotedTrialInstanceSensitivity Insert(
+            ExhaustiveSearchInstancePromotedTrialInstanceSensitivity model)
+        {
+            model.Id = dbContext.InsertWithInt32Identity(model);
+            return model;
+        }
 
-    public ExhaustiveSearchInstancePromotedTrialInstanceSensitivity Insert(
-        ExhaustiveSearchInstancePromotedTrialInstanceSensitivity model)
-    {
-        model.Id = _dbContext.InsertWithInt32Identity(model);
-        return model;
-    }
+        public IQueryable<ExhaustiveSearchInstancePromotedTrialInstanceSensitivity>
+            GetByExhaustiveSearchInstanceTrialInstanceVariableIdOrderById(
+                int exhaustiveSearchInstanceTrialInstanceVariableId)
+        {
+            return dbContext.ExhaustiveSearchInstancePromotedTrialInstanceSensitivity
+                .Where(w => w.ExhaustiveSearchInstanceTrialInstanceVariableId ==
+                            exhaustiveSearchInstanceTrialInstanceVariableId)
+                .OrderBy(o => o.Id);
+        }
 
-    public IQueryable<ExhaustiveSearchInstancePromotedTrialInstanceSensitivity>
-        GetByExhaustiveSearchInstanceTrialInstanceVariableIdOrderById(
-            int exhaustiveSearchInstanceTrialInstanceVariableId)
-    {
-        return _dbContext.ExhaustiveSearchInstancePromotedTrialInstanceSensitivity
-            .Where(w => w.ExhaustiveSearchInstanceTrialInstanceVariableId ==
-                        exhaustiveSearchInstanceTrialInstanceVariableId)
-            .OrderBy(o => o.Id);
-    }
-
-    public void DeleteByTenantRegistryId(int tenantRegistryId, int importId)
-    {
-        var records = _dbContext.ExhaustiveSearchInstancePromotedTrialInstanceSensitivity
-            .Where(d =>
-                (d.ExhaustiveSearchInstanceTrialInstanceVariable.ExhaustiveSearchInstanceTrialInstance
-                     .ExhaustiveSearchInstance.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId ||
-                 !_tenantRegistryId.HasValue)
-                && d.ExhaustiveSearchInstanceTrialInstanceVariable.ExhaustiveSearchInstanceTrialInstance
-                    .ExhaustiveSearchInstance.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
-                && (d.Deleted == 0 || d.Deleted == null))
-            .Set(s => s.ImportId, importId)
-            .Set(s => s.Deleted, Convert.ToByte(1))
-            .Set(s => s.DeletedDate, DateTime.Now)
-            .Update();
+        public void DeleteByTenantRegistryIdOutsideOfInstance(int tenantRegistryIdOutsideOfInstance, int importId)
+        {
+            dbContext.ExhaustiveSearchInstancePromotedTrialInstanceSensitivity
+                .Where(d =>
+                    d.ExhaustiveSearchInstanceTrialInstanceVariable.ExhaustiveSearchInstanceTrialInstance
+                        .ExhaustiveSearchInstance.EntityAnalysisModel.TenantRegistryId == tenantRegistryIdOutsideOfInstance
+                    && (d.Deleted == 0 || d.Deleted == null))
+                .Set(s => s.ImportId, importId)
+                .Set(s => s.Deleted, Convert.ToByte(1))
+                .Set(s => s.DeletedDate, DateTime.Now)
+                .Update();
+        }
     }
 }

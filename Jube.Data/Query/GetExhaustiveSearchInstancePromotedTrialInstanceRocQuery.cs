@@ -11,56 +11,57 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System.Collections.Generic;
-using System.Linq;
-using Jube.Data.Context;
-
-namespace Jube.Data.Query;
-
-public class GetExhaustiveSearchInstancePromotedTrialInstanceRocQuery
+namespace Jube.Data.Query
 {
-    private readonly DbContext _dbContext;
-    private readonly int _tenantRegistryId;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Context;
 
-    public GetExhaustiveSearchInstancePromotedTrialInstanceRocQuery(DbContext dbContext, string userName)
+    public class GetExhaustiveSearchInstancePromotedTrialInstanceRocQuery
     {
-        _dbContext = dbContext;
-        _tenantRegistryId = _dbContext.UserInTenant.Where(w => w.User == userName)
-            .Select(s => s.TenantRegistryId).FirstOrDefault();
-    }
+        private readonly DbContext dbContext;
+        private readonly int tenantRegistryId;
 
-    public IEnumerable<Dto> Execute(
-        int exhaustiveSearchInstanceId)
-    {
-        var promotedExhaustiveSearchInstanceTrialInstanceId = _dbContext
-            .ExhaustiveSearchInstancePromotedTrialInstance
-            .Where(w =>
-                w.ExhaustiveSearchInstanceTrialInstance.ExhaustiveSearchInstance.Id == exhaustiveSearchInstanceId
-                && w.Active == 1
-                && w.ExhaustiveSearchInstanceTrialInstance.ExhaustiveSearchInstance
-                    .EntityAnalysisModel.TenantRegistryId == _tenantRegistryId)
-            .OrderByDescending(o => o.Id)
-            .Select(s => s.ExhaustiveSearchInstanceTrialInstanceId)
-            .FirstOrDefault();
+        public GetExhaustiveSearchInstancePromotedTrialInstanceRocQuery(DbContext dbContext, string userName)
+        {
+            this.dbContext = dbContext;
+            tenantRegistryId = this.dbContext.UserInTenant.Where(w => w.User == userName)
+                .Select(s => s.TenantRegistryId).FirstOrDefault();
+        }
 
-        return _dbContext.ExhaustiveSearchInstancePromotedTrialInstanceRoc
-            .Where(w =>
-                w.ExhaustiveSearchInstanceTrialInstanceId == promotedExhaustiveSearchInstanceTrialInstanceId)
-            .OrderBy(o => o.Id)
-            .Select(s => new Dto
-            {
-                Id = s.Id,
-                Score = s.Score.Value,
-                Fpr = (double)s.FalsePositive.Value / (s.FalsePositive.Value + s.TrueNegative.Value),
-                Tpr = (double)s.TruePositive.Value / (s.TruePositive.Value + s.FalseNegative.Value)
-            });
-    }
+        public IEnumerable<Dto> Execute(
+            int exhaustiveSearchInstanceId)
+        {
+            var promotedExhaustiveSearchInstanceTrialInstanceId = dbContext
+                .ExhaustiveSearchInstancePromotedTrialInstance
+                .Where(w =>
+                    w.ExhaustiveSearchInstanceTrialInstance.ExhaustiveSearchInstance.Id == exhaustiveSearchInstanceId
+                    && w.Active == 1
+                    && w.ExhaustiveSearchInstanceTrialInstance.ExhaustiveSearchInstance
+                        .EntityAnalysisModel.TenantRegistryId == tenantRegistryId)
+                .OrderByDescending(o => o.Id)
+                .Select(s => s.ExhaustiveSearchInstanceTrialInstanceId)
+                .FirstOrDefault();
 
-    public class Dto
-    {
-        public int Id { get; set; }
-        public double Score { get; set; }
-        public double Fpr { get; set; }
-        public double Tpr { get; set; }
+            return dbContext.ExhaustiveSearchInstancePromotedTrialInstanceRoc
+                .Where(w =>
+                    w.ExhaustiveSearchInstanceTrialInstanceId == promotedExhaustiveSearchInstanceTrialInstanceId)
+                .OrderBy(o => o.Id)
+                .Select(s => new Dto
+                {
+                    Id = s.Id,
+                    Score = s.Score.Value,
+                    Fpr = (double)s.FalsePositive.Value / (s.FalsePositive.Value + s.TrueNegative.Value),
+                    Tpr = (double)s.TruePositive.Value / (s.TruePositive.Value + s.FalseNegative.Value)
+                });
+        }
+
+        public class Dto
+        {
+            public int Id { get; set; }
+            public double Score { get; set; }
+            public double Fpr { get; set; }
+            public double Tpr { get; set; }
+        }
     }
 }

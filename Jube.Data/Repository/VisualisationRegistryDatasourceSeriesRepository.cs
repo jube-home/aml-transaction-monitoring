@@ -11,33 +11,34 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System.Collections.Generic;
-using System.Linq;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-
-namespace Jube.Data.Repository;
-
-public class VisualisationRegistryDatasourceSeriesRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
-    private readonly int _tenantRegistryId;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Context;
+    using Poco;
 
-    public VisualisationRegistryDatasourceSeriesRepository(DbContext dbContext, string userName)
+    public class VisualisationRegistryDatasourceSeriesRepository
     {
-        _dbContext = dbContext;
-        _tenantRegistryId = _dbContext.UserInTenant.Where(w => w.User == userName)
-            .Select(s => s.TenantRegistryId).FirstOrDefault();
-    }
+        private readonly DbContext dbContext;
+        private readonly int tenantRegistryId;
 
-    public IEnumerable<VisualisationRegistryDatasourceSeries> GetByVisualisationRegistryDatasourceId(
-        int visualisationRegistryDatasourceId)
-    {
-        return _dbContext.VisualisationRegistryDatasourceSeries
-            .Where(w => w.VisualisationRegistryDatasource.VisualisationRegistry.TenantRegistryId ==
-                        _tenantRegistryId
-                        && w.VisualisationRegistryDatasourceId == visualisationRegistryDatasourceId &&
-                        (w.VisualisationRegistryDatasource.Deleted == 0 ||
-                         w.VisualisationRegistryDatasource.Deleted == null));
+        public VisualisationRegistryDatasourceSeriesRepository(DbContext dbContext, string userName)
+        {
+            this.dbContext = dbContext;
+            tenantRegistryId = this.dbContext.UserInTenant.Where(w => w.User == userName)
+                .Select(s => s.TenantRegistryId).FirstOrDefault();
+        }
+
+        public IEnumerable<VisualisationRegistryDatasourceSeries> GetByVisualisationRegistryDatasourceId(
+            int visualisationRegistryDatasourceId)
+        {
+            return dbContext.VisualisationRegistryDatasourceSeries
+                .Where(w => w.VisualisationRegistryDatasource.VisualisationRegistry.TenantRegistryId ==
+                            tenantRegistryId
+                            && w.VisualisationRegistryDatasourceId == visualisationRegistryDatasourceId &&
+                            (w.VisualisationRegistryDatasource.Deleted == 0 ||
+                             w.VisualisationRegistryDatasource.Deleted == null));
+        }
     }
 }

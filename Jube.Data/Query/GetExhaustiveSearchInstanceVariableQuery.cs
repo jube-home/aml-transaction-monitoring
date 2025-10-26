@@ -11,100 +11,104 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System.Collections.Generic;
-using System.Linq;
-using Jube.Data.Context;
-
-namespace Jube.Data.Query;
-
-public class GetExhaustiveSearchInstanceVariableQuery
+namespace Jube.Data.Query
 {
-    private readonly DbContext _dbContext;
-    private readonly int _tenantRegistryId;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Context;
 
-    public GetExhaustiveSearchInstanceVariableQuery(DbContext dbContext, string userName)
+    public class GetExhaustiveSearchInstanceVariableQuery
     {
-        _dbContext = dbContext;
-        _tenantRegistryId = _dbContext.UserInTenant.Where(w => w.User == userName)
-            .Select(s => s.TenantRegistryId).FirstOrDefault();
-    }
+        private readonly DbContext dbContext;
+        private readonly int tenantRegistryId;
 
-    public IEnumerable<Dto> Execute(
-        int exhaustiveSearchInstanceId)
-    {
-        var histograms = _dbContext.ExhaustiveSearchInstanceVariableHistogram
-            .Where(w =>
-                w.ExhaustiveSearchInstanceVariable.ExhaustiveSearchInstance.EntityAnalysisModel.TenantRegistryId ==
-                _tenantRegistryId
-                && w.ExhaustiveSearchInstanceVariable.ExhaustiveSearchInstanceId == exhaustiveSearchInstanceId)
-            .ToList();
-
-        var variables = _dbContext.ExhaustiveSearchInstanceVariable
-            .Where(w =>
-                w.ExhaustiveSearchInstance.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId
-                && w.ExhaustiveSearchInstanceId == exhaustiveSearchInstanceId).ToList();
-
-        var joined = new List<Dto>();
-        foreach (var variable in variables)
+        public GetExhaustiveSearchInstanceVariableQuery(DbContext dbContext, string userName)
         {
-            var join = new Dto
-            {
-                Id = variable.Id,
-                Mean = variable.Mean.GetValueOrDefault(),
-                StandardDeviation = variable.StandardDeviation.GetValueOrDefault(),
-                Name = variable.Name,
-                Kurtosis = variable.Kurtosis.GetValueOrDefault(),
-                Skewness = variable.Skewness.GetValueOrDefault(),
-                Maximum = variable.Maximum.GetValueOrDefault(),
-                Iqr = variable.Iqr.GetValueOrDefault(),
-                DistinctValues = variable.DistinctValues.GetValueOrDefault(),
-                Correlation = variable.Correlation.GetValueOrDefault(),
-                CorrelationAbsRank = variable.CorrelationAbsRank.GetValueOrDefault(),
-                NormalisationType = variable.NormalisationTypeId switch
-                {
-                    0 => "No",
-                    1 => "Binary",
-                    2 => "Z Score",
-                    _ => "Default"
-                }
-            };
-
-            foreach (var histogram in histograms
-                         .Where(w =>
-                             w.ExhaustiveSearchInstanceVariableId == variable.Id))
-                join.HistogramValues.Add(new Dto.HistogramValue
-                {
-                    Frequency = histogram.Frequency.GetValueOrDefault(),
-                    Bin = histogram.BinRangeStart.GetValueOrDefault()
-                });
-
-            joined.Add(join);
+            this.dbContext = dbContext;
+            tenantRegistryId = this.dbContext.UserInTenant.Where(w => w.User == userName)
+                .Select(s => s.TenantRegistryId).FirstOrDefault();
         }
 
-        return joined;
-    }
-
-    public class Dto
-    {
-        public int Id { get; set; }
-        public double Mean { get; set; }
-        public double StandardDeviation { get; set; }
-        public string Name { get; set; }
-        public double Kurtosis { get; set; }
-        public double Skewness { get; set; }
-        public double Maximum { get; set; }
-        public double Minimum { get; set; }
-        public double Iqr { get; set; }
-        public string NormalisationType { get; set; }
-        public int DistinctValues { get; set; }
-        public double Correlation { get; set; }
-        public int CorrelationAbsRank { get; set; }
-        public List<HistogramValue> HistogramValues { get; set; } = [];
-
-        public class HistogramValue
+        public IEnumerable<Dto> Execute(
+            int exhaustiveSearchInstanceId)
         {
-            public int Frequency { get; set; }
-            public double Bin { get; set; }
+            var histograms = dbContext.ExhaustiveSearchInstanceVariableHistogram
+                .Where(w =>
+                    w.ExhaustiveSearchInstanceVariable.ExhaustiveSearchInstance.EntityAnalysisModel.TenantRegistryId ==
+                    tenantRegistryId
+                    && w.ExhaustiveSearchInstanceVariable.ExhaustiveSearchInstanceId == exhaustiveSearchInstanceId)
+                .ToList();
+
+            var variables = dbContext.ExhaustiveSearchInstanceVariable
+                .Where(w =>
+                    w.ExhaustiveSearchInstance.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
+                    && w.ExhaustiveSearchInstanceId == exhaustiveSearchInstanceId).ToList();
+
+            var joined = new List<Dto>();
+            foreach (var variable in variables)
+            {
+                var join = new Dto
+                {
+                    Id = variable.Id,
+                    Mean = variable.Mean.GetValueOrDefault(),
+                    StandardDeviation = variable.StandardDeviation.GetValueOrDefault(),
+                    Name = variable.Name,
+                    Kurtosis = variable.Kurtosis.GetValueOrDefault(),
+                    Skewness = variable.Skewness.GetValueOrDefault(),
+                    Maximum = variable.Maximum.GetValueOrDefault(),
+                    Iqr = variable.Iqr.GetValueOrDefault(),
+                    DistinctValues = variable.DistinctValues.GetValueOrDefault(),
+                    Correlation = variable.Correlation.GetValueOrDefault(),
+                    CorrelationAbsRank = variable.CorrelationAbsRank.GetValueOrDefault(),
+                    NormalisationType = variable.NormalisationTypeId switch
+                    {
+                        0 => "No",
+                        1 => "Binary",
+                        2 => "Z Score",
+                        _ => "Default"
+                    }
+                };
+
+                foreach (var histogram in histograms
+                             .Where(w =>
+                                 w.ExhaustiveSearchInstanceVariableId == variable.Id))
+                {
+                    join.HistogramValues.Add(new Dto.HistogramValue
+                    {
+                        Frequency = histogram.Frequency.GetValueOrDefault(),
+                        Bin = histogram.BinRangeStart.GetValueOrDefault()
+                    });
+                }
+
+                joined.Add(join);
+            }
+
+            return joined;
+        }
+
+        public class Dto
+        {
+            public int Id { get; set; }
+            public double Mean { get; set; }
+            public double StandardDeviation { get; set; }
+            public string Name { get; set; }
+            public double Kurtosis { get; set; }
+            public double Skewness { get; set; }
+            public double Maximum { get; set; }
+            public double Minimum { get; set; }
+            public double Iqr { get; set; }
+            public string NormalisationType { get; set; }
+            public int DistinctValues { get; set; }
+            public double Correlation { get; set; }
+            public int CorrelationAbsRank { get; set; }
+            // ReSharper disable once CollectionNeverQueried.Global
+            public List<HistogramValue> HistogramValues { get; set; } = [];
+
+            public class HistogramValue
+            {
+                public int Frequency { get; set; }
+                public double Bin { get; set; }
+            }
         }
     }
 }

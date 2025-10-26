@@ -13,18 +13,19 @@
 
 using System;
 
-namespace Jube.Engine.Model;
-
-public class EntityAnalysisModelTtlCounter
+namespace Jube.Engine.Model
 {
-    public int Id { get; init; }
-    public string TtlCounterInterval { get; set; }
-    public int TtlCounterValue { get; set; }
-    public bool ResponsePayload { get; set; }
-    public string Name { get; set; }
-    public bool ReportTable { get; set; }
-    public string TtlCounterDataName { get; set; }
-    public bool OnlineAggregation { get; set; }
-    public bool EnableLiveForever { get; set; }
-    public Guid Guid { get; set; }
+    public class EntityAnalysisModelTtlCounter
+    {
+        public int Id { get; init; }
+        public string TtlCounterInterval { get; set; }
+        public int TtlCounterValue { get; set; }
+        public bool ResponsePayload { get; set; }
+        public string Name { get; set; }
+        public bool ReportTable { get; set; }
+        public string TtlCounterDataName { get; set; }
+        public bool OnlineAggregation { get; set; }
+        public bool EnableLiveForever { get; set; }
+        public Guid Guid { get; set; }
+    }
 }

@@ -15,22 +15,23 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace Jube.Engine.Model;
-
-public class EntityAnalysisModelInlineScript
+namespace Jube.Engine.Model
 {
-    public int Id { get; set; }
-    public Assembly InlineScriptCompile { get; set; }
-    public string InlineScriptCode { get; set; }
-    public string Dependencies { get; set; }
-    public int InlineScriptId { get; set; }
-    public string ClassName { get; set; }
-    public string Name { get; set; }
-    public Type InlineScriptType { get; set; }
-    public string MethodName { get; set; }
-    public MethodInfo PreProcessingMethodInfo { get; set; }
-    public Dictionary<string, int> PromoteReportTableColumns { get; } = [];
-    public List<DistinctSearchKey> GroupingKeys { get; } = [];
-    public object ActivatedObject { get; set; }
-    public DateTime? CreatedDate { get; set; }
+    public class EntityAnalysisModelInlineScript
+    {
+        public int Id { get; set; }
+        public Assembly InlineScriptCompile { get; set; }
+        public string InlineScriptCode { get; set; }
+        public string Dependencies { get; set; }
+        public int InlineScriptId { get; set; }
+        public string ClassName { get; set; }
+        public string Name { get; set; }
+        public Type InlineScriptType { get; set; }
+        public string MethodName { get; set; }
+        public MethodInfo PreProcessingMethodInfo { get; set; }
+        public Dictionary<string, int> PromoteReportTableColumns { get; } = [];
+        public List<DistinctSearchKey> GroupingKeys { get; } = [];
+        public object ActivatedObject { get; set; }
+        public DateTime? CreatedDate { get; set; }
+    }
 }

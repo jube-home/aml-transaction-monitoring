@@ -13,25 +13,26 @@
 
 using Accord.Statistics.Distributions.Univariate;
 
-namespace Jube.Engine.Exhaustive.Variables;
-
-public class Variable
+namespace Jube.Engine.Exhaustive.Variables
 {
-    public int ExhaustiveSearchInstanceVariableId { get; set; }
-    public byte ProcessingTypeId { get; set; }
-    public string ValueJsonPath { get; set; }
-    public string Name { get; set; }
-    public double Mean { get; set; }
-    public double Mode { get; set; }
-    public double Max { get; set; }
-    public double Min { get; set; }
-    public double Kurtosis { get; set; }
-    public double Skewness { get; set; }
-    public double Iqr { get; set; }
-    public double Sd { get; set; }
-    public int DistinctCount { get; set; }
-    public byte NormalisationType { get; set; }
-    public int Bins { get; set; }
-    public double Correlation { get; set; }
-    public TriangularDistribution TriangularDistribution { get; set; }
+    public class Variable
+    {
+        public int ExhaustiveSearchInstanceVariableId { get; set; }
+        public byte ProcessingTypeId { get; set; }
+        public string ValueJsonPath { get; set; }
+        public string Name { get; set; }
+        public double Mean { get; set; }
+        public double Mode { get; set; }
+        public double Max { get; set; }
+        public double Min { get; set; }
+        public double Kurtosis { get; set; }
+        public double Skewness { get; set; }
+        public double Iqr { get; set; }
+        public double Sd { get; set; }
+        public int DistinctCount { get; set; }
+        public byte NormalisationType { get; set; }
+        public int Bins { get; set; }
+        public double Correlation { get; set; }
+        public TriangularDistribution TriangularDistribution { get; set; }
+    }
 }

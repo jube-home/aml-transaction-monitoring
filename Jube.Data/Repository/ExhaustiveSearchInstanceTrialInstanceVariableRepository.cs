@@ -11,78 +11,67 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB;
-
-namespace Jube.Data.Repository;
-
-public class ExhaustiveSearchInstanceTrialInstanceVariableRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
-    private readonly int? _tenantRegistryId;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Context;
+    using LinqToDB;
+    using Poco;
 
-    public ExhaustiveSearchInstanceTrialInstanceVariableRepository(DbContext dbContext)
+    public class ExhaustiveSearchInstanceTrialInstanceVariableRepository(DbContext dbContext)
     {
-        _dbContext = dbContext;
-    }
 
-    public ExhaustiveSearchInstanceTrialInstanceVariableRepository(DbContext dbContext, int tenantRegistryId)
-    {
-        _dbContext = dbContext;
-        _tenantRegistryId = tenantRegistryId;
-    }
+        public ExhaustiveSearchInstanceTrialInstanceVariable Insert(ExhaustiveSearchInstanceTrialInstanceVariable model)
+        {
+            model.Id = dbContext.InsertWithInt32Identity(model);
+            return model;
+        }
 
-    public ExhaustiveSearchInstanceTrialInstanceVariable Insert(ExhaustiveSearchInstanceTrialInstanceVariable model)
-    {
-        model.Id = _dbContext.InsertWithInt32Identity(model);
-        return model;
-    }
+        public void DeleteAllByExhaustiveSearchInstanceTrialInstanceId(int id)
+        {
+            dbContext.ExhaustiveSearchInstanceTrialInstanceVariable
+                .Where(w => w.ExhaustiveSearchInstanceTrialInstanceId == id)
+                .Delete();
+        }
 
-    public void DeleteAllByExhaustiveSearchInstanceTrialInstanceId(int id)
-    {
-        _dbContext.ExhaustiveSearchInstanceTrialInstanceVariable
-            .Where(w => w.ExhaustiveSearchInstanceTrialInstanceId == id)
-            .Delete();
-    }
-
-    public void UpdateAsRemovedByExhaustiveSearchInstanceVariableId(int exhaustiveSearchInstanceVariableId,
-        int exhaustiveSearchInstanceTrialInstanceId)
-    {
-        var records = _dbContext.ExhaustiveSearchInstanceTrialInstanceVariable
-            .Where(u =>
-                u.ExhaustiveSearchInstanceVariableId == exhaustiveSearchInstanceVariableId
-                && u.ExhaustiveSearchInstanceTrialInstanceId == exhaustiveSearchInstanceTrialInstanceId)
-            .Set(s => s.Removed, 1)
-            .Update();
-
-        if (records == 0) throw new KeyNotFoundException();
-    }
-
-    public IQueryable<ExhaustiveSearchInstanceTrialInstanceVariable>
-        GetByExhaustiveSearchInstanceTrialInstanceIdOrderById(
+        public void UpdateAsRemovedByExhaustiveSearchInstanceVariableId(int exhaustiveSearchInstanceVariableId,
             int exhaustiveSearchInstanceTrialInstanceId)
-    {
-        return _dbContext.ExhaustiveSearchInstanceTrialInstanceVariable.Where(w =>
-                w.ExhaustiveSearchInstanceTrialInstanceId == exhaustiveSearchInstanceTrialInstanceId)
-            .OrderBy(o => o.Id);
-    }
+        {
+            var records = dbContext.ExhaustiveSearchInstanceTrialInstanceVariable
+                .Where(u =>
+                    u.ExhaustiveSearchInstanceVariableId == exhaustiveSearchInstanceVariableId
+                    && u.ExhaustiveSearchInstanceTrialInstanceId == exhaustiveSearchInstanceTrialInstanceId)
+                .Set(s => s.Removed, 1)
+                .Update();
 
-    public void DeleteByTenantRegistryId(int tenantRegistryId, int importId)
-    {
-        var records = _dbContext.ExhaustiveSearchInstanceTrialInstanceVariable
-            .Where(d =>
-                (d.ExhaustiveSearchInstanceTrialInstance.ExhaustiveSearchInstance.EntityAnalysisModel
-                    .TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue)
-                && d.ExhaustiveSearchInstanceTrialInstance.ExhaustiveSearchInstance.EntityAnalysisModel
-                    .TenantRegistryId == tenantRegistryId
-                && (d.Deleted == 0 || d.Deleted == null))
-            .Set(s => s.ImportId, importId)
-            .Set(s => s.Deleted, Convert.ToByte(1))
-            .Set(s => s.DeletedDate, DateTime.Now)
-            .Update();
+            if (records == 0)
+            {
+                throw new KeyNotFoundException();
+            }
+        }
+
+        public IQueryable<ExhaustiveSearchInstanceTrialInstanceVariable>
+            GetByExhaustiveSearchInstanceTrialInstanceIdOrderById(
+                int exhaustiveSearchInstanceTrialInstanceId)
+        {
+            return dbContext.ExhaustiveSearchInstanceTrialInstanceVariable.Where(w =>
+                    w.ExhaustiveSearchInstanceTrialInstanceId == exhaustiveSearchInstanceTrialInstanceId)
+                .OrderBy(o => o.Id);
+        }
+
+        public void DeleteByTenantRegistryIdOutsideOfInstance(int tenantRegistryIdOutsideOfInstance, int importId)
+        {
+            dbContext.ExhaustiveSearchInstanceTrialInstanceVariable
+                .Where(d =>
+                    d.ExhaustiveSearchInstanceTrialInstance.ExhaustiveSearchInstance.EntityAnalysisModel
+                        .TenantRegistryId == tenantRegistryIdOutsideOfInstance
+                    && (d.Deleted == 0 || d.Deleted == null))
+                .Set(s => s.ImportId, importId)
+                .Set(s => s.Deleted, Convert.ToByte(1))
+                .Set(s => s.DeletedDate, DateTime.Now)
+                .Update();
+        }
     }
 }

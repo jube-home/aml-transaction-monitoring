@@ -14,24 +14,25 @@
 using FluentValidation;
 using Jube.Service.Dto.Authentication;
 
-namespace Jube.Validations.Authentication;
-
-public class AuthenticationRequestDtoValidator : AbstractValidator<AuthenticationRequestDto>
+namespace Jube.Validations.Authentication
 {
-    public AuthenticationRequestDtoValidator()
+    public class AuthenticationRequestDtoValidator : AbstractValidator<AuthenticationRequestDto>
     {
-        RuleFor(p => p.UserName).NotEmpty();
-        RuleFor(p => p.Password).NotEmpty();
-        RuleFor(p => p.NewPassword)
-            .MinimumLength(8).WithMessage("Your password length must be at least 8 characters.")
-            .MaximumLength(16).WithMessage("Your password length must not exceed 16 characters.")
-            .Matches(@"[A-Z]+").WithMessage("Your password must contain at least one uppercase letter.")
-            .Matches(@"[a-z]+").WithMessage("Your password must contain at least one lowercase letter.")
-            .Matches(@"[0-9]+").WithMessage("Your password must contain at least one number.")
-            .Matches(@"[\!\?\*\.]+").WithMessage("Your password must contain at least one (!? *.).")
-            .Equal(e => e.RepeatNewPassword).WithMessage("Repeat New Password.")
-            .When(w => !string.IsNullOrEmpty(w.NewPassword));
-        RuleFor(p => p.NewPassword)
-            .NotEmpty().When(w => w.PasswordChangeState);
+        public AuthenticationRequestDtoValidator()
+        {
+            RuleFor(p => p.UserName).NotEmpty();
+            RuleFor(p => p.Password).NotEmpty();
+            RuleFor(p => p.NewPassword)
+                .MinimumLength(8).WithMessage("Your password length must be at least 8 characters.")
+                .MaximumLength(16).WithMessage("Your password length must not exceed 16 characters.")
+                .Matches(@"[A-Z]+").WithMessage("Your password must contain at least one uppercase letter.")
+                .Matches(@"[a-z]+").WithMessage("Your password must contain at least one lowercase letter.")
+                .Matches(@"[0-9]+").WithMessage("Your password must contain at least one number.")
+                .Matches(@"[\!\?\*\.]+").WithMessage("Your password must contain at least one (!? *.).")
+                .Equal(e => e.RepeatNewPassword).WithMessage("Repeat New Password.")
+                .When(w => !String.IsNullOrEmpty(w.NewPassword));
+            RuleFor(p => p.NewPassword)
+                .NotEmpty().When(w => w.PasswordChangeState);
+        }
     }
 }

@@ -1,25 +1,25 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Jube.App.Code.QueryBuilder;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using Jube.Data.Reporting;
-using Jube.Data.Repository;
-using Newtonsoft.Json;
-
 namespace Jube.App.Controllers.Session
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Threading.Tasks;
+    using Code.QueryBuilder;
+    using Data.Context;
+    using Data.Poco;
+    using Data.Reporting;
+    using Data.Repository;
+    using Newtonsoft.Json;
+
     public static class CompileSql
     {
         public static async Task<SessionCaseSearchCompiledSql> Compile(DbContext dbContext,
             SessionCaseSearchCompiledSql model, string userName)
         {
             var filterJsonRule = JsonConvert.DeserializeObject<Rule>(model.FilterJson);
-            var filterRule = new Code.QueryBuilder.Parser(filterJsonRule, dbContext, model.CaseWorkflowGuid, userName);
+            var filterRule = new Parser(filterJsonRule, dbContext, model.CaseWorkflowGuid, userName);
             var selectTokensRule = JsonConvert.DeserializeObject<Rule>(model.SelectJson);
             var selectRule =
-                new Code.QueryBuilder.Parser(selectTokensRule, dbContext, model.CaseWorkflowGuid, userName);
+                new Parser(selectTokensRule, dbContext, model.CaseWorkflowGuid, userName);
 
             model.SelectSqlDisplay = "select \"Case\".\"Id\" as \"Id\"," +
                                      "\"Case\".\"EntityAnalysisModelInstanceEntryGuid\" as \"EntityAnalysisModelInstanceEntryGuid\"," +
@@ -55,7 +55,10 @@ namespace Jube.App.Controllers.Session
             var columnsOrder = new List<string>();
             foreach (var rule in selectRule.Rules)
             {
-                if (rule.Field == null || rule.Id == null) continue;
+                if (rule.Field == null || rule.Id == null)
+                {
+                    continue;
+                }
 
                 var convertedColumnSelectField = rule.Id switch
                 {
@@ -76,18 +79,28 @@ namespace Jube.App.Controllers.Session
 
                 columnsOrder.Add(rule.Field + " " + rule.Value);
 
-                if (rule.Id == "Id") continue;
+                if (rule.Id == "Id")
+                {
+                    continue;
+                }
 
                 if (rule.Id.Contains('.'))
+                {
                     columnsSelect.Add(convertedColumnSelectField
                                       + " as \"" + rule.Id.Replace(".", "") + "\"");
+                }
                 else
+                {
                     columnsSelect.Add(convertedColumnSelectField
                                       + " as \"" + rule.Id + "\"");
+                }
             }
 
             var repository = new SessionCaseSearchCompiledSqlRepository(dbContext, userName);
-            if (filterRule.Tokens == null) return repository.Insert(model);
+            if (filterRule.Tokens == null)
+            {
+                return repository.Insert(model);
+            }
 
             filterRule.Tokens.Add(model.CaseWorkflowGuid);
             var positionCaseWorkflowGuid = filterRule.Tokens.Count;
@@ -95,7 +108,7 @@ namespace Jube.App.Controllers.Session
             filterRule.Tokens.Add(userName);
             var positionUser = filterRule.Tokens.Count;
 
-            model.SelectSqlSearch = "select " + string.Join(",", columnsSelect);
+            model.SelectSqlSearch = "select " + String.Join(",", columnsSelect);
 
             model.WhereSql = "from \"Case\",\"CaseWorkflow\",\"EntityAnalysisModel\",\"TenantRegistry\"," +
                              "\"CaseWorkflowStatus\",\"UserInTenant\"" +
@@ -110,7 +123,7 @@ namespace Jube.App.Controllers.Session
                              ") and (\"CaseWorkflow\".\"Deleted\" = 0 or \"CaseWorkflow\".\"Deleted\" is null))" +
                              " and \"UserInTenant\".\"User\" = (@" + positionUser + ")";
 
-            model.OrderSql = "order by " + string.Join(",", columnsOrder);
+            model.OrderSql = "order by " + String.Join(",", columnsOrder);
 
             model.FilterTokens = JsonConvert.SerializeObject(filterRule.Tokens);
 
@@ -127,7 +140,10 @@ namespace Jube.App.Controllers.Session
                 model.Error = e.Message;
             }
 
-            if (model.Rebuild == 1) model.RebuildDate = DateTime.Now;
+            if (model.Rebuild == 1)
+            {
+                model.RebuildDate = DateTime.Now;
+            }
 
             return repository.Insert(model);
         }

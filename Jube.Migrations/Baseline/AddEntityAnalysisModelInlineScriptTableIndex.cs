@@ -14,46 +14,47 @@
 using System;
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124933)]
-public class AddEntityAnalysisModelInlineScriptTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124933)]
+    public class AddEntityAnalysisModelInlineScriptTableIndex : Migration
     {
-        Create.Table("EntityAnalysisModelInlineScript")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
-            .WithColumn("EntityAnalysisInlineScriptId").AsInt32().Nullable()
-            .WithColumn("Name").AsString().Nullable()
-            .WithColumn("Locked").AsByte().Nullable()
-            .WithColumn("Active").AsByte().Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("Deleted").AsByte().Nullable()
-            .WithColumn("DeletedDate").AsDateTime2().Nullable()
-            .WithColumn("DeletedUser").AsString().Nullable()
-            .WithColumn("Version").AsInt32().Nullable()
-            .WithColumn("InheritedId").AsInt32().Nullable();
-
-        Create.Index().OnTable("EntityAnalysisModelInlineScript")
-            .OnColumn("EntityAnalysisModelId").Ascending()
-            .OnColumn("Deleted").Ascending();
-
-        Insert.IntoTable("EntityAnalysisModelInlineScript").Row(new
+        public override void Up()
         {
-            EntityAnalysisModelId = 1,
-            Name = "Issue OTP",
-            Active = 1,
-            CreatedDate = DateTime.Now,
-            CreatedUser = "Administrator",
-            Version = 1,
-            EntityAnalysisInlineScriptId = 1
-        });
-    }
+            Create.Table("EntityAnalysisModelInlineScript")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
+                .WithColumn("EntityAnalysisInlineScriptId").AsInt32().Nullable()
+                .WithColumn("Name").AsString().Nullable()
+                .WithColumn("Locked").AsByte().Nullable()
+                .WithColumn("Active").AsByte().Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("Deleted").AsByte().Nullable()
+                .WithColumn("DeletedDate").AsDateTime2().Nullable()
+                .WithColumn("DeletedUser").AsString().Nullable()
+                .WithColumn("Version").AsInt32().Nullable()
+                .WithColumn("InheritedId").AsInt32().Nullable();
 
-    public override void Down()
-    {
-        Delete.Table("EntityAnalysisModelInlineScript");
+            Create.Index().OnTable("EntityAnalysisModelInlineScript")
+                .OnColumn("EntityAnalysisModelId").Ascending()
+                .OnColumn("Deleted").Ascending();
+
+            Insert.IntoTable("EntityAnalysisModelInlineScript").Row(new
+            {
+                EntityAnalysisModelId = 1,
+                Name = "Issue OTP",
+                Active = 1,
+                CreatedDate = DateTime.Now,
+                CreatedUser = "Administrator",
+                Version = 1,
+                EntityAnalysisInlineScriptId = 1
+            });
+        }
+
+        public override void Down()
+        {
+            Delete.Table("EntityAnalysisModelInlineScript");
+        }
     }
 }

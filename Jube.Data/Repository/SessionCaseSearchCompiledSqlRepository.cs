@@ -11,47 +11,40 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Linq;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB;
-
-namespace Jube.Data.Repository;
-
-public class SessionCaseSearchCompiledSqlRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
-    private readonly string _userName;
+    using System;
+    using System.Linq;
+    using Context;
+    using LinqToDB;
+    using Poco;
 
-    public SessionCaseSearchCompiledSqlRepository(DbContext dbContext, string userName)
+    public class SessionCaseSearchCompiledSqlRepository(DbContext dbContext, string userName)
     {
-        _dbContext = dbContext;
-        _userName = userName;
-    }
 
-    public SessionCaseSearchCompiledSql GetByGuid(Guid guid)
-    {
-        return _dbContext.SessionCaseSearchCompiledSql
-            .FirstOrDefault(w => w.Guid == guid);
-    }
+        public SessionCaseSearchCompiledSql GetByGuid(Guid guid)
+        {
+            return dbContext.SessionCaseSearchCompiledSql
+                .FirstOrDefault(w => w.Guid == guid);
+        }
 
-    public SessionCaseSearchCompiledSql GetByLast()
-    {
-        return _dbContext.SessionCaseSearchCompiledSql
-            .Where(w => w.CreatedUser == _userName)
-            .OrderByDescending(o => o.Id)
-            .FirstOrDefault();
-    }
+        public SessionCaseSearchCompiledSql GetByLast()
+        {
+            return dbContext.SessionCaseSearchCompiledSql
+                .Where(w => w.CreatedUser == userName)
+                .OrderByDescending(o => o.Id)
+                .FirstOrDefault();
+        }
 
-    public SessionCaseSearchCompiledSql Insert(SessionCaseSearchCompiledSql model)
-    {
-        model.CreatedUser = _userName;
-        model.CreatedDate = DateTime.Now;
-        model.Guid = Guid.NewGuid();
+        public SessionCaseSearchCompiledSql Insert(SessionCaseSearchCompiledSql model)
+        {
+            model.CreatedUser = userName;
+            model.CreatedDate = DateTime.Now;
+            model.Guid = Guid.NewGuid();
 
-        model.Id = _dbContext.InsertWithInt32Identity(model);
+            model.Id = dbContext.InsertWithInt32Identity(model);
 
-        return model;
+            return model;
+        }
     }
 }

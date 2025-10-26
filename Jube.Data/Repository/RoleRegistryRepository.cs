@@ -11,97 +11,104 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using AutoMapper;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB;
-
-namespace Jube.Data.Repository;
-
-public class RoleRegistryRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
-    private readonly int _tenantRegistryId;
-    private readonly string _userName;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using AutoMapper;
+    using Context;
+    using LinqToDB;
+    using Poco;
 
-    public RoleRegistryRepository(DbContext dbContext, string userName)
+    public class RoleRegistryRepository
     {
-        _dbContext = dbContext;
-        _userName = userName;
-        _tenantRegistryId = _dbContext.UserInTenant.Where(w => w.User == _userName)
-            .Select(s => s.TenantRegistryId).FirstOrDefault();
-    }
+        private readonly DbContext dbContext;
+        private readonly int tenantRegistryId;
+        private readonly string userName;
 
-    public RoleRegistryRepository(DbContext dbContext, TenantRegistry tenantRegistry)
-    {
-        _dbContext = dbContext;
-        _tenantRegistryId = tenantRegistry.Id;
-    }
+        public RoleRegistryRepository(DbContext dbContext, string userName)
+        {
+            this.dbContext = dbContext;
+            this.userName = userName;
+            tenantRegistryId = this.dbContext.UserInTenant.Where(w => w.User == this.userName)
+                .Select(s => s.TenantRegistryId).FirstOrDefault();
+        }
 
-    public IEnumerable<RoleRegistry> Get()
-    {
-        return _dbContext.RoleRegistry.Where(w => w.TenantRegistryId == _tenantRegistryId
-                                                  && (w.Deleted == 0 || w.Deleted == null));
-    }
+        public RoleRegistryRepository(DbContext dbContext, TenantRegistry tenantRegistry)
+        {
+            this.dbContext = dbContext;
+            tenantRegistryId = tenantRegistry.Id;
+        }
 
-    public RoleRegistry GetById(int id)
-    {
-        return _dbContext.RoleRegistry.FirstOrDefault(w => w.Id == id
-                                                           && w.TenantRegistryId == _tenantRegistryId
-                                                           && (w.Deleted == 0 || w.Deleted == null));
-    }
+        public IEnumerable<RoleRegistry> Get()
+        {
+            return dbContext.RoleRegistry.Where(w => w.TenantRegistryId == tenantRegistryId
+                                                     && (w.Deleted == 0 || w.Deleted == null));
+        }
 
-    public RoleRegistry Insert(RoleRegistry model)
-    {
-        model.CreatedUser = _userName;
-        model.TenantRegistryId = _tenantRegistryId;
-        model.Version = 1;
-        model.CreatedDate = DateTime.Now;
-        model.Guid = Guid.NewGuid();
-        model.Id = _dbContext.InsertWithInt32Identity(model);
-        return model;
-    }
+        public RoleRegistry GetById(int id)
+        {
+            return dbContext.RoleRegistry.FirstOrDefault(w => w.Id == id
+                                                              && w.TenantRegistryId == tenantRegistryId
+                                                              && (w.Deleted == 0 || w.Deleted == null));
+        }
 
-    public RoleRegistry Update(RoleRegistry model)
-    {
-        var existing = _dbContext.RoleRegistry
-            .FirstOrDefault(u => u.TenantRegistryId == _tenantRegistryId
-                                 && u.Id == model.Id
-                                 && (u.Deleted == 0 || u.Deleted == null)
-                                 && (u.Locked == 0 || u.Locked == null));
+        public RoleRegistry Insert(RoleRegistry model)
+        {
+            model.CreatedUser = userName;
+            model.TenantRegistryId = tenantRegistryId;
+            model.Version = 1;
+            model.CreatedDate = DateTime.Now;
+            model.Guid = Guid.NewGuid();
+            model.Id = dbContext.InsertWithInt32Identity(model);
+            return model;
+        }
 
-        if (existing == null) throw new KeyNotFoundException();
+        public RoleRegistry Update(RoleRegistry model)
+        {
+            var existing = dbContext.RoleRegistry
+                .FirstOrDefault(u => u.TenantRegistryId == tenantRegistryId
+                                     && u.Id == model.Id
+                                     && (u.Deleted == 0 || u.Deleted == null)
+                                     && (u.Locked == 0 || u.Locked == null));
 
-        model.Version = existing.Version + 1;
-        model.Guid = existing.Guid;
-        model.CreatedUser = _userName;
-        model.CreatedDate = DateTime.Now;
-        model.TenantRegistryId = _tenantRegistryId;
+            if (existing == null)
+            {
+                throw new KeyNotFoundException();
+            }
 
-        _dbContext.Update(model);
+            model.Version = existing.Version + 1;
+            model.Guid = existing.Guid;
+            model.CreatedUser = userName;
+            model.CreatedDate = DateTime.Now;
+            model.TenantRegistryId = tenantRegistryId;
 
-        var config = new MapperConfiguration(cfg => { cfg.CreateMap<RoleRegistry, RoleRegistryVersion>(); });
-        var mapper = new Mapper(config);
+            dbContext.Update(model);
 
-        var audit = mapper.Map<RoleRegistryVersion>(existing);
-        audit.RoleRegistryId = existing.Id;
+            var config = new MapperConfiguration(cfg => { cfg.CreateMap<RoleRegistry, RoleRegistryVersion>(); });
+            var mapper = new Mapper(config);
 
-        _dbContext.Insert(audit);
+            var audit = mapper.Map<RoleRegistryVersion>(existing);
+            audit.RoleRegistryId = existing.Id;
 
-        return model;
-    }
+            dbContext.Insert(audit);
 
-    public void Delete(int id)
-    {
-        var records = _dbContext.RoleRegistry
-            .Where(d => d.Id == id
-                        && d.TenantRegistryId == _tenantRegistryId
-                        && (d.Deleted == 0 || d.Deleted == null)
-                        && (d.Locked == 0 || d.Locked == null)).Delete();
+            return model;
+        }
 
-        if (records == 0) throw new KeyNotFoundException();
+        public void Delete(int id)
+        {
+            var records = dbContext.RoleRegistry
+                .Where(d => d.Id == id
+                            && d.TenantRegistryId == tenantRegistryId
+                            && (d.Deleted == 0 || d.Deleted == null)
+                            && (d.Locked == 0 || d.Locked == null)).Delete();
+
+            if (records == 0)
+            {
+                throw new KeyNotFoundException();
+            }
+        }
     }
 }

@@ -11,165 +11,171 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using AutoMapper;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB;
-
-namespace Jube.Data.Repository;
-
-public class EntityAnalysisModelRequestXPathRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
-    private readonly int? _tenantRegistryId;
-    private readonly string _userName;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using AutoMapper;
+    using Context;
+    using LinqToDB;
+    using Poco;
 
-    public EntityAnalysisModelRequestXPathRepository(DbContext dbContext, string userName)
+    public class EntityAnalysisModelRequestXPathRepository
     {
-        _dbContext = dbContext;
-        _userName = userName;
-        _tenantRegistryId = _dbContext.UserInTenant.Where(w => w.User == _userName)
-            .Select(s => s.TenantRegistryId).FirstOrDefault();
-    }
+        private readonly DbContext dbContext;
+        private readonly int? tenantRegistryId;
+        private readonly string userName;
 
-    public EntityAnalysisModelRequestXPathRepository(DbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
-
-    public EntityAnalysisModelRequestXPathRepository(DbContext dbContext, int tenantRegistryId)
-    {
-        _dbContext = dbContext;
-        _tenantRegistryId = tenantRegistryId;
-    }
-
-    public IEnumerable<EntityAnalysisModelRequestXpath> Get()
-    {
-        return _dbContext.EntityAnalysisModelRequestXpath
-            .Where(w =>
-                (w.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue)
-                && (w.Deleted == 0 || w.Deleted == null));
-    }
-
-    public IEnumerable<EntityAnalysisModelRequestXpath> GetByEntityAnalysisModelIdOrderById(int entityAnalysisModelId)
-    {
-        return _dbContext.EntityAnalysisModelRequestXpath
-            .Where(w =>
-                (w.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue)
-                && w.EntityAnalysisModelId == entityAnalysisModelId
-                && (w.Deleted == 0 || w.Deleted == null))
-            .OrderBy(o => o.Id);
-    }
-
-    public IEnumerable<EntityAnalysisModelRequestXpath> GetBySuppressionKeys()
-    {
-        return _dbContext.EntityAnalysisModelRequestXpath
-            .Where(w =>
-                (w.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue)
-                && w.EnableSuppression == 1 && (w.Deleted == 0 || w.Deleted == null));
-    }
-
-    public IEnumerable<EntityAnalysisModelRequestXpath> GetByCasesWorkflowId(int casesWorkflowId)
-    {
-        var query =
-            from x in _dbContext.EntityAnalysisModelRequestXpath
-            join m in _dbContext.EntityAnalysisModel
-                on x.EntityAnalysisModelId equals m.Id
-            join c in _dbContext.CaseWorkflow on m.Id equals c.EntityAnalysisModelId
-            where (m.TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue)
-                  && c.Id == casesWorkflowId && (x.Deleted == 0 || x.Deleted == null)
-            select x;
-
-        return query;
-    }
-
-    public IEnumerable<EntityAnalysisModelRequestXpath> GetByEntityAnalysisModelIdByDataType(
-        int entityAnalysisModelId, int dataTypeId)
-    {
-        return _dbContext.EntityAnalysisModelRequestXpath
-            .Where(w =>
-                (w.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue)
-                && w.DataTypeId == dataTypeId
-                && w.EntityAnalysisModelId == entityAnalysisModelId && (w.Deleted == 0 || w.Deleted == null));
-    }
-
-    public EntityAnalysisModelRequestXpath GetById(int id)
-    {
-        return _dbContext.EntityAnalysisModelRequestXpath.FirstOrDefault(w =>
-            (w.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue)
-            && w.Id == id && (w.Deleted == 0 || w.Deleted == null));
-    }
-
-    public EntityAnalysisModelRequestXpath Insert(EntityAnalysisModelRequestXpath model)
-    {
-        model.CreatedUser = _userName ?? model.CreatedUser;
-        model.Guid = model.Guid == Guid.Empty ? Guid.NewGuid() : model.Guid;
-        model.CreatedDate = DateTime.Now;
-        model.Version = 1;
-        model.Id = _dbContext.InsertWithInt32Identity(model);
-        return model;
-    }
-
-    public EntityAnalysisModelRequestXpath Update(EntityAnalysisModelRequestXpath model)
-    {
-        var existing = _dbContext.EntityAnalysisModelRequestXpath
-            .FirstOrDefault(w => w.Id
-                                 == model.Id
-                                 && (w.Deleted == 0 || w.Deleted == null)
-                                 && (w.Locked == 0 || w.Locked == null));
-
-        if (existing == null) throw new KeyNotFoundException();
-
-        model.Version = existing.Version + 1;
-        model.Guid = existing.Guid;
-        model.CreatedUser = _userName;
-        model.CreatedDate = DateTime.Now;
-
-        _dbContext.Update(model);
-
-        var config = new MapperConfiguration(cfg =>
+        public EntityAnalysisModelRequestXPathRepository(DbContext dbContext, string userName)
         {
-            cfg.CreateMap<EntityAnalysisModelRequestXpath, EntityAnalysisModelRequestXpathVersion>();
-        });
-        var mapper = new Mapper(config);
+            this.dbContext = dbContext;
+            this.userName = userName;
+            tenantRegistryId = this.dbContext.UserInTenant.Where(w => w.User == this.userName)
+                .Select(s => s.TenantRegistryId).FirstOrDefault();
+        }
 
-        var audit = mapper.Map<EntityAnalysisModelRequestXpathVersion>(existing);
-        audit.EntityAnalysisModelRequestXpathId = existing.Id;
+        public EntityAnalysisModelRequestXPathRepository(DbContext dbContext)
+        {
+            this.dbContext = dbContext;
+        }
 
-        _dbContext.Insert(audit);
+        public EntityAnalysisModelRequestXPathRepository(DbContext dbContext, int tenantRegistryId)
+        {
+            this.dbContext = dbContext;
+            this.tenantRegistryId = tenantRegistryId;
+        }
 
-        return model;
-    }
+        public IEnumerable<EntityAnalysisModelRequestXpath> Get()
+        {
+            return dbContext.EntityAnalysisModelRequestXpath
+                .Where(w =>
+                    (w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                    && (w.Deleted == 0 || w.Deleted == null));
+        }
 
-    public void Delete(int id)
-    {
-        var records = _dbContext.EntityAnalysisModelRequestXpath
-            .Where(d =>
-                (d.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue)
-                && d.Id == id
-                && (d.Locked == 0 || d.Locked == null)
-                && (d.Deleted == 0 || d.Deleted == null))
-            .Set(s => s.Deleted, Convert.ToByte(1))
-            .Set(s => s.DeletedDate, DateTime.Now)
-            .Set(s => s.DeletedUser, _userName)
-            .Update();
+        public IEnumerable<EntityAnalysisModelRequestXpath> GetByEntityAnalysisModelIdOrderById(int entityAnalysisModelId)
+        {
+            return dbContext.EntityAnalysisModelRequestXpath
+                .Where(w =>
+                    (w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                    && w.EntityAnalysisModelId == entityAnalysisModelId
+                    && (w.Deleted == 0 || w.Deleted == null))
+                .OrderBy(o => o.Id);
+        }
 
-        if (records == 0) throw new KeyNotFoundException();
-    }
+        public IEnumerable<EntityAnalysisModelRequestXpath> GetBySuppressionKeys()
+        {
+            return dbContext.EntityAnalysisModelRequestXpath
+                .Where(w =>
+                    (w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                    && w.EnableSuppression == 1 && (w.Deleted == 0 || w.Deleted == null));
+        }
 
-    public void DeleteByTenantRegistryId(int tenantRegistryId, int importId)
-    {
-        _dbContext.EntityAnalysisModelRequestXpath
-            .Where(d =>
-                (d.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue)
-                && d.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
-                && (d.Deleted == 0 || d.Deleted == null))
-            .Set(s => s.ImportId, importId)
-            .Set(s => s.Deleted, Convert.ToByte(1))
-            .Set(s => s.DeletedDate, DateTime.Now)
-            .Update();
+        public IEnumerable<EntityAnalysisModelRequestXpath> GetByCasesWorkflowId(int casesWorkflowId)
+        {
+            var query =
+                from x in dbContext.EntityAnalysisModelRequestXpath
+                join m in dbContext.EntityAnalysisModel
+                    on x.EntityAnalysisModelId equals m.Id
+                join c in dbContext.CaseWorkflow on m.Id equals c.EntityAnalysisModelId
+                where (m.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                      && c.Id == casesWorkflowId && (x.Deleted == 0 || x.Deleted == null)
+                select x;
+
+            return query;
+        }
+
+        public IEnumerable<EntityAnalysisModelRequestXpath> GetByEntityAnalysisModelIdByDataType(
+            int entityAnalysisModelId, int dataTypeId)
+        {
+            return dbContext.EntityAnalysisModelRequestXpath
+                .Where(w =>
+                    (w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                    && w.DataTypeId == dataTypeId
+                    && w.EntityAnalysisModelId == entityAnalysisModelId && (w.Deleted == 0 || w.Deleted == null));
+        }
+
+        public EntityAnalysisModelRequestXpath GetById(int id)
+        {
+            return dbContext.EntityAnalysisModelRequestXpath.FirstOrDefault(w =>
+                (w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                && w.Id == id && (w.Deleted == 0 || w.Deleted == null));
+        }
+
+        public EntityAnalysisModelRequestXpath Insert(EntityAnalysisModelRequestXpath model)
+        {
+            model.CreatedUser = userName ?? model.CreatedUser;
+            model.Guid = model.Guid == Guid.Empty ? Guid.NewGuid() : model.Guid;
+            model.CreatedDate = DateTime.Now;
+            model.Version = 1;
+            model.Id = dbContext.InsertWithInt32Identity(model);
+            return model;
+        }
+
+        public EntityAnalysisModelRequestXpath Update(EntityAnalysisModelRequestXpath model)
+        {
+            var existing = dbContext.EntityAnalysisModelRequestXpath
+                .FirstOrDefault(w => w.Id
+                                     == model.Id
+                                     && (w.Deleted == 0 || w.Deleted == null)
+                                     && (w.Locked == 0 || w.Locked == null));
+
+            if (existing == null)
+            {
+                throw new KeyNotFoundException();
+            }
+
+            model.Version = existing.Version + 1;
+            model.Guid = existing.Guid;
+            model.CreatedUser = userName;
+            model.CreatedDate = DateTime.Now;
+
+            dbContext.Update(model);
+
+            var config = new MapperConfiguration(cfg =>
+            {
+                cfg.CreateMap<EntityAnalysisModelRequestXpath, EntityAnalysisModelRequestXpathVersion>();
+            });
+            var mapper = new Mapper(config);
+
+            var audit = mapper.Map<EntityAnalysisModelRequestXpathVersion>(existing);
+            audit.EntityAnalysisModelRequestXpathId = existing.Id;
+
+            dbContext.Insert(audit);
+
+            return model;
+        }
+
+        public void Delete(int id)
+        {
+            var records = dbContext.EntityAnalysisModelRequestXpath
+                .Where(d =>
+                    (d.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                    && d.Id == id
+                    && (d.Locked == 0 || d.Locked == null)
+                    && (d.Deleted == 0 || d.Deleted == null))
+                .Set(s => s.Deleted, Convert.ToByte(1))
+                .Set(s => s.DeletedDate, DateTime.Now)
+                .Set(s => s.DeletedUser, userName)
+                .Update();
+
+            if (records == 0)
+            {
+                throw new KeyNotFoundException();
+            }
+        }
+
+        public void DeleteByTenantRegistryIdOutsideOfInstance(int tenantRegistryIdOutsideOfInstance, int importId)
+        {
+            dbContext.EntityAnalysisModelRequestXpath
+                .Where(d =>
+                    d.EntityAnalysisModel.TenantRegistryId == tenantRegistryIdOutsideOfInstance
+                    && (d.Deleted == 0 || d.Deleted == null))
+                .Set(s => s.ImportId, importId)
+                .Set(s => s.Deleted, Convert.ToByte(1))
+                .Set(s => s.DeletedDate, DateTime.Now)
+                .Update();
+        }
     }
 }

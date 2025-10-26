@@ -13,35 +13,36 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220608104200)]
-public class AddSessionCaseSearchCompiledSqlTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220608104200)]
+    public class AddSessionCaseSearchCompiledSqlTableIndex : Migration
     {
-        Create.Table("SessionCaseSearchCompiledSql")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("Guid").AsGuid().Nullable()
-            .WithColumn("CaseWorkflowId").AsInt32().Nullable()
-            .WithColumn("FilterJson").AsCustom("jsonb").Nullable()
-            .WithColumn("FilterTokens").AsCustom("jsonb").Nullable()
-            .WithColumn("SelectJson").AsCustom("jsonb").Nullable()
-            .WithColumn("FilterSql").AsString().Nullable()
-            .WithColumn("Prepared").AsByte().Nullable()
-            .WithColumn("Error").AsString().Nullable()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable()
-            .WithColumn("SelectSqlSearch").AsString().Nullable()
-            .WithColumn("SelectSqlDisplay").AsString().Nullable()
-            .WithColumn("WhereSql").AsString().Nullable()
-            .WithColumn("OrderSql").AsString().Nullable();
+        public override void Up()
+        {
+            Create.Table("SessionCaseSearchCompiledSql")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("Guid").AsGuid().Nullable()
+                .WithColumn("CaseWorkflowId").AsInt32().Nullable()
+                .WithColumn("FilterJson").AsCustom("jsonb").Nullable()
+                .WithColumn("FilterTokens").AsCustom("jsonb").Nullable()
+                .WithColumn("SelectJson").AsCustom("jsonb").Nullable()
+                .WithColumn("FilterSql").AsString().Nullable()
+                .WithColumn("Prepared").AsByte().Nullable()
+                .WithColumn("Error").AsString().Nullable()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable()
+                .WithColumn("SelectSqlSearch").AsString().Nullable()
+                .WithColumn("SelectSqlDisplay").AsString().Nullable()
+                .WithColumn("WhereSql").AsString().Nullable()
+                .WithColumn("OrderSql").AsString().Nullable();
 
-        Create.Index().OnTable("SessionCaseSearchCompiledSql").OnColumn("Guid").Unique();
-    }
+            Create.Index().OnTable("SessionCaseSearchCompiledSql").OnColumn("Guid").Unique();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("SessionCaseSearchCompiledSql");
+        public override void Down()
+        {
+            Delete.Table("SessionCaseSearchCompiledSql");
+        }
     }
 }

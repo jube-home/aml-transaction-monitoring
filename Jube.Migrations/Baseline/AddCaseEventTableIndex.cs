@@ -13,31 +13,32 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124903)]
-public class AddCaseEventTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124903)]
+    public class AddCaseEventTableIndex : Migration
     {
-        Create.Table("CaseEvent")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("CaseEventTypeId").AsInt32().Nullable()
-            .WithColumn("Before").AsString().Nullable()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable()
-            .WithColumn("CaseKey").AsString().Nullable()
-            .WithColumn("After").AsString().Nullable()
-            .WithColumn("CaseKeyValue").AsString().Nullable()
-            .WithColumn("CaseId").AsInt32().Nullable();
+        public override void Up()
+        {
+            Create.Table("CaseEvent")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("CaseEventTypeId").AsInt32().Nullable()
+                .WithColumn("Before").AsString().Nullable()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable()
+                .WithColumn("CaseKey").AsString().Nullable()
+                .WithColumn("After").AsString().Nullable()
+                .WithColumn("CaseKeyValue").AsString().Nullable()
+                .WithColumn("CaseId").AsInt32().Nullable();
 
-        Create.Index().OnTable("CaseEvent")
-            .OnColumn("CaseKey").Ascending()
-            .OnColumn("CaseKeyValue").Ascending();
-    }
+            Create.Index().OnTable("CaseEvent")
+                .OnColumn("CaseKey").Ascending()
+                .OnColumn("CaseKeyValue").Ascending();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("CaseEvent");
+        public override void Down()
+        {
+            Delete.Table("CaseEvent");
+        }
     }
 }

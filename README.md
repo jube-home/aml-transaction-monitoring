@@ -18,10 +18,10 @@ installed. Via Docker Compose. Jube can be up and running in just a few minutes:
 ```shell
 git clone https://github.com/jube-home/aml-fraud-transaction-monitoring
 cd aml-fraud-transaction-monitoring
-export DockerComposePostgresPassword="SuperSecretPasswordToChangeForPg"
-export DockerComposeRabbitMQPassword="SuperSecretPasswordToChangeForAmqp"
-export DockerComposeJWTKey="IMPORTANT:_ChangeThisKey_~%pvif3KRo!3Mkm1oMC50TvAPi%{mUt<9sBm>DPjGZyfYYWssseVrNUqLQE}mz{L_UsingThisKeyIsDangerous"
-export DockerComposePasswordHashingKey="IMPORTANT:_ChangeThisKey_~%pvif3KRo!3Mkm1oMC50TvAPi%{mUt<9sBm>DPjGZyfYYWssseVrNUqLQE}mz{L_UsingThisKeyIsDangerous"
+export DockerComposePostgresPassword='SuperSecretPasswordToChangeForPg'
+export DockerComposeRabbitMQPassword='SuperSecretPasswordToChangeForAmqp'
+export DockerComposeJWTKey='IMPORTANT:_ChangeThisKey_~%pvif3KRo!3Mkm1oMC50TvAPi%{mUt<9sBm>DPjGZyfYYWssseVrNUqLQE}mz{L_UsingThisKeyIsDangerous'
+export DockerComposePasswordHashingKey='IMPORTANT:_ChangeThisKey_~%pvif3KRo!3Mkm1oMC50TvAPi%{mUt<9sBm>DPjGZyfYYWssseVrNUqLQE}mz{L_UsingThisKeyIsDangerous'
 docker compose up -d
 ```
 

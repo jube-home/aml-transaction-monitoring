@@ -13,30 +13,31 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429125003)]
-public class AddExhaustiveSearchInstancePromotedTrialInstanceVariableTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429125003)]
+    public class AddExhaustiveSearchInstancePromotedTrialInstanceVariableTableIndex : Migration
     {
-        Create.Table("ExhaustiveSearchInstancePromotedTrialInstanceVariable")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("ExhaustiveSearchInstanceTrialInstanceVariableId").AsInt32().Nullable()
-            .WithColumn("Mean").AsDouble().Nullable()
-            .WithColumn("StandardDeviation").AsDouble().Nullable()
-            .WithColumn("Kurtosis").AsDouble().Nullable()
-            .WithColumn("Skewness").AsDouble().Nullable()
-            .WithColumn("Maximum").AsDouble().Nullable()
-            .WithColumn("Minimum").AsDouble().Nullable()
-            .WithColumn("Iqr").AsDouble().Nullable();
+        public override void Up()
+        {
+            Create.Table("ExhaustiveSearchInstancePromotedTrialInstanceVariable")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("ExhaustiveSearchInstanceTrialInstanceVariableId").AsInt32().Nullable()
+                .WithColumn("Mean").AsDouble().Nullable()
+                .WithColumn("StandardDeviation").AsDouble().Nullable()
+                .WithColumn("Kurtosis").AsDouble().Nullable()
+                .WithColumn("Skewness").AsDouble().Nullable()
+                .WithColumn("Maximum").AsDouble().Nullable()
+                .WithColumn("Minimum").AsDouble().Nullable()
+                .WithColumn("Iqr").AsDouble().Nullable();
 
-        Create.Index().OnTable("ExhaustiveSearchInstancePromotedTrialInstanceVariable")
-            .OnColumn("ExhaustiveSearchInstanceTrialInstanceVariableId");
-    }
+            Create.Index().OnTable("ExhaustiveSearchInstancePromotedTrialInstanceVariable")
+                .OnColumn("ExhaustiveSearchInstanceTrialInstanceVariableId");
+        }
 
-    public override void Down()
-    {
-        Delete.Table("ExhaustiveSearchInstancePromotedTrialInstanceVariable");
+        public override void Down()
+        {
+            Delete.Table("ExhaustiveSearchInstancePromotedTrialInstanceVariable");
+        }
     }
 }

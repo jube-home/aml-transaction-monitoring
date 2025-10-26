@@ -13,37 +13,38 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220819093600)]
-public class AddEntityAnalysisModelTtlCounterVersionTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220819093600)]
+    public class AddEntityAnalysisModelTtlCounterVersionTableIndex : Migration
     {
-        Create.Table("EntityAnalysisModelTtlCounterVersion")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("EntityAnalysisModelTtlCounterId").AsInt32().Nullable()
-            .WithColumn("Name").AsString().Nullable()
-            .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
-            .WithColumn("Active").AsByte().Nullable()
-            .WithColumn("Locked").AsByte().Nullable()
-            .WithColumn("CreatedDate").AsDateTime().Nullable()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("Version").AsInt32().Nullable()
-            .WithColumn("DeletedDate").AsDateTime().Nullable()
-            .WithColumn("DeletedUser").AsString().Nullable()
-            .WithColumn("Deleted").AsByte().Nullable()
-            .WithColumn("TtlCounterInterval").AsString().Nullable()
-            .WithColumn("TtlCounterValue").AsInt32().Nullable()
-            .WithColumn("ResponsePayload").AsByte().Nullable()
-            .WithColumn("ReportTable").AsString().Nullable()
-            .WithColumn("TtlCounterDataName").AsString().Nullable()
-            .WithColumn("OnlineAggregation").AsByte().Nullable()
-            .WithColumn("EnableLiveForever").AsByte().Nullable();
-    }
+        public override void Up()
+        {
+            Create.Table("EntityAnalysisModelTtlCounterVersion")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("EntityAnalysisModelTtlCounterId").AsInt32().Nullable()
+                .WithColumn("Name").AsString().Nullable()
+                .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
+                .WithColumn("Active").AsByte().Nullable()
+                .WithColumn("Locked").AsByte().Nullable()
+                .WithColumn("CreatedDate").AsDateTime().Nullable()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("Version").AsInt32().Nullable()
+                .WithColumn("DeletedDate").AsDateTime().Nullable()
+                .WithColumn("DeletedUser").AsString().Nullable()
+                .WithColumn("Deleted").AsByte().Nullable()
+                .WithColumn("TtlCounterInterval").AsString().Nullable()
+                .WithColumn("TtlCounterValue").AsInt32().Nullable()
+                .WithColumn("ResponsePayload").AsByte().Nullable()
+                .WithColumn("ReportTable").AsString().Nullable()
+                .WithColumn("TtlCounterDataName").AsString().Nullable()
+                .WithColumn("OnlineAggregation").AsByte().Nullable()
+                .WithColumn("EnableLiveForever").AsByte().Nullable();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("EntityAnalysisModelTtlCounterVersion");
+        public override void Down()
+        {
+            Delete.Table("EntityAnalysisModelTtlCounterVersion");
+        }
     }
 }

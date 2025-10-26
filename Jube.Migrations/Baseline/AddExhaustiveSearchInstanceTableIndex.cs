@@ -13,51 +13,52 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124958)]
-public class AddExhaustiveSearchInstanceTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124958)]
+    public class AddExhaustiveSearchInstanceTableIndex : Migration
     {
-        Create.Table("ExhaustiveSearchInstance")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("CreatedDate").AsDateTime().Nullable()
-            .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
-            .WithColumn("Active").AsByte().Nullable()
-            .WithColumn("Locked").AsByte().Nullable()
-            .WithColumn("ResponsePayload").AsByte().Nullable()
-            .WithColumn("ReportTable").AsByte().Nullable()
-            .WithColumn("ModelsSinceBest").AsInt32().Nullable()
-            .WithColumn("Guid").AsGuid().Nullable()
-            .WithColumn("Name").AsString().Nullable()
-            .WithColumn("Anomaly").AsByte().Nullable()
-            .WithColumn("Filter").AsByte().Nullable()
-            .WithColumn("AnomalyProbability").AsDouble().Nullable()
-            .WithColumn("FilterJson").AsCustom("jsonb").Nullable()
-            .WithColumn("FilterSql").AsString().Nullable()
-            .WithColumn("FilterTokens").AsCustom("jsonb").Nullable()
-            .WithColumn("StatusId").AsByte().Nullable()
-            .WithColumn("Models").AsInt32().Nullable()
-            .WithColumn("Score").AsDouble().Nullable()
-            .WithColumn("TopologyComplexity").AsDouble().Nullable()
-            .WithColumn("CompletedDate").AsDateTime().Nullable()
-            .WithColumn("UpdatedDate").AsDateTime().Nullable()
-            .WithColumn("Object").AsBinary().Nullable()
-            .WithColumn("Deleted").AsByte().Nullable()
-            .WithColumn("DeletedUser").AsString().Nullable()
-            .WithColumn("DeletedDate").AsDateTime().Nullable()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("Version").AsInt32().Nullable()
-            .WithColumn("InheritedId").AsInt32().Nullable();
+        public override void Up()
+        {
+            Create.Table("ExhaustiveSearchInstance")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("CreatedDate").AsDateTime().Nullable()
+                .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
+                .WithColumn("Active").AsByte().Nullable()
+                .WithColumn("Locked").AsByte().Nullable()
+                .WithColumn("ResponsePayload").AsByte().Nullable()
+                .WithColumn("ReportTable").AsByte().Nullable()
+                .WithColumn("ModelsSinceBest").AsInt32().Nullable()
+                .WithColumn("Guid").AsGuid().Nullable()
+                .WithColumn("Name").AsString().Nullable()
+                .WithColumn("Anomaly").AsByte().Nullable()
+                .WithColumn("Filter").AsByte().Nullable()
+                .WithColumn("AnomalyProbability").AsDouble().Nullable()
+                .WithColumn("FilterJson").AsCustom("jsonb").Nullable()
+                .WithColumn("FilterSql").AsString().Nullable()
+                .WithColumn("FilterTokens").AsCustom("jsonb").Nullable()
+                .WithColumn("StatusId").AsByte().Nullable()
+                .WithColumn("Models").AsInt32().Nullable()
+                .WithColumn("Score").AsDouble().Nullable()
+                .WithColumn("TopologyComplexity").AsDouble().Nullable()
+                .WithColumn("CompletedDate").AsDateTime().Nullable()
+                .WithColumn("UpdatedDate").AsDateTime().Nullable()
+                .WithColumn("Object").AsBinary().Nullable()
+                .WithColumn("Deleted").AsByte().Nullable()
+                .WithColumn("DeletedUser").AsString().Nullable()
+                .WithColumn("DeletedDate").AsDateTime().Nullable()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("Version").AsInt32().Nullable()
+                .WithColumn("InheritedId").AsInt32().Nullable();
 
-        Create.Index().OnTable("ExhaustiveSearchInstance")
-            .OnColumn("EntityAnalysisModelId").Ascending()
-            .OnColumn("Deleted").Ascending();
-    }
+            Create.Index().OnTable("ExhaustiveSearchInstance")
+                .OnColumn("EntityAnalysisModelId").Ascending()
+                .OnColumn("Deleted").Ascending();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("ExhaustiveSearchInstance");
+        public override void Down()
+        {
+            Delete.Table("ExhaustiveSearchInstance");
+        }
     }
 }

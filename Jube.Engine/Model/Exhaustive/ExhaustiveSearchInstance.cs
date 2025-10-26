@@ -15,15 +15,16 @@ using System;
 using System.Collections.Generic;
 using Accord.Neuro;
 
-namespace Jube.Engine.Model.Exhaustive;
-
-public class ExhaustiveSearchInstance
+namespace Jube.Engine.Model.Exhaustive
 {
-    public string Name { get; set; }
-    public bool ResponsePayload { get; set; }
-    public bool ReportTable { get; set; }
-    public int Id { get; set; }
-    public Guid Guid { get; set; }
-    public ActivationNetwork TopologyNetwork { get; set; }
-    public List<ExhaustiveSearchInstancePromotedTrialInstanceVariable> NetworkVariablesInOrder { get; } = [];
+    public class ExhaustiveSearchInstance
+    {
+        public string Name { get; set; }
+        public bool ResponsePayload { get; set; }
+        public bool ReportTable { get; set; }
+        public int Id { get; set; }
+        public Guid Guid { get; set; }
+        public ActivationNetwork TopologyNetwork { get; set; }
+        public List<ExhaustiveSearchInstancePromotedTrialInstanceVariable> NetworkVariablesInOrder { get; } = [];
+    }
 }

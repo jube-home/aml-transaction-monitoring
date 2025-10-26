@@ -13,36 +13,37 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220615103900)]
-public class AddCaseFileTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220615103900)]
+    public class AddCaseFileTableIndex : Migration
     {
-        Create.Table("CaseFile")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("CaseId").AsInt32()
-            .WithColumn("CaseKey").AsString().Nullable()
-            .WithColumn("CaseKeyValue").AsString().Nullable()
-            .WithColumn("Name").AsString().Nullable()
-            .WithColumn("ContentType").AsString().Nullable()
-            .WithColumn("Extension").AsString().Nullable()
-            .WithColumn("Size").AsInt64().Nullable()
-            .WithColumn("Object").AsBinary().Nullable()
-            .WithColumn("CreatedDate").AsDateTime().Nullable()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("DeletedDate").AsDateTime().Nullable()
-            .WithColumn("DeletedUser").AsString().Nullable()
-            .WithColumn("Deleted").AsByte().Nullable();
+        public override void Up()
+        {
+            Create.Table("CaseFile")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("CaseId").AsInt32()
+                .WithColumn("CaseKey").AsString().Nullable()
+                .WithColumn("CaseKeyValue").AsString().Nullable()
+                .WithColumn("Name").AsString().Nullable()
+                .WithColumn("ContentType").AsString().Nullable()
+                .WithColumn("Extension").AsString().Nullable()
+                .WithColumn("Size").AsInt64().Nullable()
+                .WithColumn("Object").AsBinary().Nullable()
+                .WithColumn("CreatedDate").AsDateTime().Nullable()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("DeletedDate").AsDateTime().Nullable()
+                .WithColumn("DeletedUser").AsString().Nullable()
+                .WithColumn("Deleted").AsByte().Nullable();
 
-        Create.Index().OnTable("CaseFile")
-            .OnColumn("CaseKey").Ascending()
-            .OnColumn("CaseKeyValue").Ascending();
-    }
+            Create.Index().OnTable("CaseFile")
+                .OnColumn("CaseKey").Ascending()
+                .OnColumn("CaseKeyValue").Ascending();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("CaseFile");
+        public override void Down()
+        {
+            Delete.Table("CaseFile");
+        }
     }
 }

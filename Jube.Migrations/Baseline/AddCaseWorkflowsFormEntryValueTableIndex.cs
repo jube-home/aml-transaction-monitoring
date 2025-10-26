@@ -13,25 +13,26 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124915)]
-public class AddCaseWorkflowFormEntryValueTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124915)]
+    public class AddCaseWorkflowFormEntryValueTableIndex : Migration
     {
-        Create.Table("CaseWorkflowFormEntryValue")
-            .WithColumn("Id").AsInt64().PrimaryKey().Identity()
-            .WithColumn("Name").AsString().Nullable()
-            .WithColumn("Value").AsString().Nullable()
-            .WithColumn("CaseWorkflowFormEntryId").AsInt32().Nullable();
+        public override void Up()
+        {
+            Create.Table("CaseWorkflowFormEntryValue")
+                .WithColumn("Id").AsInt64().PrimaryKey().Identity()
+                .WithColumn("Name").AsString().Nullable()
+                .WithColumn("Value").AsString().Nullable()
+                .WithColumn("CaseWorkflowFormEntryId").AsInt32().Nullable();
 
-        Create.Index().OnTable("CaseWorkflowFormEntryValue")
-            .OnColumn("CaseWorkflowFormEntryId").Descending();
-    }
+            Create.Index().OnTable("CaseWorkflowFormEntryValue")
+                .OnColumn("CaseWorkflowFormEntryId").Descending();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("CaseWorkflowFormEntryValue");
+        public override void Down()
+        {
+            Delete.Table("CaseWorkflowFormEntryValue");
+        }
     }
 }

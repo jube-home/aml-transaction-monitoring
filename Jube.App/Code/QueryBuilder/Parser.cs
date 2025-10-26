@@ -11,25 +11,25 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Jube.Data.Context;
-using Jube.Data.Query;
-using Jube.Data.Repository;
-
 namespace Jube.App.Code.QueryBuilder
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Data.Context;
+    using Data.Query;
+    using Data.Repository;
+
     public class Parser
     {
-        private readonly List<GetModelFieldByEntityAnalysisModelIdParseTypeIdQuery.Dto> _completionDto;
-        public readonly List<Rule> Rules = new();
-        public readonly List<object> Tokens = new();
+        private readonly List<GetModelFieldByEntityAnalysisModelIdParseTypeIdQuery.Dto> completionDto;
+        public readonly List<Rule> Rules = new List<Rule>();
+        public readonly List<object> Tokens = new List<object>();
         public string Sql;
 
         public Parser(Rule rule, DbContext dbContext, Guid caseWorkflowGuid, string userName)
         {
-            _completionDto = GetCompletions(dbContext, caseWorkflowGuid, userName);
+            completionDto = GetCompletions(dbContext, caseWorkflowGuid, userName);
             ExtractRule(rule);
         }
 
@@ -45,8 +45,10 @@ namespace Jube.App.Code.QueryBuilder
                 = new GetModelFieldByEntityAnalysisModelIdParseTypeIdQuery(dbContext, userName);
 
             if (entityAnalysisModelId != null)
+            {
                 return getModelFieldByEntityAnalysisModelIdParseTypeIdQuery
                     .Execute(entityAnalysisModelId.Value, 5, true).ToList();
+            }
 
             throw new Exception(
                 "Could not lookup model for Case Workflow Id {caseWorkflowId} and therefore could not lookup completions.");
@@ -55,7 +57,12 @@ namespace Jube.App.Code.QueryBuilder
         private void ExtractRule(Rule ruleChild)
         {
             ProcessChildrenRules(ruleChild);
-            if (ValidateRuleNotNull(ruleChild)) return;
+
+            if (ValidateRuleNotNull(ruleChild))
+            {
+                return;
+            }
+
             AddRule(ruleChild);
             AddToken(ruleChild);
             ConcatenateSql(ruleChild);
@@ -63,14 +70,20 @@ namespace Jube.App.Code.QueryBuilder
 
         private void ProcessChildrenRules(Rule ruleChild)
         {
-            if (ruleChild?.Rules == null) return;
+            if (ruleChild?.Rules == null)
+            {
+                return;
+            }
 
             Sql += "(";
             for (var j = 0; j < ruleChild.Rules.Count; j++)
             {
                 ExtractRule(ruleChild.Rules.ElementAt(j));
 
-                if (j < ruleChild.Rules.Count - 1) Sql = Sql + " " + ruleChild.Condition + " ";
+                if (j < ruleChild.Rules.Count - 1)
+                {
+                    Sql = Sql + " " + ruleChild.Condition + " ";
+                }
             }
 
             Sql += ")";
@@ -78,7 +91,10 @@ namespace Jube.App.Code.QueryBuilder
 
         private void ConcatenateSql(Rule ruleChild)
         {
-            if (ruleChild == null) return;
+            if (ruleChild == null)
+            {
+                return;
+            }
 
             var field = ReturnField(ruleChild.Id);
 
@@ -112,7 +128,11 @@ namespace Jube.App.Code.QueryBuilder
 
         private static bool ValidateRuleNotNull(Rule ruleChild)
         {
-            if (ruleChild?.Rules != null) return true;
+            if (ruleChild?.Rules != null)
+            {
+                return true;
+            }
+
             return ruleChild is not { Value: not null, Operator: not null, Field: not null };
         }
 
@@ -126,10 +146,10 @@ namespace Jube.App.Code.QueryBuilder
             switch (ruleChild.Type)
             {
                 case "integer":
-                    Tokens.Add(int.Parse(ruleChild.Value));
+                    Tokens.Add(Int32.Parse(ruleChild.Value));
                     break;
                 case "double":
-                    Tokens.Add(double.Parse(ruleChild.Value));
+                    Tokens.Add(Double.Parse(ruleChild.Value));
                     break;
                 case "string":
                     Tokens.Add(ruleChild.Value);
@@ -139,7 +159,7 @@ namespace Jube.App.Code.QueryBuilder
                     Tokens.Add(date);
                     break;
                 case "boolean":
-                    Tokens.Add(bool.Parse(ruleChild.Value));
+                    Tokens.Add(Boolean.Parse(ruleChild.Value));
                     break;
                 default:
                     Tokens.Add(ruleChild.Value);
@@ -149,11 +169,22 @@ namespace Jube.App.Code.QueryBuilder
 
         private string ReturnField(string id)
         {
-            if (IsCaseField(id) != null) return $"\"Case\".\"{id}\"";
-            if (IsCaseWorkflowStatusField(id) != null) return $"\"CaseWorkflowStatus\".\"{id}\"";
+            if (IsCaseField(id) != null)
+            {
+                return $"\"Case\".\"{id}\"";
+            }
 
-            var matched = _completionDto.FirstOrDefault(f => f.Name == id);
-            if (matched != null) return matched.ValueSqlPath;
+            if (IsCaseWorkflowStatusField(id) != null)
+            {
+                return $"\"CaseWorkflowStatus\".\"{id}\"";
+            }
+
+            var matched = completionDto.FirstOrDefault(f => f.Name == id);
+
+            if (matched != null)
+            {
+                return matched.ValueSqlPath;
+            }
 
             throw new InvalidOperationException($"Not found {id} in completions list.");
         }

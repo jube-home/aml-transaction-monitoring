@@ -11,79 +11,81 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB;
-
-namespace Jube.Data.Repository;
-
-public class ExhaustiveSearchInstancePromotedTrialInstanceRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
-    private readonly int? _tenantRegistryId;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Context;
+    using LinqToDB;
+    using Poco;
 
-    public ExhaustiveSearchInstancePromotedTrialInstanceRepository(DbContext dbContext)
+    public class ExhaustiveSearchInstancePromotedTrialInstanceRepository
     {
-        _dbContext = dbContext;
-    }
+        private readonly DbContext dbContext;
+        private readonly int? tenantRegistryId;
 
-    public ExhaustiveSearchInstancePromotedTrialInstanceRepository(DbContext dbContext, int tenantRegistryId)
-    {
-        _dbContext = dbContext;
-        _tenantRegistryId = tenantRegistryId;
-    }
+        public ExhaustiveSearchInstancePromotedTrialInstanceRepository(DbContext dbContext)
+        {
+            this.dbContext = dbContext;
+        }
 
-    public ExhaustiveSearchInstancePromotedTrialInstanceRepository(DbContext dbContext, string userName)
-    {
-        _dbContext = dbContext;
-        _tenantRegistryId = _dbContext.UserInTenant.Where(w => w.User == userName)
-            .Select(s => s.TenantRegistryId).FirstOrDefault();
-    }
+        public ExhaustiveSearchInstancePromotedTrialInstanceRepository(DbContext dbContext, int tenantRegistryId)
+        {
+            this.dbContext = dbContext;
+            this.tenantRegistryId = tenantRegistryId;
+        }
 
-    public void UpdateActive(int id, bool active)
-    {
-        var records = _dbContext.ExhaustiveSearchInstancePromotedTrialInstance
-            .Where(d =>
-                (d.ExhaustiveSearchInstanceTrialInstance.ExhaustiveSearchInstance
-                    .EntityAnalysisModel.TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue)
-                && d.Id == id)
-            .Set(s => s.Active, (byte)(active ? 1 : 0))
-            .Update();
+        public ExhaustiveSearchInstancePromotedTrialInstanceRepository(DbContext dbContext, string userName)
+        {
+            this.dbContext = dbContext;
+            tenantRegistryId = this.dbContext.UserInTenant.Where(w => w.User == userName)
+                .Select(s => s.TenantRegistryId).FirstOrDefault();
+        }
 
-        if (records == 0) throw new KeyNotFoundException();
-    }
+        public void UpdateActive(int id, bool active)
+        {
+            var records = dbContext.ExhaustiveSearchInstancePromotedTrialInstance
+                .Where(d =>
+                    (d.ExhaustiveSearchInstanceTrialInstance.ExhaustiveSearchInstance
+                        .EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                    && d.Id == id)
+                .Set(s => s.Active, (byte)(active ? 1 : 0))
+                .Update();
 
-    public ExhaustiveSearchInstancePromotedTrialInstance Insert(ExhaustiveSearchInstancePromotedTrialInstance model)
-    {
-        model.CreatedDate = DateTime.Now;
-        model.Id = _dbContext.InsertWithInt32Identity(model);
-        return model;
-    }
+            if (records == 0)
+            {
+                throw new KeyNotFoundException();
+            }
+        }
 
-    public IQueryable<ExhaustiveSearchInstancePromotedTrialInstance>
-        GetByExhaustiveSearchInstanceTrialInstanceIdOrderById(
-            int exhaustiveSearchInstanceTrialInstanceId)
-    {
-        return _dbContext.ExhaustiveSearchInstancePromotedTrialInstance.Where(w =>
-                w.ExhaustiveSearchInstanceTrialInstanceId == exhaustiveSearchInstanceTrialInstanceId)
-            .OrderBy(o => o.Id);
-    }
+        public ExhaustiveSearchInstancePromotedTrialInstance Insert(ExhaustiveSearchInstancePromotedTrialInstance model)
+        {
+            model.CreatedDate = DateTime.Now;
+            model.Id = dbContext.InsertWithInt32Identity(model);
+            return model;
+        }
 
-    public void DeleteByTenantRegistryId(int tenantRegistryId, int importId)
-    {
-        var records = _dbContext.ExhaustiveSearchInstancePromotedTrialInstance
-            .Where(d =>
-                (d.ExhaustiveSearchInstanceTrialInstance.ExhaustiveSearchInstance.EntityAnalysisModel
-                    .TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue)
-                && d.ExhaustiveSearchInstanceTrialInstance.ExhaustiveSearchInstance.EntityAnalysisModel
-                    .TenantRegistryId == tenantRegistryId
-                && (d.Deleted == 0 || d.Deleted == null))
-            .Set(s => s.ImportId, importId)
-            .Set(s => s.Deleted, Convert.ToByte(1))
-            .Set(s => s.DeletedDate, DateTime.Now)
-            .Update();
+        public IQueryable<ExhaustiveSearchInstancePromotedTrialInstance>
+            GetByExhaustiveSearchInstanceTrialInstanceIdOrderById(
+                int exhaustiveSearchInstanceTrialInstanceId)
+        {
+            return dbContext.ExhaustiveSearchInstancePromotedTrialInstance.Where(w =>
+                    w.ExhaustiveSearchInstanceTrialInstanceId == exhaustiveSearchInstanceTrialInstanceId)
+                .OrderBy(o => o.Id);
+        }
+
+        public void DeleteByTenantRegistryIdOutsideOfInstance(int tenantRegistryIdOutsideOfInstance, int importId)
+        {
+            dbContext.ExhaustiveSearchInstancePromotedTrialInstance
+                .Where(d =>
+                    d.ExhaustiveSearchInstanceTrialInstance.ExhaustiveSearchInstance.EntityAnalysisModel
+                        .TenantRegistryId == tenantRegistryIdOutsideOfInstance
+                    && (d.Deleted == 0 || d.Deleted == null))
+                .Set(s => s.ImportId, importId)
+                .Set(s => s.Deleted, Convert.ToByte(1))
+                .Set(s => s.DeletedDate, DateTime.Now)
+                .Update();
+        }
     }
 }

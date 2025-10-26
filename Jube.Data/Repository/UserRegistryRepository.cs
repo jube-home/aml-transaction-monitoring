@@ -11,184 +11,206 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using AutoMapper;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB;
-
-namespace Jube.Data.Repository;
-
-public class UserRegistryRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
-    private readonly int? _tenantRegistryId;
-    private readonly string _userName;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using AutoMapper;
+    using Context;
+    using LinqToDB;
+    using Poco;
 
-    public UserRegistryRepository(DbContext dbContext, string userName)
+    public class UserRegistryRepository
     {
-        _dbContext = dbContext;
-        _userName = userName;
-        _tenantRegistryId = _dbContext.UserInTenant.Where(w => w.User == _userName)
-            .Select(s => s.TenantRegistryId).FirstOrDefault();
-    }
+        private readonly DbContext dbContext;
+        private readonly int? tenantRegistryId;
+        private readonly string userName;
 
-    public UserRegistryRepository(DbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
-
-    public UserRegistryRepository(DbContext dbContext, RoleRegistry roleRegistry)
-    {
-        _dbContext = dbContext;
-        _tenantRegistryId = roleRegistry.TenantRegistryId;
-    }
-
-    public IEnumerable<UserRegistry> Get()
-    {
-        return _dbContext.UserRegistry
-            .Where(w => w.RoleRegistry.TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue);
-    }
-
-    public IEnumerable<UserRegistry> GetByRoleRegistryId(int roleRegistryId)
-    {
-        return _dbContext.UserRegistry
-            .Where(w => (w.RoleRegistry.TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue)
-                        && w.RoleRegistryId == roleRegistryId && (w.Deleted == 0 || w.Deleted == null));
-    }
-
-    public UserRegistry GetById(int id)
-    {
-        return _dbContext.UserRegistry.FirstOrDefault(w =>
-            (w.RoleRegistry.TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue)
-            && w.Id == id && (w.Deleted == 0 || w.Deleted == null));
-    }
-
-    public UserRegistry GetByUserName(string userName)
-    {
-        return _dbContext.UserRegistry.FirstOrDefault(w =>
-            (w.RoleRegistry.TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue)
-            && w.Name == userName && (w.Deleted == 0 || w.Deleted == null));
-    }
-
-    public UserRegistry Insert(UserRegistry model)
-    {
-        if (!_tenantRegistryId.HasValue) throw new KeyNotFoundException();
-
-        model.CreatedUser = _userName;
-        model.Version = 1;
-        model.CreatedDate = DateTime.Now;
-        model.Guid = Guid.NewGuid();
-        model.Id = _dbContext.InsertWithInt32Identity(model);
-
-        var userInTenant = new UserInTenant
+        public UserRegistryRepository(DbContext dbContext, string userName)
         {
-            User = model.Name,
-            TenantRegistryId = _tenantRegistryId.Value,
-            SwitchedUser = _userName,
-            SwitchedDate = DateTime.Now
-        };
+            this.dbContext = dbContext;
+            this.userName = userName;
+            tenantRegistryId = this.dbContext.UserInTenant.Where(w => w.User == this.userName)
+                .Select(s => s.TenantRegistryId).FirstOrDefault();
+        }
 
-        _dbContext.Insert(userInTenant);
+        public UserRegistryRepository(DbContext dbContext)
+        {
+            this.dbContext = dbContext;
+        }
 
-        return model;
-    }
+        public UserRegistryRepository(DbContext dbContext, RoleRegistry roleRegistry)
+        {
+            this.dbContext = dbContext;
+            tenantRegistryId = roleRegistry.TenantRegistryId;
+        }
 
-    public UserRegistry Update(UserRegistry model)
-    {
-        var existing = _dbContext.UserRegistry
-            .FirstOrDefault(w => w.Id
-                                 == model.Id
-                                 && (w.Deleted == 0 || w.Deleted == null));
+        public IEnumerable<UserRegistry> Get()
+        {
+            return dbContext.UserRegistry
+                .Where(w => w.RoleRegistry.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue);
+        }
 
-        if (existing == null) throw new KeyNotFoundException();
+        public IEnumerable<UserRegistry> GetByRoleRegistryId(int roleRegistryId)
+        {
+            return dbContext.UserRegistry
+                .Where(w => (w.RoleRegistry.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                            && w.RoleRegistryId == roleRegistryId && (w.Deleted == 0 || w.Deleted == null));
+        }
 
-        model.Version = existing.Version + 1;
-        model.Guid = existing.Guid;
-        model.CreatedUser = _userName;
-        model.CreatedDate = DateTime.Now;
+        public UserRegistry GetById(int id)
+        {
+            return dbContext.UserRegistry.FirstOrDefault(w =>
+                (w.RoleRegistry.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                && w.Id == id && (w.Deleted == 0 || w.Deleted == null));
+        }
 
-        _dbContext.Update(model);
+        public UserRegistry GetByUserName(string userNameInTenant)
+        {
+            return dbContext.UserRegistry.FirstOrDefault(w =>
+                (w.RoleRegistry.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                && w.Name == userNameInTenant && (w.Deleted == 0 || w.Deleted == null));
+        }
 
-        var config = new MapperConfiguration(cfg => { cfg.CreateMap<UserRegistry, UserRegistryVersion>(); });
-        var mapper = new Mapper(config);
+        public UserRegistry Insert(UserRegistry model)
+        {
+            if (!tenantRegistryId.HasValue)
+            {
+                throw new KeyNotFoundException();
+            }
 
-        var audit = mapper.Map<UserRegistryVersion>(existing);
-        audit.UserRegistryId = existing.Id;
+            model.CreatedUser = userName;
+            model.Version = 1;
+            model.CreatedDate = DateTime.Now;
+            model.Guid = Guid.NewGuid();
+            model.Id = dbContext.InsertWithInt32Identity(model);
 
-        _dbContext.Insert(audit);
+            var userInTenant = new UserInTenant
+            {
+                User = model.Name,
+                TenantRegistryId = tenantRegistryId.Value,
+                SwitchedUser = userName,
+                SwitchedDate = DateTime.Now
+            };
 
-        return model;
-    }
+            dbContext.Insert(userInTenant);
 
-    public void ResetFailedPasswordCount(int id)
-    {
-        var records = _dbContext.UserRegistry
-            .Where(d => (d.RoleRegistry.TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue)
-                        && d.Id == id
-                        && (d.Deleted == 0 || d.Deleted == null))
-            .Set(s => s.FailedPasswordCount, 0)
-            .Update();
+            return model;
+        }
 
-        if (records == 0) throw new KeyNotFoundException();
-    }
+        public UserRegistry Update(UserRegistry model)
+        {
+            var existing = dbContext.UserRegistry
+                .FirstOrDefault(w => w.Id
+                                     == model.Id
+                                     && (w.Deleted == 0 || w.Deleted == null));
 
-    public void SetPassword(int id, string password, DateTime expiryDate)
-    {
-        var records = _dbContext.UserRegistry
-            .Where(d => (d.RoleRegistry.TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue)
-                        && d.Id == id
-                        && (d.Deleted == 0 || d.Deleted == null))
-            .Set(s => s.Password, password)
-            .Set(s => s.PasswordLocked, (byte)0)
-            .Set(s => s.FailedPasswordCount, 0)
-            .Set(s => s.PasswordExpiryDate, expiryDate)
-            .Set(s => s.PasswordCreatedDate, DateTime.Now)
-            .Update();
+            if (existing == null)
+            {
+                throw new KeyNotFoundException();
+            }
 
-        if (records == 0) throw new KeyNotFoundException();
-    }
+            model.Version = existing.Version + 1;
+            model.Guid = existing.Guid;
+            model.CreatedUser = userName;
+            model.CreatedDate = DateTime.Now;
 
-    public void SetLocked(int id)
-    {
-        var records = _dbContext.UserRegistry
-            .Where(d => (d.RoleRegistry.TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue)
-                        && d.Id == id
-                        && (d.Deleted == 0 || d.Deleted == null))
-            .Set(s => s.PasswordLocked, (byte)1)
-            .Set(s => s.PasswordLockedDate, DateTime.Now)
-            .Update();
+            dbContext.Update(model);
 
-        if (records == 0) throw new KeyNotFoundException();
-    }
+            var config = new MapperConfiguration(cfg => { cfg.CreateMap<UserRegistry, UserRegistryVersion>(); });
+            var mapper = new Mapper(config);
 
-    public void IncrementFailedPassword(int id)
-    {
-        var existing = _dbContext.UserRegistry
-            .FirstOrDefault(w => w.Id
-                                 == id
-                                 && (w.Deleted == 0 || w.Deleted == null));
+            var audit = mapper.Map<UserRegistryVersion>(existing);
+            audit.UserRegistryId = existing.Id;
 
-        if (existing == null) throw new KeyNotFoundException();
+            dbContext.Insert(audit);
 
-        existing.FailedPasswordCount += 1;
+            return model;
+        }
 
-        _dbContext.Update(existing);
-    }
+        public void ResetFailedPasswordCount(int id)
+        {
+            var records = dbContext.UserRegistry
+                .Where(d => (d.RoleRegistry.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                            && d.Id == id
+                            && (d.Deleted == 0 || d.Deleted == null))
+                .Set(s => s.FailedPasswordCount, 0)
+                .Update();
 
-    public void Delete(int id)
-    {
-        var records = _dbContext.UserRegistry
-            .Where(d => (d.RoleRegistry.TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue)
-                        && d.Id == id
-                        && (d.Deleted == 0 || d.Deleted == null))
-            .Set(s => s.Deleted, Convert.ToByte(1))
-            .Set(s => s.DeletedDate, DateTime.Now)
-            .Set(s => s.DeletedUser, _userName)
-            .Update();
+            if (records == 0)
+            {
+                throw new KeyNotFoundException();
+            }
+        }
 
-        if (records == 0) throw new KeyNotFoundException();
+        public void SetPassword(int id, string password, DateTime expiryDate)
+        {
+            var records = dbContext.UserRegistry
+                .Where(d => (d.RoleRegistry.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                            && d.Id == id
+                            && (d.Deleted == 0 || d.Deleted == null))
+                .Set(s => s.Password, password)
+                .Set(s => s.PasswordLocked, (byte)0)
+                .Set(s => s.FailedPasswordCount, 0)
+                .Set(s => s.PasswordExpiryDate, expiryDate)
+                .Set(s => s.PasswordCreatedDate, DateTime.Now)
+                .Update();
+
+            if (records == 0)
+            {
+                throw new KeyNotFoundException();
+            }
+        }
+
+        public void SetLocked(int id)
+        {
+            var records = dbContext.UserRegistry
+                .Where(d => (d.RoleRegistry.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                            && d.Id == id
+                            && (d.Deleted == 0 || d.Deleted == null))
+                .Set(s => s.PasswordLocked, (byte)1)
+                .Set(s => s.PasswordLockedDate, DateTime.Now)
+                .Update();
+
+            if (records == 0)
+            {
+                throw new KeyNotFoundException();
+            }
+        }
+
+        public void IncrementFailedPassword(int id)
+        {
+            var existing = dbContext.UserRegistry
+                .FirstOrDefault(w => w.Id
+                                     == id
+                                     && (w.Deleted == 0 || w.Deleted == null));
+
+            if (existing == null)
+            {
+                throw new KeyNotFoundException();
+            }
+
+            existing.FailedPasswordCount += 1;
+
+            dbContext.Update(existing);
+        }
+
+        public void Delete(int id)
+        {
+            var records = dbContext.UserRegistry
+                .Where(d => (d.RoleRegistry.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                            && d.Id == id
+                            && (d.Deleted == 0 || d.Deleted == null))
+                .Set(s => s.Deleted, Convert.ToByte(1))
+                .Set(s => s.DeletedDate, DateTime.Now)
+                .Set(s => s.DeletedUser, userName)
+                .Update();
+
+            if (records == 0)
+            {
+                throw new KeyNotFoundException();
+            }
+        }
     }
 }

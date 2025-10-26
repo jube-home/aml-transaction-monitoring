@@ -11,55 +11,58 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using Jube.App.Code;
-using Jube.App.Dto;
-using Jube.App.Dto.Requests;
-using Jube.Data.Context;
-using Jube.Data.Repository;
-using Jube.Engine.Helpers;
-using Jube.Parser;
-using Jube.Parser.Compiler;
-using log4net;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-
 namespace Jube.App.Controllers.Helper
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using System.Reflection;
+    using System.Text;
+    using Code;
+    using Data.Context;
+    using Data.Repository;
+    using Dto;
+    using Dto.Requests;
+    using DynamicEnvironment;
+    using log4net;
+    using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.AspNetCore.Mvc;
+    using Parser;
+    using Parser.Compiler;
+
     [Route("api/[controller]")]
     [Produces("application/json")]
     [Authorize]
     public class ParserController : Controller
     {
-        private readonly DbContext _dbContext;
-        private readonly ILog _log;
-        private readonly PermissionValidation _permissionValidation;
-        private readonly string _userName;
+        private readonly DbContext dbContext;
+        private readonly ILog log;
+        private readonly PermissionValidation permissionValidation;
+        private readonly string userName;
 
         public ParserController(ILog log, IHttpContextAccessor httpContextAccessor,
-            DynamicEnvironment.DynamicEnvironment dynamicEnvironment)
+            DynamicEnvironment dynamicEnvironment)
         {
             if (httpContextAccessor.HttpContext?.User.Identity != null)
-                _userName = httpContextAccessor.HttpContext.User.Identity.Name;
-            _log = log;
+            {
+                userName = httpContextAccessor.HttpContext.User.Identity.Name;
+            }
 
-            _dbContext =
+            this.log = log;
+
+            dbContext =
                 DataConnectionDbContext.GetDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
-            _permissionValidation = new PermissionValidation(_dbContext, _userName);
+            permissionValidation = new PermissionValidation(dbContext, userName);
         }
 
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                _dbContext.Close();
-                _dbContext.Dispose();
+                dbContext.Close();
+                dbContext.Dispose();
             }
 
             base.Dispose(disposing);
@@ -70,9 +73,15 @@ namespace Jube.App.Controllers.Helper
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 8, 10, 13, 14, 16, 17, 25, 26 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        8, 10, 13, 14, 16, 17, 25, 26
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var tokens = _dbContext.RuleScriptToken.Select(s => s.Token).ToList();
+                var tokens = dbContext.RuleScriptToken.Select(s => s.Token).ToList();
 
                 var entityAnalysisModelRequestXPaths = parseRuleRequestDto.RuleParseType switch
                 {
@@ -115,7 +124,7 @@ namespace Jube.App.Controllers.Helper
                         = EntityAnalysisModelsExhaustiveAdaptations(parseRuleRequestDto.EntityAnalysisModelId);
                 }
 
-                var parser = new Parser.Parser(_log,
+                var parser = new Parser(log,
                     tokens
                 )
                 {
@@ -140,7 +149,10 @@ namespace Jube.App.Controllers.Helper
                 parsedRule = parser.Parse(parsedRule);
 
                 var sb = new StringBuilder();
-                foreach (var softParseErrorSpan in parsedRule.ErrorSpans) sb.AppendLine(softParseErrorSpan.Message);
+                foreach (var softParseErrorSpan in parsedRule.ErrorSpans)
+                {
+                    sb.AppendLine(softParseErrorSpan.Message);
+                }
 
                 var response = new ParseRuleResultDto
                 {
@@ -162,20 +174,16 @@ namespace Jube.App.Controllers.Helper
                 var strPathFramework = Path.GetDirectoryName(typeof(object).Assembly.Location);
 
                 if (strPathFramework != null)
+                {
                     if (strPathBinary != null)
                     {
                         var refs = new[]
                         {
-                            Path.Combine(strPathFramework, "mscorlib.dll"),
-                            Path.Combine(strPathFramework, "System.dll"),
-                            Path.Combine(strPathFramework, "Microsoft.VisualBasic.dll"),
-                            Path.Combine(strPathFramework, "System.Xml.dll"),
-                            Path.Combine(strPathBinary, "log4net.dll"),
-                            Path.Combine(strPathFramework, "System.Collections.dll")
+                            Path.Combine(strPathFramework, "mscorlib.dll"), Path.Combine(strPathFramework, "System.dll"), Path.Combine(strPathFramework, "Microsoft.VisualBasic.dll"), Path.Combine(strPathFramework, "System.Xml.dll"), Path.Combine(strPathBinary, "log4net.dll"), Path.Combine(strPathBinary, "Jube.Dictionary.dll"), Path.Combine(strPathFramework, "System.Collections.dll")
                         };
 
                         var compile = new Compile();
-                        compile.CompileCode(parsedRule.ParsedRuleText, _log, refs);
+                        compile.CompileCode(parsedRule.ParsedRuleText, log, refs);
 
                         if (!compile.Success)
                         {
@@ -203,13 +211,16 @@ namespace Jube.App.Controllers.Helper
                             return response;
                         }
                     }
+                }
 
                 if (errorSpans.Count > 0)
+                {
                     return new ParseRuleResultDto
                     {
                         Message = "Error",
                         ErrorSpans = errorSpans
                     };
+                }
 
                 return new ParseRuleResultDto
                 {
@@ -218,7 +229,7 @@ namespace Jube.App.Controllers.Helper
             }
             catch (Exception ex)
             {
-                _log.Error(ex.ToString());
+                log.Error(ex.ToString());
 
                 return new ParseRuleResultDto
                 {
@@ -230,7 +241,7 @@ namespace Jube.App.Controllers.Helper
         private List<string> EntityAnalysisModelsHttpAdaptations(int entityAnalysisModelId)
         {
             var entityAnalysisModelHttpAdaptationRepository =
-                new EntityAnalysisModelHttpAdaptationRepository(_dbContext, _userName);
+                new EntityAnalysisModelHttpAdaptationRepository(dbContext, userName);
 
             return entityAnalysisModelHttpAdaptationRepository
                 .GetByEntityAnalysisModelIdOrderById(entityAnalysisModelId)
@@ -240,7 +251,7 @@ namespace Jube.App.Controllers.Helper
         private List<string> EntityAnalysisModelsExhaustiveAdaptations(int entityAnalysisModelId)
         {
             var entityAnalysisModelExhaustiveRepository =
-                new ExhaustiveSearchInstanceRepository(_dbContext, _userName);
+                new ExhaustiveSearchInstanceRepository(dbContext, userName);
 
             return entityAnalysisModelExhaustiveRepository
                 .GetByEntityAnalysisModelIdOrderById(entityAnalysisModelId)
@@ -250,7 +261,7 @@ namespace Jube.App.Controllers.Helper
         private List<string> EntityAnalysisModelsDictionaries(int entityAnalysisModelId)
         {
             var entityAnalysisModelDictionaryRepository =
-                new EntityAnalysisModelDictionaryRepository(_dbContext, _userName);
+                new EntityAnalysisModelDictionaryRepository(dbContext, userName);
 
             return entityAnalysisModelDictionaryRepository
                 .GetByEntityAnalysisModelIdOrderById(entityAnalysisModelId)
@@ -260,7 +271,7 @@ namespace Jube.App.Controllers.Helper
         private List<string> EntityAnalysisModelsLists(int entityAnalysisModelId)
         {
             var entityAnalysisModelListRepository =
-                new EntityAnalysisModelListRepository(_dbContext, _userName);
+                new EntityAnalysisModelListRepository(dbContext, userName);
 
             return entityAnalysisModelListRepository
                 .GetByEntityAnalysisModelIdOrderById(entityAnalysisModelId)
@@ -270,7 +281,7 @@ namespace Jube.App.Controllers.Helper
         private List<string> EntityAnalysisModelsSanctions(int entityAnalysisModelId)
         {
             var entityAnalysisModelSanctionRepository =
-                new EntityAnalysisModelSanctionRepository(_dbContext, _userName);
+                new EntityAnalysisModelSanctionRepository(dbContext, userName);
 
             return entityAnalysisModelSanctionRepository
                 .GetByEntityAnalysisModelIdOrderById(entityAnalysisModelId)
@@ -280,7 +291,7 @@ namespace Jube.App.Controllers.Helper
         private List<string> EntityAnalysisModelsTtlCounters(int entityAnalysisModelId)
         {
             var entityAnalysisModelTtlCounterRepository =
-                new EntityAnalysisModelTtlCounterRepository(_dbContext, _userName);
+                new EntityAnalysisModelTtlCounterRepository(dbContext, userName);
 
             return entityAnalysisModelTtlCounterRepository
                 .GetByEntityAnalysisModelIdOrderById(entityAnalysisModelId)
@@ -290,7 +301,7 @@ namespace Jube.App.Controllers.Helper
         private List<string> EntityAnalysisModelAbstractionCalculations(int entityAnalysisModelId)
         {
             var entityAnalysisModelAbstractionCalculationRepository =
-                new EntityAnalysisModelAbstractionCalculationRepository(_dbContext, _userName);
+                new EntityAnalysisModelAbstractionCalculationRepository(dbContext, userName);
 
             return entityAnalysisModelAbstractionCalculationRepository
                 .GetByEntityAnalysisModelIdOrderByIdDesc(entityAnalysisModelId)
@@ -300,7 +311,7 @@ namespace Jube.App.Controllers.Helper
         private List<string> EntityAnalysisModelsAbstractionRules(int entityAnalysisModelId)
         {
             var entityAnalysisModelAbstractionRuleRepository =
-                new EntityAnalysisModelAbstractionRuleRepository(_dbContext, _userName);
+                new EntityAnalysisModelAbstractionRuleRepository(dbContext, userName);
 
             return entityAnalysisModelAbstractionRuleRepository
                 .GetByEntityAnalysisModelIdOrderByIdDesc(entityAnalysisModelId)
@@ -311,12 +322,14 @@ namespace Jube.App.Controllers.Helper
             int entityAnalysisModelId)
         {
             var entityAnalysisModelRequestXPathRepository =
-                new EntityAnalysisModelRequestXPathRepository(_dbContext, _userName);
+                new EntityAnalysisModelRequestXPathRepository(dbContext, userName);
 
             var values = new Dictionary<string, EntityAnalysisModelRequestXPath>();
             foreach (var entityAnalysisModelRequestXPath in entityAnalysisModelRequestXPathRepository
                          .GetByEntityAnalysisModelIdOrderById(entityAnalysisModelId))
+            {
                 if (!values.ContainsKey(entityAnalysisModelRequestXPath.Name))
+                {
                     values.Add(entityAnalysisModelRequestXPath.Name,
                         new EntityAnalysisModelRequestXPath
                         {
@@ -324,6 +337,8 @@ namespace Jube.App.Controllers.Helper
                             DefaultValue = entityAnalysisModelRequestXPath.DefaultValue
                         }
                     );
+                }
+            }
 
             return values;
         }

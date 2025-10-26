@@ -11,57 +11,61 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Jube.Data.Context;
-
-namespace Jube.Data.Query;
-
-public class GetEntityAnalysisModelSynchronisationNodeStatusEntriesQuery
+namespace Jube.Data.Query
 {
-    private readonly DbContext _dbContext;
-    private readonly int _tenantRegistryId;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Context;
 
-    public GetEntityAnalysisModelSynchronisationNodeStatusEntriesQuery(DbContext dbContext, string userName)
+    public class GetEntityAnalysisModelSynchronisationNodeStatusEntriesQuery
     {
-        _dbContext = dbContext;
-        _tenantRegistryId = _dbContext.UserInTenant.Where(w => w.User == userName)
-            .Select(s => s.TenantRegistryId).FirstOrDefault();
-    }
+        private readonly DbContext dbContext;
+        private readonly int tenantRegistryId;
 
-    public IEnumerable<Dto> Execute()
-    {
-        var schedule = _dbContext.EntityAnalysisModelSynchronisationSchedule
-            .Where(w => w.TenantRegistryId == _tenantRegistryId)
-            .OrderByDescending(o => o.Id)
-            .FirstOrDefault();
-
-        if (schedule == null) return null;
+        public GetEntityAnalysisModelSynchronisationNodeStatusEntriesQuery(DbContext dbContext, string userName)
         {
-            var entries = _dbContext.EntityAnalysisModelSynchronisationNodeStatusEntry
-                .Where(w => w.TenantRegistryId == _tenantRegistryId)
-                .Select(s => new Dto
-                {
-                    HeartbeatDate = s.HeartbeatDate.Value,
-                    Instance = s.Instance,
-                    SynchronisedDate = s.SynchronisedDate ?? default(DateTime),
-                    SynchronisationPending = (schedule.ScheduleDate > s.SynchronisedDate &&
-                                              DateTime.Now > schedule.ScheduleDate)
-                                             || !s.SynchronisedDate.HasValue,
-                    InstanceAvailable = s.HeartbeatDate > DateTime.Now.AddMinutes(-2)
-                });
-
-            return entries;
+            this.dbContext = dbContext;
+            tenantRegistryId = this.dbContext.UserInTenant.Where(w => w.User == userName)
+                .Select(s => s.TenantRegistryId).FirstOrDefault();
         }
-    }
 
-    public class Dto
-    {
-        public bool SynchronisationPending { get; set; }
-        public bool InstanceAvailable { get; set; }
-        public string Instance { get; set; }
-        public DateTime SynchronisedDate { get; set; }
-        public DateTime HeartbeatDate { get; set; }
+        public IEnumerable<Dto> Execute()
+        {
+            var schedule = dbContext.EntityAnalysisModelSynchronisationSchedule
+                .Where(w => w.TenantRegistryId == tenantRegistryId)
+                .OrderByDescending(o => o.Id)
+                .FirstOrDefault();
+
+            if (schedule == null)
+            {
+                return null;
+            }
+            {
+                var entries = dbContext.EntityAnalysisModelSynchronisationNodeStatusEntry
+                    .Where(w => w.TenantRegistryId == tenantRegistryId)
+                    .Select(s => new Dto
+                    {
+                        HeartbeatDate = s.HeartbeatDate.Value,
+                        Instance = s.Instance,
+                        SynchronisedDate = s.SynchronisedDate ?? default(DateTime),
+                        SynchronisationPending = schedule.ScheduleDate > s.SynchronisedDate &&
+                                                 DateTime.Now > schedule.ScheduleDate
+                                                 || !s.SynchronisedDate.HasValue,
+                        InstanceAvailable = s.HeartbeatDate > DateTime.Now.AddMinutes(-2)
+                    });
+
+                return entries;
+            }
+        }
+
+        public class Dto
+        {
+            public bool SynchronisationPending { get; set; }
+            public bool InstanceAvailable { get; set; }
+            public string Instance { get; set; }
+            public DateTime SynchronisedDate { get; set; }
+            public DateTime HeartbeatDate { get; set; }
+        }
     }
 }

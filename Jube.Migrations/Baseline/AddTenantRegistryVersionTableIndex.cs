@@ -13,35 +13,36 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429125018)]
-public class AddTenantRegistryVersionTable : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429125018)]
+    public class AddTenantRegistryVersionTable : Migration
     {
-        Create.Table("TenantRegistryVersion")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("TenantRegistryId").AsInt32().Nullable()
-            .WithColumn("Name").AsString().Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("UpdatedDate").AsDateTime2().Nullable()
-            .WithColumn("UpdatedUser").AsString().Nullable()
-            .WithColumn("DeletedDate").AsDateTime2().Nullable()
-            .WithColumn("DeletedUser").AsString().Nullable()
-            .WithColumn("Active").AsByte().Nullable()
-            .WithColumn("Locked").AsByte().Nullable()
-            .WithColumn("Deleted").AsByte().Nullable()
-            .WithColumn("Landlord").AsByte().Nullable()
-            .WithColumn("Version").AsInt32();
+        public override void Up()
+        {
+            Create.Table("TenantRegistryVersion")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("TenantRegistryId").AsInt32().Nullable()
+                .WithColumn("Name").AsString().Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("UpdatedDate").AsDateTime2().Nullable()
+                .WithColumn("UpdatedUser").AsString().Nullable()
+                .WithColumn("DeletedDate").AsDateTime2().Nullable()
+                .WithColumn("DeletedUser").AsString().Nullable()
+                .WithColumn("Active").AsByte().Nullable()
+                .WithColumn("Locked").AsByte().Nullable()
+                .WithColumn("Deleted").AsByte().Nullable()
+                .WithColumn("Landlord").AsByte().Nullable()
+                .WithColumn("Version").AsInt32();
 
-        Create.Index().OnTable("TenantRegistryVersion")
-            .OnColumn("TenantRegistryId").Ascending();
-    }
+            Create.Index().OnTable("TenantRegistryVersion")
+                .OnColumn("TenantRegistryId").Ascending();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("TenantRegistryVersion");
+        public override void Down()
+        {
+            Delete.Table("TenantRegistryVersion");
+        }
     }
 }

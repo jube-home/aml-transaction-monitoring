@@ -15,27 +15,28 @@ using System.IO;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
-namespace Jube.Engine.Model.Processing.Payload;
-
-public class EntityAnalysisModelInstanceEntryPayloadJson
+namespace Jube.Engine.Model.Processing.Payload
 {
-    public MemoryStream BuildJson(EntityAnalysisModelInstanceEntryPayload payload,
-        DefaultContractResolver contractResolver)
+    public class EntityAnalysisModelInstanceEntryPayloadJson
     {
-        var stream = new MemoryStream();
-        var streamWriter = new StreamWriter(stream);
-        var jsonWriter = new JsonTextWriter(streamWriter);
-
-        var serializer = new JsonSerializer
+        public MemoryStream BuildJson(EntityAnalysisModelInstanceEntryPayload payload,
+            DefaultContractResolver contractResolver)
         {
-            NullValueHandling = NullValueHandling.Ignore,
-            ContractResolver = contractResolver
-        };
+            var stream = new MemoryStream();
+            var streamWriter = new StreamWriter(stream);
+            var jsonWriter = new JsonTextWriter(streamWriter);
 
-        serializer.Serialize(jsonWriter, payload);
-        jsonWriter.Flush();
-        streamWriter.Flush();
-        stream.Seek(0, SeekOrigin.Begin);
-        return stream;
+            var serializer = new JsonSerializer
+            {
+                NullValueHandling = NullValueHandling.Ignore,
+                ContractResolver = contractResolver
+            };
+
+            serializer.Serialize(jsonWriter, payload);
+            jsonWriter.Flush();
+            streamWriter.Flush();
+            stream.Seek(0, SeekOrigin.Begin);
+            return stream;
+        }
     }
 }

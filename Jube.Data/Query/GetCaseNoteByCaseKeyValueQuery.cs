@@ -11,75 +11,68 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Jube.Data.Context;
-using LinqToDB;
-
-namespace Jube.Data.Query;
-
-public class GetCaseNoteByCaseKeyValueQuery
+namespace Jube.Data.Query
 {
-    private readonly DbContext _dbContext;
-    private readonly string _userName;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Context;
+    using LinqToDB;
 
-
-    public GetCaseNoteByCaseKeyValueQuery(DbContext dbContext, string user)
+    public class GetCaseNoteByCaseKeyValueQuery(DbContext dbContext, string user)
     {
-        _dbContext = dbContext;
-        _userName = user;
-    }
 
-    public IEnumerable<Dto> Execute(string key, string value)
-    {
-        var query = from c in _dbContext.Case
-            from n in _dbContext.CaseNote.InnerJoin(w => w.CaseId == c.Id)
-            from a in _dbContext.CaseWorkflowAction.InnerJoin(w => w.Id == n.ActionId)
-            from i in _dbContext.CaseWorkflow.InnerJoin(w => w.Guid == c.CaseWorkflowGuid)
-            from m in _dbContext.EntityAnalysisModel.InnerJoin(w =>
-                w.Id == i.EntityAnalysisModelId && (w.Deleted == 0 || w.Deleted == null))
-            from t in _dbContext.TenantRegistry.InnerJoin(w => w.Id == m.TenantRegistryId)
-            from u in _dbContext.UserInTenant.InnerJoin(w => w.TenantRegistryId == t.Id)
-            orderby n.Id descending
-            where c.CaseKey == key && c.CaseKeyValue == value && u.User == _userName
-            select new Dto
-            {
-                Id = n.Id,
-                CaseId = n.CaseId.GetValueOrDefault(),
-                CreatedDate = n.CreatedDate.GetValueOrDefault(),
-                CreatedUser = n.CreatedUser,
-                Note = n.Note,
-                ActionId = n.ActionId.GetValueOrDefault(),
-                Action = a.Name,
-                PriorityId = n.PriorityId.GetValueOrDefault(),
-                Priority = ConvertPriorityIdToString(n.PriorityId.GetValueOrDefault())
-            };
 
-        return query;
-    }
-
-    private string ConvertPriorityIdToString(int id)
-    {
-        return id switch
+        public IEnumerable<Dto> Execute(string key, string value)
         {
-            1 => "High",
-            2 => "Medium",
-            3 => "Low",
-            _ => "Medium"
-        };
-    }
+            var query = from c in dbContext.Case
+                from n in dbContext.CaseNote.InnerJoin(w => w.CaseId == c.Id)
+                from a in dbContext.CaseWorkflowAction.InnerJoin(w => w.Id == n.ActionId)
+                from i in dbContext.CaseWorkflow.InnerJoin(w => w.Guid == c.CaseWorkflowGuid)
+                from m in dbContext.EntityAnalysisModel.InnerJoin(w =>
+                    w.Id == i.EntityAnalysisModelId && (w.Deleted == 0 || w.Deleted == null))
+                from t in dbContext.TenantRegistry.InnerJoin(w => w.Id == m.TenantRegistryId)
+                from u in dbContext.UserInTenant.InnerJoin(w => w.TenantRegistryId == t.Id)
+                orderby n.Id descending
+                where c.CaseKey == key && c.CaseKeyValue == value && u.User == user
+                select new Dto
+                {
+                    Id = n.Id,
+                    CaseId = n.CaseId.GetValueOrDefault(),
+                    CreatedDate = n.CreatedDate.GetValueOrDefault(),
+                    CreatedUser = n.CreatedUser,
+                    Note = n.Note,
+                    ActionId = n.ActionId.GetValueOrDefault(),
+                    Action = a.Name,
+                    PriorityId = n.PriorityId.GetValueOrDefault(),
+                    Priority = ConvertPriorityIdToString(n.PriorityId.GetValueOrDefault())
+                };
 
-    public class Dto
-    {
-        public int Id { get; set; }
-        public int CaseId { get; set; }
-        public DateTime CreatedDate { get; set; }
-        public string CreatedUser { get; set; }
-        public string Note { get; set; }
-        public int ActionId { get; set; }
-        public string Action { get; set; }
-        public int PriorityId { get; set; }
-        public string Priority { get; set; }
+            return query;
+        }
+
+        private string ConvertPriorityIdToString(int id)
+        {
+            return id switch
+            {
+                1 => "High",
+                2 => "Medium",
+                3 => "Low",
+                _ => "Medium"
+            };
+        }
+
+        public class Dto
+        {
+            public int Id { get; set; }
+            public int CaseId { get; set; }
+            public DateTime CreatedDate { get; set; }
+            public string CreatedUser { get; set; }
+            public string Note { get; set; }
+            public int ActionId { get; set; }
+            public string Action { get; set; }
+            public int PriorityId { get; set; }
+            public string Priority { get; set; }
+        }
     }
 }

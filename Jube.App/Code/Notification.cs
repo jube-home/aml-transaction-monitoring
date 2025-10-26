@@ -11,20 +11,22 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System.Collections.Generic;
-using log4net;
-
 namespace Jube.App.Code
 {
+    using System;
+    using System.Collections.Generic;
+    using DynamicEnvironment;
+    using log4net;
+
     public class Notification
     {
-        private readonly DynamicEnvironment.DynamicEnvironment _dynamicEnvironment;
-        private readonly ILog _log;
+        private readonly DynamicEnvironment dynamicEnvironment;
+        private readonly ILog log;
 
-        public Notification(ILog log, DynamicEnvironment.DynamicEnvironment dynamicEnvironment)
+        public Notification(ILog log, DynamicEnvironment dynamicEnvironment)
         {
-            _dynamicEnvironment = dynamicEnvironment;
-            _log = log;
+            this.dynamicEnvironment = dynamicEnvironment;
+            this.log = log;
         }
 
         public void Send(int notificationType, string notificationDestination, string notificationSubject,
@@ -34,55 +36,67 @@ namespace Jube.App.Code
             var notificationTokenization = new Tokenisation();
 
             var replacedNotificationDestination = notificationDestination;
-            if (!string.IsNullOrEmpty(replacedNotificationDestination))
+            if (!String.IsNullOrEmpty(replacedNotificationDestination))
             {
                 var notificationDestinationTokens =
                     notificationTokenization.ReturnTokens(replacedNotificationDestination);
                 foreach (var notificationToken in notificationDestinationTokens)
-                    if (values.TryGetValue(notificationToken, out var value))
+                {
+                    if (!values.TryGetValue(notificationToken, out var value))
                     {
-                        var notificationReplaceToken = $"[@{notificationToken}@]";
-                        replacedNotificationDestination =
-                            replacedNotificationDestination.Replace(notificationReplaceToken,
-                                value);
+                        continue;
                     }
+
+                    var notificationReplaceToken = $"[@{notificationToken}@]";
+                    replacedNotificationDestination =
+                        replacedNotificationDestination.Replace(notificationReplaceToken,
+                            value);
+                }
             }
 
             var replacedNotificationSubject = notificationSubject;
-            if (!string.IsNullOrEmpty(replacedNotificationSubject))
+            if (!String.IsNullOrEmpty(replacedNotificationSubject))
             {
                 var notificationSubjectTokens = notificationTokenization.ReturnTokens(replacedNotificationSubject);
                 foreach (var notificationToken in notificationSubjectTokens)
-                    if (values.TryGetValue(notificationToken, out var value))
+                {
+                    if (!values.TryGetValue(notificationToken, out var value))
                     {
-                        var notificationReplaceToken = $"[@{notificationToken}@]";
-                        replacedNotificationSubject =
-                            replacedNotificationSubject.Replace(notificationReplaceToken, value);
+                        continue;
                     }
+
+                    var notificationReplaceToken = $"[@{notificationToken}@]";
+                    replacedNotificationSubject =
+                        replacedNotificationSubject.Replace(notificationReplaceToken, value);
+                }
             }
 
             var replacedNotificationBody = notificationBody;
-            if (!string.IsNullOrEmpty(replacedNotificationBody))
+            if (!String.IsNullOrEmpty(replacedNotificationBody))
             {
                 var notificationBodyTokens = notificationTokenization.ReturnTokens(replacedNotificationBody);
                 foreach (var notificationToken in notificationBodyTokens)
-                    if (values.TryGetValue(notificationToken, out var value))
+                {
+                    if (!values.TryGetValue(notificationToken, out var value))
                     {
-                        var notificationReplaceToken = $"[@{notificationToken}@]";
-                        replacedNotificationBody =
-                            replacedNotificationBody.Replace(notificationReplaceToken, value);
+                        continue;
                     }
+
+                    var notificationReplaceToken = $"[@{notificationToken}@]";
+                    replacedNotificationBody =
+                        replacedNotificationBody.Replace(notificationReplaceToken, value);
+                }
             }
 
             if (notificationType == 1)
             {
-                var sendMail = new SendMail(_dynamicEnvironment, _log);
+                var sendMail = new SendMail(dynamicEnvironment, log);
                 sendMail.Send(replacedNotificationDestination, replacedNotificationSubject,
                     replacedNotificationBody);
             }
             else
             {
-                var sendSms = new SendSms(_dynamicEnvironment, _log);
+                var sendSms = new SendSms(dynamicEnvironment, log);
                 sendSms.Send(replacedNotificationDestination, replacedNotificationBody);
             }
         }

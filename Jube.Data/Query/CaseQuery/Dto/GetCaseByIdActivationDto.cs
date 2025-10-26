@@ -11,9 +11,10 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-namespace Jube.Data.Query.CaseQuery.Dto;
-
-public class GetCaseByIdActivationDto
+namespace Jube.Data.Query.CaseQuery.Dto
 {
-    public string Name { get; set; }
+    public class GetCaseByIdActivationDto
+    {
+        public string Name { get; set; }
+    }
 }

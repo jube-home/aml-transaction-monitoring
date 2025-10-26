@@ -11,20 +11,19 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-namespace Jube.Engine.Model.Exhaustive;
-
-public class ExhaustiveSearchInstancePromotedTrialInstanceVariable
+namespace Jube.Engine.Model.Exhaustive
 {
-    public string Name { get; set; }
-    public int ProcessingTypeId { get; set; }
-    public double Mean { get; set; }
-    public double Sd { get; set; }
-    public byte NormalisationTypeId { get; set; }
-
-    public double ZScore(double value)
+    public class ExhaustiveSearchInstancePromotedTrialInstanceVariable
     {
-        if (NormalisationTypeId == 2) return (value - Mean) / Sd;
+        public string Name { get; set; }
+        public int ProcessingTypeId { get; set; }
+        public double Mean { get; set; }
+        public double Sd { get; set; }
+        public byte NormalisationTypeId { get; set; }
 
-        return value;
+        public double ZScore(double value)
+        {
+            return NormalisationTypeId == 2 ? (value - Mean) / Sd : value;
+        }
     }
 }

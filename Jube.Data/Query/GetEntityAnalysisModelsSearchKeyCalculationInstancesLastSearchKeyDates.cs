@@ -11,39 +11,34 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Jube.Data.Context;
-
-namespace Jube.Data.Query;
-
-public class GetEntityAnalysisModelsSearchKeyCalculationInstancesLastSearchKeyDates
+namespace Jube.Data.Query
 {
-    private readonly DbContext _dbContext;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Context;
 
-    public GetEntityAnalysisModelsSearchKeyCalculationInstancesLastSearchKeyDates(DbContext dbContext)
+    public class GetEntityAnalysisModelsSearchKeyCalculationInstancesLastSearchKeyDates(DbContext dbContext)
     {
-        _dbContext = dbContext;
-    }
 
-    public IEnumerable<Dto> Execute(Guid entityAnalysisModelGuid)
-    {
-        return from c
-                in _dbContext.EntityAnalysisModelSearchKeyCalculationInstance
-            where c.EntityAnalysisModelGuid == entityAnalysisModelGuid
-            group c by c.SearchKey
-            into g
-            select new Dto
-            {
-                SearchKey = g.Key,
-                DistinctFetchToDate = g.Max(s => s.DistinctFetchToDate)
-            };
-    }
+        public IEnumerable<Dto> Execute(Guid entityAnalysisModelGuid)
+        {
+            return from c
+                    in dbContext.EntityAnalysisModelSearchKeyCalculationInstance
+                where c.EntityAnalysisModelGuid == entityAnalysisModelGuid
+                group c by c.SearchKey
+                into g
+                select new Dto
+                {
+                    SearchKey = g.Key,
+                    DistinctFetchToDate = g.Max(s => s.DistinctFetchToDate)
+                };
+        }
 
-    public class Dto
-    {
-        public string SearchKey { get; set; }
-        public DateTime? DistinctFetchToDate { get; set; }
+        public class Dto
+        {
+            public string SearchKey { get; set; }
+            public DateTime? DistinctFetchToDate { get; set; }
+        }
     }
 }

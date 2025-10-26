@@ -11,31 +11,32 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using Jube.Data.Repository;
-using Jube.Data.Security;
-using Jube.Engine.Helpers;
-
-namespace Jube.CLI.UserRegistry;
-
-public static class PasswordReset
+namespace Jube.CLI.UserRegistry
 {
-    public static void Execute(string? connectionString, string? hash, string? userName, string? password)
+    using Data.Context;
+    using Data.Repository;
+    using Data.Security;
+
+    public static class PasswordReset
     {
-        var dbContext = DataConnectionDbContext.GetDbContextDataConnection(connectionString);
-        var repository = new UserRegistryRepository(dbContext);
-
-        var userRegistry = repository.GetByUserName(userName);
-
-        if (userRegistry != null)
+        public static void Execute(string? connectionString, string? hash, string? userName, string? password)
         {
-            repository.SetPassword(userRegistry.Id, HashPassword.GenerateHash(password, hash), DateTime.Now);
-        }
-        else
-        {
-            Console.WriteLine(@"User Registry Password Reset: User Name not found.");
-        }
+            var dbContext = DataConnectionDbContext.GetDbContextDataConnection(connectionString);
+            var repository = new UserRegistryRepository(dbContext);
 
-        dbContext.Close();
-        dbContext.Dispose();
+            var userRegistry = repository.GetByUserName(userName);
+
+            if (userRegistry != null)
+            {
+                repository.SetPassword(userRegistry.Id, HashPassword.GenerateHash(password, hash), DateTime.Now);
+            }
+            else
+            {
+                Console.WriteLine(@"User Registry Password Reset: User Name not found.");
+            }
+
+            dbContext.Close();
+            dbContext.Dispose();
+        }
     }
 }

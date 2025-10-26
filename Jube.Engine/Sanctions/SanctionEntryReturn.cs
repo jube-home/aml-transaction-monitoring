@@ -11,10 +11,11 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-namespace Jube.Engine.Sanctions;
-
-public class SanctionEntryReturn
+namespace Jube.Engine.Sanctions
 {
-    public int LevenshteinDistance { get; init; }
-    public SanctionEntryDto SanctionEntryDto { get; init; }
+    public class SanctionEntryReturn
+    {
+        public int LevenshteinDistance { get; init; }
+        public SanctionEntryDto SanctionEntryDto { get; init; }
+    }
 }

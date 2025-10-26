@@ -15,60 +15,61 @@ using System;
 using FluentMigrator;
 using Jube.Data.Security;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220705082300)]
-public class AddUserRegistryTableIndex(DynamicEnvironment.DynamicEnvironment dynamicEnvironment) : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220705082300)]
+    public class AddUserRegistryTableIndex(DynamicEnvironment.DynamicEnvironment dynamicEnvironment) : Migration
     {
-        Create.Table("UserRegistry")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("RoleRegistryId").AsInt32().Nullable()
-            .WithColumn("Name").AsString().Nullable()
-            .WithColumn("Email").AsString().Nullable()
-            .WithColumn("Password").AsString().Nullable()
-            .WithColumn("PasswordExpiryDate").AsDateTime().Nullable()
-            .WithColumn("PasswordCreatedDate").AsDateTime().Nullable()
-            .WithColumn("FailedPasswordCount").AsInt32().Nullable()
-            .WithColumn("LastLoginDate").AsDateTime().Nullable()
-            .WithColumn("PasswordLocked").AsByte().Nullable()
-            .WithColumn("PasswordLockedDate").AsDateTime().Nullable()
-            .WithColumn("Active").AsByte().Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("Deleted").AsByte().Nullable()
-            .WithColumn("DeletedDate").AsDateTime2().Nullable()
-            .WithColumn("DeletedUser").AsString().Nullable()
-            .WithColumn("Version").AsInt32().Nullable()
-            .WithColumn("InheritedId").AsInt32().Nullable();
-
-        Create.Index().OnTable("UserRegistry")
-            .OnColumn("Name").Ascending()
-            .OnColumn("Active").Ascending();
-
-        Create.Index().OnTable("UserRegistry")
-            .OnColumn("Name").Ascending();
-
-        var userRegistryEntry = new
+        public override void Up()
         {
-            RoleRegistryId = 1,
-            Name = "Administrator",
-            Email = "sink@jube.io",
-            Password = HashPassword.GenerateHash("Administrator", dynamicEnvironment.AppSettings("PasswordHashingKey")),
-            PasswordExpiryDate = DateTime.Now,
-            Active = 1,
-            CreatedUser = "Administrator",
-            CreatedDate = DateTime.Now,
-            Version = 1,
-            PasswordCreatedDate = DateTime.Now
-        };
+            Create.Table("UserRegistry")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("RoleRegistryId").AsInt32().Nullable()
+                .WithColumn("Name").AsString().Nullable()
+                .WithColumn("Email").AsString().Nullable()
+                .WithColumn("Password").AsString().Nullable()
+                .WithColumn("PasswordExpiryDate").AsDateTime().Nullable()
+                .WithColumn("PasswordCreatedDate").AsDateTime().Nullable()
+                .WithColumn("FailedPasswordCount").AsInt32().Nullable()
+                .WithColumn("LastLoginDate").AsDateTime().Nullable()
+                .WithColumn("PasswordLocked").AsByte().Nullable()
+                .WithColumn("PasswordLockedDate").AsDateTime().Nullable()
+                .WithColumn("Active").AsByte().Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("Deleted").AsByte().Nullable()
+                .WithColumn("DeletedDate").AsDateTime2().Nullable()
+                .WithColumn("DeletedUser").AsString().Nullable()
+                .WithColumn("Version").AsInt32().Nullable()
+                .WithColumn("InheritedId").AsInt32().Nullable();
 
-        Insert.IntoTable("UserRegistry").Row(userRegistryEntry);
-    }
+            Create.Index().OnTable("UserRegistry")
+                .OnColumn("Name").Ascending()
+                .OnColumn("Active").Ascending();
 
-    public override void Down()
-    {
-        Delete.Table("UserRegistry");
+            Create.Index().OnTable("UserRegistry")
+                .OnColumn("Name").Ascending();
+
+            var userRegistryEntry = new
+            {
+                RoleRegistryId = 1,
+                Name = "Administrator",
+                Email = "sink@jube.io",
+                Password = HashPassword.GenerateHash("Administrator", dynamicEnvironment.AppSettings("PasswordHashingKey")),
+                PasswordExpiryDate = DateTime.Now,
+                Active = 1,
+                CreatedUser = "Administrator",
+                CreatedDate = DateTime.Now,
+                Version = 1,
+                PasswordCreatedDate = DateTime.Now
+            };
+
+            Insert.IntoTable("UserRegistry").Row(userRegistryEntry);
+        }
+
+        public override void Down()
+        {
+            Delete.Table("UserRegistry");
+        }
     }
 }

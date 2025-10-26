@@ -14,65 +14,66 @@
 using System;
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124912)]
-public class AddCaseWorkflowFormTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124912)]
+    public class AddCaseWorkflowFormTableIndex : Migration
     {
-        Create.Table("CaseWorkflowForm")
-            .WithColumn("Id").AsInt64().PrimaryKey().Identity()
-            .WithColumn("CaseWorkflowId").AsInt32().Nullable()
-            .WithColumn("Name").AsString().Nullable()
-            .WithColumn("Active").AsByte().Nullable()
-            .WithColumn("Locked").AsByte().Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("UpdatedDate").AsDateTime2().Nullable()
-            .WithColumn("UpdatedUser").AsString().Nullable()
-            .WithColumn("Deleted").AsByte().Nullable()
-            .WithColumn("DeletedUser").AsString().Nullable()
-            .WithColumn("DeletedDate").AsDateTime2().Nullable()
-            .WithColumn("InheritedId").AsInt32().Nullable()
-            .WithColumn("Html").AsString().Nullable()
-            .WithColumn("Version").AsInt32().Nullable()
-            .WithColumn("EnableHttpEndpoint").AsByte().Nullable()
-            .WithColumn("HttpEndpoint").AsString().Nullable()
-            .WithColumn("HttpEndpointTypeId").AsByte().Nullable()
-            .WithColumn("EnableNotification").AsByte().Nullable()
-            .WithColumn("NotificationTypeId").AsByte().Nullable()
-            .WithColumn("NotificationDestination").AsString().Nullable()
-            .WithColumn("NotificationSubject").AsString().Nullable()
-            .WithColumn("NotificationBody").AsString().Nullable();
-
-        Create.Index().OnTable("CaseWorkflowForm")
-            .OnColumn("CaseWorkflowId").Ascending()
-            .OnColumn("Deleted").Ascending();
-
-        Insert.IntoTable("CaseWorkflowForm").Row(new
+        public override void Up()
         {
-            CaseWorkflowId = 1,
-            Name = "ExampleForm",
-            Active = 1,
-            CreatedDate = DateTime.Now,
-            CreatedUser = "Administrator",
-            Version = 1,
-            Html = "<p>This form will support most unstyled elements available to HTML forms.</p>" +
-                   Environment.NewLine +
-                   "<p>Injection of Javascript to support validation and additional styling " +
-                   "is not supported at this time.</p>" + Environment.NewLine +
-                   "<p>The submit button is added during rendering.  " +
-                   "The submit button will query the name and value attributes and create the " +
-                   "payload for processing.</p>" + Environment.NewLine +
-                   "Example Textbox Element: " + Environment.NewLine +
-                   "<br/>" + Environment.NewLine +
-                   "<input id='ExampleTextboxElement'/>"
-        });
-    }
+            Create.Table("CaseWorkflowForm")
+                .WithColumn("Id").AsInt64().PrimaryKey().Identity()
+                .WithColumn("CaseWorkflowId").AsInt32().Nullable()
+                .WithColumn("Name").AsString().Nullable()
+                .WithColumn("Active").AsByte().Nullable()
+                .WithColumn("Locked").AsByte().Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("UpdatedDate").AsDateTime2().Nullable()
+                .WithColumn("UpdatedUser").AsString().Nullable()
+                .WithColumn("Deleted").AsByte().Nullable()
+                .WithColumn("DeletedUser").AsString().Nullable()
+                .WithColumn("DeletedDate").AsDateTime2().Nullable()
+                .WithColumn("InheritedId").AsInt32().Nullable()
+                .WithColumn("Html").AsString().Nullable()
+                .WithColumn("Version").AsInt32().Nullable()
+                .WithColumn("EnableHttpEndpoint").AsByte().Nullable()
+                .WithColumn("HttpEndpoint").AsString().Nullable()
+                .WithColumn("HttpEndpointTypeId").AsByte().Nullable()
+                .WithColumn("EnableNotification").AsByte().Nullable()
+                .WithColumn("NotificationTypeId").AsByte().Nullable()
+                .WithColumn("NotificationDestination").AsString().Nullable()
+                .WithColumn("NotificationSubject").AsString().Nullable()
+                .WithColumn("NotificationBody").AsString().Nullable();
 
-    public override void Down()
-    {
-        Delete.Table("CaseWorkflowForm");
+            Create.Index().OnTable("CaseWorkflowForm")
+                .OnColumn("CaseWorkflowId").Ascending()
+                .OnColumn("Deleted").Ascending();
+
+            Insert.IntoTable("CaseWorkflowForm").Row(new
+            {
+                CaseWorkflowId = 1,
+                Name = "ExampleForm",
+                Active = 1,
+                CreatedDate = DateTime.Now,
+                CreatedUser = "Administrator",
+                Version = 1,
+                Html = "<p>This form will support most unstyled elements available to HTML forms.</p>" +
+                       Environment.NewLine +
+                       "<p>Injection of Javascript to support validation and additional styling " +
+                       "is not supported at this time.</p>" + Environment.NewLine +
+                       "<p>The submit button is added during rendering.  " +
+                       "The submit button will query the name and value attributes and create the " +
+                       "payload for processing.</p>" + Environment.NewLine +
+                       "Example Textbox Element: " + Environment.NewLine +
+                       "<br/>" + Environment.NewLine +
+                       "<input id='ExampleTextboxElement'/>"
+            });
+        }
+
+        public override void Down()
+        {
+            Delete.Table("CaseWorkflowForm");
+        }
     }
 }

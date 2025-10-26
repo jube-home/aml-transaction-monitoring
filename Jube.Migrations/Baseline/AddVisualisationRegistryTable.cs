@@ -14,63 +14,64 @@
 using System;
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429125027)]
-public class AddVisualisationRegistryTable : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429125027)]
+    public class AddVisualisationRegistryTable : Migration
     {
-        Create.Table("VisualisationRegistry")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("Name").AsString().Nullable()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("Active").AsByte().Nullable()
-            .WithColumn("Locked").AsByte().Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable()
-            .WithColumn("ShowInDirectory").AsByte().Nullable()
-            .WithColumn("Deleted").AsByte().Nullable()
-            .WithColumn("DeletedDate").AsDateTime2().Nullable()
-            .WithColumn("DeletedUser").AsString().Nullable()
-            .WithColumn("UpdatedDate").AsDateTime2().Nullable()
-            .WithColumn("UpdatedUser").AsString().Nullable()
-            .WithColumn("TenantRegistryId").AsInt32().Nullable()
-            .WithColumn("Columns").AsInt32().Nullable()
-            .WithColumn("ColumnWidth").AsInt32().Nullable()
-            .WithColumn("RowHeight").AsInt32().Nullable()
-            .WithColumn("Version").AsInt32().Nullable();
-
-        Insert.IntoTable("VisualisationRegistry").Row(new
+        public override void Up()
         {
-            Name = "ExampleVisualisation",
-            CreatedUser = "Administrator",
-            CreatedDate = DateTime.Now,
-            Active = 1,
-            ShowInDirectory = 1,
-            TenantRegistryId = 1,
-            Columns = 6,
-            ColumnWidth = 300,
-            RowHeight = 300,
-            Version = 1
-        });
+            Create.Table("VisualisationRegistry")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("Name").AsString().Nullable()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("Active").AsByte().Nullable()
+                .WithColumn("Locked").AsByte().Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable()
+                .WithColumn("ShowInDirectory").AsByte().Nullable()
+                .WithColumn("Deleted").AsByte().Nullable()
+                .WithColumn("DeletedDate").AsDateTime2().Nullable()
+                .WithColumn("DeletedUser").AsString().Nullable()
+                .WithColumn("UpdatedDate").AsDateTime2().Nullable()
+                .WithColumn("UpdatedUser").AsString().Nullable()
+                .WithColumn("TenantRegistryId").AsInt32().Nullable()
+                .WithColumn("Columns").AsInt32().Nullable()
+                .WithColumn("ColumnWidth").AsInt32().Nullable()
+                .WithColumn("RowHeight").AsInt32().Nullable()
+                .WithColumn("Version").AsInt32().Nullable();
 
-        Insert.IntoTable("VisualisationRegistry").Row(new
+            Insert.IntoTable("VisualisationRegistry").Row(new
+            {
+                Name = "ExampleVisualisation",
+                CreatedUser = "Administrator",
+                CreatedDate = DateTime.Now,
+                Active = 1,
+                ShowInDirectory = 1,
+                TenantRegistryId = 1,
+                Columns = 6,
+                ColumnWidth = 300,
+                RowHeight = 300,
+                Version = 1
+            });
+
+            Insert.IntoTable("VisualisationRegistry").Row(new
+            {
+                Name = "ExampleEmbeddedVisualisation",
+                CreatedUser = "Administrator",
+                CreatedDate = DateTime.Now,
+                Active = 1,
+                ShowInDirectory = 0,
+                TenantRegistryId = 1,
+                Columns = 6,
+                ColumnWidth = 300,
+                RowHeight = 300,
+                Version = 1
+            });
+        }
+
+        public override void Down()
         {
-            Name = "ExampleEmbeddedVisualisation",
-            CreatedUser = "Administrator",
-            CreatedDate = DateTime.Now,
-            Active = 1,
-            ShowInDirectory = 0,
-            TenantRegistryId = 1,
-            Columns = 6,
-            ColumnWidth = 300,
-            RowHeight = 300,
-            Version = 1
-        });
-    }
-
-    public override void Down()
-    {
-        Delete.Table("VisualisationRegistry");
+            Delete.Table("VisualisationRegistry");
+        }
     }
 }

@@ -13,26 +13,27 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220430125453)]
-public class AddRoleRegistryPermissionFk : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220430125453)]
+    public class AddRoleRegistryPermissionFk : Migration
     {
-        Create.ForeignKey().FromTable("RoleRegistryPermission").ForeignColumn("PermissionSpecificationId")
-            .ToTable("PermissionSpecification").PrimaryColumn("Id");
+        public override void Up()
+        {
+            Create.ForeignKey().FromTable("RoleRegistryPermission").ForeignColumn("PermissionSpecificationId")
+                .ToTable("PermissionSpecification").PrimaryColumn("Id");
 
-        Create.ForeignKey().FromTable("RoleRegistryPermission").ForeignColumn("RoleRegistryId")
-            .ToTable("RoleRegistry").PrimaryColumn("Id");
-    }
+            Create.ForeignKey().FromTable("RoleRegistryPermission").ForeignColumn("RoleRegistryId")
+                .ToTable("RoleRegistry").PrimaryColumn("Id");
+        }
 
-    public override void Down()
-    {
-        Delete.ForeignKey().FromTable("RoleRegistryPermission").ForeignColumn("PermissionSpecificationId")
-            .ToTable("PermissionSpecification").PrimaryColumn("Id");
+        public override void Down()
+        {
+            Delete.ForeignKey().FromTable("RoleRegistryPermission").ForeignColumn("PermissionSpecificationId")
+                .ToTable("PermissionSpecification").PrimaryColumn("Id");
 
-        Delete.ForeignKey().FromTable("RoleRegistryPermission").ForeignColumn("RoleRegistryId")
-            .ToTable("RoleRegistry").PrimaryColumn("Id");
+            Delete.ForeignKey().FromTable("RoleRegistryPermission").ForeignColumn("RoleRegistryId")
+                .ToTable("RoleRegistry").PrimaryColumn("Id");
+        }
     }
 }

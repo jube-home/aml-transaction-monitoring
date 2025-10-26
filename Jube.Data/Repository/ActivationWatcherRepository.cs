@@ -11,54 +11,55 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB.Data;
-
-namespace Jube.Data.Repository;
-
-public class ActivationWatcherRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
-    private readonly int? _tenantRegistryId;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Context;
+    using LinqToDB.Data;
+    using Poco;
 
-    public ActivationWatcherRepository(DbContext dbContext, string userName)
+    public class ActivationWatcherRepository
     {
-        _dbContext = dbContext;
-        _tenantRegistryId = dbContext.UserInTenant.Where(w => w.User == userName)
-            .Select(s => s.TenantRegistryId).FirstOrDefault();
-    }
+        private readonly DbContext dbContext;
+        private readonly int? tenantRegistryId;
 
-    public ActivationWatcherRepository(DbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
+        public ActivationWatcherRepository(DbContext dbContext, string userName)
+        {
+            this.dbContext = dbContext;
+            tenantRegistryId = dbContext.UserInTenant.Where(w => w.User == userName)
+                .Select(s => s.TenantRegistryId).FirstOrDefault();
+        }
 
-    public ActivationWatcher GetLast()
-    {
-        return _dbContext.ActivationWatcher.OrderByDescending(s => s.Id).FirstOrDefault();
-    }
+        public ActivationWatcherRepository(DbContext dbContext)
+        {
+            this.dbContext = dbContext;
+        }
 
-    public IEnumerable<ActivationWatcher> GetAllSinceId(int id, int limit)
-    {
-        return _dbContext.ActivationWatcher
-            .Where(w => w.Id > id)
-            .OrderByDescending(s => s.Id).Take(limit);
-    }
+        public ActivationWatcher GetLast()
+        {
+            return dbContext.ActivationWatcher.OrderByDescending(s => s.Id).FirstOrDefault();
+        }
 
-    public IEnumerable<ActivationWatcher> GetByDateRangeAscending(DateTime dateFrom, DateTime dateTo, int limit)
-    {
-        return _dbContext.ActivationWatcher
-            .Where(w => w.CreatedDate > dateFrom && w.CreatedDate <= dateTo
-                                                 && w.TenantRegistryId == _tenantRegistryId)
-            .OrderBy(s => s.Id).Take(limit);
-    }
+        public IEnumerable<ActivationWatcher> GetAllSinceId(int id, int limit)
+        {
+            return dbContext.ActivationWatcher
+                .Where(w => w.Id > id)
+                .OrderByDescending(s => s.Id).Take(limit);
+        }
 
-    public void BulkCopy(List<ActivationWatcher> models)
-    {
-        _dbContext.BulkCopy(models);
+        public IEnumerable<ActivationWatcher> GetByDateRangeAscending(DateTime dateFrom, DateTime dateTo, int limit)
+        {
+            return dbContext.ActivationWatcher
+                .Where(w => w.CreatedDate > dateFrom && w.CreatedDate <= dateTo
+                                                     && w.TenantRegistryId == tenantRegistryId)
+                .OrderBy(s => s.Id).Take(limit);
+        }
+
+        public void BulkCopy(List<ActivationWatcher> models)
+        {
+            dbContext.BulkCopy(models);
+        }
     }
 }

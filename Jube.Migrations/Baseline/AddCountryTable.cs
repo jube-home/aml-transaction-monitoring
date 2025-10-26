@@ -13,25 +13,26 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124919)]
-public class AddCountryTable : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124919)]
+    public class AddCountryTable : Migration
     {
-        Create.Table("Country")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("Name").AsString().Nullable()
-            .WithColumn("Alpha2").AsString().Nullable()
-            .WithColumn("Alpha3").AsString().Nullable()
-            .WithColumn("Numeric").AsInt32().Nullable()
-            .WithColumn("Latitude").AsString().Nullable()
-            .WithColumn("Longitude").AsString().Nullable();
-    }
+        public override void Up()
+        {
+            Create.Table("Country")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("Name").AsString().Nullable()
+                .WithColumn("Alpha2").AsString().Nullable()
+                .WithColumn("Alpha3").AsString().Nullable()
+                .WithColumn("Numeric").AsInt32().Nullable()
+                .WithColumn("Latitude").AsString().Nullable()
+                .WithColumn("Longitude").AsString().Nullable();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("Country");
+        public override void Down()
+        {
+            Delete.Table("Country");
+        }
     }
 }

@@ -11,69 +11,64 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Linq;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB;
-
-namespace Jube.Data.Repository;
-
-public class EntityAnalysisModelSyncronisationNodeStatusEntryRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
+    using System;
+    using System.Linq;
+    using Context;
+    using LinqToDB;
+    using Poco;
 
-    public EntityAnalysisModelSyncronisationNodeStatusEntryRepository(DbContext dbContext)
+    public class EntityAnalysisModelSyncronisationNodeStatusEntryRepository(DbContext dbContext)
     {
-        _dbContext = dbContext;
-    }
 
-    public EntityAnalysisModelSynchronisationNodeStatusEntry UpsertSynchronisation(
-        EntityAnalysisModelSynchronisationNodeStatusEntry model)
-    {
-        var existing =
-            _dbContext.EntityAnalysisModelSynchronisationNodeStatusEntry
-                .FirstOrDefault(w
-                    => w.TenantRegistryId == model.TenantRegistryId
-                       && w.Instance == model.Instance);
-
-        if (existing == null)
+        public EntityAnalysisModelSynchronisationNodeStatusEntry UpsertSynchronisation(
+            EntityAnalysisModelSynchronisationNodeStatusEntry model)
         {
-            model.SynchronisedDate = DateTime.Now;
-            model.HeartbeatDate = DateTime.Now;
-            model.Id = _dbContext.InsertWithInt32Identity(model);
-        }
-        else
-        {
-            existing.SynchronisedDate = DateTime.Now;
-            existing.HeartbeatDate = DateTime.Now;
-            _dbContext.Update(existing);
-        }
+            var existing =
+                dbContext.EntityAnalysisModelSynchronisationNodeStatusEntry
+                    .FirstOrDefault(w
+                        => w.TenantRegistryId == model.TenantRegistryId
+                           && w.Instance == model.Instance);
 
-        return model;
-    }
+            if (existing == null)
+            {
+                model.SynchronisedDate = DateTime.Now;
+                model.HeartbeatDate = DateTime.Now;
+                model.Id = dbContext.InsertWithInt32Identity(model);
+            }
+            else
+            {
+                existing.SynchronisedDate = DateTime.Now;
+                existing.HeartbeatDate = DateTime.Now;
+                dbContext.Update(existing);
+            }
 
-    public EntityAnalysisModelSynchronisationNodeStatusEntry UpsertHeartbeat(
-        EntityAnalysisModelSynchronisationNodeStatusEntry model)
-    {
-        var existing =
-            _dbContext.EntityAnalysisModelSynchronisationNodeStatusEntry
-                .FirstOrDefault(w
-                    => w.TenantRegistryId == model.TenantRegistryId
-                       && w.Instance == model.Instance);
-
-        if (existing == null)
-        {
-            model.SynchronisedDate = DateTime.Now;
-            model.HeartbeatDate = DateTime.Now;
-            model.Id = _dbContext.InsertWithInt32Identity(model);
-        }
-        else
-        {
-            existing.HeartbeatDate = DateTime.Now;
-            _dbContext.Update(existing);
+            return model;
         }
 
-        return model;
+        public EntityAnalysisModelSynchronisationNodeStatusEntry UpsertHeartbeat(
+            EntityAnalysisModelSynchronisationNodeStatusEntry model)
+        {
+            var existing =
+                dbContext.EntityAnalysisModelSynchronisationNodeStatusEntry
+                    .FirstOrDefault(w
+                        => w.TenantRegistryId == model.TenantRegistryId
+                           && w.Instance == model.Instance);
+
+            if (existing == null)
+            {
+                model.SynchronisedDate = DateTime.Now;
+                model.HeartbeatDate = DateTime.Now;
+                model.Id = dbContext.InsertWithInt32Identity(model);
+            }
+            else
+            {
+                existing.HeartbeatDate = DateTime.Now;
+                dbContext.Update(existing);
+            }
+
+            return model;
+        }
     }
 }

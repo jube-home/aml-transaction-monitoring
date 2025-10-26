@@ -11,228 +11,249 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using AutoMapper;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB;
-
-namespace Jube.Data.Repository;
-
-public class ExhaustiveSearchInstanceRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
-    private readonly int? _tenantRegistryId;
-    private readonly string _userName;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using AutoMapper;
+    using Context;
+    using LinqToDB;
+    using Poco;
 
-    public ExhaustiveSearchInstanceRepository(DbContext dbContext, string userName)
+    public class ExhaustiveSearchInstanceRepository
     {
-        _dbContext = dbContext;
-        _userName = userName;
-        _tenantRegistryId = _dbContext.UserInTenant.Where(w => w.User == _userName)
-            .Select(s => s.TenantRegistryId).FirstOrDefault();
-    }
+        private readonly DbContext dbContext;
+        private readonly int? tenantRegistryId;
+        private readonly string userName;
 
-    public ExhaustiveSearchInstanceRepository(DbContext dbContext, int tenantRegistryId)
-    {
-        _dbContext = dbContext;
-        _tenantRegistryId = tenantRegistryId;
-    }
-
-    public ExhaustiveSearchInstanceRepository(DbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
-
-    public IEnumerable<ExhaustiveSearchInstance> Get()
-    {
-        return _dbContext.ExhaustiveSearchInstance
-            .Where(w => w.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId);
-    }
-
-    public IEnumerable<ExhaustiveSearchInstance> GetByEntityAnalysisModelIdOrderById(int entityAnalysisModelId)
-    {
-        return _dbContext.ExhaustiveSearchInstance.Where(w =>
-                (w.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue)
-                && w.EntityAnalysisModelId == entityAnalysisModelId
-                && (w.Deleted == 0 || w.Deleted == null))
-            .OrderBy(o => o.Id);
-    }
-
-    public ExhaustiveSearchInstance GetById(int id)
-    {
-        return _dbContext.ExhaustiveSearchInstance.FirstOrDefault(w =>
-            (w.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue)
-            && w.Id == id && (w.Deleted == 0 || w.Deleted == null));
-    }
-
-    public ExhaustiveSearchInstance Insert(ExhaustiveSearchInstance model)
-    {
-        model.CreatedUser = _userName ?? model.CreatedUser;
-        model.Guid = model.Guid == Guid.Empty ? Guid.NewGuid() : model.Guid;
-        model.CreatedDate = DateTime.Now;
-        model.UpdatedDate = DateTime.Now;
-        model.Version = 1;
-        model.Id = _dbContext.InsertWithInt32Identity(model);
-        return model;
-    }
-
-    public ExhaustiveSearchInstance Update(ExhaustiveSearchInstance model)
-    {
-        var existing = _dbContext.ExhaustiveSearchInstance
-            .FirstOrDefault(w => w.Id
-                                 == model.Id
-                                 && (w.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId ||
-                                     !_tenantRegistryId
-                                         .HasValue)
-                                 && (w.StatusId == 0 || w.StatusId == null)
-                                 && (w.Deleted == 0 || w.Deleted == null)
-                                 && (w.Locked == 0 || w.Locked == null));
-
-        if (existing == null) throw new KeyNotFoundException();
-
-        model.Version = existing.Version + 1;
-        model.Guid = existing.Guid;
-        model.CreatedUser = _userName;
-        model.CreatedDate = DateTime.Now;
-
-        _dbContext.Update(model);
-
-        var config = new MapperConfiguration(cfg =>
+        public ExhaustiveSearchInstanceRepository(DbContext dbContext, string userName)
         {
-            cfg.CreateMap<ExhaustiveSearchInstance, ExhaustiveSearchInstanceVersion>();
-        });
-        var mapper = new Mapper(config);
+            this.dbContext = dbContext;
+            this.userName = userName;
+            tenantRegistryId = this.dbContext.UserInTenant.Where(w => w.User == this.userName)
+                .Select(s => s.TenantRegistryId).FirstOrDefault();
+        }
 
-        var audit = mapper.Map<ExhaustiveSearchInstanceVersion>(existing);
-        audit.ExhaustiveSearchInstanceId = existing.Id;
+        public ExhaustiveSearchInstanceRepository(DbContext dbContext, int tenantRegistryId)
+        {
+            this.dbContext = dbContext;
+            this.tenantRegistryId = tenantRegistryId;
+        }
 
-        _dbContext.Insert(audit);
+        public ExhaustiveSearchInstanceRepository(DbContext dbContext)
+        {
+            this.dbContext = dbContext;
+        }
 
-        return model;
-    }
+        public IEnumerable<ExhaustiveSearchInstance> Get()
+        {
+            return dbContext.ExhaustiveSearchInstance
+                .Where(w => w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId);
+        }
+
+        public IEnumerable<ExhaustiveSearchInstance> GetByEntityAnalysisModelIdOrderById(int entityAnalysisModelId)
+        {
+            return dbContext.ExhaustiveSearchInstance.Where(w =>
+                    (w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                    && w.EntityAnalysisModelId == entityAnalysisModelId
+                    && (w.Deleted == 0 || w.Deleted == null))
+                .OrderBy(o => o.Id);
+        }
+
+        public ExhaustiveSearchInstance GetById(int id)
+        {
+            return dbContext.ExhaustiveSearchInstance.FirstOrDefault(w =>
+                (w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                && w.Id == id && (w.Deleted == 0 || w.Deleted == null));
+        }
+
+        public ExhaustiveSearchInstance Insert(ExhaustiveSearchInstance model)
+        {
+            model.CreatedUser = userName ?? model.CreatedUser;
+            model.Guid = model.Guid == Guid.Empty ? Guid.NewGuid() : model.Guid;
+            model.CreatedDate = DateTime.Now;
+            model.UpdatedDate = DateTime.Now;
+            model.Version = 1;
+            model.Id = dbContext.InsertWithInt32Identity(model);
+            return model;
+        }
+
+        public ExhaustiveSearchInstance Update(ExhaustiveSearchInstance model)
+        {
+            var existing = dbContext.ExhaustiveSearchInstance
+                .FirstOrDefault(w => w.Id
+                                     == model.Id
+                                     && (w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId ||
+                                         !tenantRegistryId
+                                             .HasValue)
+                                     && (w.StatusId == 0 || w.StatusId == null)
+                                     && (w.Deleted == 0 || w.Deleted == null)
+                                     && (w.Locked == 0 || w.Locked == null));
+
+            if (existing == null)
+            {
+                throw new KeyNotFoundException();
+            }
+
+            model.Version = existing.Version + 1;
+            model.Guid = existing.Guid;
+            model.CreatedUser = userName;
+            model.CreatedDate = DateTime.Now;
+
+            dbContext.Update(model);
+
+            var config = new MapperConfiguration(cfg =>
+            {
+                cfg.CreateMap<ExhaustiveSearchInstance, ExhaustiveSearchInstanceVersion>();
+            });
+            var mapper = new Mapper(config);
+
+            var audit = mapper.Map<ExhaustiveSearchInstanceVersion>(existing);
+            audit.ExhaustiveSearchInstanceId = existing.Id;
+
+            dbContext.Insert(audit);
+
+            return model;
+        }
 
 
-    public void Stop(Guid exhaustiveSearchInstanceGuid)
-    {
-        var records = _dbContext.ExhaustiveSearchInstance
-            .Where(d =>
-                (d.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue)
-                && d.Guid == exhaustiveSearchInstanceGuid
-                && (d.Deleted == 0 || d.Deleted == null)
-                && d.StatusId != 19)
-            .Set(s => s.UpdatedDate, DateTime.Now)
-            .Set(s => s.StatusId, (byte)18)
-            .Update();
-    }
+        public void Stop(Guid exhaustiveSearchInstanceGuid)
+        {
+            dbContext.ExhaustiveSearchInstance
+                .Where(d =>
+                    (d.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                    && d.Guid == exhaustiveSearchInstanceGuid
+                    && (d.Deleted == 0 || d.Deleted == null)
+                    && d.StatusId != 19)
+                .Set(s => s.UpdatedDate, DateTime.Now)
+                .Set(s => s.StatusId, (byte)18)
+                .Update();
+        }
 
-    public bool IsStoppingOrStopped(int id)
-    {
-        return _dbContext.ExhaustiveSearchInstance.FirstOrDefault(w =>
-            (w.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue)
-            && (w.StatusId == 18 || w.StatusId == 19)
-            && w.Id == id && (w.Deleted == 0 || w.Deleted == null)) == null;
-    }
+        public bool IsStoppingOrStopped(int id)
+        {
+            return dbContext.ExhaustiveSearchInstance.FirstOrDefault(w =>
+                (w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                && (w.StatusId == 18 || w.StatusId == 19)
+                && w.Id == id && (w.Deleted == 0 || w.Deleted == null)) == null;
+        }
 
-    public void UpdateStatus(int id, byte statusId)
-    {
-        var records = _dbContext.ExhaustiveSearchInstance
-            .Where(d =>
-                (d.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue)
-                && d.Id == id
-                && (d.Deleted == 0 || d.Deleted == null))
-            .Set(s => s.UpdatedDate, DateTime.Now)
-            .Set(s => s.StatusId, statusId)
-            .Update();
+        public void UpdateStatus(int id, byte statusId)
+        {
+            var records = dbContext.ExhaustiveSearchInstance
+                .Where(d =>
+                    (d.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                    && d.Id == id
+                    && (d.Deleted == 0 || d.Deleted == null))
+                .Set(s => s.UpdatedDate, DateTime.Now)
+                .Set(s => s.StatusId, statusId)
+                .Update();
 
-        if (records == 0) throw new KeyNotFoundException();
-    }
+            if (records == 0)
+            {
+                throw new KeyNotFoundException();
+            }
+        }
 
-    public void UpdateCompleted(int id)
-    {
-        var records = _dbContext.ExhaustiveSearchInstance
-            .Where(d =>
-                (d.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue)
-                && d.Id == id
-                && (d.Deleted == 0 || d.Deleted == null))
-            .Set(s => s.UpdatedDate, DateTime.Now)
-            .Set(s => s.CompletedDate, DateTime.Now)
-            .Update();
+        public void UpdateCompleted(int id)
+        {
+            var records = dbContext.ExhaustiveSearchInstance
+                .Where(d =>
+                    (d.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                    && d.Id == id
+                    && (d.Deleted == 0 || d.Deleted == null))
+                .Set(s => s.UpdatedDate, DateTime.Now)
+                .Set(s => s.CompletedDate, DateTime.Now)
+                .Update();
 
-        if (records == 0) throw new KeyNotFoundException();
-    }
+            if (records == 0)
+            {
+                throw new KeyNotFoundException();
+            }
+        }
 
-    public void UpdateModels(int id, int models)
-    {
-        var records = _dbContext.ExhaustiveSearchInstance
-            .Where(d =>
-                (d.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue)
-                && d.Id == id
-                && (d.Deleted == 0 || d.Deleted == null))
-            .Set(s => s.Models, models)
-            .Set(s => s.UpdatedDate, DateTime.Now)
-            .Update();
+        public void UpdateModels(int id, int models)
+        {
+            var records = dbContext.ExhaustiveSearchInstance
+                .Where(d =>
+                    (d.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                    && d.Id == id
+                    && (d.Deleted == 0 || d.Deleted == null))
+                .Set(s => s.Models, models)
+                .Set(s => s.UpdatedDate, DateTime.Now)
+                .Update();
 
-        if (records == 0) throw new KeyNotFoundException();
-    }
+            if (records == 0)
+            {
+                throw new KeyNotFoundException();
+            }
+        }
 
-    public void UpdateModelsSinceBest(int id, int modelsSinceBest)
-    {
-        var records = _dbContext.ExhaustiveSearchInstance
-            .Where(d =>
-                (d.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue)
-                && d.Id == id
-                && (d.Deleted == 0 || d.Deleted == null))
-            .Set(s => s.ModelsSinceBest, modelsSinceBest)
-            .Set(s => s.UpdatedDate, DateTime.Now)
-            .Update();
+        public void UpdateModelsSinceBest(int id, int modelsSinceBest)
+        {
+            var records = dbContext.ExhaustiveSearchInstance
+                .Where(d =>
+                    (d.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                    && d.Id == id
+                    && (d.Deleted == 0 || d.Deleted == null))
+                .Set(s => s.ModelsSinceBest, modelsSinceBest)
+                .Set(s => s.UpdatedDate, DateTime.Now)
+                .Update();
 
-        if (records == 0) throw new KeyNotFoundException();
-    }
+            if (records == 0)
+            {
+                throw new KeyNotFoundException();
+            }
+        }
 
-    public void UpdateBestScore(int id, double score, int topologyComplexity)
-    {
-        var records = _dbContext.ExhaustiveSearchInstance
-            .Where(d =>
-                (d.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue)
-                && d.Id == id
-                && (d.Deleted == 0 || d.Deleted == null))
-            .Set(s => s.Score, score)
-            .Set(s => s.TopologyComplexity, topologyComplexity)
-            .Set(s => s.UpdatedDate, DateTime.Now)
-            .Update();
+        public void UpdateBestScore(int id, double score, int topologyComplexity)
+        {
+            var records = dbContext.ExhaustiveSearchInstance
+                .Where(d =>
+                    (d.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                    && d.Id == id
+                    && (d.Deleted == 0 || d.Deleted == null))
+                .Set(s => s.Score, score)
+                .Set(s => s.TopologyComplexity, topologyComplexity)
+                .Set(s => s.UpdatedDate, DateTime.Now)
+                .Update();
 
-        if (records == 0) throw new KeyNotFoundException();
-    }
+            if (records == 0)
+            {
+                throw new KeyNotFoundException();
+            }
+        }
 
-    public void Delete(int id)
-    {
-        var records = _dbContext.ExhaustiveSearchInstance
-            .Where(d =>
-                (d.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue)
-                && d.Id == id
-                && (d.Locked == 0 || d.Locked == null)
-                && (d.Deleted == 0 || d.Deleted == null))
-            .Set(s => s.Deleted, Convert.ToByte(1))
-            .Set(s => s.DeletedDate, DateTime.Now)
-            .Set(s => s.DeletedUser, _userName)
-            .Update();
+        public void Delete(int id)
+        {
+            var records = dbContext.ExhaustiveSearchInstance
+                .Where(d =>
+                    (d.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                    && d.Id == id
+                    && (d.Locked == 0 || d.Locked == null)
+                    && (d.Deleted == 0 || d.Deleted == null))
+                .Set(s => s.Deleted, Convert.ToByte(1))
+                .Set(s => s.DeletedDate, DateTime.Now)
+                .Set(s => s.DeletedUser, userName)
+                .Update();
 
-        if (records == 0) throw new KeyNotFoundException();
-    }
+            if (records == 0)
+            {
+                throw new KeyNotFoundException();
+            }
+        }
 
-    public void DeleteByTenantRegistryId(int tenantRegistryId, int importId)
-    {
-        _dbContext.ExhaustiveSearchInstance
-            .Where(d =>
-                (d.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue)
-                && d.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
-                && (d.Deleted == 0 || d.Deleted == null))
-            .Set(s => s.ImportId, importId)
-            .Set(s => s.Deleted, Convert.ToByte(1))
-            .Set(s => s.DeletedDate, DateTime.Now)
-            .Update();
+        public void DeleteByTenantRegistryIdOutsideOfInstance(int tenantRegistryIdOutsideOfInstance, int importId)
+        {
+            dbContext.ExhaustiveSearchInstance
+                .Where(d =>
+                    d.EntityAnalysisModel.TenantRegistryId == tenantRegistryIdOutsideOfInstance
+                    && (d.Deleted == 0 || d.Deleted == null))
+                .Set(s => s.ImportId, importId)
+                .Set(s => s.Deleted, Convert.ToByte(1))
+                .Set(s => s.DeletedDate, DateTime.Now)
+                .Update();
+        }
     }
 }

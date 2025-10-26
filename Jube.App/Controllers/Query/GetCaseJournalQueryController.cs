@@ -11,50 +11,53 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Threading.Tasks;
-using Jube.App.Code;
-using Jube.Data.Context;
-using Jube.Data.Query;
-using Jube.Engine.Helpers;
-using log4net;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-
 namespace Jube.App.Controllers.Query
 {
+    using System;
+    using System.Threading.Tasks;
+    using Code;
+    using Data.Context;
+    using Data.Query;
+    using DynamicEnvironment;
+    using log4net;
+    using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.AspNetCore.Mvc;
+
     [Route("api/[controller]")]
     [Produces("application/json")]
     [Authorize]
     public class GetCaseJournalQueryController : Controller
     {
-        private readonly DbContext _dbContext;
-        private readonly ILog _log;
-        private readonly PermissionValidation _permissionValidation;
-        private readonly GetCaseJournalQuery _query;
-        private readonly string _userName;
+        private readonly DbContext dbContext;
+        private readonly ILog log;
+        private readonly PermissionValidation permissionValidation;
+        private readonly GetCaseJournalQuery query;
+        private readonly string userName;
 
         public GetCaseJournalQueryController(ILog log,
-            IHttpContextAccessor httpContextAccessor, DynamicEnvironment.DynamicEnvironment dynamicEnvironment)
+            IHttpContextAccessor httpContextAccessor, DynamicEnvironment dynamicEnvironment)
         {
             if (httpContextAccessor.HttpContext?.User.Identity != null)
-                _userName = httpContextAccessor.HttpContext.User.Identity.Name;
-            _log = log;
+            {
+                userName = httpContextAccessor.HttpContext.User.Identity.Name;
+            }
 
-            _dbContext =
+            this.log = log;
+
+            dbContext =
                 DataConnectionDbContext.GetDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
-            _permissionValidation = new PermissionValidation(_dbContext, _userName);
+            permissionValidation = new PermissionValidation(dbContext, userName);
 
-            _query = new GetCaseJournalQuery(_dbContext, _userName);
+            query = new GetCaseJournalQuery(dbContext, userName);
         }
 
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                _dbContext.Close();
-                _dbContext.Dispose();
+                dbContext.Close();
+                dbContext.Dispose();
             }
 
             base.Dispose(disposing);
@@ -66,14 +69,20 @@ namespace Jube.App.Controllers.Query
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 1 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        1
+                    }))
+                {
+                    return Forbid();
+                }
 
-                return Ok(await _query.ExecuteAsync(drillName, drillValue, caseWorkflowGuid, limit,
+                return Ok(await query.ExecuteAsync(drillName, drillValue, caseWorkflowGuid, limit,
                     activationsOnly ? 1 : 0, responseElevation).ConfigureAwait(false));
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }

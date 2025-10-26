@@ -11,58 +11,44 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Linq;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB;
-
-namespace Jube.Data.Repository;
-
-public class ExhaustiveSearchInstanceVariableMultiColiniarityRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
-    private readonly int? _tenantRegistryId;
+    using System;
+    using System.Linq;
+    using Context;
+    using LinqToDB;
+    using Poco;
 
-    public ExhaustiveSearchInstanceVariableMultiColiniarityRepository(DbContext dbContext)
+    public class ExhaustiveSearchInstanceVariableMultiColiniarityRepository(DbContext dbContext)
     {
-        _dbContext = dbContext;
-    }
 
-    public ExhaustiveSearchInstanceVariableMultiColiniarityRepository(DbContext dbContext, int tenantRegistryId)
-    {
-        _dbContext = dbContext;
-        _tenantRegistryId = tenantRegistryId;
-    }
+        public ExhaustiveSearchInstanceVariableMultiCollinearity Insert(
+            ExhaustiveSearchInstanceVariableMultiCollinearity model)
+        {
+            model.Id = dbContext.InsertWithInt32Identity(model);
+            return model;
+        }
 
-    public ExhaustiveSearchInstanceVariableMultiCollinearity Insert(
-        ExhaustiveSearchInstanceVariableMultiCollinearity model)
-    {
-        model.Id = _dbContext.InsertWithInt32Identity(model);
-        return model;
-    }
+        public IQueryable<ExhaustiveSearchInstanceVariableMultiCollinearity>
+            GetByExhaustiveSearchInstanceVariableIdOrderById(
+                int exhaustiveSearchInstanceVariableId)
+        {
+            return dbContext.ExhaustiveSearchInstanceVariableMultiCollinearity.Where(w =>
+                    w.ExhaustiveSearchInstanceVariableId == exhaustiveSearchInstanceVariableId)
+                .OrderBy(o => o.Id);
+        }
 
-    public IQueryable<ExhaustiveSearchInstanceVariableMultiCollinearity>
-        GetByExhaustiveSearchInstanceVariableIdOrderById(
-            int exhaustiveSearchInstanceVariableId)
-    {
-        return _dbContext.ExhaustiveSearchInstanceVariableMultiCollinearity.Where(w =>
-                w.ExhaustiveSearchInstanceVariableId == exhaustiveSearchInstanceVariableId)
-            .OrderBy(o => o.Id);
-    }
-
-    public void DeleteByTenantRegistryId(int tenantRegistryId, int importId)
-    {
-        var records = _dbContext.ExhaustiveSearchInstanceVariableMultiCollinearity
-            .Where(d =>
-                (d.ExhaustiveSearchInstanceVariable.ExhaustiveSearchInstance.EntityAnalysisModel.TenantRegistryId ==
-                    _tenantRegistryId || !_tenantRegistryId.HasValue)
-                && d.ExhaustiveSearchInstanceVariable.ExhaustiveSearchInstance.EntityAnalysisModel.TenantRegistryId ==
-                tenantRegistryId
-                && (d.Deleted == 0 || d.Deleted == null))
-            .Set(s => s.ImportId, importId)
-            .Set(s => s.Deleted, Convert.ToByte(1))
-            .Set(s => s.DeletedDate, DateTime.Now)
-            .Update();
+        public void DeleteByTenantRegistryIdOutsideOfInstance(int tenantRegistryIdOutsideOfInstance, int importId)
+        {
+            dbContext.ExhaustiveSearchInstanceVariableMultiCollinearity
+                .Where(d =>
+                    d.ExhaustiveSearchInstanceVariable.ExhaustiveSearchInstance.EntityAnalysisModel.TenantRegistryId ==
+                    tenantRegistryIdOutsideOfInstance
+                    && (d.Deleted == 0 || d.Deleted == null))
+                .Set(s => s.ImportId, importId)
+                .Set(s => s.Deleted, Convert.ToByte(1))
+                .Set(s => s.DeletedDate, DateTime.Now)
+                .Update();
+        }
     }
 }

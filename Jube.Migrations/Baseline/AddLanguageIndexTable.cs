@@ -13,20 +13,21 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429125009)]
-public class AddLanguageTable : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429125009)]
+    public class AddLanguageTable : Migration
     {
-        Create.Table("Language")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("Name").AsString().Nullable();
-    }
+        public override void Up()
+        {
+            Create.Table("Language")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("Name").AsString().Nullable();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("Language");
+        public override void Down()
+        {
+            Delete.Table("Language");
+        }
     }
 }

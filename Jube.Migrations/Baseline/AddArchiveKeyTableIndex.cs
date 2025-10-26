@@ -13,47 +13,48 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124901)]
-public class AddArchiveKeyTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124901)]
+    public class AddArchiveKeyTableIndex : Migration
     {
-        Create.Table("ArchiveKey")
-            .WithColumn("Id").AsInt64().PrimaryKey().Identity()
-            .WithColumn("ProcessingTypeId").AsByte().Nullable()
-            .WithColumn("Key").AsString().Nullable()
-            .WithColumn("KeyValueString").AsString().Nullable()
-            .WithColumn("KeyValueInteger").AsInt32().Nullable()
-            .WithColumn("KeyValueFloat").AsDouble().Nullable()
-            .WithColumn("KeyValueBoolean").AsByte().Nullable()
-            .WithColumn("KeyValueDate").AsDateTime2().Nullable()
-            .WithColumn("EntityAnalysisModelInstanceEntryGuid").AsGuid();
+        public override void Up()
+        {
+            Create.Table("ArchiveKey")
+                .WithColumn("Id").AsInt64().PrimaryKey().Identity()
+                .WithColumn("ProcessingTypeId").AsByte().Nullable()
+                .WithColumn("Key").AsString().Nullable()
+                .WithColumn("KeyValueString").AsString().Nullable()
+                .WithColumn("KeyValueInteger").AsInt32().Nullable()
+                .WithColumn("KeyValueFloat").AsDouble().Nullable()
+                .WithColumn("KeyValueBoolean").AsByte().Nullable()
+                .WithColumn("KeyValueDate").AsDateTime2().Nullable()
+                .WithColumn("EntityAnalysisModelInstanceEntryGuid").AsGuid();
 
-        Create.Index().OnTable("ArchiveKey")
-            .OnColumn("Key").Ascending()
-            .OnColumn("KeyValueString").Ascending();
+            Create.Index().OnTable("ArchiveKey")
+                .OnColumn("Key").Ascending()
+                .OnColumn("KeyValueString").Ascending();
 
-        Create.Index().OnTable("ArchiveKey")
-            .OnColumn("Key").Ascending()
-            .OnColumn("KeyValueInteger").Ascending();
+            Create.Index().OnTable("ArchiveKey")
+                .OnColumn("Key").Ascending()
+                .OnColumn("KeyValueInteger").Ascending();
 
-        Create.Index().OnTable("ArchiveKey")
-            .OnColumn("Key").Ascending()
-            .OnColumn("KeyValueFloat").Ascending();
+            Create.Index().OnTable("ArchiveKey")
+                .OnColumn("Key").Ascending()
+                .OnColumn("KeyValueFloat").Ascending();
 
-        Create.Index().OnTable("ArchiveKey")
-            .OnColumn("Key").Ascending()
-            .OnColumn("KeyValueBoolean").Ascending();
+            Create.Index().OnTable("ArchiveKey")
+                .OnColumn("Key").Ascending()
+                .OnColumn("KeyValueBoolean").Ascending();
 
-        Create.Index().OnTable("ArchiveKey")
-            .OnColumn("Key").Ascending()
-            .OnColumn("KeyValueDate").Ascending();
-    }
+            Create.Index().OnTable("ArchiveKey")
+                .OnColumn("Key").Ascending()
+                .OnColumn("KeyValueDate").Ascending();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("ArchiveKey");
+        public override void Down()
+        {
+            Delete.Table("ArchiveKey");
+        }
     }
 }

@@ -11,50 +11,53 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using AutoMapper;
-using FluentValidation;
-using Jube.App.Code;
-using Jube.App.Dto;
-using Jube.App.Validators;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using Jube.Data.Repository;
-using Jube.Engine.Helpers;
-using log4net;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json.Linq;
-
 namespace Jube.App.Controllers.Repository
 {
+    using System;
+    using System.Collections.Generic;
+    using AutoMapper;
+    using Code;
+    using Data.Context;
+    using Data.Poco;
+    using Data.Repository;
+    using Dto;
+    using DynamicEnvironment;
+    using FluentValidation;
+    using log4net;
+    using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.AspNetCore.Mvc;
+    using Newtonsoft.Json.Linq;
+    using Validators;
+
     [Route("api/[controller]")]
     [Produces("application/json")]
     [Authorize]
     public class CaseNoteController : Controller
     {
-        private readonly DbContext _dbContext;
-        private readonly DynamicEnvironment.DynamicEnvironment _dynamicEnvironment;
-        private readonly ILog _log;
-        private readonly IMapper _mapper;
-        private readonly PermissionValidation _permissionValidation;
-        private readonly CaseNoteRepository _repository;
-        private readonly string _userName;
-        private readonly IValidator<CaseNoteDto> _validator;
+        private readonly DbContext dbContext;
+        private readonly DynamicEnvironment dynamicEnvironment;
+        private readonly ILog log;
+        private readonly IMapper mapper;
+        private readonly PermissionValidation permissionValidation;
+        private readonly CaseNoteRepository repository;
+        private readonly string userName;
+        private readonly IValidator<CaseNoteDto> validator;
 
         public CaseNoteController(ILog log,
-            DynamicEnvironment.DynamicEnvironment dynamicEnvironment
+            DynamicEnvironment dynamicEnvironment
             , IHttpContextAccessor httpContextAccessor)
         {
             if (httpContextAccessor.HttpContext?.User.Identity != null)
-                _userName = httpContextAccessor.HttpContext.User.Identity.Name;
-            _log = log;
+            {
+                userName = httpContextAccessor.HttpContext.User.Identity.Name;
+            }
 
-            _dbContext =
+            this.log = log;
+
+            dbContext =
                 DataConnectionDbContext.GetDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
-            _permissionValidation = new PermissionValidation(_dbContext, _userName);
+            permissionValidation = new PermissionValidation(dbContext, userName);
 
             var config = new MapperConfiguration(cfg =>
             {
@@ -63,18 +66,18 @@ namespace Jube.App.Controllers.Repository
                 cfg.CreateMap<List<CaseNote>, List<CaseNoteDto>>()
                     .ForMember("Item", opt => opt.Ignore());
             });
-            _mapper = new Mapper(config);
-            _repository = new CaseNoteRepository(_dbContext, _userName);
-            _validator = new CaseNoteDtoValidator();
-            _dynamicEnvironment = dynamicEnvironment;
+            mapper = new Mapper(config);
+            repository = new CaseNoteRepository(dbContext, userName);
+            validator = new CaseNoteDtoValidator();
+            this.dynamicEnvironment = dynamicEnvironment;
         }
 
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                _dbContext.Close();
-                _dbContext.Dispose();
+                dbContext.Close();
+                dbContext.Dispose();
             }
 
             base.Dispose(disposing);
@@ -83,29 +86,44 @@ namespace Jube.App.Controllers.Repository
         [HttpPost]
         public ActionResult<CaseNoteDto> Insert([FromBody] CaseNoteDto model)
         {
-            if (!_permissionValidation.Validate(new[] { 1 })) return Forbid();
+            if (!permissionValidation.Validate(new[]
+                {
+                    1
+                }))
+            {
+                return Forbid();
+            }
 
-            var results = _validator.Validate(model);
+            var results = validator.Validate(model);
 
-            if (!results.IsValid) return Ok(_repository.Insert(_mapper.Map<CaseNote>(model)));
+            if (!results.IsValid)
+            {
+                return Ok(repository.Insert(mapper.Map<CaseNote>(model)));
+            }
 
             var jObject = JObject.Parse(model.Payload);
 
             var values = new Dictionary<string, string>();
             foreach (var (key, value) in jObject)
+            {
                 if (value != null)
+                {
                     values.Add(key, value.ToString());
+                }
+            }
 
-            var caseWorkflowActionRepository = new CaseWorkflowActionRepository(_dbContext, _userName);
+            var caseWorkflowActionRepository = new CaseWorkflowActionRepository(dbContext, userName);
 
             var caseWorkflowAction = caseWorkflowActionRepository.GetById(model.ActionId);
 
             if (caseWorkflowAction.EnableNotification != 1 && caseWorkflowAction.EnableHttpEndpoint != 1)
-                return Ok(_repository.Insert(_mapper.Map<CaseNote>(model)));
+            {
+                return Ok(repository.Insert(mapper.Map<CaseNote>(model)));
+            }
 
             if (caseWorkflowAction.EnableNotification == 1)
             {
-                var notification = new Notification(_log, _dynamicEnvironment);
+                var notification = new Notification(log, dynamicEnvironment);
                 notification.Send(caseWorkflowAction.NotificationTypeId ?? 1,
                     caseWorkflowAction.NotificationDestination,
                     caseWorkflowAction.NotificationSubject,
@@ -113,15 +131,19 @@ namespace Jube.App.Controllers.Repository
             }
 
             if (caseWorkflowAction.EnableHttpEndpoint != 1)
-                return Ok(_repository.Insert(_mapper.Map<CaseNote>(model)));
+            {
+                return Ok(repository.Insert(mapper.Map<CaseNote>(model)));
+            }
 
             var sendHttpEndpoint = new SendHttpEndpoint();
             if (caseWorkflowAction.HttpEndpointTypeId != null)
+            {
                 sendHttpEndpoint.Send(caseWorkflowAction.HttpEndpoint,
                     caseWorkflowAction.HttpEndpointTypeId.Value
                     , values);
+            }
 
-            return Ok(_repository.Insert(_mapper.Map<CaseNote>(model)));
+            return Ok(repository.Insert(mapper.Map<CaseNote>(model)));
         }
 
         [HttpGet("ByCaseKeyValue")]
@@ -129,13 +151,19 @@ namespace Jube.App.Controllers.Repository
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 1 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        1
+                    }))
+                {
+                    return Forbid();
+                }
 
-                return Ok(_mapper.Map<List<CaseNote>>(_repository.GetByCaseKeyValue(key, value)));
+                return Ok(mapper.Map<List<CaseNote>>(repository.GetByCaseKeyValue(key, value)));
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }

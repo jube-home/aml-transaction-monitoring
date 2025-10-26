@@ -11,34 +11,22 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB;
-
-namespace Jube.Data.Repository;
-
-public class UserLoginRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
-    private readonly string _userName;
+    using System;
+    using Context;
+    using LinqToDB;
+    using Poco;
 
-    public UserLoginRepository(DbContext dbContext, string userName)
+    public class UserLoginRepository(DbContext dbContext, string userName = null)
     {
-        _dbContext = dbContext;
-        _userName = userName;
-    }
 
-    public UserLoginRepository(DbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
-
-    public UserLogin Insert(UserLogin model)
-    {
-        model.CreatedUser = _userName;
-        model.CreatedDate = DateTime.Now;
-        model.Id = _dbContext.InsertWithInt32Identity(model);
-        return model;
+        public UserLogin Insert(UserLogin model)
+        {
+            model.CreatedUser = userName;
+            model.CreatedDate = DateTime.Now;
+            model.Id = dbContext.InsertWithInt32Identity(model);
+            return model;
+        }
     }
 }

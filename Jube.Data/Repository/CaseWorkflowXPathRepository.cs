@@ -11,141 +11,147 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using AutoMapper;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB;
-
-namespace Jube.Data.Repository;
-
-public class CaseWorkflowXPathRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
-    private readonly int _tenantRegistryId;
-    private readonly string _userName;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using AutoMapper;
+    using Context;
+    using LinqToDB;
+    using Poco;
 
-    public CaseWorkflowXPathRepository(DbContext dbContext, string userName)
+    public class CaseWorkflowXPathRepository
     {
-        _dbContext = dbContext;
-        _userName = userName;
-        _tenantRegistryId = _dbContext.UserInTenant.Where(w => w.User == _userName)
-            .Select(s => s.TenantRegistryId).FirstOrDefault();
-    }
+        private readonly DbContext dbContext;
+        private readonly int tenantRegistryId;
+        private readonly string userName;
 
-    public CaseWorkflowXPathRepository(DbContext dbContext, int tenantRegistryId)
-    {
-        _dbContext = dbContext;
-        _tenantRegistryId = tenantRegistryId;
-    }
+        public CaseWorkflowXPathRepository(DbContext dbContext, string userName)
+        {
+            this.dbContext = dbContext;
+            this.userName = userName;
+            tenantRegistryId = this.dbContext.UserInTenant.Where(w => w.User == this.userName)
+                .Select(s => s.TenantRegistryId).FirstOrDefault();
+        }
 
-    public IEnumerable<CaseWorkflowXPath> Get()
-    {
-        return _dbContext.CaseWorkflowXPath
-            .Where(w => w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId);
-    }
+        public CaseWorkflowXPathRepository(DbContext dbContext, int tenantRegistryId)
+        {
+            this.dbContext = dbContext;
+            this.tenantRegistryId = tenantRegistryId;
+        }
 
-    public IEnumerable<CaseWorkflowXPath> GetByCasesWorkflowIdActiveDrillOnly(int casesWorkflowId)
-    {
-        return _dbContext.CaseWorkflowXPath
-            .Where(w => w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId
-                        && w.Active == 1
-                        && w.Drill == 1
-                        && w.CaseWorkflowId == casesWorkflowId
-                        && (w.Deleted == 0 || w.Deleted == null));
-    }
+        public IEnumerable<CaseWorkflowXPath> Get()
+        {
+            return dbContext.CaseWorkflowXPath
+                .Where(w => w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == tenantRegistryId);
+        }
 
-    public IEnumerable<CaseWorkflowXPath> GetByCasesWorkflowGuidActiveDrillOnly(Guid casesWorkflowGuid)
-    {
-        return _dbContext.CaseWorkflowXPath
-            .Where(w => w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId
-                        && w.Active == 1
-                        && w.Drill == 1
-                        && w.CaseWorkflow.Guid == casesWorkflowGuid
-                        && (w.Deleted == 0 || w.Deleted == null));
-    }
+        public IEnumerable<CaseWorkflowXPath> GetByCasesWorkflowIdActiveDrillOnly(int casesWorkflowId)
+        {
+            return dbContext.CaseWorkflowXPath
+                .Where(w => w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
+                            && w.Active == 1
+                            && w.Drill == 1
+                            && w.CaseWorkflowId == casesWorkflowId
+                            && (w.Deleted == 0 || w.Deleted == null));
+        }
 
-    public IEnumerable<CaseWorkflowXPath> GetByCasesWorkflowIdOrderByIdDesc(int casesWorkflowId)
-    {
-        return _dbContext.CaseWorkflowXPath
-            .Where(w => w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId
-                        && w.CaseWorkflowId == casesWorkflowId && (w.Deleted == 0 || w.Deleted == null))
-            .OrderBy(o => o.Id);
-    }
+        public IEnumerable<CaseWorkflowXPath> GetByCasesWorkflowGuidActiveDrillOnly(Guid casesWorkflowGuid)
+        {
+            return dbContext.CaseWorkflowXPath
+                .Where(w => w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
+                            && w.Active == 1
+                            && w.Drill == 1
+                            && w.CaseWorkflow.Guid == casesWorkflowGuid
+                            && (w.Deleted == 0 || w.Deleted == null));
+        }
 
-    public CaseWorkflowXPath GetById(int id)
-    {
-        return _dbContext.CaseWorkflowXPath.FirstOrDefault(w =>
-            w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId
-            && w.Id == id && (w.Deleted == 0 || w.Deleted == null));
-    }
+        public IEnumerable<CaseWorkflowXPath> GetByCasesWorkflowIdOrderByIdDesc(int casesWorkflowId)
+        {
+            return dbContext.CaseWorkflowXPath
+                .Where(w => w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
+                            && w.CaseWorkflowId == casesWorkflowId && (w.Deleted == 0 || w.Deleted == null))
+                .OrderBy(o => o.Id);
+        }
 
-    public CaseWorkflowXPath Insert(CaseWorkflowXPath model)
-    {
-        model.CreatedUser = _userName;
-        model.CreatedDate = DateTime.Now;
-        model.Version = 1;
-        model.Guid = Guid.NewGuid();
-        model.Id = _dbContext.InsertWithInt32Identity(model);
-        return model;
-    }
+        public CaseWorkflowXPath GetById(int id)
+        {
+            return dbContext.CaseWorkflowXPath.FirstOrDefault(w =>
+                w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
+                && w.Id == id && (w.Deleted == 0 || w.Deleted == null));
+        }
 
-    public CaseWorkflowXPath Update(CaseWorkflowXPath model)
-    {
-        var existing = _dbContext.CaseWorkflowXPath
-            .FirstOrDefault(w => w.Id
-                                 == model.Id
-                                 && w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId ==
-                                 _tenantRegistryId
-                                 && (w.Deleted == 0 || w.Deleted == null)
-                                 && (w.Locked == 0 || w.Locked == null));
+        public CaseWorkflowXPath Insert(CaseWorkflowXPath model)
+        {
+            model.CreatedUser = userName;
+            model.CreatedDate = DateTime.Now;
+            model.Version = 1;
+            model.Guid = Guid.NewGuid();
+            model.Id = dbContext.InsertWithInt32Identity(model);
+            return model;
+        }
 
-        if (existing == null) throw new KeyNotFoundException();
+        public CaseWorkflowXPath Update(CaseWorkflowXPath model)
+        {
+            var existing = dbContext.CaseWorkflowXPath
+                .FirstOrDefault(w => w.Id
+                                     == model.Id
+                                     && w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId ==
+                                     tenantRegistryId
+                                     && (w.Deleted == 0 || w.Deleted == null)
+                                     && (w.Locked == 0 || w.Locked == null));
 
-        model.Version = existing.Version + 1;
-        model.CreatedUser = _userName ?? model.CreatedUser;
-        model.Guid = model.Guid == Guid.Empty ? Guid.NewGuid() : model.Guid;
-        model.CreatedDate = DateTime.Now;
+            if (existing == null)
+            {
+                throw new KeyNotFoundException();
+            }
 
-        _dbContext.Update(model);
+            model.Version = existing.Version + 1;
+            model.CreatedUser = userName ?? model.CreatedUser;
+            model.Guid = model.Guid == Guid.Empty ? Guid.NewGuid() : model.Guid;
+            model.CreatedDate = DateTime.Now;
 
-        var config = new MapperConfiguration(cfg => { cfg.CreateMap<CaseWorkflowXPath, CaseWorkflowXPathVersion>(); });
-        var mapper = new Mapper(config);
+            dbContext.Update(model);
 
-        var audit = mapper.Map<CaseWorkflowXPathVersion>(existing);
-        audit.CaseWorkflowXPathId = existing.Id;
+            var config = new MapperConfiguration(cfg => { cfg.CreateMap<CaseWorkflowXPath, CaseWorkflowXPathVersion>(); });
+            var mapper = new Mapper(config);
 
-        _dbContext.Insert(audit);
+            var audit = mapper.Map<CaseWorkflowXPathVersion>(existing);
+            audit.CaseWorkflowXPathId = existing.Id;
 
-        return model;
-    }
+            dbContext.Insert(audit);
 
-    public void Delete(int id)
-    {
-        var records = _dbContext.CaseWorkflowXPath
-            .Where(d => d.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId
-                        && d.Id == id
-                        && (d.Locked == 0 || d.Locked == null)
-                        && (d.Deleted == 0 || d.Deleted == null))
-            .Set(s => s.Deleted, Convert.ToByte(1))
-            .Set(s => s.DeletedDate, DateTime.Now)
-            .Set(s => s.DeletedUser, _userName)
-            .Update();
+            return model;
+        }
 
-        if (records == 0) throw new KeyNotFoundException();
-    }
+        public void Delete(int id)
+        {
+            var records = dbContext.CaseWorkflowXPath
+                .Where(d => d.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
+                            && d.Id == id
+                            && (d.Locked == 0 || d.Locked == null)
+                            && (d.Deleted == 0 || d.Deleted == null))
+                .Set(s => s.Deleted, Convert.ToByte(1))
+                .Set(s => s.DeletedDate, DateTime.Now)
+                .Set(s => s.DeletedUser, userName)
+                .Update();
 
-    public void DeleteByTenantRegistryId(int tenantRegistryId, int importId)
-    {
-        _dbContext.CaseWorkflowXPath
-            .Where(d => d.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId
-                        && d.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
-                        && (d.Deleted == 0 || d.Deleted == null))
-            .Set(s => s.ImportId, importId)
-            .Set(s => s.Deleted, Convert.ToByte(1))
-            .Set(s => s.DeletedDate, DateTime.Now)
-            .Update();
+            if (records == 0)
+            {
+                throw new KeyNotFoundException();
+            }
+        }
+
+        public void DeleteByTenantRegistryIdOutsideOfInstance(int tenantRegistryIdOutsideOfInstance, int importId)
+        {
+            dbContext.CaseWorkflowXPath
+                .Where(d => d.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == tenantRegistryIdOutsideOfInstance
+                            && (d.Deleted == 0 || d.Deleted == null))
+                .Set(s => s.ImportId, importId)
+                .Set(s => s.Deleted, Convert.ToByte(1))
+                .Set(s => s.DeletedDate, DateTime.Now)
+                .Update();
+        }
     }
 }

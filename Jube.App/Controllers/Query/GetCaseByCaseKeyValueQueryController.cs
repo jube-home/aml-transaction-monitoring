@@ -2,59 +2,62 @@
  *
  * This file is part of Jube™ software.
  *
- * Jube™ is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License 
+ * Jube™ is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License
  * as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
- * Jube™ is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty  
+ * Jube™ is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
 
- * You should have received a copy of the GNU Affero General Public License along with Jube™. If not, 
+ * You should have received a copy of the GNU Affero General Public License along with Jube™. If not,
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using Jube.App.Code;
-using Jube.Data.Context;
-using Jube.Data.Query;
-using Jube.Data.Query.CaseQuery.Dto;
-using Jube.Engine.Helpers;
-using log4net;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-
 namespace Jube.App.Controllers.Query
 {
+    using System;
+    using Code;
+    using Data.Context;
+    using Data.Query;
+    using Data.Query.CaseQuery.Dto;
+    using DynamicEnvironment;
+    using log4net;
+    using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.AspNetCore.Mvc;
+
     [Route("api/[controller]")]
     [Produces("application/json")]
     [Authorize]
     public class GetCaseByCaseKeyValueQueryController : Controller
     {
-        private readonly DbContext _dbContext;
-        private readonly ILog _log;
-        private readonly PermissionValidation _permissionValidation;
-        private readonly GetCaseByCaseKeyValueQuery _query;
-        private readonly string _userName;
+        private readonly DbContext dbContext;
+        private readonly ILog log;
+        private readonly PermissionValidation permissionValidation;
+        private readonly GetCaseByCaseKeyValueQuery query;
+        private readonly string userName;
 
         public GetCaseByCaseKeyValueQueryController(ILog log,
-            IHttpContextAccessor httpContextAccessor,DynamicEnvironment.DynamicEnvironment dynamicEnvironment)
+            IHttpContextAccessor httpContextAccessor, DynamicEnvironment dynamicEnvironment)
         {
             if (httpContextAccessor.HttpContext?.User.Identity != null)
-                _userName = httpContextAccessor.HttpContext.User.Identity.Name;
-            _log = log;
+            {
+                userName = httpContextAccessor.HttpContext.User.Identity.Name;
+            }
 
-            _dbContext=
+            this.log = log;
+
+            dbContext =
                 DataConnectionDbContext.GetDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
-            _permissionValidation = new PermissionValidation(_dbContext, _userName);
-            
-            _query = new GetCaseByCaseKeyValueQuery(_dbContext, _userName);
+            permissionValidation = new PermissionValidation(dbContext, userName);
+
+            query = new GetCaseByCaseKeyValueQuery(dbContext, userName);
         }
-        
+
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                _dbContext.Close();
-                _dbContext.Dispose();
+                dbContext.Close();
+                dbContext.Dispose();
             }
             base.Dispose(disposing);
         }
@@ -64,13 +67,19 @@ namespace Jube.App.Controllers.Query
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] {1})) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        1
+                    }))
+                {
+                    return Forbid();
+                }
 
-                return Ok(_query.Execute(key, value));
+                return Ok(query.Execute(key, value));
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }

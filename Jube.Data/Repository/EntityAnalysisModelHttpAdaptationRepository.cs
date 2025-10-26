@@ -11,135 +11,141 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using AutoMapper;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB;
-
-namespace Jube.Data.Repository;
-
-public class EntityAnalysisModelHttpAdaptationRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
-    private readonly int? _tenantRegistryId;
-    private readonly string _userName;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using AutoMapper;
+    using Context;
+    using LinqToDB;
+    using Poco;
 
-    public EntityAnalysisModelHttpAdaptationRepository(DbContext dbContext, string userName)
+    public class EntityAnalysisModelHttpAdaptationRepository
     {
-        _dbContext = dbContext;
-        _userName = userName;
-        _tenantRegistryId = _dbContext.UserInTenant.Where(w => w.User == _userName)
-            .Select(s => s.TenantRegistryId).FirstOrDefault();
-    }
+        private readonly DbContext dbContext;
+        private readonly int? tenantRegistryId;
+        private readonly string userName;
 
-    public EntityAnalysisModelHttpAdaptationRepository(DbContext dbContext, int tenantRegistryId)
-    {
-        _dbContext = dbContext;
-        _tenantRegistryId = tenantRegistryId;
-    }
-
-    public EntityAnalysisModelHttpAdaptationRepository(DbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
-
-    public IEnumerable<EntityAnalysisModelHttpAdaptation> Get()
-    {
-        return _dbContext.EntityAnalysisModelHttpAdaptation
-            .Where(w =>
-                w.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue
-            );
-    }
-
-    public IEnumerable<EntityAnalysisModelHttpAdaptation> GetByEntityAnalysisModelIdOrderById(int entityAnalysisModelId)
-    {
-        return _dbContext.EntityAnalysisModelHttpAdaptation
-            .Where(w =>
-                (w.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue)
-                && w.EntityAnalysisModelId == entityAnalysisModelId
-                && (w.Deleted == 0 || w.Deleted == null))
-            .OrderBy(o => o.Id);
-    }
-
-    public EntityAnalysisModelHttpAdaptation GetById(int id)
-    {
-        return _dbContext.EntityAnalysisModelHttpAdaptation.FirstOrDefault(w =>
-            (w.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue)
-            && w.Id == id && (w.Deleted == 0 || w.Deleted == null));
-    }
-
-    public EntityAnalysisModelHttpAdaptation Insert(EntityAnalysisModelHttpAdaptation model)
-    {
-        model.CreatedUser = _userName ?? model.CreatedUser;
-        model.Guid = model.Guid == Guid.Empty ? Guid.NewGuid() : model.Guid;
-        model.CreatedDate = DateTime.Now;
-        model.Version = 1;
-        model.Id = _dbContext.InsertWithInt32Identity(model);
-        return model;
-    }
-
-    public EntityAnalysisModelHttpAdaptation Update(EntityAnalysisModelHttpAdaptation model)
-    {
-        var existing = _dbContext.EntityAnalysisModelHttpAdaptation
-            .FirstOrDefault(w => w.Id
-                                 == model.Id
-                                 && (w.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId ||
-                                     !_tenantRegistryId.HasValue)
-                                 && (w.Deleted == 0 || w.Deleted == null)
-                                 && (w.Locked == 0 || w.Locked == null));
-
-        if (existing == null) throw new KeyNotFoundException();
-
-        model.Version = existing.Version + 1;
-        model.Guid = existing.Guid;
-        model.CreatedUser = _userName;
-        model.CreatedDate = DateTime.Now;
-
-        _dbContext.Update(model);
-
-        var config = new MapperConfiguration(cfg =>
+        public EntityAnalysisModelHttpAdaptationRepository(DbContext dbContext, string userName)
         {
-            cfg.CreateMap<EntityAnalysisModelHttpAdaptation, EntityAnalysisModelHttpAdaptationVersion>();
-        });
-        var mapper = new Mapper(config);
+            this.dbContext = dbContext;
+            this.userName = userName;
+            tenantRegistryId = this.dbContext.UserInTenant.Where(w => w.User == this.userName)
+                .Select(s => s.TenantRegistryId).FirstOrDefault();
+        }
 
-        var audit = mapper.Map<EntityAnalysisModelHttpAdaptationVersion>(existing);
-        audit.EntityAnalysisModelHttpAdaptationId = existing.Id;
+        public EntityAnalysisModelHttpAdaptationRepository(DbContext dbContext, int tenantRegistryId)
+        {
+            this.dbContext = dbContext;
+            this.tenantRegistryId = tenantRegistryId;
+        }
 
-        _dbContext.Insert(audit);
+        public EntityAnalysisModelHttpAdaptationRepository(DbContext dbContext)
+        {
+            this.dbContext = dbContext;
+        }
 
-        return model;
-    }
+        public IEnumerable<EntityAnalysisModelHttpAdaptation> Get()
+        {
+            return dbContext.EntityAnalysisModelHttpAdaptation
+                .Where(w =>
+                    w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue
+                );
+        }
 
-    public void Delete(int id)
-    {
-        var records = _dbContext.EntityAnalysisModelHttpAdaptation
-            .Where(d =>
-                (d.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue)
-                && d.Id == id
-                && (d.Locked == 0 || d.Locked == null)
-                && (d.Deleted == 0 || d.Deleted == null))
-            .Set(s => s.Deleted, Convert.ToByte(1))
-            .Set(s => s.DeletedDate, DateTime.Now)
-            .Set(s => s.DeletedUser, _userName)
-            .Update();
+        public IEnumerable<EntityAnalysisModelHttpAdaptation> GetByEntityAnalysisModelIdOrderById(int entityAnalysisModelId)
+        {
+            return dbContext.EntityAnalysisModelHttpAdaptation
+                .Where(w =>
+                    (w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                    && w.EntityAnalysisModelId == entityAnalysisModelId
+                    && (w.Deleted == 0 || w.Deleted == null))
+                .OrderBy(o => o.Id);
+        }
 
-        if (records == 0) throw new KeyNotFoundException();
-    }
+        public EntityAnalysisModelHttpAdaptation GetById(int id)
+        {
+            return dbContext.EntityAnalysisModelHttpAdaptation.FirstOrDefault(w =>
+                (w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                && w.Id == id && (w.Deleted == 0 || w.Deleted == null));
+        }
 
-    public void DeleteByTenantRegistryId(int tenantRegistryId, int importId)
-    {
-        _dbContext.EntityAnalysisModelHttpAdaptation
-            .Where(d =>
-                (d.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue)
-                && d.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
-                && (d.Deleted == 0 || d.Deleted == null))
-            .Set(s => s.ImportId, importId)
-            .Set(s => s.Deleted, Convert.ToByte(1))
-            .Set(s => s.DeletedDate, DateTime.Now)
-            .Update();
+        public EntityAnalysisModelHttpAdaptation Insert(EntityAnalysisModelHttpAdaptation model)
+        {
+            model.CreatedUser = userName ?? model.CreatedUser;
+            model.Guid = model.Guid == Guid.Empty ? Guid.NewGuid() : model.Guid;
+            model.CreatedDate = DateTime.Now;
+            model.Version = 1;
+            model.Id = dbContext.InsertWithInt32Identity(model);
+            return model;
+        }
+
+        public EntityAnalysisModelHttpAdaptation Update(EntityAnalysisModelHttpAdaptation model)
+        {
+            var existing = dbContext.EntityAnalysisModelHttpAdaptation
+                .FirstOrDefault(w => w.Id
+                                     == model.Id
+                                     && (w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId ||
+                                         !tenantRegistryId.HasValue)
+                                     && (w.Deleted == 0 || w.Deleted == null)
+                                     && (w.Locked == 0 || w.Locked == null));
+
+            if (existing == null)
+            {
+                throw new KeyNotFoundException();
+            }
+
+            model.Version = existing.Version + 1;
+            model.Guid = existing.Guid;
+            model.CreatedUser = userName;
+            model.CreatedDate = DateTime.Now;
+
+            dbContext.Update(model);
+
+            var config = new MapperConfiguration(cfg =>
+            {
+                cfg.CreateMap<EntityAnalysisModelHttpAdaptation, EntityAnalysisModelHttpAdaptationVersion>();
+            });
+            var mapper = new Mapper(config);
+
+            var audit = mapper.Map<EntityAnalysisModelHttpAdaptationVersion>(existing);
+            audit.EntityAnalysisModelHttpAdaptationId = existing.Id;
+
+            dbContext.Insert(audit);
+
+            return model;
+        }
+
+        public void Delete(int id)
+        {
+            var records = dbContext.EntityAnalysisModelHttpAdaptation
+                .Where(d =>
+                    (d.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                    && d.Id == id
+                    && (d.Locked == 0 || d.Locked == null)
+                    && (d.Deleted == 0 || d.Deleted == null))
+                .Set(s => s.Deleted, Convert.ToByte(1))
+                .Set(s => s.DeletedDate, DateTime.Now)
+                .Set(s => s.DeletedUser, userName)
+                .Update();
+
+            if (records == 0)
+            {
+                throw new KeyNotFoundException();
+            }
+        }
+
+        public void DeleteByTenantRegistryIdOutsideOfInstance(int tenantRegistryIdOutsideOfInstance, int importId)
+        {
+            dbContext.EntityAnalysisModelHttpAdaptation
+                .Where(d =>
+                    d.EntityAnalysisModel.TenantRegistryId == tenantRegistryIdOutsideOfInstance
+                    && (d.Deleted == 0 || d.Deleted == null))
+                .Set(s => s.ImportId, importId)
+                .Set(s => s.Deleted, Convert.ToByte(1))
+                .Set(s => s.DeletedDate, DateTime.Now)
+                .Update();
+        }
     }
 }

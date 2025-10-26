@@ -2,59 +2,62 @@
  *
  * This file is part of Jube™ software.
  *
- * Jube™ is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License 
+ * Jube™ is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License
  * as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
- * Jube™ is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty  
+ * Jube™ is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
 
- * You should have received a copy of the GNU Affero General Public License along with Jube™. If not, 
+ * You should have received a copy of the GNU Affero General Public License along with Jube™. If not,
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Net;
-using AutoMapper;
-using FluentValidation;
-using FluentValidation.Results;
-using Jube.App.Code;
-using Jube.App.Dto;
-using Jube.App.Validators;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using Jube.Data.Repository;
-using Jube.Engine.Helpers;
-using log4net;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-
 namespace Jube.App.Controllers.Repository
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Net;
+    using AutoMapper;
+    using Code;
+    using Data.Context;
+    using Data.Poco;
+    using Data.Repository;
+    using Dto;
+    using DynamicEnvironment;
+    using FluentValidation;
+    using FluentValidation.Results;
+    using log4net;
+    using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.AspNetCore.Mvc;
+    using Validators;
+
     [Route("api/[controller]")]
     [Produces("application/json")]
     [Authorize]
     public class EntityAnalysisModelReprocessingRuleInstanceController : Controller
     {
-        private readonly DbContext _dbContext;
-        private readonly ILog _log;
-        private readonly IMapper _mapper;
-        private readonly PermissionValidation _permissionValidation;
-        private readonly EntityAnalysisModelReprocessingRuleInstanceRepository _repository;
-        private readonly string _userName;
-        private readonly IValidator<EntityAnalysisModelReprocessingRuleInstanceDto> _validator;
+        private readonly DbContext dbContext;
+        private readonly ILog log;
+        private readonly IMapper mapper;
+        private readonly PermissionValidation permissionValidation;
+        private readonly EntityAnalysisModelReprocessingRuleInstanceRepository repository;
+        private readonly string userName;
+        private readonly IValidator<EntityAnalysisModelReprocessingRuleInstanceDto> validator;
 
         public EntityAnalysisModelReprocessingRuleInstanceController(ILog log,
-            IHttpContextAccessor httpContextAccessor,DynamicEnvironment.DynamicEnvironment dynamicEnvironment)
+            IHttpContextAccessor httpContextAccessor, DynamicEnvironment dynamicEnvironment)
         {
             if (httpContextAccessor.HttpContext?.User.Identity != null)
-                _userName = httpContextAccessor.HttpContext.User.Identity.Name;
-            _log = log;
-            
-            _dbContext =
+            {
+                userName = httpContextAccessor.HttpContext.User.Identity.Name;
+            }
+
+            this.log = log;
+
+            dbContext =
                 DataConnectionDbContext.GetDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
-            _permissionValidation = new PermissionValidation(_dbContext, _userName);
-            
+            permissionValidation = new PermissionValidation(dbContext, userName);
+
             var config = new MapperConfiguration(cfg =>
             {
                 cfg.CreateMap<EntityAnalysisModelReprocessingRuleInstanceDto,
@@ -62,20 +65,20 @@ namespace Jube.App.Controllers.Repository
                 cfg.CreateMap<EntityAnalysisModelReprocessingRuleInstance,
                     EntityAnalysisModelReprocessingRuleInstanceDto>();
                 cfg.CreateMap<List<EntityAnalysisModelReprocessingRuleInstance>,
-                    List<EntityAnalysisModelReprocessingRuleInstanceDto>>()
+                        List<EntityAnalysisModelReprocessingRuleInstanceDto>>()
                     .ForMember("Item", opt => opt.Ignore());
             });
-            _mapper = new Mapper(config);
-            _repository = new EntityAnalysisModelReprocessingRuleInstanceRepository(_dbContext, _userName);
-            _validator = new EntityAnalysisModelReprocessingRuleInstanceDtoValidator();
+            mapper = new Mapper(config);
+            repository = new EntityAnalysisModelReprocessingRuleInstanceRepository(dbContext, userName);
+            validator = new EntityAnalysisModelReprocessingRuleInstanceDtoValidator();
         }
-        
+
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                _dbContext.Close();
-                _dbContext.Dispose();
+                dbContext.Close();
+                dbContext.Dispose();
             }
             base.Dispose(disposing);
         }
@@ -85,13 +88,19 @@ namespace Jube.App.Controllers.Repository
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] {26})) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        26
+                    }))
+                {
+                    return Forbid();
+                }
 
-                return Ok(_mapper.Map<List<EntityAnalysisModelReprocessingRuleInstanceDto>>(_repository.Get()));
+                return Ok(mapper.Map<List<EntityAnalysisModelReprocessingRuleInstanceDto>>(repository.Get()));
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -102,14 +111,20 @@ namespace Jube.App.Controllers.Repository
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] {26})) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        26
+                    }))
+                {
+                    return Forbid();
+                }
 
-                return Ok(_mapper.Map<List<EntityAnalysisModelReprocessingRuleInstanceDto>>(
-                    _repository.GetByEntityAnalysisModelsReprocessingRuleId(entityAnalysisModelReprocessingId)));
+                return Ok(mapper.Map<List<EntityAnalysisModelReprocessingRuleInstanceDto>>(
+                    repository.GetByEntityAnalysisModelsReprocessingRuleId(entityAnalysisModelReprocessingId)));
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -119,79 +134,109 @@ namespace Jube.App.Controllers.Repository
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] {26})) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        26
+                    }))
+                {
+                    return Forbid();
+                }
 
-                return Ok(_mapper.Map<EntityAnalysisModelReprocessingRuleInstanceDto>(_repository.GetById(id)));
+                return Ok(mapper.Map<EntityAnalysisModelReprocessingRuleInstanceDto>(repository.GetById(id)));
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
 
         [HttpPost]
         [Route("ByExistingUpdateUncompleted")]
-        [ProducesResponseType(typeof(EntityAnalysisModelReprocessingRuleInstanceDto), (int) HttpStatusCode.OK)]
-        [ProducesResponseType(typeof(ValidationResult), (int) HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(EntityAnalysisModelReprocessingRuleInstanceDto), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ValidationResult), (int)HttpStatusCode.BadRequest)]
         public ActionResult<EntityAnalysisModelReprocessingRuleInstanceDto> CreateByExistingUpdateUncompleted(
             [FromBody] EntityAnalysisModelReprocessingRuleInstanceDto model)
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] {26}, true)) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        26
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var results = _validator.Validate(model);
+                var results = validator.Validate(model);
                 if (results.IsValid)
-                    return Ok(_repository.InsertByExistingUpdateUncompleted(
-                        _mapper.Map<EntityAnalysisModelReprocessingRuleInstance>(model)));
+                {
+                    return Ok(repository.InsertByExistingUpdateUncompleted(
+                        mapper.Map<EntityAnalysisModelReprocessingRuleInstance>(model)));
+                }
 
                 return BadRequest(results);
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
 
 
         [HttpPost]
-        [ProducesResponseType(typeof(EntityAnalysisModelReprocessingRuleInstanceDto), (int) HttpStatusCode.OK)]
-        [ProducesResponseType(typeof(ValidationResult), (int) HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(EntityAnalysisModelReprocessingRuleInstanceDto), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ValidationResult), (int)HttpStatusCode.BadRequest)]
         public ActionResult<EntityAnalysisModelReprocessingRuleInstanceDto> Create(
             [FromBody] EntityAnalysisModelReprocessingRuleInstanceDto model)
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] {26}, true)) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        26
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var results = _validator.Validate(model);
+                var results = validator.Validate(model);
                 if (results.IsValid)
-                    return Ok(_repository.Insert(_mapper.Map<EntityAnalysisModelReprocessingRuleInstance>(model)));
+                {
+                    return Ok(repository.Insert(mapper.Map<EntityAnalysisModelReprocessingRuleInstance>(model)));
+                }
 
                 return BadRequest(results);
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
 
         [HttpPut]
-        [ProducesResponseType(typeof(EntityAnalysisModelReprocessingRuleInstanceDto), (int) HttpStatusCode.OK)]
-        [ProducesResponseType(typeof(ValidationResult), (int) HttpStatusCode.BadRequest)]
+        [ProducesResponseType(typeof(EntityAnalysisModelReprocessingRuleInstanceDto), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ValidationResult), (int)HttpStatusCode.BadRequest)]
         public ActionResult<EntityAnalysisModelReprocessingRuleInstanceDto> Update(
             [FromBody] EntityAnalysisModelReprocessingRuleInstanceDto model)
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] {26}, true)) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        26
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var results = _validator.Validate(model);
+                var results = validator.Validate(model);
                 if (results.IsValid)
-                    return Ok(_repository.Update(_mapper.Map<EntityAnalysisModelReprocessingRuleInstance>(model)));
+                {
+                    return Ok(repository.Update(mapper.Map<EntityAnalysisModelReprocessingRuleInstance>(model)));
+                }
 
                 return BadRequest(results);
             }
@@ -201,7 +246,7 @@ namespace Jube.App.Controllers.Repository
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -212,9 +257,15 @@ namespace Jube.App.Controllers.Repository
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] {26}, true)) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        26
+                    }))
+                {
+                    return Forbid();
+                }
 
-                _repository.Delete(id);
+                repository.Delete(id);
                 return Ok();
             }
             catch (KeyNotFoundException)
@@ -223,7 +274,7 @@ namespace Jube.App.Controllers.Repository
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }

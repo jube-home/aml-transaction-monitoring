@@ -11,34 +11,36 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System.Collections.Generic;
-using System.Reflection;
-using log4net;
-
-namespace Jube.Engine.Model;
-
-public class EntityAnalysisModelAbstractionRule
+namespace Jube.Engine.Model
 {
-    public delegate bool Match(Dictionary<string, object> data, Dictionary<string, int> ttlCounter,
-        Dictionary<string, List<string>> list, Dictionary<string, double> kvp, ILog log);
+    using System.Collections.Generic;
+    using System.Reflection;
+    using Dictionary;
+    using log4net;
 
-    public int Id { get; init; }
-    public string AbstractionRuleScript { get; set; }
-    public byte RuleScriptTypeId { get; set; }
-    public string Name { get; set; }
-    public string SearchKey { get; set; }
-    public string SearchFunctionKey { get; set; }
-    public int AbstractionRuleAggregationFunctionType { get; set; }
-    public string AbstractionHistoryIntervalType { get; set; }
-    public int AbstractionHistoryIntervalValue { get; set; }
-    public bool Search { get; set; }
-    public Assembly AbstractionRuleCompile { get; set; }
-    public Match AbstractionRuleCompileDelegate { get; set; }
-    public bool ResponsePayload { get; set; }
-    public string LogicHash { get; set; }
-    public bool ReportTable { get; set; }
-    public bool EnableOffset { get; set; }
-    public int OffsetType { get; set; }
-    public int OffsetValue { get; set; }
-    public string AbstractionRuleAggregationFunctionIntervalType { get; set; }
+    public class EntityAnalysisModelAbstractionRule
+    {
+        public delegate bool Match(DictionaryNoBoxing data, Dictionary<string, int> ttlCounter,
+            Dictionary<string, List<string>> list, PooledDictionary<string, double> kvp, ILog log);
+
+        public int Id { get; init; }
+        public string AbstractionRuleScript { get; set; }
+        public byte RuleScriptTypeId { get; set; }
+        public string Name { get; set; }
+        public string SearchKey { get; set; }
+        public string SearchFunctionKey { get; set; }
+        public int AbstractionRuleAggregationFunctionType { get; set; }
+        public string AbstractionHistoryIntervalType { get; set; }
+        public int AbstractionHistoryIntervalValue { get; set; }
+        public bool Search { get; set; }
+        public Assembly AbstractionRuleCompile { get; set; }
+        public Match AbstractionRuleCompileDelegate { get; set; }
+        public bool ResponsePayload { get; set; }
+        public string LogicHash { get; set; }
+        public bool ReportTable { get; set; }
+        public bool EnableOffset { get; set; }
+        public int OffsetType { get; set; }
+        public int OffsetValue { get; set; }
+        public string AbstractionRuleAggregationFunctionIntervalType { get; set; }
+    }
 }

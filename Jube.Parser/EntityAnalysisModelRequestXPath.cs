@@ -1,7 +1,8 @@
-namespace Jube.Parser;
-
-public class EntityAnalysisModelRequestXPath
+namespace Jube.Parser
 {
-    public int DataTypeId { get; set; }
-    public  string DefaultValue { get; set; }
+    public class EntityAnalysisModelRequestXPath
+    {
+        public int DataTypeId { get; set; }
+        public  string DefaultValue { get; set; }
+    }
 }

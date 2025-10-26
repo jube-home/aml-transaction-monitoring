@@ -11,44 +11,45 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System.Collections.Generic;
-using System.Linq;
-using Jube.Data.Context;
-
-namespace Jube.Data.Query;
-
-public class GetExhaustiveSearchInstanceVariableVarianceQuery
+namespace Jube.Data.Query
 {
-    private readonly DbContext _dbContext;
-    private readonly int _tenantRegistryId;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Context;
 
-    public GetExhaustiveSearchInstanceVariableVarianceQuery(DbContext dbContext, string userName)
+    public class GetExhaustiveSearchInstanceVariableVarianceQuery
     {
-        _dbContext = dbContext;
-        _tenantRegistryId = _dbContext.UserInTenant.Where(w => w.User == userName)
-            .Select(s => s.TenantRegistryId).FirstOrDefault();
-    }
+        private readonly DbContext dbContext;
+        private readonly int tenantRegistryId;
 
-    public IEnumerable<Dto> Execute(
-        int exhaustiveSearchInstanceVariableId)
-    {
-        return _dbContext.ExhaustiveSearchInstanceVariableMultiCollinearity
-            .Where(w => w.ExhaustiveSearchInstanceVariable
-                            .ExhaustiveSearchInstance.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId
-                        && w.ExhaustiveSearchInstanceVariableId == exhaustiveSearchInstanceVariableId)
-            .OrderBy(o => o.CorrelationAbsRank)
-            .Select(s => new Dto
-            {
-                Name = s.TestExhaustiveSearchInstanceVariable.Name,
-                Correlation = s.Correlation.Value,
-                CorrelationAbsRank = s.CorrelationAbsRank.Value
-            });
-    }
+        public GetExhaustiveSearchInstanceVariableVarianceQuery(DbContext dbContext, string userName)
+        {
+            this.dbContext = dbContext;
+            tenantRegistryId = this.dbContext.UserInTenant.Where(w => w.User == userName)
+                .Select(s => s.TenantRegistryId).FirstOrDefault();
+        }
 
-    public class Dto
-    {
-        public double Correlation { get; set; }
-        public int CorrelationAbsRank { get; set; }
-        public string Name { get; set; }
+        public IEnumerable<Dto> Execute(
+            int exhaustiveSearchInstanceVariableId)
+        {
+            return dbContext.ExhaustiveSearchInstanceVariableMultiCollinearity
+                .Where(w => w.ExhaustiveSearchInstanceVariable
+                                .ExhaustiveSearchInstance.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
+                            && w.ExhaustiveSearchInstanceVariableId == exhaustiveSearchInstanceVariableId)
+                .OrderBy(o => o.CorrelationAbsRank)
+                .Select(s => new Dto
+                {
+                    Name = s.TestExhaustiveSearchInstanceVariable.Name,
+                    Correlation = s.Correlation.Value,
+                    CorrelationAbsRank = s.CorrelationAbsRank.Value
+                });
+        }
+
+        public class Dto
+        {
+            public double Correlation { get; set; }
+            public int CorrelationAbsRank { get; set; }
+            public string Name { get; set; }
+        }
     }
 }

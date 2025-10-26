@@ -13,24 +13,25 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429125000)]
-public class AddExhaustiveSearchInstanceTrialInstanceTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429125000)]
+    public class AddExhaustiveSearchInstanceTrialInstanceTableIndex : Migration
     {
-        Create.Table("ExhaustiveSearchInstanceTrialInstance")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("ExhaustiveSearchInstanceId").AsInt32().Nullable()
-            .WithColumn("CreatedDate").AsDateTime().Nullable();
+        public override void Up()
+        {
+            Create.Table("ExhaustiveSearchInstanceTrialInstance")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("ExhaustiveSearchInstanceId").AsInt32().Nullable()
+                .WithColumn("CreatedDate").AsDateTime().Nullable();
 
-        Create.Index().OnTable("ExhaustiveSearchInstanceTrialInstance")
-            .OnColumn("ExhaustiveSearchInstanceId").Ascending();
-    }
+            Create.Index().OnTable("ExhaustiveSearchInstanceTrialInstance")
+                .OnColumn("ExhaustiveSearchInstanceId").Ascending();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("ExhaustiveSearchInstanceTrialInstance");
+        public override void Down()
+        {
+            Delete.Table("ExhaustiveSearchInstanceTrialInstance");
+        }
     }
 }

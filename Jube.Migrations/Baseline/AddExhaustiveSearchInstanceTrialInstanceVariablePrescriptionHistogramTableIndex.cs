@@ -13,28 +13,29 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429125002)]
-public class AddExhaustiveSearchInstancePromotedTrialInstanceVariableHistogramTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429125002)]
+    public class AddExhaustiveSearchInstancePromotedTrialInstanceVariableHistogramTableIndex : Migration
     {
-        Create.Table("ExhaustiveSearchInstancePromotedTrialInstanceVariableHistogram")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("ExhaustiveSearchInstancePromotedTrialInstanceVariableId").AsInt32().Nullable()
-            .WithColumn("BinIndex").AsInt32().Nullable()
-            .WithColumn("BinRangeStart").AsDouble().Nullable()
-            .WithColumn("BinRangeEnd").AsDouble().Nullable()
-            .WithColumn("Frequency").AsInt32();
+        public override void Up()
+        {
+            Create.Table("ExhaustiveSearchInstancePromotedTrialInstanceVariableHistogram")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("ExhaustiveSearchInstancePromotedTrialInstanceVariableId").AsInt32().Nullable()
+                .WithColumn("BinIndex").AsInt32().Nullable()
+                .WithColumn("BinRangeStart").AsDouble().Nullable()
+                .WithColumn("BinRangeEnd").AsDouble().Nullable()
+                .WithColumn("Frequency").AsInt32();
 
-        Create.Index("IX_Truncated_Name_ESITIVPH_ESITIVP")
-            .OnTable("ExhaustiveSearchInstancePromotedTrialInstanceVariableHistogram")
-            .OnColumn("ExhaustiveSearchInstancePromotedTrialInstanceVariableId");
-    }
+            Create.Index("IX_Truncated_Name_ESITIVPH_ESITIVP")
+                .OnTable("ExhaustiveSearchInstancePromotedTrialInstanceVariableHistogram")
+                .OnColumn("ExhaustiveSearchInstancePromotedTrialInstanceVariableId");
+        }
 
-    public override void Down()
-    {
-        Delete.Table("ExhaustiveSearchInstancePromotedTrialInstanceVariableHistogram");
+        public override void Down()
+        {
+            Delete.Table("ExhaustiveSearchInstancePromotedTrialInstanceVariableHistogram");
+        }
     }
 }

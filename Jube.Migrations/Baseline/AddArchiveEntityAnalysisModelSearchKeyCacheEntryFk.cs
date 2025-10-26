@@ -13,20 +13,21 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220430135800)]
-public class AddEntityAnalysisModelSearchKeyCacheEntryFk : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220430135800)]
+    public class AddEntityAnalysisModelSearchKeyCacheEntryFk : Migration
     {
-        Create.ForeignKey("FK_Truncated_EAMSKCE_EAMSKDVCI").FromTable("ArchiveEntityAnalysisModelAbstractionEntry")
-            .ForeignColumn("EntityAnalysisModelSearchKeyDistinctValueCalculationInstanceId")
-            .ToTable("EntityAnalysisModelSearchKeyDistinctValueCalculationInstance").PrimaryColumn("Id");
-    }
+        public override void Up()
+        {
+            Create.ForeignKey("FK_Truncated_EAMSKCE_EAMSKDVCI").FromTable("ArchiveEntityAnalysisModelAbstractionEntry")
+                .ForeignColumn("EntityAnalysisModelSearchKeyDistinctValueCalculationInstanceId")
+                .ToTable("EntityAnalysisModelSearchKeyDistinctValueCalculationInstance").PrimaryColumn("Id");
+        }
 
-    public override void Down()
-    {
-        Delete.ForeignKey("FK_Truncated_EAMSKCE_EAMSKDVCI");
+        public override void Down()
+        {
+            Delete.ForeignKey("FK_Truncated_EAMSKCE_EAMSKDVCI");
+        }
     }
 }

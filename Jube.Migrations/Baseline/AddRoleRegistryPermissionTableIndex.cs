@@ -14,51 +14,52 @@
 using System;
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429125012)]
-public class AddRoleRegistryPermissionTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429125012)]
+    public class AddRoleRegistryPermissionTableIndex : Migration
     {
-        Create.Table("RoleRegistryPermission")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("RoleRegistryId").AsInt32().Nullable()
-            .WithColumn("PermissionSpecificationId").AsInt32().Nullable()
-            .WithColumn("Active").AsByte().Nullable()
-            .WithColumn("Locked").AsByte().Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("UpdatedDate").AsDateTime2().Nullable()
-            .WithColumn("UpdatedUser").AsString().Nullable()
-            .WithColumn("Deleted").AsByte().Nullable()
-            .WithColumn("DeletedUser").AsString().Nullable()
-            .WithColumn("DeletedDate").AsDateTime2().Nullable()
-            .WithColumn("InheritedId").AsInt32().Nullable()
-            .WithColumn("Version").AsInt32().Nullable();
-
-        Create.Index().OnTable("RoleRegistryPermission")
-            .OnColumn("RoleRegistryId").Ascending();
-
-        const int numberOfUserRoleRegistryPermissionSpecifications = 37;
-        for (var i = 1; i <= numberOfUserRoleRegistryPermissionSpecifications; i++)
+        public override void Up()
         {
-            var roleRegistryPermissionEntry = new
+            Create.Table("RoleRegistryPermission")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("RoleRegistryId").AsInt32().Nullable()
+                .WithColumn("PermissionSpecificationId").AsInt32().Nullable()
+                .WithColumn("Active").AsByte().Nullable()
+                .WithColumn("Locked").AsByte().Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("UpdatedDate").AsDateTime2().Nullable()
+                .WithColumn("UpdatedUser").AsString().Nullable()
+                .WithColumn("Deleted").AsByte().Nullable()
+                .WithColumn("DeletedUser").AsString().Nullable()
+                .WithColumn("DeletedDate").AsDateTime2().Nullable()
+                .WithColumn("InheritedId").AsInt32().Nullable()
+                .WithColumn("Version").AsInt32().Nullable();
+
+            Create.Index().OnTable("RoleRegistryPermission")
+                .OnColumn("RoleRegistryId").Ascending();
+
+            const int numberOfUserRoleRegistryPermissionSpecifications = 37;
+            for (var i = 1; i <= numberOfUserRoleRegistryPermissionSpecifications; i++)
             {
-                RoleRegistryId = 1,
-                PermissionSpecificationId = i,
-                Active = 1,
-                CreatedDate = DateTime.Now,
-                CreatedUser = "Administrator",
-                Version = 1
-            };
+                var roleRegistryPermissionEntry = new
+                {
+                    RoleRegistryId = 1,
+                    PermissionSpecificationId = i,
+                    Active = 1,
+                    CreatedDate = DateTime.Now,
+                    CreatedUser = "Administrator",
+                    Version = 1
+                };
 
-            Insert.IntoTable("RoleRegistryPermission").Row(roleRegistryPermissionEntry);
+                Insert.IntoTable("RoleRegistryPermission").Row(roleRegistryPermissionEntry);
+            }
         }
-    }
 
-    public override void Down()
-    {
-        Delete.Table("RoleRegistryPermission");
+        public override void Down()
+        {
+            Delete.Table("RoleRegistryPermission");
+        }
     }
 }

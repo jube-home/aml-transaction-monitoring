@@ -17,19 +17,20 @@ using Jube.Data.Context;
 using Jube.Data.Poco;
 using LinqToDB;
 
-namespace Jube.Data.Repository;
-
-public class EntityAnalysisInlineScriptRepository(DbContext dbContext)
+namespace Jube.Data.Repository
 {
-    public IEnumerable<EntityAnalysisInlineScript> Get()
+    public class EntityAnalysisInlineScriptRepository(DbContext dbContext)
     {
-        return dbContext.EntityAnalysisInlineScript;
-    }
+        public IEnumerable<EntityAnalysisInlineScript> Get()
+        {
+            return dbContext.EntityAnalysisInlineScript;
+        }
 
-    public EntityAnalysisInlineScript Insert(EntityAnalysisInlineScript model)
-    {
-        model.CreatedDate = DateTime.Now;
-        model.Id = dbContext.InsertWithInt32Identity(model);
-        return model;
+        public EntityAnalysisInlineScript Insert(EntityAnalysisInlineScript model)
+        {
+            model.CreatedDate = DateTime.Now;
+            model.Id = dbContext.InsertWithInt32Identity(model);
+            return model;
+        }
     }
 }

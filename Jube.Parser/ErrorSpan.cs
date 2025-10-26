@@ -11,12 +11,13 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-namespace Jube.Parser;
-
-public class ErrorSpan
+namespace Jube.Parser
 {
-    public int Start { get; set; }
-    public int Length { get; set; }
-    public string Message { get; set; }
-    public int Line { get; set; }
+    public class ErrorSpan
+    {
+        public int Start { get; set; }
+        public int Length { get; set; }
+        public string Message { get; set; }
+        public int Line { get; set; }
+    }
 }

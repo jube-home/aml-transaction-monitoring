@@ -13,18 +13,19 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220430125401)]
-public class AddCaseEventFk : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220430125401)]
+    public class AddCaseEventFk : Migration
     {
-        Create.ForeignKey().FromTable("CaseEvent").ForeignColumn("CaseId").ToTable("Case").PrimaryColumn("Id");
-    }
+        public override void Up()
+        {
+            Create.ForeignKey().FromTable("CaseEvent").ForeignColumn("CaseId").ToTable("Case").PrimaryColumn("Id");
+        }
 
-    public override void Down()
-    {
-        Delete.ForeignKey().FromTable("CaseEvent").ForeignColumn("CaseId").ToTable("Case").PrimaryColumn("Id");
+        public override void Down()
+        {
+            Delete.ForeignKey().FromTable("CaseEvent").ForeignColumn("CaseId").ToTable("Case").PrimaryColumn("Id");
+        }
     }
 }

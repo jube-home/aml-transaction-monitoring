@@ -11,11 +11,11 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System.Collections.Generic;
-using System.Text.RegularExpressions;
-
 namespace Jube.App.Code
 {
+    using System.Collections.Generic;
+    using System.Text.RegularExpressions;
+
     public class Tokenisation
     {
         public List<string> ReturnTokens(string message)
@@ -26,7 +26,10 @@ namespace Jube.App.Code
             {
                 var key = match.ToString()?.Remove(0, 2);
 
-                if (key == null) continue;
+                if (key == null)
+                {
+                    continue;
+                }
 
                 key = key.Remove(key.Length - 2, 2);
                 returnList.Add(key);

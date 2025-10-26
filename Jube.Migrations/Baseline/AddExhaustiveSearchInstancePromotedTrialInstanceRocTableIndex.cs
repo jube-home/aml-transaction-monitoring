@@ -13,29 +13,30 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124955)]
-public class AddExhaustiveSearchInstancePromotedTrialInstanceRocTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124955)]
+    public class AddExhaustiveSearchInstancePromotedTrialInstanceRocTableIndex : Migration
     {
-        Create.Table("ExhaustiveSearchInstancePromotedTrialInstanceRoc")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("TruePositive").AsInt32().Nullable()
-            .WithColumn("TrueNegative").AsInt32().Nullable()
-            .WithColumn("FalsePositive").AsInt32().Nullable()
-            .WithColumn("FalseNegative").AsInt32().Nullable()
-            .WithColumn("Score").AsDouble().Nullable()
-            .WithColumn("Threshold").AsDouble().Nullable()
-            .WithColumn("ExhaustiveSearchInstanceTrialInstanceId").AsInt32().Nullable();
+        public override void Up()
+        {
+            Create.Table("ExhaustiveSearchInstancePromotedTrialInstanceRoc")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("TruePositive").AsInt32().Nullable()
+                .WithColumn("TrueNegative").AsInt32().Nullable()
+                .WithColumn("FalsePositive").AsInt32().Nullable()
+                .WithColumn("FalseNegative").AsInt32().Nullable()
+                .WithColumn("Score").AsDouble().Nullable()
+                .WithColumn("Threshold").AsDouble().Nullable()
+                .WithColumn("ExhaustiveSearchInstanceTrialInstanceId").AsInt32().Nullable();
 
-        Create.Index().OnTable("ExhaustiveSearchInstancePromotedTrialInstanceRoc")
-            .OnColumn("ExhaustiveSearchInstanceTrialInstanceId").Ascending();
-    }
+            Create.Index().OnTable("ExhaustiveSearchInstancePromotedTrialInstanceRoc")
+                .OnColumn("ExhaustiveSearchInstanceTrialInstanceId").Ascending();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("ExhaustiveSearchInstancePromotedTrialInstanceRoc");
+        public override void Down()
+        {
+            Delete.Table("ExhaustiveSearchInstancePromotedTrialInstanceRoc");
+        }
     }
 }

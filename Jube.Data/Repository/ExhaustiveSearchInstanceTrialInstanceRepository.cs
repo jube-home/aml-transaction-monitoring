@@ -11,55 +11,41 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Linq;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB;
-
-namespace Jube.Data.Repository;
-
-public class ExhaustiveSearchInstanceTrialInstanceRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
-    private readonly int? _tenantRegistryId;
+    using System;
+    using System.Linq;
+    using Context;
+    using LinqToDB;
+    using Poco;
 
-    public ExhaustiveSearchInstanceTrialInstanceRepository(DbContext dbContext)
+    public class ExhaustiveSearchInstanceTrialInstanceRepository(DbContext dbContext)
     {
-        _dbContext = dbContext;
-    }
 
-    public ExhaustiveSearchInstanceTrialInstanceRepository(DbContext dbContext, int tenantRegistryId)
-    {
-        _dbContext = dbContext;
-        _tenantRegistryId = tenantRegistryId;
-    }
+        public ExhaustiveSearchInstanceTrialInstance Insert(ExhaustiveSearchInstanceTrialInstance model)
+        {
+            model.Id = dbContext.InsertWithInt32Identity(model);
+            return model;
+        }
 
-    public ExhaustiveSearchInstanceTrialInstance Insert(ExhaustiveSearchInstanceTrialInstance model)
-    {
-        model.Id = _dbContext.InsertWithInt32Identity(model);
-        return model;
-    }
+        public IQueryable<ExhaustiveSearchInstanceTrialInstance> GetByExhaustiveSearchInstanceIdOrderById(
+            int exhaustiveSearchInstanceId)
+        {
+            return dbContext.ExhaustiveSearchInstanceTrialInstance.Where(w
+                    => w.ExhaustiveSearchInstanceId == exhaustiveSearchInstanceId)
+                .OrderBy(o => o.Id);
+        }
 
-    public IQueryable<ExhaustiveSearchInstanceTrialInstance> GetByExhaustiveSearchInstanceIdOrderById(
-        int exhaustiveSearchInstanceId)
-    {
-        return _dbContext.ExhaustiveSearchInstanceTrialInstance.Where(w
-                => w.ExhaustiveSearchInstanceId == exhaustiveSearchInstanceId)
-            .OrderBy(o => o.Id);
-    }
-
-    public void DeleteByTenantRegistryId(int tenantRegistryId, int importId)
-    {
-        var records = _dbContext.ExhaustiveSearchInstanceTrialInstance
-            .Where(d =>
-                (d.ExhaustiveSearchInstance.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId ||
-                 !_tenantRegistryId.HasValue)
-                && d.ExhaustiveSearchInstance.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
-                && (d.Deleted == 0 || d.Deleted == null))
-            .Set(s => s.ImportId, importId)
-            .Set(s => s.Deleted, Convert.ToByte(1))
-            .Set(s => s.DeletedDate, DateTime.Now)
-            .Update();
+        public void DeleteByTenantRegistryIdOutsideOfInstance(int tenantRegistryIdOutsideOfInstance, int importId)
+        {
+            dbContext.ExhaustiveSearchInstanceTrialInstance
+                .Where(d =>
+                    d.ExhaustiveSearchInstance.EntityAnalysisModel.TenantRegistryId == tenantRegistryIdOutsideOfInstance
+                    && (d.Deleted == 0 || d.Deleted == null))
+                .Set(s => s.ImportId, importId)
+                .Set(s => s.Deleted, Convert.ToByte(1))
+                .Set(s => s.DeletedDate, DateTime.Now)
+                .Update();
+        }
     }
 }

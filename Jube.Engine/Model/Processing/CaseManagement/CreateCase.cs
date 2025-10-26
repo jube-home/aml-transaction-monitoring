@@ -13,15 +13,16 @@
 
 using System;
 
-namespace Jube.Engine.Model.Processing.CaseManagement;
-
-public class CreateCase
+namespace Jube.Engine.Model.Processing.CaseManagement
 {
-    public Guid CaseWorkflowGuid { get; init; }
-    public Guid CaseWorkflowStatusGuid { get; init; }
-    public Guid CaseEntryGuid { get; init; }
-    public string CaseKeyValue { get; set; }
-    public string CaseKey { get; set; }
-    public bool SuspendBypass { get; set; }
-    public DateTime SuspendBypassDate { get; set; }
+    public class CreateCase
+    {
+        public Guid CaseWorkflowGuid { get; init; }
+        public Guid CaseWorkflowStatusGuid { get; init; }
+        public Guid CaseEntryGuid { get; init; }
+        public string CaseKeyValue { get; set; }
+        public string CaseKey { get; set; }
+        public bool SuspendBypass { get; set; }
+        public DateTime SuspendBypassDate { get; set; }
+    }
 }

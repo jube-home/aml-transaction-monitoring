@@ -14,46 +14,47 @@
 using System;
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124929)]
-public class AddEntityAnalysisModelDictionaryKvpTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124929)]
+    public class AddEntityAnalysisModelDictionaryKvpTableIndex : Migration
     {
-        Create.Table("EntityAnalysisModelDictionaryKvp")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("EntityAnalysisModelDictionaryId").AsInt32().Nullable()
-            .WithColumn("KvpKey").AsString().Nullable()
-            .WithColumn("KvpValue").AsDouble().Nullable()
-            .WithColumn("Locked").AsByte().Nullable()
-            .WithColumn("Active").AsByte().Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("Deleted").AsByte().Nullable()
-            .WithColumn("DeletedDate").AsDateTime2().Nullable()
-            .WithColumn("DeletedUser").AsString().Nullable()
-            .WithColumn("Version").AsInt32().Nullable()
-            .WithColumn("InheritedId").AsInt32().Nullable();
-
-        Create.Index().OnTable("EntityAnalysisModelDictionaryKvp")
-            .OnColumn("EntityAnalysisModelDictionaryId").Ascending()
-            .OnColumn("Deleted").Ascending();
-
-        Insert.IntoTable("EntityAnalysisModelDictionaryKvp").Row(new
+        public override void Up()
         {
-            EntityAnalysisModelDictionaryId = 1,
-            KvpKey = "Test1",
-            KvpValue = 1000,
-            Version = 1,
-            CreatedUser = "Administrator",
-            CreatedDate = DateTime.Now,
-            Active = 1
-        });
-    }
+            Create.Table("EntityAnalysisModelDictionaryKvp")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("EntityAnalysisModelDictionaryId").AsInt32().Nullable()
+                .WithColumn("KvpKey").AsString().Nullable()
+                .WithColumn("KvpValue").AsDouble().Nullable()
+                .WithColumn("Locked").AsByte().Nullable()
+                .WithColumn("Active").AsByte().Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("Deleted").AsByte().Nullable()
+                .WithColumn("DeletedDate").AsDateTime2().Nullable()
+                .WithColumn("DeletedUser").AsString().Nullable()
+                .WithColumn("Version").AsInt32().Nullable()
+                .WithColumn("InheritedId").AsInt32().Nullable();
 
-    public override void Down()
-    {
-        Delete.Table("EntityAnalysisModelDictionaryKvp");
+            Create.Index().OnTable("EntityAnalysisModelDictionaryKvp")
+                .OnColumn("EntityAnalysisModelDictionaryId").Ascending()
+                .OnColumn("Deleted").Ascending();
+
+            Insert.IntoTable("EntityAnalysisModelDictionaryKvp").Row(new
+            {
+                EntityAnalysisModelDictionaryId = 1,
+                KvpKey = "Test1",
+                KvpValue = 1000,
+                Version = 1,
+                CreatedUser = "Administrator",
+                CreatedDate = DateTime.Now,
+                Active = 1
+            });
+        }
+
+        public override void Down()
+        {
+            Delete.Table("EntityAnalysisModelDictionaryKvp");
+        }
     }
 }

@@ -14,42 +14,43 @@
 using System;
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429125015)]
-public class AddSanctionEntryTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429125015)]
+    public class AddSanctionEntryTableIndex : Migration
     {
-        Create.Table("SanctionEntry")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("SanctionEntryElementValue").AsString().Nullable()
-            .WithColumn("CreatedDate").AsDateTime().Nullable()
-            .WithColumn("SanctionEntrySourceId").AsInt32().Nullable()
-            .WithColumn("SanctionEntryReference").AsString().Nullable()
-            .WithColumn("SanctionPayload").AsString().Nullable()
-            .WithColumn("SanctionEntryHash").AsString().Nullable();
-
-        Create.Index().OnTable("SanctionEntry")
-            .OnColumn("SanctionEntrySourceId").Ascending();
-
-        Create.Index().OnTable("SanctionEntry")
-            .OnColumn("SanctionEntrySourceId").Ascending()
-            .OnColumn("SanctionEntryHash").Ascending();
-
-        Insert.IntoTable("SanctionEntry").Row(new
+        public override void Up()
         {
-            SanctionEntryElementValue = "Robert Mugabe",
-            CreatedDate = DateTime.Now,
-            SanctionEntrySourceId = 1,
-            SanctionEntryReference = "Testing",
-            SanctionPayload = "Robert Mugabe",
-            SanctionEntryHash = "34700ceb0a3814d567351268e741f1eb"
-        });
-    }
+            Create.Table("SanctionEntry")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("SanctionEntryElementValue").AsString().Nullable()
+                .WithColumn("CreatedDate").AsDateTime().Nullable()
+                .WithColumn("SanctionEntrySourceId").AsInt32().Nullable()
+                .WithColumn("SanctionEntryReference").AsString().Nullable()
+                .WithColumn("SanctionPayload").AsString().Nullable()
+                .WithColumn("SanctionEntryHash").AsString().Nullable();
 
-    public override void Down()
-    {
-        Delete.Table("SanctionEntry");
+            Create.Index().OnTable("SanctionEntry")
+                .OnColumn("SanctionEntrySourceId").Ascending();
+
+            Create.Index().OnTable("SanctionEntry")
+                .OnColumn("SanctionEntrySourceId").Ascending()
+                .OnColumn("SanctionEntryHash").Ascending();
+
+            Insert.IntoTable("SanctionEntry").Row(new
+            {
+                SanctionEntryElementValue = "Robert Mugabe",
+                CreatedDate = DateTime.Now,
+                SanctionEntrySourceId = 1,
+                SanctionEntryReference = "Testing",
+                SanctionPayload = "Robert Mugabe",
+                SanctionEntryHash = "34700ceb0a3814d567351268e741f1eb"
+            });
+        }
+
+        public override void Down()
+        {
+            Delete.Table("SanctionEntry");
+        }
     }
 }

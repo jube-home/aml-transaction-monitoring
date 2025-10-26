@@ -11,74 +11,75 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB;
-using LinqToDB.Data;
-
-namespace Jube.Data.Repository;
-
-public class CaseEventRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
-    private readonly int? _tenantRegistryId;
-    private readonly string _userName;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Context;
+    using LinqToDB;
+    using LinqToDB.Data;
+    using Poco;
 
-    public CaseEventRepository(DbContext dbContext, string userName)
+    public class CaseEventRepository
     {
-        _dbContext = dbContext;
-        _userName = userName;
-        _tenantRegistryId = dbContext.UserInTenant.Where(w => w.User == _userName)
-            .Select(s => s.TenantRegistryId).FirstOrDefault();
-    }
+        private readonly DbContext dbContext;
+        private readonly int? tenantRegistryId;
+        private readonly string userName;
 
-    public CaseEventRepository(DbContext dbContext, int tenantRegistryId)
-    {
-        _dbContext = dbContext;
-        _tenantRegistryId = tenantRegistryId;
-    }
+        public CaseEventRepository(DbContext dbContext, string userName)
+        {
+            this.dbContext = dbContext;
+            this.userName = userName;
+            tenantRegistryId = dbContext.UserInTenant.Where(w => w.User == this.userName)
+                .Select(s => s.TenantRegistryId).FirstOrDefault();
+        }
 
-    public CaseEventRepository(DbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
+        public CaseEventRepository(DbContext dbContext, int tenantRegistryId)
+        {
+            this.dbContext = dbContext;
+            this.tenantRegistryId = tenantRegistryId;
+        }
 
-    public IEnumerable<CaseEvent> Get()
-    {
-        return _dbContext.CaseEvent.Where(w =>
-            w.Case.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId ||
-            !_tenantRegistryId.HasValue);
-    }
+        public CaseEventRepository(DbContext dbContext)
+        {
+            this.dbContext = dbContext;
+        }
 
-    public CaseEvent GetById(int id)
-    {
-        return _dbContext.CaseEvent.FirstOrDefault(w
-            => (w.Case.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId ||
-                !_tenantRegistryId.HasValue)
-               && w.Id == id);
-    }
+        public IEnumerable<CaseEvent> Get()
+        {
+            return dbContext.CaseEvent.Where(w =>
+                w.Case.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == tenantRegistryId ||
+                !tenantRegistryId.HasValue);
+        }
 
-    public void UpdateAbstractionRuleMatches(int id)
-    {
-        _dbContext.EntityAnalysisModelSearchKeyDistinctValueCalculationInstance
-            .Where(d => d.EntityAnalysisModelSearchKeyCalculationInstanceId == id)
-            .Set(s => s.AbstractionRulesMatchesUpdatedDate, DateTime.Now)
-            .Update();
-    }
+        public CaseEvent GetById(int id)
+        {
+            return dbContext.CaseEvent.FirstOrDefault(w
+                => (w.Case.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == tenantRegistryId ||
+                    !tenantRegistryId.HasValue)
+                   && w.Id == id);
+        }
 
-    public CaseEvent Insert(CaseEvent model)
-    {
-        model.CreatedUser = _userName;
-        model.CreatedDate = DateTime.Now;
-        model.Id = _dbContext.InsertWithInt32Identity(model);
-        return model;
-    }
+        public void UpdateAbstractionRuleMatches(int id)
+        {
+            dbContext.EntityAnalysisModelSearchKeyDistinctValueCalculationInstance
+                .Where(d => d.EntityAnalysisModelSearchKeyCalculationInstanceId == id)
+                .Set(s => s.AbstractionRulesMatchesUpdatedDate, DateTime.Now)
+                .Update();
+        }
 
-    public void BulkInsert(IEnumerable<CaseEvent> models)
-    {
-        _dbContext.BulkCopy(models);
+        public CaseEvent Insert(CaseEvent model)
+        {
+            model.CreatedUser = userName;
+            model.CreatedDate = DateTime.Now;
+            model.Id = dbContext.InsertWithInt32Identity(model);
+            return model;
+        }
+
+        public void BulkInsert(IEnumerable<CaseEvent> models)
+        {
+            dbContext.BulkCopy(models);
+        }
     }
 }

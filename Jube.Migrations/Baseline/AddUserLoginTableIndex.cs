@@ -13,28 +13,29 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429125020)]
-public class AddUserLoginTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429125020)]
+    public class AddUserLoginTableIndex : Migration
     {
-        Create.Table("UserLogin")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("FailureTypeId").AsInt32().Nullable()
-            .WithColumn("RemoteIp").AsString().Nullable()
-            .WithColumn("LocalIp").AsString().Nullable()
-            .WithColumn("UserAgent").AsString().Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable()
-            .WithColumn("Failed").AsByte().Nullable();
+        public override void Up()
+        {
+            Create.Table("UserLogin")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("FailureTypeId").AsInt32().Nullable()
+                .WithColumn("RemoteIp").AsString().Nullable()
+                .WithColumn("LocalIp").AsString().Nullable()
+                .WithColumn("UserAgent").AsString().Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable()
+                .WithColumn("Failed").AsByte().Nullable();
 
-        Create.Index().OnTable("UserLogin").OnColumn("CreatedUser").Ascending();
-    }
+            Create.Index().OnTable("UserLogin").OnColumn("CreatedUser").Ascending();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("UserLogin");
+        public override void Down()
+        {
+            Delete.Table("UserLogin");
+        }
     }
 }

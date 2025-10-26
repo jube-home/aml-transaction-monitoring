@@ -12,21 +12,22 @@
  */
 
 using System;
-namespace Jube.Data.Validation;
-
-public class SqlValidationFailed : Exception
+namespace Jube.Data.Validation
 {
-    public SqlValidationFailed()
+    public class SqlValidationFailed : Exception
     {
-    }
+        public SqlValidationFailed()
+        {
+        }
 
-    public SqlValidationFailed(string message)
-        : base(message)
-    {
-    }
+        public SqlValidationFailed(string message)
+            : base(message)
+        {
+        }
 
-    public SqlValidationFailed(string message, Exception inner)
-        : base(message, inner)
-    {
+        public SqlValidationFailed(string message, Exception inner)
+            : base(message, inner)
+        {
+        }
     }
 }

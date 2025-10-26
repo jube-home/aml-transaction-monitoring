@@ -11,9 +11,10 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-namespace Jube.Data.Repository.Interface;
-
-public interface IGenericRepository
+namespace Jube.Data.Repository.Interface
 {
-    public int Insert(object arg);
+    public interface IGenericRepository
+    {
+        public int Insert(object arg);
+    }
 }

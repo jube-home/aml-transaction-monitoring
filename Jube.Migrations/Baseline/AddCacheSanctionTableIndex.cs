@@ -14,31 +14,32 @@
 using FluentMigrator;
 using FluentMigrator.Postgres;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220602101500)]
-public class AddCacheSanctionTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220602101500)]
+    public class AddCacheSanctionTableIndex : Migration
     {
-        Create.Table("CacheSanction")
-            .WithColumn("Id").AsInt64().PrimaryKey().Identity()
-            .WithColumn("EntityAnalysisModelId").AsInt64().Nullable()
-            .WithColumn("MultiPartString").AsString().Nullable()
-            .WithColumn("DistanceThreshold").AsInt32().Nullable()
-            .WithColumn("Value").AsDouble().Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable();
+        public override void Up()
+        {
+            Create.Table("CacheSanction")
+                .WithColumn("Id").AsInt64().PrimaryKey().Identity()
+                .WithColumn("EntityAnalysisModelId").AsInt64().Nullable()
+                .WithColumn("MultiPartString").AsString().Nullable()
+                .WithColumn("DistanceThreshold").AsInt32().Nullable()
+                .WithColumn("Value").AsDouble().Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable();
 
-        Create.Index().OnTable("CacheSanction")
-            .OnColumn("EntityAnalysisModelId").Ascending()
-            .OnColumn("MultiPartString").Ascending()
-            .OnColumn("DistanceThreshold").Ascending()
-            .OnColumn("CreatedDate").Descending()
-            .WithOptions().Include("Value");
-    }
+            Create.Index().OnTable("CacheSanction")
+                .OnColumn("EntityAnalysisModelId").Ascending()
+                .OnColumn("MultiPartString").Ascending()
+                .OnColumn("DistanceThreshold").Ascending()
+                .OnColumn("CreatedDate").Descending()
+                .WithOptions().Include("Value");
+        }
 
-    public override void Down()
-    {
-        Delete.Table("CacheSanction");
+        public override void Down()
+        {
+            Delete.Table("CacheSanction");
+        }
     }
 }

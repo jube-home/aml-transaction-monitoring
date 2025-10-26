@@ -11,25 +11,20 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB;
-
-namespace Jube.Data.Repository;
-
-public class VisualisationRegistryDatasourceExecutionLogRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
+    using Context;
+    using LinqToDB;
+    using Poco;
 
-    public VisualisationRegistryDatasourceExecutionLogRepository(DbContext dbContext)
+    public class VisualisationRegistryDatasourceExecutionLogRepository(DbContext dbContext)
     {
-        _dbContext = dbContext;
-    }
 
-    public VisualisationRegistryDatasourceExecutionLog Insert(VisualisationRegistryDatasourceExecutionLog model)
-    {
-        model.Id = _dbContext.InsertWithInt32Identity(model);
+        public VisualisationRegistryDatasourceExecutionLog Insert(VisualisationRegistryDatasourceExecutionLog model)
+        {
+            model.Id = dbContext.InsertWithInt32Identity(model);
 
-        return model;
+            return model;
+        }
     }
 }

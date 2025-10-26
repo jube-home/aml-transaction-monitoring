@@ -11,86 +11,79 @@
 * see <https://www.gnu.org/licenses/>.
 */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Jube.Data.Context;
-using LinqToDB;
-
-namespace Jube.Data.Query;
-
-public class GetCaseEventByCaseKeyValueQuery
+namespace Jube.Data.Query
 {
-    private readonly DbContext _dbContext;
-    private readonly string _userName;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Context;
+    using LinqToDB;
 
-    public GetCaseEventByCaseKeyValueQuery(DbContext dbContext, string user)
+    public class GetCaseEventByCaseKeyValueQuery(DbContext dbContext, string user)
     {
-        _dbContext = dbContext;
-        _userName = user;
-    }
 
-    public IEnumerable<Dto> Execute(string key, string value)
-    {
-        var query = from c in _dbContext.Case
-            from e in _dbContext.CaseEvent.InnerJoin(w => w.CaseId == c.Id)
-            from i in _dbContext.CaseWorkflow.InnerJoin(w => w.Guid == c.CaseWorkflowGuid)
-            from m in _dbContext.EntityAnalysisModel.InnerJoin(w =>
-                w.Id == i.EntityAnalysisModelId && (w.Deleted == 0 || w.Deleted == null))
-            from t in _dbContext.TenantRegistry.InnerJoin(w => w.Id == m.TenantRegistryId)
-            from u in _dbContext.UserInTenant.InnerJoin(w => w.TenantRegistryId == t.Id)
-            from s in _dbContext.CaseWorkflowStatus.LeftJoin(w =>
-                w.Guid == c.CaseWorkflowStatusGuid && w.CaseWorkflowId == i.Id &&
-                (w.Deleted == 0 || w.Deleted == null))
-            orderby e.Id descending
-            where c.CaseKey == key && c.CaseKeyValue == value && u.User == _userName
-            select e;
-
-        var getCaseEventByCaseKeyValueQueryDtos = new List<Dto>();
-        foreach (var caseEvent in query)
+        public IEnumerable<Dto> Execute(string key, string value)
         {
-            var getCaseEventByCaseKeyValueQueryDto = new Dto
-            {
-                Id = caseEvent.Id,
-                CaseId = caseEvent.CaseId.GetValueOrDefault(),
-                CreatedDate = caseEvent.CreatedDate.GetValueOrDefault(),
-                CreatedUser = caseEvent.CreatedUser,
-                Before = caseEvent.Before,
-                After = caseEvent.After,
-                CaseEventType = caseEvent.CaseEventTypeId switch
-                {
-                    1 => "Automatic Unlock",
-                    2 => "Skim Case",
-                    3 => "Automatic Lock",
-                    4 => "Full Case Fetch",
-                    5 => "Closed",
-                    6 => "Manual Lock",
-                    7 => "Diary",
-                    8 => "Workflow Change",
-                    9 => "Status Change",
-                    10 => "Diary Date Change",
-                    11 => "Rating Change",
-                    12 => "Suspend Closed",
-                    13 => "Suspend Open",
-                    14 => "Allocate Lock",
-                    _ => "Unknown"
-                }
-            };
+            var query = from c in dbContext.Case
+                from e in dbContext.CaseEvent.InnerJoin(w => w.CaseId == c.Id)
+                from i in dbContext.CaseWorkflow.InnerJoin(w => w.Guid == c.CaseWorkflowGuid)
+                from m in dbContext.EntityAnalysisModel.InnerJoin(w =>
+                    w.Id == i.EntityAnalysisModelId && (w.Deleted == 0 || w.Deleted == null))
+                from t in dbContext.TenantRegistry.InnerJoin(w => w.Id == m.TenantRegistryId)
+                from u in dbContext.UserInTenant.InnerJoin(w => w.TenantRegistryId == t.Id)
+                from s in dbContext.CaseWorkflowStatus.LeftJoin(w =>
+                    w.Guid == c.CaseWorkflowStatusGuid && w.CaseWorkflowId == i.Id &&
+                    (w.Deleted == 0 || w.Deleted == null))
+                orderby e.Id descending
+                where c.CaseKey == key && c.CaseKeyValue == value && u.User == user
+                select e;
 
-            getCaseEventByCaseKeyValueQueryDtos.Add(getCaseEventByCaseKeyValueQueryDto);
+            var getCaseEventByCaseKeyValueQueryDtos = new List<Dto>();
+            foreach (var caseEvent in query)
+            {
+                var getCaseEventByCaseKeyValueQueryDto = new Dto
+                {
+                    Id = caseEvent.Id,
+                    CaseId = caseEvent.CaseId.GetValueOrDefault(),
+                    CreatedDate = caseEvent.CreatedDate.GetValueOrDefault(),
+                    CreatedUser = caseEvent.CreatedUser,
+                    Before = caseEvent.Before,
+                    After = caseEvent.After,
+                    CaseEventType = caseEvent.CaseEventTypeId switch
+                    {
+                        1 => "Automatic Unlock",
+                        2 => "Skim Case",
+                        3 => "Automatic Lock",
+                        4 => "Full Case Fetch",
+                        5 => "Closed",
+                        6 => "Manual Lock",
+                        7 => "Diary",
+                        8 => "Workflow Change",
+                        9 => "Status Change",
+                        10 => "Diary Date Change",
+                        11 => "Rating Change",
+                        12 => "Suspend Closed",
+                        13 => "Suspend Open",
+                        14 => "Allocate Lock",
+                        _ => "Unknown"
+                    }
+                };
+
+                getCaseEventByCaseKeyValueQueryDtos.Add(getCaseEventByCaseKeyValueQueryDto);
+            }
+
+            return getCaseEventByCaseKeyValueQueryDtos;
         }
 
-        return getCaseEventByCaseKeyValueQueryDtos;
-    }
-
-    public class Dto
-    {
-        public int Id { get; set; }
-        public int CaseId { get; set; }
-        public string CaseEventType { get; set; }
-        public DateTime CreatedDate { get; set; }
-        public string CreatedUser { get; set; }
-        public string Before { get; set; }
-        public string After { get; set; }
+        public class Dto
+        {
+            public int Id { get; set; }
+            public int CaseId { get; set; }
+            public string CaseEventType { get; set; }
+            public DateTime CreatedDate { get; set; }
+            public string CreatedUser { get; set; }
+            public string Before { get; set; }
+            public string After { get; set; }
+        }
     }
 }

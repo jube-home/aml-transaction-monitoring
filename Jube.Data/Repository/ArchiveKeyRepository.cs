@@ -11,35 +11,30 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System.Collections.Generic;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB;
-using LinqToDB.Data;
-
-namespace Jube.Data.Repository;
-
-public class ArchiveKeyRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
+    using System.Collections.Generic;
+    using Context;
+    using LinqToDB;
+    using LinqToDB.Data;
+    using Poco;
 
-    public ArchiveKeyRepository(DbContext dbContext)
+    public class ArchiveKeyRepository(DbContext dbContext)
     {
-        _dbContext = dbContext;
-    }
 
-    public void Update(ArchiveKey model)
-    {
-        _dbContext.Update(model);
-    }
+        public void Update(ArchiveKey model)
+        {
+            dbContext.Update(model);
+        }
 
-    public void Insert(ArchiveKey model)
-    {
-        _dbContext.Insert(model);
-    }
+        public void Insert(ArchiveKey model)
+        {
+            dbContext.Insert(model);
+        }
 
-    public void BulkCopy(List<ArchiveKey> models)
-    {
-        _dbContext.BulkCopy(models);
+        public void BulkCopy(List<ArchiveKey> models)
+        {
+            dbContext.BulkCopy(models);
+        }
     }
 }

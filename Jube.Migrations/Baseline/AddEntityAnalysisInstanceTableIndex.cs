@@ -13,24 +13,25 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124923)]
-public class AddEntityAnalysisInstanceTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124923)]
+    public class AddEntityAnalysisInstanceTableIndex : Migration
     {
-        Create.Table("EntityAnalysisInstance")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable()
-            .WithColumn("Guid").AsGuid().Nullable()
-            .WithColumn("Instance").AsString().Nullable();
+        public override void Up()
+        {
+            Create.Table("EntityAnalysisInstance")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable()
+                .WithColumn("Guid").AsGuid().Nullable()
+                .WithColumn("Instance").AsString().Nullable();
 
-        Create.Index().OnTable("EntityAnalysisInstance").OnColumn("Guid").Unique();
-    }
+            Create.Index().OnTable("EntityAnalysisInstance").OnColumn("Guid").Unique();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("EntityAnalysisInstance");
+        public override void Down()
+        {
+            Delete.Table("EntityAnalysisInstance");
+        }
     }
 }

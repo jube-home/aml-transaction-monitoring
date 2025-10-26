@@ -13,20 +13,21 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220430130402)]
-public class AddVisualisationRegistryParameterFk : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220430130402)]
+    public class AddVisualisationRegistryParameterFk : Migration
     {
-        Create.ForeignKey().FromTable("VisualisationRegistryParameter")
-            .ForeignColumn("VisualisationRegistryId").ToTable("VisualisationRegistry").PrimaryColumn("Id");
-    }
+        public override void Up()
+        {
+            Create.ForeignKey().FromTable("VisualisationRegistryParameter")
+                .ForeignColumn("VisualisationRegistryId").ToTable("VisualisationRegistry").PrimaryColumn("Id");
+        }
 
-    public override void Down()
-    {
-        Delete.ForeignKey().FromTable("VisualisationRegistryParameter")
-            .ForeignColumn("VisualisationRegistryId").ToTable("VisualisationRegistry").PrimaryColumn("Id");
+        public override void Down()
+        {
+            Delete.ForeignKey().FromTable("VisualisationRegistryParameter")
+                .ForeignColumn("VisualisationRegistryId").ToTable("VisualisationRegistry").PrimaryColumn("Id");
+        }
     }
 }

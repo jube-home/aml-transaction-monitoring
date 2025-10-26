@@ -13,22 +13,23 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124920)]
-public class AddCurrencyTable : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124920)]
+    public class AddCurrencyTable : Migration
     {
-        Create.Table("Currency")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("Name").AsString().Nullable()
-            .WithColumn("Symbol").AsString().Nullable()
-            .WithColumn("ExchangeRateToBaseCurrency").AsDouble().Nullable();
-    }
+        public override void Up()
+        {
+            Create.Table("Currency")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("Name").AsString().Nullable()
+                .WithColumn("Symbol").AsString().Nullable()
+                .WithColumn("ExchangeRateToBaseCurrency").AsDouble().Nullable();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("Currency");
+        public override void Down()
+        {
+            Delete.Table("Currency");
+        }
     }
 }

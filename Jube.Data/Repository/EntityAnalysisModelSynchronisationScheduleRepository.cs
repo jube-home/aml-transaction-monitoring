@@ -11,58 +11,61 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB;
-
-namespace Jube.Data.Repository;
-
-public class EntityAnalysisModelSynchronisationScheduleRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
-    private readonly int? _tenantRegistryId;
-    private readonly string _userName;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Context;
+    using LinqToDB;
+    using Poco;
 
-    public EntityAnalysisModelSynchronisationScheduleRepository(DbContext dbContext, string userName)
+    public class EntityAnalysisModelSynchronisationScheduleRepository
     {
-        _dbContext = dbContext;
-        _userName = userName;
-        _tenantRegistryId = _dbContext.UserInTenant.Where(w => w.User == _userName)
-            .Select(s => s.TenantRegistryId).FirstOrDefault();
-    }
+        private readonly DbContext dbContext;
+        private readonly int? tenantRegistryId;
+        private readonly string userName;
 
-    public EntityAnalysisModelSynchronisationScheduleRepository(DbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
+        public EntityAnalysisModelSynchronisationScheduleRepository(DbContext dbContext, string userName)
+        {
+            this.dbContext = dbContext;
+            this.userName = userName;
+            tenantRegistryId = this.dbContext.UserInTenant.Where(w => w.User == this.userName)
+                .Select(s => s.TenantRegistryId).FirstOrDefault();
+        }
 
-    public IEnumerable<EntityAnalysisModelSynchronisationSchedule> Get()
-    {
-        return _dbContext.EntityAnalysisModelSynchronisationSchedule
-            .Where(w => w.TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue);
-    }
+        public EntityAnalysisModelSynchronisationScheduleRepository(DbContext dbContext)
+        {
+            this.dbContext = dbContext;
+        }
 
-    public EntityAnalysisModelSynchronisationSchedule GetCurrent()
-    {
-        return _dbContext.EntityAnalysisModelSynchronisationSchedule.Where(w
-                => w.TenantRegistryId == _tenantRegistryId)
-            .OrderByDescending(o => o.Id)
-            .FirstOrDefault();
-    }
+        public IEnumerable<EntityAnalysisModelSynchronisationSchedule> Get()
+        {
+            return dbContext.EntityAnalysisModelSynchronisationSchedule
+                .Where(w => w.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue);
+        }
 
-    public EntityAnalysisModelSynchronisationSchedule Insert(EntityAnalysisModelSynchronisationSchedule model)
-    {
-        model.CreatedUser = _userName;
-        model.TenantRegistryId = _tenantRegistryId;
-        model.CreatedDate = DateTime.Now;
+        public EntityAnalysisModelSynchronisationSchedule GetCurrent()
+        {
+            return dbContext.EntityAnalysisModelSynchronisationSchedule.Where(w
+                    => w.TenantRegistryId == tenantRegistryId)
+                .OrderByDescending(o => o.Id)
+                .FirstOrDefault();
+        }
 
-        if (model.ScheduleDate == default(DateTime) || model.ScheduleDate == null)
-            model.ScheduleDate = model.CreatedDate;
+        public EntityAnalysisModelSynchronisationSchedule Insert(EntityAnalysisModelSynchronisationSchedule model)
+        {
+            model.CreatedUser = userName;
+            model.TenantRegistryId = tenantRegistryId;
+            model.CreatedDate = DateTime.Now;
 
-        model.Id = _dbContext.InsertWithInt32Identity(model);
-        return model;
+            if (model.ScheduleDate == default(DateTime) || model.ScheduleDate == null)
+            {
+                model.ScheduleDate = model.CreatedDate;
+            }
+
+            model.Id = dbContext.InsertWithInt32Identity(model);
+            return model;
+        }
     }
 }

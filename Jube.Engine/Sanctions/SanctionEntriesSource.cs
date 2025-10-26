@@ -11,18 +11,19 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-namespace Jube.Engine.Sanctions;
-
-public class SanctionEntriesSource
+namespace Jube.Engine.Sanctions
 {
-    public string DirectoryLocation { get; set; }
-    public string HttpLocation { get; set; }
-    public bool EnableHttpLocation { get; set; }
-    public bool EnableDirectoryLocation { get; set; }
-    public string Delimiter { get; set; }
-    public string MultiPartStringIndex { get; set; }
-    public int ReferenceIndex { get; set; }
-    public int SanctionEntrySourceId { get; set; }
-    public string Name { get; set; }
-    public byte Skip { get; set; }
+    public class SanctionEntriesSource
+    {
+        public string DirectoryLocation { get; set; }
+        public string HttpLocation { get; set; }
+        public bool EnableHttpLocation { get; set; }
+        public bool EnableDirectoryLocation { get; set; }
+        public string Delimiter { get; set; }
+        public string MultiPartStringIndex { get; set; }
+        public int ReferenceIndex { get; set; }
+        public int SanctionEntrySourceId { get; set; }
+        public string Name { get; set; }
+        public byte Skip { get; set; }
+    }
 }

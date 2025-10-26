@@ -11,54 +11,57 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Net;
-using System.Threading.Tasks;
-using AutoMapper;
-using FluentMigrator.Runner;
-using FluentValidation;
-using FluentValidation.Results;
-using Jube.App.Code;
-using Jube.App.Dto;
-using Jube.App.Validators;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using Jube.Data.Reporting;
-using Jube.Data.Repository;
-using Jube.Engine.Helpers;
-using log4net;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
-
 namespace Jube.App.Controllers.Session
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Net;
+    using System.Threading.Tasks;
+    using AutoMapper;
+    using Code;
+    using Data.Context;
+    using Data.Poco;
+    using Data.Reporting;
+    using Data.Repository;
+    using Dto;
+    using DynamicEnvironment;
+    using FluentMigrator.Runner;
+    using FluentValidation;
+    using FluentValidation.Results;
+    using log4net;
+    using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.AspNetCore.Mvc;
+    using Newtonsoft.Json;
+    using Validators;
+
     [Route("api/[controller]")]
     [Produces("application/json")]
     [Authorize]
     public class SessionCaseSearchCompiledSqlController : Controller
     {
-        private readonly DbContext _dbContext;
-        private readonly DynamicEnvironment.DynamicEnvironment _dynamicEnvironment;
-        private readonly ILog _log;
-        private readonly IMapper _mapper;
-        private readonly PermissionValidation _permissionValidation;
-        private readonly string _userName;
-        private readonly IValidator<SessionCaseSearchCompiledSqlDto> _validator;
+        private readonly DbContext dbContext;
+        private readonly DynamicEnvironment dynamicEnvironment;
+        private readonly ILog log;
+        private readonly IMapper mapper;
+        private readonly PermissionValidation permissionValidation;
+        private readonly string userName;
+        private readonly IValidator<SessionCaseSearchCompiledSqlDto> validator;
 
         public SessionCaseSearchCompiledSqlController(ILog log,
-            DynamicEnvironment.DynamicEnvironment dynamicEnvironment,
+            DynamicEnvironment dynamicEnvironment,
             IHttpContextAccessor httpContextAccessor)
         {
             if (httpContextAccessor.HttpContext?.User.Identity != null)
-                _userName = httpContextAccessor.HttpContext.User.Identity.Name;
-            _log = log;
+            {
+                userName = httpContextAccessor.HttpContext.User.Identity.Name;
+            }
 
-            _dbContext =
+            this.log = log;
+
+            dbContext =
                 DataConnectionDbContext.GetDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
-            _permissionValidation = new PermissionValidation(_dbContext, _userName);
+            permissionValidation = new PermissionValidation(dbContext, userName);
 
             var config = new MapperConfiguration(cfg =>
             {
@@ -67,18 +70,18 @@ namespace Jube.App.Controllers.Session
                 cfg.CreateMap<List<SessionCaseSearchCompiledSql>, List<SessionCaseSearchCompiledSqlDto>>()
                     .ForMember("Item", opt => opt.Ignore());
             });
-            _mapper = new Mapper(config);
+            mapper = new Mapper(config);
 
-            _validator = new SessionCaseSearchCompiledSqlDtoValidator();
-            _dynamicEnvironment = dynamicEnvironment;
+            validator = new SessionCaseSearchCompiledSqlDtoValidator();
+            this.dynamicEnvironment = dynamicEnvironment;
         }
 
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                _dbContext.Close();
-                _dbContext.Dispose();
+                dbContext.Close();
+                dbContext.Dispose();
             }
 
             base.Dispose(disposing);
@@ -89,23 +92,33 @@ namespace Jube.App.Controllers.Session
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 1 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        1
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var repository = new SessionCaseSearchCompiledSqlRepository(_dbContext, _userName);
+                var repository = new SessionCaseSearchCompiledSqlRepository(dbContext, userName);
 
                 var modelCompiled = repository.GetByGuid(guid);
-                if (modelCompiled == null) return NotFound();
+                if (modelCompiled == null)
+                {
+                    return NotFound();
+                }
+
                 await CheckRebuild(modelCompiled).ConfigureAwait(false);
 
-                var postgres = new Postgres(_dynamicEnvironment.AppSettings("ConnectionString"));
+                var postgres = new Postgres(dynamicEnvironment.AppSettings("ConnectionString"));
                 var tokens = JsonConvert.DeserializeObject<List<object>>(modelCompiled.FilterTokens);
 
                 var sw = new StopWatch();
                 sw.Start();
 
                 var value = await postgres.ExecuteByOrderedParametersAsync(modelCompiled.SelectSqlSearch + " "
-                    + modelCompiled.WhereSql
-                    + " " + modelCompiled.OrderSql, tokens).ConfigureAwait(false);
+                                                                                                         + modelCompiled.WhereSql
+                                                                                                         + " " + modelCompiled.OrderSql, tokens).ConfigureAwait(false);
 
                 sw.Stop();
 
@@ -117,7 +130,7 @@ namespace Jube.App.Controllers.Session
                 };
 
                 var sessionCaseSearchCompiledSqlExecutionRepository =
-                    new SessionCaseSearchCompiledSqlExecutionRepository(_dbContext, _userName);
+                    new SessionCaseSearchCompiledSqlExecutionRepository(dbContext, userName);
 
                 sessionCaseSearchCompiledSqlExecutionRepository.Insert(modelInsert);
 
@@ -125,7 +138,7 @@ namespace Jube.App.Controllers.Session
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -133,7 +146,10 @@ namespace Jube.App.Controllers.Session
         private async Task<SessionCaseSearchCompiledSql> CheckRebuild(SessionCaseSearchCompiledSql modelCompiled)
         {
             if (modelCompiled.Rebuild == 1 && modelCompiled.RebuildDate != null)
-                return await CompileSql.Compile(_dbContext, modelCompiled, _userName).ConfigureAwait(false);
+            {
+                return await CompileSql.Compile(dbContext, modelCompiled, userName).ConfigureAwait(false);
+            }
+
             return modelCompiled;
         }
 
@@ -142,19 +158,32 @@ namespace Jube.App.Controllers.Session
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 1 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        1
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var repository = new SessionCaseSearchCompiledSqlRepository(_dbContext, _userName);
+                var repository = new SessionCaseSearchCompiledSqlRepository(dbContext, userName);
 
                 var modelCompiled = repository.GetByLast();
-                if (modelCompiled == null) return new SessionCaseSearchCompiledSqlDto { NotFound = true };
+                if (modelCompiled == null)
+                {
+                    return new SessionCaseSearchCompiledSqlDto
+                    {
+                        NotFound = true
+                    };
+                }
+
                 modelCompiled = await CheckRebuild(modelCompiled).ConfigureAwait(false);
 
-                return Ok(_mapper.Map<SessionCaseSearchCompiledSqlDto>(modelCompiled));
+                return Ok(mapper.Map<SessionCaseSearchCompiledSqlDto>(modelCompiled));
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -167,18 +196,27 @@ namespace Jube.App.Controllers.Session
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 1 }, true)) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        1
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var results = await _validator.ValidateAsync(model).ConfigureAwait(false);
-                if (!results.IsValid) return BadRequest(results);
+                var results = await validator.ValidateAsync(model).ConfigureAwait(false);
+                if (!results.IsValid)
+                {
+                    return BadRequest(results);
+                }
 
-                return Ok(_mapper.Map<SessionCaseSearchCompiledSqlDto>(await CompileSql.Compile(_dbContext,
-                    _mapper.Map<SessionCaseSearchCompiledSql>(model),
-                    _userName).ConfigureAwait(false)));
+                return Ok(mapper.Map<SessionCaseSearchCompiledSqlDto>(await CompileSql.Compile(dbContext,
+                    mapper.Map<SessionCaseSearchCompiledSql>(model),
+                    userName).ConfigureAwait(false)));
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }

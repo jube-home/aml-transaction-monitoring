@@ -11,43 +11,45 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System.Collections.Generic;
-using System.Linq;
-using Jube.Data.Context;
-
-namespace Jube.Data.Query;
-
-public class GetRoleRegistryPermissionByRoleRegistryIdQuery
+namespace Jube.Data.Query
 {
-    private readonly DbContext _dbContext;
-    private readonly int _tenantRegistryId;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Context;
 
-    public GetRoleRegistryPermissionByRoleRegistryIdQuery(DbContext dbContext, string userName)
+    public class GetRoleRegistryPermissionByRoleRegistryIdQuery
     {
-        _dbContext = dbContext;
-        _tenantRegistryId = _dbContext.UserInTenant.Where(w => w.User == userName)
-            .Select(s => s.TenantRegistryId).FirstOrDefault();
-    }
+        private readonly DbContext dbContext;
+        private readonly int tenantRegistryId;
 
-    public IEnumerable<Dto> Execute(int roleRegistryId)
-    {
-        return _dbContext.RoleRegistryPermission
-            .Where(w => w.RoleRegistryId == roleRegistryId
-                        && w.RoleRegistry.TenantRegistryId == _tenantRegistryId
-                        && (w.Deleted == 0 || w.Deleted == null))
-            .Select(s => new Dto
-            {
-                Name = s.PermissionSpecification.Name, Id = s.Id,
-                Active = s.Active == 1,
-                RoleRegistryId = s.RoleRegistryId.Value
-            }).ToList();
-    }
+        public GetRoleRegistryPermissionByRoleRegistryIdQuery(DbContext dbContext, string userName)
+        {
+            this.dbContext = dbContext;
+            tenantRegistryId = this.dbContext.UserInTenant.Where(w => w.User == userName)
+                .Select(s => s.TenantRegistryId).FirstOrDefault();
+        }
 
-    public class Dto
-    {
-        public string Name { get; set; }
-        public int Id { get; set; }
-        public bool Active { get; set; }
-        public int RoleRegistryId { get; set; }
+        public IEnumerable<Dto> Execute(int roleRegistryId)
+        {
+            return dbContext.RoleRegistryPermission
+                .Where(w => w.RoleRegistryId == roleRegistryId
+                            && w.RoleRegistry.TenantRegistryId == tenantRegistryId
+                            && (w.Deleted == 0 || w.Deleted == null))
+                .Select(s => new Dto
+                {
+                    Name = s.PermissionSpecification.Name,
+                    Id = s.Id,
+                    Active = s.Active == 1,
+                    RoleRegistryId = s.RoleRegistryId.Value
+                }).ToList();
+        }
+
+        public class Dto
+        {
+            public string Name { get; set; }
+            public int Id { get; set; }
+            public bool Active { get; set; }
+            public int RoleRegistryId { get; set; }
+        }
     }
 }

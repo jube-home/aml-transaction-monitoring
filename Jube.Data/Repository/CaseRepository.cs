@@ -11,96 +11,97 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB;
-
-namespace Jube.Data.Repository;
-
-public class CaseRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
-    private readonly int? _tenantRegistryId;
-    private readonly string _userName;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Context;
+    using LinqToDB;
+    using Poco;
 
-    public CaseRepository(DbContext dbContext, string userName)
+    public class CaseRepository
     {
-        _dbContext = dbContext;
-        _userName = userName;
-        _tenantRegistryId = dbContext.UserInTenant.Where(w => w.User == _userName)
-            .Select(s => s.TenantRegistryId).FirstOrDefault();
-    }
+        private readonly DbContext dbContext;
+        private readonly int? tenantRegistryId;
+        private readonly string userName;
 
-    public CaseRepository(DbContext dbContext, int tenantRegistryId)
-    {
-        _dbContext = dbContext;
-        _tenantRegistryId = tenantRegistryId;
-    }
+        public CaseRepository(DbContext dbContext, string userName)
+        {
+            this.dbContext = dbContext;
+            this.userName = userName;
+            tenantRegistryId = dbContext.UserInTenant.Where(w => w.User == this.userName)
+                .Select(s => s.TenantRegistryId).FirstOrDefault();
+        }
 
-    public CaseRepository(DbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
+        public CaseRepository(DbContext dbContext, int tenantRegistryId)
+        {
+            this.dbContext = dbContext;
+            this.tenantRegistryId = tenantRegistryId;
+        }
 
-    public void UpdateExpiredCaseDiary(int id, byte closedStatus, byte lastClosedStatus)
-    {
-        _dbContext.Case
-            .Where(d => d.Id == id)
-            .Set(s => s.ClosedStatusId, closedStatus)
-            .Set(s => s.LastClosedStatus, lastClosedStatus)
-            .Update();
-    }
+        public CaseRepository(DbContext dbContext)
+        {
+            this.dbContext = dbContext;
+        }
 
-    public void LockToUser(int id)
-    {
-        _dbContext.Case
-            .Where(d => d.Id == id)
-            .Set(s => s.Locked, (byte)1)
-            .Set(s => s.LockedUser, _userName)
-            .Set(s => s.LockedDate, DateTime.Now)
-            .Update();
-    }
+        public void UpdateExpiredCaseDiary(int id, byte closedStatus, byte lastClosedStatus)
+        {
+            dbContext.Case
+                .Where(d => d.Id == id)
+                .Set(s => s.ClosedStatusId, closedStatus)
+                .Set(s => s.LastClosedStatus, lastClosedStatus)
+                .Update();
+        }
 
-    public IEnumerable<Case> Get()
-    {
-        return _dbContext.Case.Where(w =>
-            w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId ||
-            !_tenantRegistryId.HasValue);
-    }
+        public void LockToUser(int id)
+        {
+            dbContext.Case
+                .Where(d => d.Id == id)
+                .Set(s => s.Locked, (byte)1)
+                .Set(s => s.LockedUser, userName)
+                .Set(s => s.LockedDate, DateTime.Now)
+                .Update();
+        }
 
-    public Case GetById(int id)
-    {
-        return _dbContext.Case.FirstOrDefault(w
-            => (w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId ||
-                !_tenantRegistryId.HasValue)
-               && w.Id == id);
-    }
+        public IEnumerable<Case> Get()
+        {
+            return dbContext.Case.Where(w =>
+                w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == tenantRegistryId ||
+                !tenantRegistryId.HasValue);
+        }
 
-    public IEnumerable<Case> GetByExpired()
-    {
-        return _dbContext.Case.Where(w
-            => (w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId ||
-                !_tenantRegistryId.HasValue)
-               && (w.ClosedStatusId == 0 ||
-                   w.ClosedStatusId == 1 ||
-                   w.ClosedStatusId == 2 ||
-                   w.ClosedStatusId == 4)
-               && DateTime.Now >= w.DiaryDate
-               && w.Diary == 1);
-    }
+        public Case GetById(int id)
+        {
+            return dbContext.Case.FirstOrDefault(w
+                => (w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == tenantRegistryId ||
+                    !tenantRegistryId.HasValue)
+                   && w.Id == id);
+        }
 
-    public Case Insert(Case model)
-    {
-        model.Id = _dbContext.InsertWithInt32Identity(model);
-        return model;
-    }
+        public IEnumerable<Case> GetByExpired()
+        {
+            return dbContext.Case.Where(w
+                => (w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == tenantRegistryId ||
+                    !tenantRegistryId.HasValue)
+                   && (w.ClosedStatusId == 0 ||
+                       w.ClosedStatusId == 1 ||
+                       w.ClosedStatusId == 2 ||
+                       w.ClosedStatusId == 4)
+                   && DateTime.Now >= w.DiaryDate
+                   && w.Diary == 1);
+        }
 
-    public Case Update(Case model)
-    {
-        _dbContext.Update(model);
-        return model;
+        public Case Insert(Case model)
+        {
+            model.Id = dbContext.InsertWithInt32Identity(model);
+            return model;
+        }
+
+        public Case Update(Case model)
+        {
+            dbContext.Update(model);
+            return model;
+        }
     }
 }

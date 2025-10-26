@@ -11,109 +11,138 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using log4net;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.VisualBasic;
-
-namespace Jube.Parser.Compiler;
-
-public class Compile
+namespace Jube.Parser.Compiler
 {
-    public bool Success;
-    public Assembly CompiledAssembly { get; set; }
-    public IEnumerable<Diagnostic> Errors { get; set; }
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using System.Reflection;
+    using log4net;
+    using Microsoft.CodeAnalysis;
+    using Microsoft.CodeAnalysis.VisualBasic;
 
-    public void CompileCode(string code, ILog log, string[] refs)
+    public class Compile
     {
-        var assemblyGuid = Guid.NewGuid().ToString();
+        public bool Success;
+        public Assembly CompiledAssembly { get; set; }
+        // ReSharper disable once MemberCanBePrivate.Global
+        public IEnumerable<Diagnostic> Errors { get; set; }
 
-        log.Info("Roslyn Compilation in VB.net: Is about to compile the code " + code +
-                 " with the assembly GUID of " + assemblyGuid + ".");
-
-        var compilation = VisualBasicCompilationConfig(code, log, refs, assemblyGuid);
-
-        log.Info(
-            "Roslyn Compilation in VB.net: Has configured the compiler and will now proceed to compile the code.");
-
-        var peStream = new MemoryStream();
-        var result = compilation.Emit(peStream);
-
-        log.Info(
-            "Roslyn Compilation in VB.net: Code compilation process has concluded.  Will now inspect any errors.");
-
-        if (!result.Success)
+        public void CompileCode(string code, ILog log, string[] refs)
         {
-            var failures = result.Diagnostics.Where(diagnostic =>
-                diagnostic.IsWarningAsError || diagnostic.Severity == DiagnosticSeverity.Error);
-            IEnumerable<Diagnostic> diagnostics = failures as Diagnostic[] ?? failures.ToArray();
-            Errors = diagnostics;
-            Success = false;
-        }
-        else
-        {
-            Success = true;
-            HandleCompile(log, peStream);
-        }
-    }
+            var assemblyGuid = Guid.NewGuid().ToString();
 
-    private void HandleCompile(ILog log, Stream peStream)
-    {
-        peStream.Position = 0;
-        log.Info("Roslyn Compilation in VB.net: Is about to load the assembly from a stream of " +
-                 peStream.Length + ".");
+            if (log.IsInfoEnabled)
+            {
+                if (log.IsInfoEnabled)
+                {
+                    log.Info("Roslyn Compilation in VB.net: Is about to compile the code " + code +
+                             " with the assembly GUID of " + assemblyGuid + ".");   
+                }
+            }
 
-        var assemblyLoadContext = new SimpleUnloadableAssemblyLoadContext();
-        CompiledAssembly = assemblyLoadContext.LoadFromStream(peStream);
+            var compilation = VisualBasicCompilationConfig(code, log, refs, assemblyGuid);
 
-        log.Info(
-            "Roslyn Compilation in VB.net: Loaded compiled assembly.  Will now proceed to unload the assembly context.");
+            if (log.IsInfoEnabled)
+            {
+                log.Info(
+                    "Roslyn Compilation in VB.net: Has configured the compiler and will now proceed to compile the code.");
+            }
 
-        assemblyLoadContext.Unload();
+            var peStream = new MemoryStream();
+            var result = compilation.Emit(peStream);
 
-        log.Info("Roslyn Compilation in VB.net: Unloaded assembly context.");
-    }
+            if (log.IsInfoEnabled)
+            {
+                log.Info(
+                    "Roslyn Compilation in VB.net: Code compilation process has concluded.  Will now inspect any errors.");
+            }
 
-    private static VisualBasicCompilation VisualBasicCompilationConfig(string code, ILog log,
-        IReadOnlyList<string> refs,
-        string assemblyGuid)
-    {
-        var parseOptions = VisualBasicParseOptions.Default.WithLanguageVersion(LanguageVersion.Latest);
-        var compileOptions = new VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary,
-            optimizationLevel: OptimizationLevel.Release, embedVbCoreRuntime: true);
-
-        var references = MetadataReferences(log, refs);
-
-        var compilation = VisualBasicCompilation.Create(assemblyGuid)
-            .AddSyntaxTrees(VisualBasicSyntaxTree.ParseText(code, parseOptions))
-            .WithReferences(references).WithOptions(compileOptions);
-        return compilation;
-    }
-
-    private static MetadataReference[] MetadataReferences(ILog log, IReadOnlyList<string> refs)
-    {
-        var references = new MetadataReference[refs.Count + 3];
-        int i;
-        for (i = 0; i < refs.Count; i++)
-        {
-            references[i] = MetadataReference.CreateFromFile(refs[i]);
-
-            log.Info("Roslyn Compilation in VB.net: Included custom reference " + refs[i] +
-                     ".  Will now add the mandated reference.");
+            if (!result.Success)
+            {
+                var failures = result.Diagnostics.Where(diagnostic =>
+                    diagnostic.IsWarningAsError || diagnostic.Severity == DiagnosticSeverity.Error);
+                IEnumerable<Diagnostic> diagnostics = failures as Diagnostic[] ?? failures.ToArray();
+                Errors = diagnostics;
+                Success = false;
+            }
+            else
+            {
+                Success = true;
+                HandleCompile(log, peStream);
+            }
         }
 
-        var directoryForDll = Path.GetDirectoryName(typeof(object).Assembly.Location);
-        references[i] = MetadataReference.CreateFromFile(typeof(object).Assembly.Location); //Dummy
-        references[i + 1] = MetadataReference.CreateFromFile(Path.Join(directoryForDll, "System.Runtime.dll")); //Dummy
-        references[i + 2] = MetadataReference.CreateFromFile(Path.Join(directoryForDll, "netstandard.dll")); //Dummy
+        private void HandleCompile(ILog log, Stream peStream)
+        {
+            peStream.Position = 0;
+            if (log.IsInfoEnabled)
+            {
+                log.Info("Roslyn Compilation in VB.net: Is about to load the assembly from a stream of " +
+                         peStream.Length + ".");
+            }
 
-        log.Info("Roslyn Compilation in VB.net: Included mandated reference " + references[i] +
-                 ".  Will now configure the compiler.");
+            var assemblyLoadContext = new SimpleUnloadableAssemblyLoadContext();
+            CompiledAssembly = assemblyLoadContext.LoadFromStream(peStream);
 
-        return references;
+            if (log.IsInfoEnabled)
+            {
+                log.Info(
+                    "Roslyn Compilation in VB.net: Loaded compiled assembly.  Will now proceed to unload the assembly context.");
+            }
+
+            assemblyLoadContext.Unload();
+
+            if (log.IsInfoEnabled)
+            {
+                log.Info("Roslyn Compilation in VB.net: Unloaded assembly context.");
+            }
+        }
+
+        private static VisualBasicCompilation VisualBasicCompilationConfig(string code, ILog log,
+            IReadOnlyList<string> refs,
+            string assemblyGuid)
+        {
+            var parseOptions = VisualBasicParseOptions.Default.WithLanguageVersion(LanguageVersion.Latest);
+            var compileOptions = new VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary,
+                optimizationLevel: OptimizationLevel.Release, embedVbCoreRuntime: true);
+
+            var references = MetadataReferences(log, refs);
+
+            var compilation = VisualBasicCompilation.Create(assemblyGuid)
+                .AddSyntaxTrees(VisualBasicSyntaxTree.ParseText(code, parseOptions))
+                .WithReferences(references).WithOptions(compileOptions);
+            return compilation;
+        }
+
+        private static MetadataReference[] MetadataReferences(ILog log, IReadOnlyList<string> refs)
+        {
+            var references = new MetadataReference[refs.Count + 3];
+            int i;
+            for (i = 0; i < refs.Count; i++)
+            {
+                references[i] = MetadataReference.CreateFromFile(refs[i]);
+
+                if (log.IsInfoEnabled)
+                {
+                    log.Info("Roslyn Compilation in VB.net: Included custom reference " + refs[i] +
+                             ".  Will now add the mandated reference.");
+                }
+            }
+
+            var directoryForDll = Path.GetDirectoryName(typeof(object).Assembly.Location);
+            references[i] = MetadataReference.CreateFromFile(typeof(object).Assembly.Location);                    //Dummy
+            references[i + 1] = MetadataReference.CreateFromFile(Path.Join(directoryForDll, "System.Runtime.dll"));//Dummy
+            references[i + 2] = MetadataReference.CreateFromFile(Path.Join(directoryForDll, "netstandard.dll"));   //Dummy
+
+            if (log.IsInfoEnabled)
+            {
+                log.Info("Roslyn Compilation in VB.net: Included mandated reference " + references[i] +
+                         ".  Will now configure the compiler.");
+            }
+
+            return references;
+        }
     }
 }

@@ -11,73 +11,68 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System.Collections.Generic;
-using System.Linq;
-using Jube.Data.Context;
-
-namespace Jube.Data.Query;
-
-public class GetExhaustiveSearchInstancePromotedTrialInstanceVariablePrescriptionQuery
+namespace Jube.Data.Query
 {
-    private readonly DbContext _dbContext;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Context;
 
-    public GetExhaustiveSearchInstancePromotedTrialInstanceVariablePrescriptionQuery(DbContext dbContext)
+    public class GetExhaustiveSearchInstancePromotedTrialInstanceVariablePrescriptionQuery(DbContext dbContext)
     {
-        _dbContext = dbContext;
-    }
 
-    public IEnumerable<Dto> Execute(
-        int exhaustiveSearchInstancePromotedTrialInstanceId)
-    {
-        var variables =
-            from t in _dbContext.ExhaustiveSearchInstanceTrialInstanceVariable
-            from p in _dbContext
-                .ExhaustiveSearchInstanceTrialInstanceVariablePrescription
-                .Where(w =>
-                    w.ExhaustiveSearchInstanceTrialInstanceVariableId == t.Id).DefaultIfEmpty()
-            from s in _dbContext
-                .ExhaustiveSearchInstancePromotedTrialInstanceSensitivity
-                .Where(w =>
-                    w.ExhaustiveSearchInstanceTrialInstanceVariableId == t.Id).DefaultIfEmpty()
-            from g in _dbContext
-                .ExhaustiveSearchInstancePromotedTrialInstance
-                .Where(w => w.ExhaustiveSearchInstanceTrialInstanceId == t.ExhaustiveSearchInstanceTrialInstanceId)
-            from v in _dbContext
-                .ExhaustiveSearchInstanceVariable
-                .Where(w => w.Id == t.ExhaustiveSearchInstanceVariableId)
-            where g.Id == exhaustiveSearchInstancePromotedTrialInstanceId
-                  && (t.Removed == 0 || t.Removed == null)
-            orderby s.Sensitivity descending
-            select new Dto
-            {
-                Id = v.Id,
-                Name = v.Name,
-                VariableMean = v.Mean.Value,
-                VariableStandardDeviation = v.StandardDeviation.Value,
-                VariableMaximum = v.Maximum.Value,
-                VariableMinimum = v.Minimum.Value,
-                PrescriptionMean = p.Mean ?? 0,
-                PrescriptionStandardDeviation = p.StandardDeviation ?? 0,
-                PrescriptionMaximum = p.Maximum ?? 0,
-                PrescriptionMinimum = p.Minimum ?? 0,
-                Sensitivity = s.Sensitivity ?? 0
-            };
+        public IEnumerable<Dto> Execute(
+            int exhaustiveSearchInstancePromotedTrialInstanceId)
+        {
+            var variables =
+                from t in dbContext.ExhaustiveSearchInstanceTrialInstanceVariable
+                from p in dbContext
+                    .ExhaustiveSearchInstanceTrialInstanceVariablePrescription
+                    .Where(w =>
+                        w.ExhaustiveSearchInstanceTrialInstanceVariableId == t.Id).DefaultIfEmpty()
+                from s in dbContext
+                    .ExhaustiveSearchInstancePromotedTrialInstanceSensitivity
+                    .Where(w =>
+                        w.ExhaustiveSearchInstanceTrialInstanceVariableId == t.Id).DefaultIfEmpty()
+                from g in dbContext
+                    .ExhaustiveSearchInstancePromotedTrialInstance
+                    .Where(w => w.ExhaustiveSearchInstanceTrialInstanceId == t.ExhaustiveSearchInstanceTrialInstanceId)
+                from v in dbContext
+                    .ExhaustiveSearchInstanceVariable
+                    .Where(w => w.Id == t.ExhaustiveSearchInstanceVariableId)
+                where g.Id == exhaustiveSearchInstancePromotedTrialInstanceId
+                      && (t.Removed == 0 || t.Removed == null)
+                orderby s.Sensitivity descending
+                select new Dto
+                {
+                    Id = v.Id,
+                    Name = v.Name,
+                    VariableMean = v.Mean.Value,
+                    VariableStandardDeviation = v.StandardDeviation.Value,
+                    VariableMaximum = v.Maximum.Value,
+                    VariableMinimum = v.Minimum.Value,
+                    PrescriptionMean = p.Mean ?? 0,
+                    PrescriptionStandardDeviation = p.StandardDeviation ?? 0,
+                    PrescriptionMaximum = p.Maximum ?? 0,
+                    PrescriptionMinimum = p.Minimum ?? 0,
+                    Sensitivity = s.Sensitivity ?? 0
+                };
 
-        return variables;
-    }
+            return variables;
+        }
 
-    public class Dto
-    {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public double VariableMean { get; set; }
-        public double VariableStandardDeviation { get; set; }
-        public double VariableMaximum { get; set; }
-        public double VariableMinimum { get; set; }
-        public double PrescriptionMean { get; set; }
-        public double PrescriptionStandardDeviation { get; set; }
-        public double PrescriptionMaximum { get; set; }
-        public double PrescriptionMinimum { get; set; }
-        public double Sensitivity { get; set; }
+        public class Dto
+        {
+            public int Id { get; set; }
+            public string Name { get; set; }
+            public double VariableMean { get; set; }
+            public double VariableStandardDeviation { get; set; }
+            public double VariableMaximum { get; set; }
+            public double VariableMinimum { get; set; }
+            public double PrescriptionMean { get; set; }
+            public double PrescriptionStandardDeviation { get; set; }
+            public double PrescriptionMaximum { get; set; }
+            public double PrescriptionMinimum { get; set; }
+            public double Sensitivity { get; set; }
+        }
     }
 }

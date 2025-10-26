@@ -13,27 +13,28 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220613092000)]
-public class AddCaseKeyJournalSessionTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220613092000)]
+    public class AddCaseKeyJournalSessionTableIndex : Migration
     {
-        Create.Table("SessionCaseJournal")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("Json").AsCustom("jsonb").Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("CaseWorkflowId").AsInt32().Nullable();
+        public override void Up()
+        {
+            Create.Table("SessionCaseJournal")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("Json").AsCustom("jsonb").Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("CaseWorkflowId").AsInt32().Nullable();
 
-        Create.Index().OnTable("SessionCaseJournal")
-            .OnColumn("CreatedUser").Ascending()
-            .OnColumn("CaseWorkflowId").Ascending();
-    }
+            Create.Index().OnTable("SessionCaseJournal")
+                .OnColumn("CreatedUser").Ascending()
+                .OnColumn("CaseWorkflowId").Ascending();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("SessionCaseJournal");
+        public override void Down()
+        {
+            Delete.Table("SessionCaseJournal");
+        }
     }
 }

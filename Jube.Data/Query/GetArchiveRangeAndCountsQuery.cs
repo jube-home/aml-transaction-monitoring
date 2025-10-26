@@ -17,29 +17,30 @@ using System.Threading.Tasks;
 using Jube.Data.Context;
 using LinqToDB;
 
-namespace Jube.Data.Query;
-
-public class GetArchiveRangeAndCountsQuery(DbContext dbContext)
+namespace Jube.Data.Query
 {
-    public async Task<Dto> Execute(Guid entityAnalysisModelGuid)
+    public class GetArchiveRangeAndCountsQuery(DbContext dbContext)
     {
-        return await (from archive in dbContext.Archive
-            join model in dbContext.EntityAnalysisModel on archive.EntityAnalysisModelId equals model.Id
-            where model.Guid == entityAnalysisModelGuid
-            group archive by new { archive.EntityAnalysisModelId }
-            into g
-            select new Dto
-            {
-                Count = g.Count(),
-                Min = g.Min(q => q.ReferenceDate),
-                Max = g.Max(q => q.ReferenceDate)
-            }).FirstOrDefaultAsync().ConfigureAwait(false);
-    }
+        public async Task<Dto> Execute(Guid entityAnalysisModelGuid)
+        {
+            return await (from archive in dbContext.Archive
+                join model in dbContext.EntityAnalysisModel on archive.EntityAnalysisModelId equals model.Id
+                where model.Guid == entityAnalysisModelGuid
+                group archive by new { archive.EntityAnalysisModelId }
+                into g
+                select new Dto
+                {
+                    Count = g.Count(),
+                    Min = g.Min(q => q.ReferenceDate),
+                    Max = g.Max(q => q.ReferenceDate)
+                }).FirstOrDefaultAsync().ConfigureAwait(false);
+        }
 
-    public class Dto
-    {
-        public long Count { get; set; }
-        public DateTime? Min { get; set; }
-        public DateTime? Max { get; set; }
+        public class Dto
+        {
+            public long Count { get; set; }
+            public DateTime? Min { get; set; }
+            public DateTime? Max { get; set; }
+        }
     }
 }

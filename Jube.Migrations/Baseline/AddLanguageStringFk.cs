@@ -13,20 +13,21 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220430132100)]
-public class AddLanguageStringFk : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220430132100)]
+    public class AddLanguageStringFk : Migration
     {
-        Create.ForeignKey().FromTable("LanguageString").ForeignColumn("LanguageId").ToTable("Language")
-            .PrimaryColumn("Id");
-    }
+        public override void Up()
+        {
+            Create.ForeignKey().FromTable("LanguageString").ForeignColumn("LanguageId").ToTable("Language")
+                .PrimaryColumn("Id");
+        }
 
-    public override void Down()
-    {
-        Delete.ForeignKey().FromTable("LanguageString").ForeignColumn("LanguageId").ToTable("Language")
-            .PrimaryColumn("Id");
+        public override void Down()
+        {
+            Delete.ForeignKey().FromTable("LanguageString").ForeignColumn("LanguageId").ToTable("Language")
+                .PrimaryColumn("Id");
+        }
     }
 }

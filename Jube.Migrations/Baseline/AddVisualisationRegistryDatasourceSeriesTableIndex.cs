@@ -13,109 +13,110 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429125024)]
-public class AddVisualisationRegistryDatasourceSeriesTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429125024)]
+    public class AddVisualisationRegistryDatasourceSeriesTableIndex : Migration
     {
-        Create.Table("VisualisationRegistryDatasourceSeries")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("VisualisationRegistryDatasourceId").AsInt32().Nullable()
-            .WithColumn("Name").AsString().Nullable()
-            .WithColumn("DataTypeId").AsInt32().Nullable();
-
-        Create.Index().OnTable("VisualisationRegistryDatasourceSeries")
-            .OnColumn("VisualisationRegistryDatasourceId");
-
-        Insert.IntoTable("VisualisationRegistryDatasourceSeries").Row(new
+        public override void Up()
         {
-            VisualisationRegistryDatasourceId = 1,
-            Name = "ActivationRuleName",
-            DataTypeId = 1
-        });
+            Create.Table("VisualisationRegistryDatasourceSeries")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("VisualisationRegistryDatasourceId").AsInt32().Nullable()
+                .WithColumn("Name").AsString().Nullable()
+                .WithColumn("DataTypeId").AsInt32().Nullable();
 
-        Insert.IntoTable("VisualisationRegistryDatasourceSeries").Row(new
+            Create.Index().OnTable("VisualisationRegistryDatasourceSeries")
+                .OnColumn("VisualisationRegistryDatasourceId");
+
+            Insert.IntoTable("VisualisationRegistryDatasourceSeries").Row(new
+            {
+                VisualisationRegistryDatasourceId = 1,
+                Name = "ActivationRuleName",
+                DataTypeId = 1
+            });
+
+            Insert.IntoTable("VisualisationRegistryDatasourceSeries").Row(new
+            {
+                VisualisationRegistryDatasourceId = 1,
+                Name = "Frequency",
+                DataTypeId = 2
+            });
+
+            Insert.IntoTable("VisualisationRegistryDatasourceSeries").Row(new
+            {
+                VisualisationRegistryDatasourceId = 1,
+                Name = "PercentageContribution",
+                DataTypeId = 3
+            });
+
+            Insert.IntoTable("VisualisationRegistryDatasourceSeries").Row(new
+            {
+                VisualisationRegistryDatasourceId = 2,
+                Name = "ActivationRuleName",
+                DataTypeId = 1
+            });
+
+            Insert.IntoTable("VisualisationRegistryDatasourceSeries").Row(new
+            {
+                VisualisationRegistryDatasourceId = 2,
+                Name = "Frequency",
+                DataTypeId = 2
+            });
+
+            Insert.IntoTable("VisualisationRegistryDatasourceSeries").Row(new
+            {
+                VisualisationRegistryDatasourceId = 2,
+                Name = "PercentageContribution",
+                DataTypeId = 3
+            });
+
+            Insert.IntoTable("VisualisationRegistryDatasourceSeries").Row(new
+            {
+                VisualisationRegistryDatasourceId = 3,
+                Name = "MCC",
+                DataTypeId = 1
+            });
+
+            Insert.IntoTable("VisualisationRegistryDatasourceSeries").Row(new
+            {
+                VisualisationRegistryDatasourceId = 3,
+                Name = "Frequency",
+                DataTypeId = 2
+            });
+
+            Insert.IntoTable("VisualisationRegistryDatasourceSeries").Row(new
+            {
+                VisualisationRegistryDatasourceId = 3,
+                Name = "Sum",
+                DataTypeId = 3
+            });
+
+            Insert.IntoTable("VisualisationRegistryDatasourceSeries").Row(new
+            {
+                VisualisationRegistryDatasourceId = 4,
+                Name = "MCC",
+                DataTypeId = 1
+            });
+
+            Insert.IntoTable("VisualisationRegistryDatasourceSeries").Row(new
+            {
+                VisualisationRegistryDatasourceId = 4,
+                Name = "Frequency",
+                DataTypeId = 2
+            });
+
+            Insert.IntoTable("VisualisationRegistryDatasourceSeries").Row(new
+            {
+                VisualisationRegistryDatasourceId = 4,
+                Name = "Sum",
+                DataTypeId = 3
+            });
+        }
+
+        public override void Down()
         {
-            VisualisationRegistryDatasourceId = 1,
-            Name = "Frequency",
-            DataTypeId = 2
-        });
-
-        Insert.IntoTable("VisualisationRegistryDatasourceSeries").Row(new
-        {
-            VisualisationRegistryDatasourceId = 1,
-            Name = "PercentageContribution",
-            DataTypeId = 3
-        });
-
-        Insert.IntoTable("VisualisationRegistryDatasourceSeries").Row(new
-        {
-            VisualisationRegistryDatasourceId = 2,
-            Name = "ActivationRuleName",
-            DataTypeId = 1
-        });
-
-        Insert.IntoTable("VisualisationRegistryDatasourceSeries").Row(new
-        {
-            VisualisationRegistryDatasourceId = 2,
-            Name = "Frequency",
-            DataTypeId = 2
-        });
-
-        Insert.IntoTable("VisualisationRegistryDatasourceSeries").Row(new
-        {
-            VisualisationRegistryDatasourceId = 2,
-            Name = "PercentageContribution",
-            DataTypeId = 3
-        });
-
-        Insert.IntoTable("VisualisationRegistryDatasourceSeries").Row(new
-        {
-            VisualisationRegistryDatasourceId = 3,
-            Name = "MCC",
-            DataTypeId = 1
-        });
-
-        Insert.IntoTable("VisualisationRegistryDatasourceSeries").Row(new
-        {
-            VisualisationRegistryDatasourceId = 3,
-            Name = "Frequency",
-            DataTypeId = 2
-        });
-
-        Insert.IntoTable("VisualisationRegistryDatasourceSeries").Row(new
-        {
-            VisualisationRegistryDatasourceId = 3,
-            Name = "Sum",
-            DataTypeId = 3
-        });
-
-        Insert.IntoTable("VisualisationRegistryDatasourceSeries").Row(new
-        {
-            VisualisationRegistryDatasourceId = 4,
-            Name = "MCC",
-            DataTypeId = 1
-        });
-
-        Insert.IntoTable("VisualisationRegistryDatasourceSeries").Row(new
-        {
-            VisualisationRegistryDatasourceId = 4,
-            Name = "Frequency",
-            DataTypeId = 2
-        });
-
-        Insert.IntoTable("VisualisationRegistryDatasourceSeries").Row(new
-        {
-            VisualisationRegistryDatasourceId = 4,
-            Name = "Sum",
-            DataTypeId = 3
-        });
-    }
-
-    public override void Down()
-    {
-        Delete.Table("VisualisationRegistryDatasourceSeries");
+            Delete.Table("VisualisationRegistryDatasourceSeries");
+        }
     }
 }

@@ -11,56 +11,42 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Linq;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using Jube.Data.Repository.Interface;
-using LinqToDB;
-
-namespace Jube.Data.Repository;
-
-public class ExhaustiveSearchInstanceVariableHistogramRepository : IGenericRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
-    private readonly int? _tenantRegistryId;
+    using System;
+    using System.Linq;
+    using Context;
+    using Interface;
+    using LinqToDB;
+    using Poco;
 
-    public ExhaustiveSearchInstanceVariableHistogramRepository(DbContext dbContext)
+    public class ExhaustiveSearchInstanceVariableHistogramRepository(DbContext dbContext) : IGenericRepository
     {
-        _dbContext = dbContext;
-    }
 
-    public ExhaustiveSearchInstanceVariableHistogramRepository(DbContext dbContext, int tenantRegistryId)
-    {
-        _dbContext = dbContext;
-        _tenantRegistryId = tenantRegistryId;
-    }
+        public int Insert(object arg)
+        {
+            return dbContext.InsertWithInt32Identity((ExhaustiveSearchInstanceVariableHistogram)arg);
+        }
 
-    public int Insert(object arg)
-    {
-        return _dbContext.InsertWithInt32Identity((ExhaustiveSearchInstanceVariableHistogram)arg);
-    }
+        public IQueryable<ExhaustiveSearchInstanceVariableHistogram> GetByExhaustiveSearchInstanceVariableIdOrderById(
+            int exhaustiveSearchInstanceVariableId)
+        {
+            return dbContext.ExhaustiveSearchInstanceVariableHistogram.Where(w =>
+                    w.ExhaustiveSearchInstanceVariableId == exhaustiveSearchInstanceVariableId)
+                .OrderBy(o => o.Id);
+        }
 
-    public IQueryable<ExhaustiveSearchInstanceVariableHistogram> GetByExhaustiveSearchInstanceVariableIdOrderById(
-        int exhaustiveSearchInstanceVariableId)
-    {
-        return _dbContext.ExhaustiveSearchInstanceVariableHistogram.Where(w =>
-                w.ExhaustiveSearchInstanceVariableId == exhaustiveSearchInstanceVariableId)
-            .OrderBy(o => o.Id);
-    }
-
-    public void DeleteByTenantRegistryId(int tenantRegistryId, int importId)
-    {
-        var records = _dbContext.ExhaustiveSearchInstanceVariableHistogram
-            .Where(d =>
-                (d.ExhaustiveSearchInstanceVariable.ExhaustiveSearchInstance.EntityAnalysisModel.TenantRegistryId ==
-                    _tenantRegistryId || !_tenantRegistryId.HasValue)
-                && d.ExhaustiveSearchInstanceVariable.ExhaustiveSearchInstance.EntityAnalysisModel.TenantRegistryId ==
-                tenantRegistryId
-                && (d.Deleted == 0 || d.Deleted == null))
-            .Set(s => s.ImportId, importId)
-            .Set(s => s.Deleted, Convert.ToByte(1))
-            .Set(s => s.DeletedDate, DateTime.Now)
-            .Update();
+        public void DeleteByTenantRegistryIdOutsideOfInstance(int tenantRegistryIdOutsideOfInstance, int importId)
+        {
+            dbContext.ExhaustiveSearchInstanceVariableHistogram
+                .Where(d =>
+                    d.ExhaustiveSearchInstanceVariable.ExhaustiveSearchInstance.EntityAnalysisModel.TenantRegistryId ==
+                    tenantRegistryIdOutsideOfInstance
+                    && (d.Deleted == 0 || d.Deleted == null))
+                .Set(s => s.ImportId, importId)
+                .Set(s => s.Deleted, Convert.ToByte(1))
+                .Set(s => s.DeletedDate, DateTime.Now)
+                .Update();
+        }
     }
 }

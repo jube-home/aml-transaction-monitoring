@@ -11,42 +11,45 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using AutoMapper;
-using Jube.App.Code;
-using Jube.App.Dto;
-using Jube.Data.Context;
-using Jube.Data.Query;
-using Jube.Engine.Helpers;
-using log4net;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-
 namespace Jube.App.Controllers.Repository
 {
+    using System;
+    using System.Collections.Generic;
+    using AutoMapper;
+    using Code;
+    using Data.Context;
+    using Data.Query;
+    using Dto;
+    using DynamicEnvironment;
+    using log4net;
+    using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.AspNetCore.Mvc;
+
     [Route("api/[controller]")]
     [Produces("application/json")]
     [Authorize]
     public class EntityAnalysisModelAsynchronousQueueBalanceController : Controller
     {
-        private readonly DbContext _dbContext;
-        private readonly ILog _log;
-        private readonly IMapper _mapper;
-        private readonly PermissionValidation _permissionValidation;
-        private readonly string _userName;
+        private readonly DbContext dbContext;
+        private readonly ILog log;
+        private readonly IMapper mapper;
+        private readonly PermissionValidation permissionValidation;
+        private readonly string userName;
 
         public EntityAnalysisModelAsynchronousQueueBalanceController(ILog log,
-            IHttpContextAccessor httpContextAccessor, DynamicEnvironment.DynamicEnvironment dynamicEnvironment)
+            IHttpContextAccessor httpContextAccessor, DynamicEnvironment dynamicEnvironment)
         {
             if (httpContextAccessor.HttpContext?.User.Identity != null)
-                _userName = httpContextAccessor.HttpContext.User.Identity.Name;
-            _log = log;
+            {
+                userName = httpContextAccessor.HttpContext.User.Identity.Name;
+            }
 
-            _dbContext =
+            this.log = log;
+
+            dbContext =
                 DataConnectionDbContext.GetDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
-            _permissionValidation = new PermissionValidation(_dbContext, _userName);
+            permissionValidation = new PermissionValidation(dbContext, userName);
 
             var config = new MapperConfiguration(cfg =>
             {
@@ -58,15 +61,15 @@ namespace Jube.App.Controllers.Repository
                         List<EntityAnalysisModelAsynchronousQueueBalanceDto>>()
                     .ForMember("Item", opt => opt.Ignore());
             });
-            _mapper = new Mapper(config);
+            mapper = new Mapper(config);
         }
 
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                _dbContext.Close();
-                _dbContext.Dispose();
+                dbContext.Close();
+                dbContext.Dispose();
             }
 
             base.Dispose(disposing);
@@ -77,14 +80,20 @@ namespace Jube.App.Controllers.Repository
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 27 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        27
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var query = new GetEntityAnalysisModelAsynchronousQueueBalancesQuery(_dbContext);
-                return Ok(_mapper.Map<List<EntityAnalysisModelAsynchronousQueueBalanceDto>>(query.Execute(1000)));
+                var query = new GetEntityAnalysisModelAsynchronousQueueBalancesQuery(dbContext);
+                return Ok(mapper.Map<List<EntityAnalysisModelAsynchronousQueueBalanceDto>>(query.Execute(1000)));
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }

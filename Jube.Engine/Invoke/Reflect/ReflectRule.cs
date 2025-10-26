@@ -11,58 +11,60 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System.Collections.Generic;
-using Jube.Engine.Model;
-using Jube.Engine.Model.Processing.Payload;
-using log4net;
-
-namespace Jube.Engine.Invoke.Reflect;
-
-public static class ReflectRule
+namespace Jube.Engine.Invoke.Reflect
 {
-    public static bool Execute(EntityAnalysisModelAbstractionRule abstractionRule,
-        EntityAnalysisModel entityAnalysisModel, Dictionary<string, object> fields,
-        Dictionary<string, int> ttlCounters, Dictionary<string, double> entityInstanceEntryDictionaryKvPs, ILog log)
+    using System.Collections.Generic;
+    using Dictionary;
+    using log4net;
+    using Model;
+    using Model.Processing.Payload;
+
+    public static class ReflectRule
     {
-        var matched = abstractionRule.AbstractionRuleCompileDelegate(fields, ttlCounters,
-            entityAnalysisModel.EntityAnalysisModelLists, entityInstanceEntryDictionaryKvPs, log);
-        return matched;
-    }
+        public static bool Execute(EntityAnalysisModelAbstractionRule abstractionRule,
+            EntityAnalysisModel entityAnalysisModel, DictionaryNoBoxing fields,
+            Dictionary<string, int> ttlCounters, PooledDictionary<string, double> entityInstanceEntryDictionaryKvPs, ILog log)
+        {
+            var matched = abstractionRule.AbstractionRuleCompileDelegate(fields, ttlCounters,
+                entityAnalysisModel.EntityAnalysisModelLists, entityInstanceEntryDictionaryKvPs, log);
+            return matched;
+        }
 
-    public static bool Execute(EntityAnalysisModelActivationRule activationRule,
-        EntityAnalysisModel entityAnalysisModel,
-        EntityAnalysisModelInstanceEntryPayload payload, Dictionary<string, double> entityInstanceEntryDictionaryKvPs,
-        ILog log)
-    {
-        var matched = activationRule.ActivationRuleCompileDelegate(payload.Payload,
-            payload.TtlCounter, payload.Abstraction,
-            payload.HttpAdaptation, payload.ExhaustiveAdaptation, entityAnalysisModel.EntityAnalysisModelLists,
-            payload.AbstractionCalculation,
-            payload.Sanction, entityInstanceEntryDictionaryKvPs, log);
-        return matched;
-    }
+        public static bool Execute(EntityAnalysisModelActivationRule activationRule,
+            EntityAnalysisModel entityAnalysisModel,
+            EntityAnalysisModelInstanceEntryPayload payload, PooledDictionary<string, double> entityInstanceEntryDictionaryKvPs,
+            ILog log)
+        {
+            var matched = activationRule.ActivationRuleCompileDelegate(payload.Payload,
+                payload.TtlCounter, payload.Abstraction,
+                payload.HttpAdaptation, payload.ExhaustiveAdaptation, entityAnalysisModel.EntityAnalysisModelLists,
+                payload.AbstractionCalculation,
+                payload.Sanction, entityInstanceEntryDictionaryKvPs, log);
+            return matched;
+        }
 
-    public static double Execute(EntityAnalysisModelAbstractionCalculation functionRule,
-        EntityAnalysisModel entityAnalysisModel,
-        EntityAnalysisModelInstanceEntryPayload payload, Dictionary<string, double> entityInstanceEntryDictionaryKvPs,
-        ILog log)
-    {
-        var matched = functionRule.FunctionCalculationCompileDelegate(payload.Payload,
-            payload.TtlCounter, payload.Abstraction,
-            entityAnalysisModel.EntityAnalysisModelLists,
-            entityInstanceEntryDictionaryKvPs, log);
+        public static double Execute(EntityAnalysisModelAbstractionCalculation functionRule,
+            EntityAnalysisModel entityAnalysisModel,
+            EntityAnalysisModelInstanceEntryPayload payload, PooledDictionary<string, double> entityInstanceEntryDictionaryKvPs,
+            ILog log)
+        {
+            var matched = functionRule.FunctionCalculationCompileDelegate(payload.Payload,
+                payload.TtlCounter, payload.Abstraction,
+                entityAnalysisModel.EntityAnalysisModelLists,
+                entityInstanceEntryDictionaryKvPs, log);
 
-        return matched;
-    }
+            return matched;
+        }
 
-    public static object Execute(EntityAnalysisModelInlineFunction entityAnalysisModelInlineFunction,
-        EntityAnalysisModel entityAnalysisModel,
-        EntityAnalysisModelInstanceEntryPayload payload,
-        Dictionary<string, double> entityInstanceEntryDictionaryKvPs, ILog log)
-    {
-        var matched = entityAnalysisModelInlineFunction.FunctionCalculationCompileDelegate(payload.Payload,
-            entityAnalysisModel.EntityAnalysisModelLists, entityInstanceEntryDictionaryKvPs, log);
+        public static object Execute(EntityAnalysisModelInlineFunction entityAnalysisModelInlineFunction,
+            EntityAnalysisModel entityAnalysisModel,
+            EntityAnalysisModelInstanceEntryPayload payload,
+            PooledDictionary<string, double> entityInstanceEntryDictionaryKvPs, ILog log)
+        {
+            var matched = entityAnalysisModelInlineFunction.FunctionCalculationCompileDelegate(payload.Payload,
+                entityAnalysisModel.EntityAnalysisModelLists, entityInstanceEntryDictionaryKvPs, log);
 
-        return matched;
+            return matched;
+        }
     }
 }

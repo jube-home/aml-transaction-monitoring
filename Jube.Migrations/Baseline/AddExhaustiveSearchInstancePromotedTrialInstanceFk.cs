@@ -13,20 +13,21 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220430125441)]
-public class AddExhaustiveSearchInstancePromotedTrialInstanceFk : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220430125441)]
+    public class AddExhaustiveSearchInstancePromotedTrialInstanceFk : Migration
     {
-        Create.ForeignKey("FK_Truncated_ESIPTI_ESITI").FromTable("ExhaustiveSearchInstancePromotedTrialInstance")
-            .ForeignColumn("ExhaustiveSearchInstanceTrialInstanceId")
-            .ToTable("ExhaustiveSearchInstanceTrialInstance").PrimaryColumn("Id");
-    }
+        public override void Up()
+        {
+            Create.ForeignKey("FK_Truncated_ESIPTI_ESITI").FromTable("ExhaustiveSearchInstancePromotedTrialInstance")
+                .ForeignColumn("ExhaustiveSearchInstanceTrialInstanceId")
+                .ToTable("ExhaustiveSearchInstanceTrialInstance").PrimaryColumn("Id");
+        }
 
-    public override void Down()
-    {
-        Delete.ForeignKey("FK_Truncated_ESIPTI_ESITI");
+        public override void Down()
+        {
+            Delete.ForeignKey("FK_Truncated_ESIPTI_ESITI");
+        }
     }
 }

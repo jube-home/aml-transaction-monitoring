@@ -13,28 +13,29 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429125023)]
-public class AddVisualisationRegistryDatasourceExecutionLogTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429125023)]
+    public class AddVisualisationRegistryDatasourceExecutionLogTableIndex : Migration
     {
-        Create.Table("VisualisationRegistryDatasourceExecutionLog")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("Error").AsString().Nullable()
-            .WithColumn("Records").AsInt32().Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("ResponseTime").AsInt32().Nullable()
-            .WithColumn("VisualisationRegistryDatasourceId").AsInt32().Nullable();
+        public override void Up()
+        {
+            Create.Table("VisualisationRegistryDatasourceExecutionLog")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("Error").AsString().Nullable()
+                .WithColumn("Records").AsInt32().Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("ResponseTime").AsInt32().Nullable()
+                .WithColumn("VisualisationRegistryDatasourceId").AsInt32().Nullable();
 
-        Create.Index().OnTable("VisualisationRegistryDatasourceExecutionLog")
-            .OnColumn("VisualisationRegistryDatasourceId");
-    }
+            Create.Index().OnTable("VisualisationRegistryDatasourceExecutionLog")
+                .OnColumn("VisualisationRegistryDatasourceId");
+        }
 
-    public override void Down()
-    {
-        Delete.Table("VisualisationRegistryDatasourceExecutionLog");
+        public override void Down()
+        {
+            Delete.Table("VisualisationRegistryDatasourceExecutionLog");
+        }
     }
 }

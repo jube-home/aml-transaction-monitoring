@@ -11,48 +11,87 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using Jube.Data.Extension;
-using Jube.Engine.Model;
-using log4net;
-
-namespace Jube.Engine.Invoke.Reflect;
-
-public static class ReflectInlineScript
+namespace Jube.Engine.Invoke.Reflect
 {
-    public static void Execute(EntityAnalysisModelInlineScript entityAnalysisModelInlineScript,
-        ref Dictionary<string, object> dataPayload,
-        ref Dictionary<string, object> responsePayload, ILog log)
+    using System;
+    using Dictionary;
+    using log4net;
+    using Model;
+
+    public static class ReflectInlineScript
     {
-        object[] args = [dataPayload, log];
-        entityAnalysisModelInlineScript.PreProcessingMethodInfo.Invoke(entityAnalysisModelInlineScript.ActivatedObject,
-            args);
+        public static void Execute(EntityAnalysisModelInlineScript entityAnalysisModelInlineScript,
+            ref DictionaryNoBoxing dataPayload,
+            ref DictionaryNoBoxing responsePayload, ILog log)
+        {
+            object[] args = [dataPayload, log];
+            entityAnalysisModelInlineScript.PreProcessingMethodInfo.Invoke(entityAnalysisModelInlineScript.ActivatedObject,
+                args);
 
-        foreach (var p in entityAnalysisModelInlineScript.InlineScriptType.GetProperties())
-            try
+            foreach (var p in entityAnalysisModelInlineScript.InlineScriptType.GetProperties())
             {
-                if (entityAnalysisModelInlineScript.ActivatedObject == null) continue;
+                try
+                {
+                    if (entityAnalysisModelInlineScript.ActivatedObject == null)
+                    {
+                        continue;
+                    }
 
-                foreach (var customAttributeData in p.CustomAttributes)
-                    if (customAttributeData.AttributeType.Name.Contains("Latitude"))
+                    foreach (var customAttributeData in p.CustomAttributes)
                     {
-                        if (!dataPayload.ContainsKey(p.Name))
-                            dataPayload.Add("Latitude", dataPayload[p.Name].AsDouble());
+                        if (customAttributeData.AttributeType.Name.Contains("Latitude"))
+                        {
+                            if (!dataPayload.ContainsKey(p.Name))
+                            {
+                                dataPayload.TryAdd("Latitude", dataPayload[p.Name].AsDouble());
+                            }
+                        }
+                        else if (customAttributeData.AttributeType.Name.Contains("Longitude"))
+                        {
+                            if (!dataPayload.ContainsKey(p.Name))
+                            {
+                                dataPayload.TryAdd("Longitude", dataPayload[p.Name].AsDouble());
+                            }
+                        }
+                        else if (customAttributeData.AttributeType.Name.Contains("ResponsePayload"))
+                        {
+                            if (responsePayload.ContainsKey(p.Name))
+                            {
+                                continue;
+                            }
+                            
+                            if (p.PropertyType == typeof(int))
+                            {
+                                responsePayload.TryAdd(p.Name, dataPayload[p.Name].AsInt());
+                            }
+
+                            else if (p.PropertyType == typeof(string))
+                            {
+                                responsePayload.TryAdd(p.Name, dataPayload[p.Name].AsString());
+                            }
+
+                            else if (p.PropertyType == typeof(double))
+                            {
+                                responsePayload.TryAdd(p.Name, dataPayload[p.Name].AsDouble());
+                            }
+
+                            else if (p.PropertyType == typeof(DateTime))
+                            {
+                                responsePayload.TryAdd(p.Name, dataPayload[p.Name].AsDateTime());
+                            }
+
+                            else if (p.PropertyType == typeof(bool))
+                            {
+                                responsePayload.TryAdd(p.Name, dataPayload[p.Name].AsBool());
+                            }
+                        }
                     }
-                    else if (customAttributeData.AttributeType.Name.Contains("Longitude"))
-                    {
-                        if (!dataPayload.ContainsKey(p.Name))
-                            dataPayload.Add("Longitude", dataPayload[p.Name].AsDouble());
-                    }
-                    else if (customAttributeData.AttributeType.Name.Contains("ResponsePayload"))
-                    {
-                        if (!responsePayload.ContainsKey(p.Name)) responsePayload.Add(p.Name, dataPayload[p.Name]);
-                    }
+                }
+                catch (Exception ex)
+                {
+                    log.Error(ex.ToString());
+                }
             }
-            catch (Exception ex)
-            {
-                log.Error(ex.ToString());
-            }
+        }
     }
 }

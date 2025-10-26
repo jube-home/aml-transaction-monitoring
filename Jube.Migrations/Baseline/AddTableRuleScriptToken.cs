@@ -13,20 +13,21 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429125016)]
-public class AddTableRuleScriptToken : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429125016)]
+    public class AddTableRuleScriptToken : Migration
     {
-        Create.Table("RuleScriptToken")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("Token").AsString().Nullable();
-    }
+        public override void Up()
+        {
+            Create.Table("RuleScriptToken")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("Token").AsString().Nullable();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("RuleScriptToken");
+        public override void Down()
+        {
+            Delete.Table("RuleScriptToken");
+        }
     }
 }

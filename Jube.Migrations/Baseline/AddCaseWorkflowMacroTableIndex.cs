@@ -14,57 +14,58 @@
 using System;
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124913)]
-public class AddCaseWorkflowMacroTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124913)]
+    public class AddCaseWorkflowMacroTableIndex : Migration
     {
-        Create.Table("CaseWorkflowMacro")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("CaseWorkflowId").AsInt32().Nullable()
-            .WithColumn("Name").AsString().Nullable()
-            .WithColumn("Active").AsByte().Nullable()
-            .WithColumn("Locked").AsByte().Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("UpdatedDate").AsDateTime2().Nullable()
-            .WithColumn("UpdatedUser").AsString().Nullable()
-            .WithColumn("Deleted").AsByte().Nullable()
-            .WithColumn("DeletedUser").AsString().Nullable()
-            .WithColumn("DeletedDate").AsDateTime2().Nullable()
-            .WithColumn("InheritedId").AsInt32().Nullable()
-            .WithColumn("Version").AsInt32().Nullable()
-            .WithColumn("Javascript").AsString().Nullable()
-            .WithColumn("ImageLocation").AsString().Nullable()
-            .WithColumn("EnableHttpEndpoint").AsByte().Nullable()
-            .WithColumn("HttpEndpoint").AsString().Nullable()
-            .WithColumn("HttpEndpointTypeId").AsByte().Nullable()
-            .WithColumn("EnableNotification").AsByte().Nullable()
-            .WithColumn("NotificationTypeId").AsByte().Nullable()
-            .WithColumn("NotificationDestination").AsString().Nullable()
-            .WithColumn("NotificationSubject").AsString().Nullable()
-            .WithColumn("NotificationBody").AsString().Nullable();
-
-        Create.Index().OnTable("CaseWorkflowMacro")
-            .OnColumn("CaseWorkflowId").Ascending()
-            .OnColumn("Deleted").Ascending();
-
-        Insert.IntoTable("CaseWorkflowMacro").Row(new
+        public override void Up()
         {
-            CaseWorkflowId = 1,
-            Name = "ExampleMacro",
-            Active = 1,
-            Version = 1,
-            CreatedDate = DateTime.Now,
-            Javascript = "alert('Example Macro Javascript Eval.');",
-            ImageLocation = "calculator.png"
-        });
-    }
+            Create.Table("CaseWorkflowMacro")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("CaseWorkflowId").AsInt32().Nullable()
+                .WithColumn("Name").AsString().Nullable()
+                .WithColumn("Active").AsByte().Nullable()
+                .WithColumn("Locked").AsByte().Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("UpdatedDate").AsDateTime2().Nullable()
+                .WithColumn("UpdatedUser").AsString().Nullable()
+                .WithColumn("Deleted").AsByte().Nullable()
+                .WithColumn("DeletedUser").AsString().Nullable()
+                .WithColumn("DeletedDate").AsDateTime2().Nullable()
+                .WithColumn("InheritedId").AsInt32().Nullable()
+                .WithColumn("Version").AsInt32().Nullable()
+                .WithColumn("Javascript").AsString().Nullable()
+                .WithColumn("ImageLocation").AsString().Nullable()
+                .WithColumn("EnableHttpEndpoint").AsByte().Nullable()
+                .WithColumn("HttpEndpoint").AsString().Nullable()
+                .WithColumn("HttpEndpointTypeId").AsByte().Nullable()
+                .WithColumn("EnableNotification").AsByte().Nullable()
+                .WithColumn("NotificationTypeId").AsByte().Nullable()
+                .WithColumn("NotificationDestination").AsString().Nullable()
+                .WithColumn("NotificationSubject").AsString().Nullable()
+                .WithColumn("NotificationBody").AsString().Nullable();
 
-    public override void Down()
-    {
-        Delete.Table("CaseWorkflowMacro");
+            Create.Index().OnTable("CaseWorkflowMacro")
+                .OnColumn("CaseWorkflowId").Ascending()
+                .OnColumn("Deleted").Ascending();
+
+            Insert.IntoTable("CaseWorkflowMacro").Row(new
+            {
+                CaseWorkflowId = 1,
+                Name = "ExampleMacro",
+                Active = 1,
+                Version = 1,
+                CreatedDate = DateTime.Now,
+                Javascript = "alert('Example Macro Javascript Eval.');",
+                ImageLocation = "calculator.png"
+            });
+        }
+
+        public override void Down()
+        {
+            Delete.Table("CaseWorkflowMacro");
+        }
     }
 }

@@ -13,34 +13,35 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124925)]
-public class AddEntityAnalysisModelActivationRuleSuppressionTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124925)]
+    public class AddEntityAnalysisModelActivationRuleSuppressionTableIndex : Migration
     {
-        Create.Table("EntityAnalysisModelActivationRuleSuppression")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("Version").AsInt32().Nullable()
-            .WithColumn("DeletedDate").AsDateTime2().Nullable()
-            .WithColumn("DeletedUser").AsString().Nullable()
-            .WithColumn("Deleted").AsByte().Nullable()
-            .WithColumn("SuppressionKey").AsString().Nullable()
-            .WithColumn("SuppressionKeyValue").AsString().Nullable()
-            .WithColumn("EntityAnalysisModelActivationRuleName").AsString().Nullable()
-            .WithColumn("InheritedId").AsInt32().Nullable();
+        public override void Up()
+        {
+            Create.Table("EntityAnalysisModelActivationRuleSuppression")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("Version").AsInt32().Nullable()
+                .WithColumn("DeletedDate").AsDateTime2().Nullable()
+                .WithColumn("DeletedUser").AsString().Nullable()
+                .WithColumn("Deleted").AsByte().Nullable()
+                .WithColumn("SuppressionKey").AsString().Nullable()
+                .WithColumn("SuppressionKeyValue").AsString().Nullable()
+                .WithColumn("EntityAnalysisModelActivationRuleName").AsString().Nullable()
+                .WithColumn("InheritedId").AsInt32().Nullable();
 
-        Create.Index().OnTable("EntityAnalysisModelActivationRuleSuppression")
-            .OnColumn("EntityAnalysisModelId").Ascending()
-            .OnColumn("Deleted");
-    }
+            Create.Index().OnTable("EntityAnalysisModelActivationRuleSuppression")
+                .OnColumn("EntityAnalysisModelId").Ascending()
+                .OnColumn("Deleted");
+        }
 
-    public override void Down()
-    {
-        Delete.Table("EntityAnalysisModelActivationRuleSuppression");
+        public override void Down()
+        {
+            Delete.Table("EntityAnalysisModelActivationRuleSuppression");
+        }
     }
 }

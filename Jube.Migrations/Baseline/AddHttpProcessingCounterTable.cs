@@ -13,29 +13,30 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220718160400)]
-public class AddHttpProcessingCounterTable : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220718160400)]
+    public class AddHttpProcessingCounterTable : Migration
     {
-        Create.Table("HttpProcessingCounter")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("Instance").AsString().Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable()
-            .WithColumn("All").AsInt32().Nullable()
-            .WithColumn("Model").AsInt32().Nullable()
-            .WithColumn("AsynchronousModel").AsInt32().Nullable()
-            .WithColumn("Tag").AsInt32().Nullable()
-            .WithColumn("Error").AsInt32().Nullable()
-            .WithColumn("Sanction").AsInt32().Nullable()
-            .WithColumn("Callback").AsInt32().Nullable()
-            .WithColumn("Exhaustive").AsInt32().Nullable();
-    }
+        public override void Up()
+        {
+            Create.Table("HttpProcessingCounter")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("Instance").AsString().Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable()
+                .WithColumn("All").AsInt32().Nullable()
+                .WithColumn("Model").AsInt32().Nullable()
+                .WithColumn("AsynchronousModel").AsInt32().Nullable()
+                .WithColumn("Tag").AsInt32().Nullable()
+                .WithColumn("Error").AsInt32().Nullable()
+                .WithColumn("Sanction").AsInt32().Nullable()
+                .WithColumn("Callback").AsInt32().Nullable()
+                .WithColumn("Exhaustive").AsInt32().Nullable();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("HttpProcessingCounter");
+        public override void Down()
+        {
+            Delete.Table("HttpProcessingCounter");
+        }
     }
 }

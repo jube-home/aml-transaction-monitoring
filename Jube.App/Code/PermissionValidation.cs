@@ -11,34 +11,40 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System.Linq;
-using Jube.Data.Context;
-using Jube.Data.Security;
-
 namespace Jube.App.Code
 {
+    using System.Linq;
+    using Data.Context;
+    using Data.Security;
+
     public class PermissionValidation
     {
-        private readonly PermissionValidationDto _permissionValidationDto;
+        private readonly PermissionValidationDto permissionValidationDto;
 
         public PermissionValidation(DbContext dbContext, string userName)
         {
             var permissionValidation = new Data.Security.PermissionValidation();
-            _permissionValidationDto = permissionValidation.GetPermissionsAsync(dbContext, userName).Result;
+            permissionValidationDto = permissionValidation.GetPermissionsAsync(dbContext, userName).Result;
         }
 
         public PermissionValidation(string connectionString, string userName)
         {
             var permissionValidation = new Data.Security.PermissionValidation();
-            _permissionValidationDto = permissionValidation.GetPermissionsAsync(connectionString, userName).Result;
+            permissionValidationDto = permissionValidation.GetPermissionsAsync(connectionString, userName).Result;
         }
 
-        public bool Landlord => _permissionValidationDto.Landlord;
+        public bool Landlord
+        {
+            get
+            {
+                return permissionValidationDto.Landlord;
+            }
+        }
 
-        public bool Validate(int[] testPermissionSpecifications, bool write = false)
+        public bool Validate(int[] testPermissionSpecifications)
         {
             return testPermissionSpecifications.Any(testPermissionSpecification
-                => _permissionValidationDto.Permissions.Contains(testPermissionSpecification));
+                => permissionValidationDto.Permissions.Contains(testPermissionSpecification));
         }
     }
 }

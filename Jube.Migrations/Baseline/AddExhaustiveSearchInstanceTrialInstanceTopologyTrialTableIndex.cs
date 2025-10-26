@@ -13,30 +13,31 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429125001)]
-public class AddExhaustiveSearchInstanceTrialInstanceTopologyTrialTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429125001)]
+    public class AddExhaustiveSearchInstanceTrialInstanceTopologyTrialTableIndex : Migration
     {
-        Create.Table("ExhaustiveSearchInstanceTrialInstanceTopologyTrial")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("ExhaustiveSearchInstanceTrialInstanceId").AsInt32().Nullable()
-            .WithColumn("TrialsSinceImprovement").AsInt32().Nullable()
-            .WithColumn("TopologyTrials").AsInt32().Nullable()
-            .WithColumn("Layer").AsInt32().Nullable()
-            .WithColumn("Neurons").AsInt32().Nullable()
-            .WithColumn("Score").AsDouble().Nullable()
-            .WithColumn("Finalisation").AsByte().Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable();
+        public override void Up()
+        {
+            Create.Table("ExhaustiveSearchInstanceTrialInstanceTopologyTrial")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("ExhaustiveSearchInstanceTrialInstanceId").AsInt32().Nullable()
+                .WithColumn("TrialsSinceImprovement").AsInt32().Nullable()
+                .WithColumn("TopologyTrials").AsInt32().Nullable()
+                .WithColumn("Layer").AsInt32().Nullable()
+                .WithColumn("Neurons").AsInt32().Nullable()
+                .WithColumn("Score").AsDouble().Nullable()
+                .WithColumn("Finalisation").AsByte().Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable();
 
-        Create.Index().OnTable("ExhaustiveSearchInstanceTrialInstanceTopologyTrial")
-            .OnColumn("ExhaustiveSearchInstanceTrialInstanceId");
-    }
+            Create.Index().OnTable("ExhaustiveSearchInstanceTrialInstanceTopologyTrial")
+                .OnColumn("ExhaustiveSearchInstanceTrialInstanceId");
+        }
 
-    public override void Down()
-    {
-        Delete.Table("ExhaustiveSearchInstanceTrialInstanceTopologyTrial");
+        public override void Down()
+        {
+            Delete.Table("ExhaustiveSearchInstanceTrialInstanceTopologyTrial");
+        }
     }
 }

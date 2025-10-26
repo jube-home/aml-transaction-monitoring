@@ -13,20 +13,21 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220430125408)]
-public class AddCaseWorkflowsFormEntryFk : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220430125408)]
+    public class AddCaseWorkflowsFormEntryFk : Migration
     {
-        Create.ForeignKey().FromTable("CaseWorkflowFormEntry").ForeignColumn("CaseId").ToTable("Case")
-            .PrimaryColumn("Id");
-    }
+        public override void Up()
+        {
+            Create.ForeignKey().FromTable("CaseWorkflowFormEntry").ForeignColumn("CaseId").ToTable("Case")
+                .PrimaryColumn("Id");
+        }
 
-    public override void Down()
-    {
-        Delete.ForeignKey().FromTable("CaseWorkflowFormEntry").ForeignColumn("CaseId").ToTable("Case")
-            .PrimaryColumn("Id");
+        public override void Down()
+        {
+            Delete.ForeignKey().FromTable("CaseWorkflowFormEntry").ForeignColumn("CaseId").ToTable("Case")
+                .PrimaryColumn("Id");
+        }
     }
 }

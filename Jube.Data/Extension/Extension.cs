@@ -13,47 +13,48 @@
 
 using System;
 
-namespace Jube.Data.Extension;
-
-public static class Extension
+namespace Jube.Data.Extension
 {
-    public static string AsString(this object obj)
+    public static class Extension
     {
-        return (string)obj;
-    }
+        public static string AsString(this object obj)
+        {
+            return (string)obj;
+        }
 
-    public static double AsDouble(this object obj)
-    {
-        return (double)obj;
-    }
+        public static double AsDouble(this object obj)
+        {
+            return (double)obj;
+        }
 
-    public static int AsInt(this object obj)
-    {
-        return (int)obj;
-    }
+        public static int AsInt(this object obj)
+        {
+            return (int)obj;
+        }
 
-    public static long AsLong(this object obj)
-    {
-        return (long)obj;
-    }
+        public static long AsLong(this object obj)
+        {
+            return (long)obj;
+        }
 
-    public static short AsShort(this object obj)
-    {
-        return (short)obj;
-    }
+        public static short AsShort(this object obj)
+        {
+            return (short)obj;
+        }
 
-    public static byte AsByte(this object obj)
-    {
-        return (byte)obj;
-    }
+        public static byte AsByte(this object obj)
+        {
+            return (byte)obj;
+        }
 
-    public static Guid AsGuid(this object obj)
-    {
-        return Guid.Parse(obj.ToString() ?? string.Empty);
-    }
+        public static Guid AsGuid(this object obj)
+        {
+            return Guid.Parse(obj.ToString() ?? string.Empty);
+        }
 
-    public static DateTime AsDateTime(this object obj)
-    {
-        return Convert.ToDateTime(obj);
+        public static DateTime AsDateTime(this object obj)
+        {
+            return Convert.ToDateTime(obj);
+        }
     }
 }

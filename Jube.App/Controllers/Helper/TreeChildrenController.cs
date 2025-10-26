@@ -11,50 +11,53 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Jube.App.Code;
-using Jube.App.Dto;
-using Jube.App.Dto.TreeChildren;
-using Jube.Data.Context;
-using Jube.Data.Query;
-using Jube.Data.Repository;
-using Jube.Engine.Helpers;
-using log4net;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-
 namespace Jube.App.Controllers.Helper
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Code;
+    using Data.Context;
+    using Data.Query;
+    using Data.Repository;
+    using Dto;
+    using Dto.TreeChildren;
+    using DynamicEnvironment;
+    using log4net;
+    using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.AspNetCore.Mvc;
+
     [Route("api/TreeChildren")]
     [Authorize]
     public class EntityAnalysisModelTreeChildrenController : Controller
     {
-        private readonly DbContext _dbContext;
-        private readonly ILog _log;
-        private readonly PermissionValidation _permissionValidation;
-        private readonly string _userName;
+        private readonly DbContext dbContext;
+        private readonly ILog log;
+        private readonly PermissionValidation permissionValidation;
+        private readonly string userName;
 
         public EntityAnalysisModelTreeChildrenController(ILog log,
-            IHttpContextAccessor httpContextAccessor, DynamicEnvironment.DynamicEnvironment dynamicEnvironment)
+            IHttpContextAccessor httpContextAccessor, DynamicEnvironment dynamicEnvironment)
         {
             if (httpContextAccessor.HttpContext?.User.Identity != null)
-                _userName = httpContextAccessor.HttpContext.User.Identity.Name;
-            _log = log;
+            {
+                userName = httpContextAccessor.HttpContext.User.Identity.Name;
+            }
 
-            _dbContext =
+            this.log = log;
+
+            dbContext =
                 DataConnectionDbContext.GetDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
-            _permissionValidation = new PermissionValidation(_dbContext, _userName);
+            permissionValidation = new PermissionValidation(dbContext, userName);
         }
 
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                _dbContext.Close();
-                _dbContext.Dispose();
+                dbContext.Close();
+                dbContext.Dispose();
             }
 
             base.Dispose(disposing);
@@ -66,19 +69,27 @@ namespace Jube.App.Controllers.Helper
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 7 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        7
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var repository = new EntityAnalysisModelRequestXPathRepository(_dbContext, _userName);
+                var repository = new EntityAnalysisModelRequestXPathRepository(dbContext, userName);
                 return Ok(repository.GetByEntityAnalysisModelIdOrderById(id)
                     .Select(entry => new EntityAnalysisModelTreeChildDto
                     {
-                        Color = entry.Active == 1 ? "green" : "red", Key = entry.Id,
-                        Name = entry.Name, EntityAnalysisModelId = entry.EntityAnalysisModelId
+                        Color = entry.Active == 1 ? "green" : "red",
+                        Key = entry.Id,
+                        Name = entry.Name,
+                        EntityAnalysisModelId = entry.EntityAnalysisModelId
                     }).ToList());
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -89,19 +100,27 @@ namespace Jube.App.Controllers.Helper
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 33 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        33
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var repository = new VisualisationRegistryDatasourceRepository(_dbContext, _userName);
+                var repository = new VisualisationRegistryDatasourceRepository(dbContext, userName);
                 return Ok(repository.GetByVisualisationRegistryIdOrderById(id)
                     .Select(entry => new VisualisationRegistryTreeChildDto
                     {
-                        Color = entry.Active == 1 ? "green" : "red", Key = entry.Id,
-                        Name = entry.Name, VisualisationRegistryId = entry.VisualisationRegistryId ?? 0
+                        Color = entry.Active == 1 ? "green" : "red",
+                        Key = entry.Id,
+                        Name = entry.Name,
+                        VisualisationRegistryId = entry.VisualisationRegistryId ?? 0
                     }).ToList());
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -112,19 +131,27 @@ namespace Jube.App.Controllers.Helper
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 35 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        35
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var repository = new UserRegistryRepository(_dbContext, _userName);
+                var repository = new UserRegistryRepository(dbContext, userName);
                 return Ok(repository.GetByRoleRegistryId(id)
                     .Select(entry => new RoleRegistryTreeChildDto
                     {
-                        Color = entry.Active == 1 ? "green" : "red", Key = entry.Id,
-                        Name = entry.Name, RoleRegistryId = entry.RoleRegistryId
+                        Color = entry.Active == 1 ? "green" : "red",
+                        Key = entry.Id,
+                        Name = entry.Name,
+                        RoleRegistryId = entry.RoleRegistryId
                     }).ToList());
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -135,10 +162,16 @@ namespace Jube.App.Controllers.Helper
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 36 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        36
+                    }))
+                {
+                    return Forbid();
+                }
 
                 var getRoleRegistryPermissionByRoleRegistryId =
-                    new GetRoleRegistryPermissionByRoleRegistryIdQuery(_dbContext, _userName);
+                    new GetRoleRegistryPermissionByRoleRegistryIdQuery(dbContext, userName);
 
                 return getRoleRegistryPermissionByRoleRegistryId.Execute(id).Select(s
                     => new RoleRegistryTreeChildDto
@@ -151,7 +184,7 @@ namespace Jube.App.Controllers.Helper
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -162,19 +195,27 @@ namespace Jube.App.Controllers.Helper
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 32 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        32
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var repository = new VisualisationRegistryParameterRepository(_dbContext, _userName);
+                var repository = new VisualisationRegistryParameterRepository(dbContext, userName);
                 return Ok(repository.GetByVisualisationRegistryIdOrderById(id)
                     .Select(entry => new VisualisationRegistryTreeChildDto
                     {
-                        Color = entry.Active == 1 ? "green" : "red", Key = entry.Id,
-                        Name = entry.Name, VisualisationRegistryId = entry.VisualisationRegistryId ?? 0
+                        Color = entry.Active == 1 ? "green" : "red",
+                        Key = entry.Id,
+                        Name = entry.Name,
+                        VisualisationRegistryId = entry.VisualisationRegistryId ?? 0
                     }).ToList());
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -185,19 +226,27 @@ namespace Jube.App.Controllers.Helper
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 8 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        8
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var repository = new EntityAnalysisModelInlineFunctionRepository(_dbContext, _userName);
+                var repository = new EntityAnalysisModelInlineFunctionRepository(dbContext, userName);
                 return Ok(repository.GetByEntityAnalysisModelIdOrderById(id)
                     .Select(entry => new EntityAnalysisModelTreeChildDto
                     {
-                        Color = entry.Active == 1 ? "green" : "red", Key = entry.Id,
-                        Name = entry.Name, EntityAnalysisModelId = entry.EntityAnalysisModelId
+                        Color = entry.Active == 1 ? "green" : "red",
+                        Key = entry.Id,
+                        Name = entry.Name,
+                        EntityAnalysisModelId = entry.EntityAnalysisModelId
                     }).ToList());
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -208,19 +257,27 @@ namespace Jube.App.Controllers.Helper
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 37 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        37
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var repository = new EntityAnalysisModelTagRepository(_dbContext, _userName);
+                var repository = new EntityAnalysisModelTagRepository(dbContext, userName);
                 return Ok(repository.GetByEntityAnalysisModelIdOrderById(id)
                     .Select(entry => new EntityAnalysisModelTreeChildDto
                     {
-                        Color = entry.Active == 1 ? "green" : "red", Key = entry.Id,
-                        Name = entry.Name, EntityAnalysisModelId = entry.EntityAnalysisModelId
+                        Color = entry.Active == 1 ? "green" : "red",
+                        Key = entry.Id,
+                        Name = entry.Name,
+                        EntityAnalysisModelId = entry.EntityAnalysisModelId
                     }).ToList());
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -231,19 +288,27 @@ namespace Jube.App.Controllers.Helper
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 10 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        10
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var repository = new EntityAnalysisModelGatewayRuleRepository(_dbContext, _userName);
+                var repository = new EntityAnalysisModelGatewayRuleRepository(dbContext, userName);
                 return Ok(repository.GetByEntityAnalysisModelIdOrderById(id)
                     .Select(entry => new EntityAnalysisModelTreeChildDto
                     {
-                        Color = entry.Active == 1 ? "green" : "red", Key = entry.Id,
-                        Name = entry.Name, EntityAnalysisModelId = entry.EntityAnalysisModelId
+                        Color = entry.Active == 1 ? "green" : "red",
+                        Key = entry.Id,
+                        Name = entry.Name,
+                        EntityAnalysisModelId = entry.EntityAnalysisModelId
                     }).ToList());
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -254,19 +319,27 @@ namespace Jube.App.Controllers.Helper
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 16 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        16
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var repository = new ExhaustiveSearchInstanceRepository(_dbContext, _userName);
+                var repository = new ExhaustiveSearchInstanceRepository(dbContext, userName);
                 return Ok(repository.GetByEntityAnalysisModelIdOrderById(id)
                     .Select(entry => new EntityAnalysisModelTreeChildDto
                     {
-                        Color = entry.Active == 1 ? "green" : "red", Key = entry.Id,
-                        Name = entry.Name, EntityAnalysisModelId = entry.EntityAnalysisModelId
+                        Color = entry.Active == 1 ? "green" : "red",
+                        Key = entry.Id,
+                        Name = entry.Name,
+                        EntityAnalysisModelId = entry.EntityAnalysisModelId
                     }).ToList());
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -277,19 +350,27 @@ namespace Jube.App.Controllers.Helper
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 26 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        26
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var repository = new EntityAnalysisModelReprocessingRuleRepository(_dbContext, _userName);
+                var repository = new EntityAnalysisModelReprocessingRuleRepository(dbContext, userName);
                 return Ok(repository.GetByEntityAnalysisModelId(id)
                     .Select(entry => new EntityAnalysisModelTreeChildDto
                     {
-                        Color = entry.Active == 1 ? "green" : "red", Key = entry.Id,
-                        Name = entry.Name, EntityAnalysisModelId = entry.EntityAnalysisModelId
+                        Color = entry.Active == 1 ? "green" : "red",
+                        Key = entry.Id,
+                        Name = entry.Name,
+                        EntityAnalysisModelId = entry.EntityAnalysisModelId
                     }).ToList());
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -300,19 +381,27 @@ namespace Jube.App.Controllers.Helper
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 15 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        15
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var repository = new EntityAnalysisModelHttpAdaptationRepository(_dbContext, _userName);
+                var repository = new EntityAnalysisModelHttpAdaptationRepository(dbContext, userName);
                 return Ok(repository.GetByEntityAnalysisModelIdOrderById(id)
                     .Select(entry => new EntityAnalysisModelTreeChildDto
                     {
-                        Color = entry.Active == 1 ? "green" : "red", Key = entry.Id,
-                        Name = entry.Name, EntityAnalysisModelId = entry.EntityAnalysisModelId
+                        Color = entry.Active == 1 ? "green" : "red",
+                        Key = entry.Id,
+                        Name = entry.Name,
+                        EntityAnalysisModelId = entry.EntityAnalysisModelId
                     }).ToList());
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -323,19 +412,27 @@ namespace Jube.App.Controllers.Helper
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 18, 19, 20, 21, 22, 23, 24, 25 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        18, 19, 20, 21, 22, 23, 24, 25
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var repository = new CaseWorkflowRepository(_dbContext, _userName);
+                var repository = new CaseWorkflowRepository(dbContext, userName);
                 return Ok(repository.GetByEntityAnalysisModelIdOrderById(id)
                     .Select(entry => new EntityAnalysisModelTreeChildDto
                     {
-                        Color = entry.Active == 1 ? "green" : "red", Key = entry.Id,
-                        Name = entry.Name, EntityAnalysisModelId = entry.EntityAnalysisModelId
+                        Color = entry.Active == 1 ? "green" : "red",
+                        Key = entry.Id,
+                        Name = entry.Name,
+                        EntityAnalysisModelId = entry.EntityAnalysisModelId
                     }).ToList());
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -346,19 +443,27 @@ namespace Jube.App.Controllers.Helper
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 14 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        14
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var repository = new EntityAnalysisModelAbstractionCalculationRepository(_dbContext, _userName);
+                var repository = new EntityAnalysisModelAbstractionCalculationRepository(dbContext, userName);
                 return Ok(repository.GetByEntityAnalysisModelIdOrderByIdDesc(id)
                     .Select(entry => new EntityAnalysisModelTreeChildDto
                     {
-                        Color = entry.Active == 1 ? "green" : "red", Key = entry.Id,
-                        Name = entry.Name, EntityAnalysisModelId = entry.EntityAnalysisModelId
+                        Color = entry.Active == 1 ? "green" : "red",
+                        Key = entry.Id,
+                        Name = entry.Name,
+                        EntityAnalysisModelId = entry.EntityAnalysisModelId
                     }).ToList());
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -369,19 +474,27 @@ namespace Jube.App.Controllers.Helper
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 13, 14 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        13, 14
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var repository = new EntityAnalysisModelAbstractionRuleRepository(_dbContext, _userName);
+                var repository = new EntityAnalysisModelAbstractionRuleRepository(dbContext, userName);
                 return Ok(repository.GetByEntityAnalysisModelIdOrderByIdDesc(id)
                     .Select(entry => new EntityAnalysisModelTreeChildDto
                     {
-                        Color = entry.Active == 1 ? "green" : "red", Key = entry.Id,
-                        Name = entry.Name, EntityAnalysisModelId = entry.EntityAnalysisModelId
+                        Color = entry.Active == 1 ? "green" : "red",
+                        Key = entry.Id,
+                        Name = entry.Name,
+                        EntityAnalysisModelId = entry.EntityAnalysisModelId
                     }).ToList());
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -392,19 +505,27 @@ namespace Jube.App.Controllers.Helper
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 17 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        17
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var repository = new EntityAnalysisModelActivationRuleRepository(_dbContext, _userName);
+                var repository = new EntityAnalysisModelActivationRuleRepository(dbContext, userName);
                 return Ok(repository.GetByEntityAnalysisModelIdOrderByIdDesc(id)
                     .Select(entry => new EntityAnalysisModelTreeChildDto
                     {
-                        Color = entry.Active == 1 ? "green" : "red", Key = entry.Id,
-                        Name = entry.Name, EntityAnalysisModelId = entry.EntityAnalysisModelId
+                        Color = entry.Active == 1 ? "green" : "red",
+                        Key = entry.Id,
+                        Name = entry.Name,
+                        EntityAnalysisModelId = entry.EntityAnalysisModelId
                     }).ToList());
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -416,19 +537,27 @@ namespace Jube.App.Controllers.Helper
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 12 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        12
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var repository = new EntityAnalysisModelTtlCounterRepository(_dbContext, _userName);
+                var repository = new EntityAnalysisModelTtlCounterRepository(dbContext, userName);
                 return Ok(repository.GetByEntityAnalysisModelIdOrderById(id)
                     .Select(entry => new EntityAnalysisModelTreeChildDto
                     {
-                        Color = entry.Active == 1 ? "green" : "red", Key = entry.Id,
-                        Name = entry.Name, EntityAnalysisModelId = entry.EntityAnalysisModelId
+                        Color = entry.Active == 1 ? "green" : "red",
+                        Key = entry.Id,
+                        Name = entry.Name,
+                        EntityAnalysisModelId = entry.EntityAnalysisModelId
                     }).ToList());
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -439,19 +568,27 @@ namespace Jube.App.Controllers.Helper
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 9 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        9
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var repository = new EntityAnalysisModelInlineScriptRepository(_dbContext, _userName);
+                var repository = new EntityAnalysisModelInlineScriptRepository(dbContext, userName);
                 return Ok(repository.GetByEntityAnalysisModelIdOrderById(id)
                     .Select(entry => new EntityAnalysisModelTreeChildDto
                     {
-                        Color = entry.Active == 1 ? "green" : "red", Key = entry.Id,
-                        Name = entry.Name, EntityAnalysisModelId = entry.EntityAnalysisModelId
+                        Color = entry.Active == 1 ? "green" : "red",
+                        Key = entry.Id,
+                        Name = entry.Name,
+                        EntityAnalysisModelId = entry.EntityAnalysisModelId
                     }).ToList());
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -462,19 +599,27 @@ namespace Jube.App.Controllers.Helper
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 11 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        11
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var repository = new EntityAnalysisModelSanctionRepository(_dbContext, _userName);
+                var repository = new EntityAnalysisModelSanctionRepository(dbContext, userName);
                 return Ok(repository.GetByEntityAnalysisModelIdOrderById(id)
                     .Select(entry => new EntityAnalysisModelTreeChildDto
                     {
-                        Color = entry.Active == 1 ? "green" : "red", Key = entry.Id,
-                        Name = entry.Name, EntityAnalysisModelId = entry.EntityAnalysisModelId
+                        Color = entry.Active == 1 ? "green" : "red",
+                        Key = entry.Id,
+                        Name = entry.Name,
+                        EntityAnalysisModelId = entry.EntityAnalysisModelId
                     }).ToList());
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -485,19 +630,27 @@ namespace Jube.App.Controllers.Helper
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 3 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        3
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var repository = new EntityAnalysisModelListRepository(_dbContext, _userName);
+                var repository = new EntityAnalysisModelListRepository(dbContext, userName);
                 return Ok(repository.GetByEntityAnalysisModelGuid(guid)
                     .Select(entry => new EntityAnalysisModelTreeChildDto
                     {
-                        Color = entry.Active == 1 ? "green" : "red", Key = entry.Id,
-                        Name = entry.Name, EntityAnalysisModelGuid = entry.EntityAnalysisModelGuid
+                        Color = entry.Active == 1 ? "green" : "red",
+                        Key = entry.Id,
+                        Name = entry.Name,
+                        EntityAnalysisModelGuid = entry.EntityAnalysisModelGuid
                     }).ToList());
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -508,19 +661,27 @@ namespace Jube.App.Controllers.Helper
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 4 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        4
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var repository = new EntityAnalysisModelDictionaryRepository(_dbContext, _userName);
+                var repository = new EntityAnalysisModelDictionaryRepository(dbContext, userName);
                 return Ok(repository.GetByEntityAnalysisModelGuid(guid)
                     .Select(entry => new EntityAnalysisModelTreeChildDto
                     {
-                        Color = entry.Active == 1 ? "green" : "red", Key = entry.Id,
-                        Name = entry.Name, EntityAnalysisModelGuid = entry.EntityAnalysisModelGuid
+                        Color = entry.Active == 1 ? "green" : "red",
+                        Key = entry.Id,
+                        Name = entry.Name,
+                        EntityAnalysisModelGuid = entry.EntityAnalysisModelGuid
                     }).ToList());
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -531,19 +692,27 @@ namespace Jube.App.Controllers.Helper
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 20 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        20
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var repository = new CaseWorkflowXPathRepository(_dbContext, _userName);
+                var repository = new CaseWorkflowXPathRepository(dbContext, userName);
                 return Ok(repository.GetByCasesWorkflowIdOrderByIdDesc(key)
                     .Select(entry => new CasesWorkflowTreeChildDto
                     {
-                        Color = entry.Active == 1 ? "green" : "red", Key = entry.Id,
-                        Name = entry.Name, CasesWorkflowId = entry.CaseWorkflowId ?? 0
+                        Color = entry.Active == 1 ? "green" : "red",
+                        Key = entry.Id,
+                        Name = entry.Name,
+                        CasesWorkflowId = entry.CaseWorkflowId ?? 0
                     }).ToList());
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -554,19 +723,27 @@ namespace Jube.App.Controllers.Helper
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 21 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        21
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var repository = new CaseWorkflowFormRepository(_dbContext, _userName);
+                var repository = new CaseWorkflowFormRepository(dbContext, userName);
                 return Ok(repository.GetByCasesWorkflowIdOrderById(key)
                     .Select(entry => new CasesWorkflowTreeChildDto
                     {
-                        Color = entry.Active == 1 ? "green" : "red", Key = entry.Id,
-                        Name = entry.Name, CasesWorkflowId = entry.CaseWorkflowId ?? 0
+                        Color = entry.Active == 1 ? "green" : "red",
+                        Key = entry.Id,
+                        Name = entry.Name,
+                        CasesWorkflowId = entry.CaseWorkflowId ?? 0
                     }).ToList());
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -577,19 +754,27 @@ namespace Jube.App.Controllers.Helper
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 22 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        22
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var repository = new CaseWorkflowActionRepository(_dbContext, _userName);
+                var repository = new CaseWorkflowActionRepository(dbContext, userName);
                 return Ok(repository.GetByCasesWorkflowIdOrderById(key)
                     .Select(entry => new CasesWorkflowTreeChildDto
                     {
-                        Color = entry.Active == 1 ? "green" : "red", Key = entry.Id,
-                        Name = entry.Name, CasesWorkflowId = entry.CaseWorkflowId ?? 0
+                        Color = entry.Active == 1 ? "green" : "red",
+                        Key = entry.Id,
+                        Name = entry.Name,
+                        CasesWorkflowId = entry.CaseWorkflowId ?? 0
                     }).ToList());
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -600,19 +785,27 @@ namespace Jube.App.Controllers.Helper
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 24 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        24
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var repository = new CaseWorkflowMacroRepository(_dbContext, _userName);
+                var repository = new CaseWorkflowMacroRepository(dbContext, userName);
                 return Ok(repository.GetByCasesWorkflowIdOrderById(key)
                     .Select(entry => new CasesWorkflowTreeChildDto
                     {
-                        Color = entry.Active == 1 ? "green" : "red", Key = entry.Id,
-                        Name = entry.Name, CasesWorkflowId = entry.CaseWorkflowId ?? 0
+                        Color = entry.Active == 1 ? "green" : "red",
+                        Key = entry.Id,
+                        Name = entry.Name,
+                        CasesWorkflowId = entry.CaseWorkflowId ?? 0
                     }).ToList());
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -623,19 +816,27 @@ namespace Jube.App.Controllers.Helper
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 25 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        25
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var repository = new CaseWorkflowFilterRepository(_dbContext, _userName);
+                var repository = new CaseWorkflowFilterRepository(dbContext, userName);
                 return Ok(repository.GetByCasesWorkflowIdOrderById(key)
                     .Select(entry => new CasesWorkflowTreeChildDto
                     {
-                        Color = entry.Active == 1 ? "green" : "red", Key = entry.Id,
-                        Name = entry.Name, CasesWorkflowId = entry.CaseWorkflowId ?? 0
+                        Color = entry.Active == 1 ? "green" : "red",
+                        Key = entry.Id,
+                        Name = entry.Name,
+                        CasesWorkflowId = entry.CaseWorkflowId ?? 0
                     }).ToList());
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -646,19 +847,27 @@ namespace Jube.App.Controllers.Helper
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 23 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        23
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var repository = new CaseWorkflowDisplayRepository(_dbContext, _userName);
+                var repository = new CaseWorkflowDisplayRepository(dbContext, userName);
                 return Ok(repository.GetByCasesWorkflowIdOrderById(key)
                     .Select(entry => new CasesWorkflowTreeChildDto
                     {
-                        Color = entry.Active == 1 ? "green" : "red", Key = entry.Id,
-                        Name = entry.Name, CasesWorkflowId = entry.CaseWorkflowId ?? 0
+                        Color = entry.Active == 1 ? "green" : "red",
+                        Key = entry.Id,
+                        Name = entry.Name,
+                        CasesWorkflowId = entry.CaseWorkflowId ?? 0
                     }).ToList());
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -669,19 +878,27 @@ namespace Jube.App.Controllers.Helper
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 19 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        19
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var repository = new CaseWorkflowStatusRepository(_dbContext, _userName);
+                var repository = new CaseWorkflowStatusRepository(dbContext, userName);
                 return Ok(repository.GetByCasesWorkflowIdOrderById(key)
                     .Select(entry => new CasesWorkflowTreeChildDto
                     {
-                        Color = entry.Active == 1 ? "green" : "red", Key = entry.Id,
-                        Name = entry.Name, CasesWorkflowId = entry.CaseWorkflowId ?? 0
+                        Color = entry.Active == 1 ? "green" : "red",
+                        Key = entry.Id,
+                        Name = entry.Name,
+                        CasesWorkflowId = entry.CaseWorkflowId ?? 0
                     }).ToList());
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }

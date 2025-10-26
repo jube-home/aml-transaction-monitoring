@@ -14,17 +14,18 @@
 using System.Reflection;
 using System.Runtime.Loader;
 
-namespace Jube.Engine.Model.Compiler;
-
-internal class SimpleUnloadableAssemblyLoadContext : AssemblyLoadContext
+namespace Jube.Engine.Model.Compiler
 {
-    public SimpleUnloadableAssemblyLoadContext()
-        : base(true)
+    internal class SimpleUnloadableAssemblyLoadContext : AssemblyLoadContext
     {
-    }
+        public SimpleUnloadableAssemblyLoadContext()
+            : base(true)
+        {
+        }
 
-    protected override Assembly Load(AssemblyName assemblyName)
-    {
-        return null;
+        protected override Assembly Load(AssemblyName assemblyName)
+        {
+            return null;
+        }
     }
 }

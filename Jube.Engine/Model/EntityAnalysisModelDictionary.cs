@@ -13,12 +13,13 @@
 
 using System.Collections.Generic;
 
-namespace Jube.Engine.Model;
-
-public class EntityAnalysisModelDictionary
+namespace Jube.Engine.Model
 {
-    public string Name { get; set; }
-    public string DataName { get; set; }
-    public bool ResponsePayload { get; set; }
-    public Dictionary<string, double> KvPs { get; } = new();
+    public class EntityAnalysisModelDictionary
+    {
+        public string Name { get; set; }
+        public string DataName { get; set; }
+        public bool ResponsePayload { get; set; }
+        public Dictionary<string, double> KvPs { get; } = new();
+    }
 }

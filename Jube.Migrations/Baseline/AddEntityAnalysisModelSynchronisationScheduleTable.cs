@@ -14,32 +14,33 @@
 using System;
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124948)]
-public class AddEntityAnalysisModelSynchronisationScheduleTable : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124948)]
+    public class AddEntityAnalysisModelSynchronisationScheduleTable : Migration
     {
-        Create.Table("EntityAnalysisModelSynchronisationSchedule")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("CreatedDate").AsDateTime().Nullable()
-            .WithColumn("ScheduleDate").AsDateTime().Nullable()
-            .WithColumn("TenantRegistryId").AsInt32().Nullable()
-            .WithColumn("CreatedUser").AsString();
+        public override void Up()
+        {
+            Create.Table("EntityAnalysisModelSynchronisationSchedule")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("CreatedDate").AsDateTime().Nullable()
+                .WithColumn("ScheduleDate").AsDateTime().Nullable()
+                .WithColumn("TenantRegistryId").AsInt32().Nullable()
+                .WithColumn("CreatedUser").AsString();
 
-        Insert.IntoTable("EntityAnalysisModelSynchronisationSchedule").Row(
-            new
-            {
-                CreatedDate = DateTime.Now,
-                ScheduleDate = DateTime.Now,
-                TenantRegistryId = 1,
-                CreatedUser = "Administrator"
-            });
-    }
+            Insert.IntoTable("EntityAnalysisModelSynchronisationSchedule").Row(
+                new
+                {
+                    CreatedDate = DateTime.Now,
+                    ScheduleDate = DateTime.Now,
+                    TenantRegistryId = 1,
+                    CreatedUser = "Administrator"
+                });
+        }
 
-    public override void Down()
-    {
-        Delete.Table("EntityAnalysisModelSynchronisationSchedule");
+        public override void Down()
+        {
+            Delete.Table("EntityAnalysisModelSynchronisationSchedule");
+        }
     }
 }

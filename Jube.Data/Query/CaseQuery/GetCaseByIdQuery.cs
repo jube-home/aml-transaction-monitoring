@@ -11,69 +11,70 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System.Linq;
-using Jube.Data.Context;
-using Jube.Data.Query.CaseQuery.Dto;
-using LinqToDB;
-
-namespace Jube.Data.Query.CaseQuery;
-
-public class GetCaseByIdQuery
+namespace Jube.Data.Query.CaseQuery
 {
-    private readonly DbContext _dbContext;
-    private readonly ProcessCaseQuery _processCaseQuery;
-    private readonly string _userName;
+    using System.Linq;
+    using Context;
+    using Dto;
+    using LinqToDB;
 
-    public GetCaseByIdQuery(DbContext dbContext, string user)
+    public class GetCaseByIdQuery
     {
-        _dbContext = dbContext;
-        _userName = user;
-        _processCaseQuery = new ProcessCaseQuery(_dbContext, _userName);
-    }
+        private readonly DbContext dbContext;
+        private readonly ProcessCaseQuery processCaseQuery;
+        private readonly string userName;
 
-    public CaseQueryDto Execute(int id)
-    {
-        var query = from c in _dbContext.Case
-            from i in _dbContext.CaseWorkflow.InnerJoin(w =>
-                w.Guid == c.CaseWorkflowGuid && (w.Deleted == 0 || w.Deleted == null))
-            from m in _dbContext.EntityAnalysisModel.InnerJoin(w =>
-                w.Id == i.EntityAnalysisModelId && (w.Deleted == 0 || w.Deleted == null))
-            from t in _dbContext.TenantRegistry.InnerJoin(w => w.Id == m.TenantRegistryId)
-            from u in _dbContext.UserInTenant.InnerJoin(w => w.TenantRegistryId == t.Id)
-            from s in _dbContext.CaseWorkflowStatus.LeftJoin(w =>
-                w.Guid == c.CaseWorkflowStatusGuid && w.CaseWorkflowId == i.Id &&
-                (w.Deleted == 0 || w.Deleted == null))
-            where c.Id == id && u.User == _userName
-            select new CaseQueryDto
-            {
-                Id = c.Id,
-                EntityAnalysisModelInstanceEntryGuid = c.EntityAnalysisModelInstanceEntryGuid,
-                DiaryDate = c.DiaryDate.GetValueOrDefault(),
-                CaseWorkflowGuid = c.CaseWorkflowGuid,
-                CaseWorkflowStatusGuid = s.Guid,
-                CreatedDate = c.CreatedDate.GetValueOrDefault(),
-                Locked = c.Locked.GetValueOrDefault() == 1,
-                LockedUser = c.LockedUser ?? "",
-                LockedDate = c.LockedDate.GetValueOrDefault(),
-                ClosedStatusId = c.ClosedStatusId.GetValueOrDefault(),
-                ClosedDate = c.ClosedDate.GetValueOrDefault(),
-                ClosedUser = c.ClosedUser ?? "",
-                CaseKey = c.CaseKey,
-                Diary = c.Diary.GetValueOrDefault() == 1,
-                DiaryUser = c.DiaryUser ?? "",
-                Rating = c.Rating.GetValueOrDefault(),
-                CaseKeyValue = c.CaseKeyValue,
-                LastClosedStatus = c.LastClosedStatus.GetValueOrDefault(),
-                ClosedStatusMigrationDate = c.ClosedStatusMigrationDate.GetValueOrDefault(),
-                ForeColor = s.ForeColor,
-                BackColor = s.BackColor,
-                Json = c.Json,
-                VisualisationRegistryGuid = i.VisualisationRegistryGuid,
-                EnableVisualisation = i.EnableVisualisation.GetValueOrDefault() == 1
-            };
+        public GetCaseByIdQuery(DbContext dbContext, string user)
+        {
+            this.dbContext = dbContext;
+            userName = user;
+            processCaseQuery = new ProcessCaseQuery(this.dbContext, userName);
+        }
 
-        var getCaseByIdDto = query.FirstOrDefault();
+        public CaseQueryDto Execute(int id)
+        {
+            var query = from c in dbContext.Case
+                from i in dbContext.CaseWorkflow.InnerJoin(w =>
+                    w.Guid == c.CaseWorkflowGuid && (w.Deleted == 0 || w.Deleted == null))
+                from m in dbContext.EntityAnalysisModel.InnerJoin(w =>
+                    w.Id == i.EntityAnalysisModelId && (w.Deleted == 0 || w.Deleted == null))
+                from t in dbContext.TenantRegistry.InnerJoin(w => w.Id == m.TenantRegistryId)
+                from u in dbContext.UserInTenant.InnerJoin(w => w.TenantRegistryId == t.Id)
+                from s in dbContext.CaseWorkflowStatus.LeftJoin(w =>
+                    w.Guid == c.CaseWorkflowStatusGuid && w.CaseWorkflowId == i.Id &&
+                    (w.Deleted == 0 || w.Deleted == null))
+                where c.Id == id && u.User == userName
+                select new CaseQueryDto
+                {
+                    Id = c.Id,
+                    EntityAnalysisModelInstanceEntryGuid = c.EntityAnalysisModelInstanceEntryGuid,
+                    DiaryDate = c.DiaryDate.GetValueOrDefault(),
+                    CaseWorkflowGuid = c.CaseWorkflowGuid,
+                    CaseWorkflowStatusGuid = s.Guid,
+                    CreatedDate = c.CreatedDate.GetValueOrDefault(),
+                    Locked = c.Locked.GetValueOrDefault() == 1,
+                    LockedUser = c.LockedUser ?? "",
+                    LockedDate = c.LockedDate.GetValueOrDefault(),
+                    ClosedStatusId = c.ClosedStatusId.GetValueOrDefault(),
+                    ClosedDate = c.ClosedDate.GetValueOrDefault(),
+                    ClosedUser = c.ClosedUser ?? "",
+                    CaseKey = c.CaseKey,
+                    Diary = c.Diary.GetValueOrDefault() == 1,
+                    DiaryUser = c.DiaryUser ?? "",
+                    Rating = c.Rating.GetValueOrDefault(),
+                    CaseKeyValue = c.CaseKeyValue,
+                    LastClosedStatus = c.LastClosedStatus.GetValueOrDefault(),
+                    ClosedStatusMigrationDate = c.ClosedStatusMigrationDate.GetValueOrDefault(),
+                    ForeColor = s.ForeColor,
+                    BackColor = s.BackColor,
+                    Json = c.Json,
+                    VisualisationRegistryGuid = i.VisualisationRegistryGuid,
+                    EnableVisualisation = i.EnableVisualisation.GetValueOrDefault() == 1
+                };
 
-        return _processCaseQuery.Process(getCaseByIdDto);
+            var getCaseByIdDto = query.FirstOrDefault();
+
+            return processCaseQuery.Process(getCaseByIdDto);
+        }
     }
 }

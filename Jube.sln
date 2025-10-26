@@ -45,6 +45,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jube.Preservation", "Jube.P
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jube.Cryptography", "Jube.Cryptography\Jube.Cryptography.csproj", "{3A8A1072-8832-4964-AD7F-22AFF60AB4DC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jube.Cache", "Jube.Cache\Jube.Cache.csproj", "{10A572C9-0015-4190-B195-D99EBBA826F9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jube.Dictionary", "Jube.Dictionary\Jube.Dictionary.csproj", "{76CCE6A8-12BE-452C-B07F-C4ED5179DDC7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -135,6 +139,14 @@ Global
 		{3A8A1072-8832-4964-AD7F-22AFF60AB4DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3A8A1072-8832-4964-AD7F-22AFF60AB4DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3A8A1072-8832-4964-AD7F-22AFF60AB4DC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{10A572C9-0015-4190-B195-D99EBBA826F9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{10A572C9-0015-4190-B195-D99EBBA826F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{10A572C9-0015-4190-B195-D99EBBA826F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{10A572C9-0015-4190-B195-D99EBBA826F9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{76CCE6A8-12BE-452C-B07F-C4ED5179DDC7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{76CCE6A8-12BE-452C-B07F-C4ED5179DDC7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{76CCE6A8-12BE-452C-B07F-C4ED5179DDC7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{76CCE6A8-12BE-452C-B07F-C4ED5179DDC7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 	EndGlobalSection

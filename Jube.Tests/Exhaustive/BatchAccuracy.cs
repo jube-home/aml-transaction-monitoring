@@ -11,93 +11,94 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
-using System.Text;
-using FluentAssertions;
-using Newtonsoft.Json;
-using Xunit;
-using Xunit.Abstractions;
-
-namespace Jube.Test.Exhaustive;
-
-public class Accuracy
+namespace Jube.Test.Exhaustive
 {
-    private readonly ITestOutputHelper _testOutputHelper;
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using System.Net.Http;
+    using System.Text;
+    using FluentAssertions;
+    using Newtonsoft.Json;
+    using Xunit;
+    using Xunit.Abstractions;
 
-    public Accuracy(ITestOutputHelper testOutputHelper)
+    public class Accuracy(ITestOutputHelper testOutputHelper)
     {
-        _testOutputHelper = testOutputHelper;
-    }
 
-    [Theory]
-    [InlineData("https://localhost:5001/api/Invoke/ExhaustiveSearchInstance/111c17f5-01d8-46a6-a940-273660a93a17",
-        10000000, 0.8)]
-    public async void BatchAccuracy(string uriString, int httpTimeout, double passThreshold)
-    {
-        try
+        [Theory]
+        [InlineData("https://localhost:5001/api/Invoke/ExhaustiveSearchInstance/111c17f5-01d8-46a6-a940-273660a93a17",
+            10000000, 0.8)]
+        public async void BatchAccuracy(string uriString, int httpTimeout, double passThreshold)
         {
-            var uri = new Uri(uriString);
-
-            var httpClientHandler = new HttpClientHandler();
-            httpClientHandler.MaxConnectionsPerServer = 30;
-            httpClientHandler.ServerCertificateCustomValidationCallback = (_, _, _, _) => true;
-
-            using var client = new HttpClient(httpClientHandler);
-            client.Timeout = TimeSpan.FromMilliseconds(httpTimeout);
-
-            await using var fileStream = File.OpenRead("Exhaustive/Mock.csv");
-            using var streamReader = new StreamReader(fileStream, Encoding.UTF8, true);
-
-            var i = 0;
-            var fields = new List<string>();
-            var outcomes = new List<int>();
-            var countCorrect = 0;
-            while (await streamReader.ReadLineAsync() is { } line)
+            try
             {
-                if (i == 0)
-                {
-                    var splits = line.Split(",");
-                    fields.AddRange(splits.Select(split => "Abstraction." + split));
-                }
-                else
-                {
-                    var splits = line.Split(",");
-                    var model = new Dictionary<string, double>();
-                    for (var j = 0; j < fields.Count; j++) model.Add(fields[j], double.Parse(splits[j]));
+                var uri = new Uri(uriString);
 
-                    var stringContent = new StringContent(
-                        JsonConvert.SerializeObject(model),
-                        Encoding.UTF8,
-                        "application/json");
+                var httpClientHandler = new HttpClientHandler();
+                httpClientHandler.MaxConnectionsPerServer = 30;
+                httpClientHandler.ServerCertificateCustomValidationCallback = (_, _, _, _) => true;
 
-                    var request = new HttpRequestMessage
+                using var client = new HttpClient(httpClientHandler);
+                client.Timeout = TimeSpan.FromMilliseconds(httpTimeout);
+
+                await using var fileStream = File.OpenRead("Exhaustive/Mock.csv");
+                using var streamReader = new StreamReader(fileStream, Encoding.UTF8, true);
+
+                var i = 0;
+                var fields = new List<string>();
+                var outcomes = new List<int>();
+                var countCorrect = 0;
+                while (await streamReader.ReadLineAsync() is {} line)
+                {
+                    if (i == 0)
                     {
-                        Method = HttpMethod.Post,
-                        RequestUri = uri,
-                        Content = stringContent
-                    };
+                        var splits = line.Split(",");
+                        fields.AddRange(splits.Select(split => "Abstraction." + split));
+                    }
+                    else
+                    {
+                        var splits = line.Split(",");
+                        var model = new Dictionary<string, double>();
+                        for (var j = 0; j < fields.Count; j++)
+                        {
+                            model.Add(fields[j], Double.Parse(splits[j]));
+                        }
 
-                    var task = await client.SendAsync(request, HttpCompletionOption.ResponseContentRead);
+                        var stringContent = new StringContent(
+                            JsonConvert.SerializeObject(model),
+                            Encoding.UTF8,
+                            "application/json");
 
-                    var recallString = await task.Content.ReadAsStringAsync();
-                    var recall = double.Parse(recallString);
-                    outcomes.Add(recall > 0.5 ? 1 : 0);
-                    if (outcomes.Last() == (int)model["Abstraction.Dependent"]) countCorrect += 1;
+                        var request = new HttpRequestMessage
+                        {
+                            Method = HttpMethod.Post,
+                            RequestUri = uri,
+                            Content = stringContent
+                        };
+
+                        var task = await client.SendAsync(request, HttpCompletionOption.ResponseContentRead);
+
+                        var recallString = await task.Content.ReadAsStringAsync();
+                        var recall = Double.Parse(recallString);
+                        outcomes.Add(recall > 0.5 ? 1 : 0);
+                        if (outcomes.Last() == (int)model["Abstraction.Dependent"])
+                        {
+                            countCorrect += 1;
+                        }
+                    }
+
+                    i += 1;
                 }
 
-                i += 1;
+                var percentageCorrect = (double)countCorrect / i;
+                percentageCorrect.Should().BeGreaterThan(passThreshold);
             }
-
-            var percentageCorrect = (double)countCorrect / i;
-            percentageCorrect.Should().BeGreaterThan(passThreshold);
-        }
-        catch (Exception ex)
-        {
-            _testOutputHelper.WriteLine(ex.ToString());
+            catch (Exception ex)
+            {
+                testOutputHelper.WriteLine(ex.ToString());
+            }
         }
     }
 }

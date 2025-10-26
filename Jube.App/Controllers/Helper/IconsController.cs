@@ -2,61 +2,64 @@
  *
  * This file is part of Jube™ software.
  *
- * Jube™ is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License 
+ * Jube™ is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License
  * as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
- * Jube™ is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty  
+ * Jube™ is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
 
- * You should have received a copy of the GNU Affero General Public License along with Jube™. If not, 
+ * You should have received a copy of the GNU Affero General Public License along with Jube™. If not,
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using Jube.App.Code;
-using Jube.App.Dto.TreeChildren;
-using Jube.Data.Context;
-using Jube.Engine.Helpers;
-using log4net;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-
 namespace Jube.App.Controllers.Helper
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using Code;
+    using Data.Context;
+    using Dto.TreeChildren;
+    using DynamicEnvironment;
+    using log4net;
+    using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Hosting;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.AspNetCore.Mvc;
+
     [Route("api/[controller]")]
     [Produces("application/json")]
     [Authorize]
     public class IconsController : Controller
     {
-        private readonly DbContext _dbContext;
-        private readonly ILog _log;
-        private readonly PermissionValidation _permissionValidation;
-        private readonly string _userName;
-        private readonly IWebHostEnvironment _env;
+        private readonly DbContext dbContext;
+        private readonly IWebHostEnvironment env;
+        private readonly ILog log;
+        private readonly PermissionValidation permissionValidation;
+        private readonly string userName;
 
         public IconsController(ILog log, IWebHostEnvironment webHostEnvironment,
-            IHttpContextAccessor httpContextAccessor,DynamicEnvironment.DynamicEnvironment dynamicEnvironment)
+            IHttpContextAccessor httpContextAccessor, DynamicEnvironment dynamicEnvironment)
         {
             if (httpContextAccessor.HttpContext?.User.Identity != null)
-                _userName = httpContextAccessor.HttpContext.User.Identity.Name;
-            _log = log;
-            _env = webHostEnvironment;
-            
-            _dbContext =
+            {
+                userName = httpContextAccessor.HttpContext.User.Identity.Name;
+            }
+
+            this.log = log;
+            env = webHostEnvironment;
+
+            dbContext =
                 DataConnectionDbContext.GetDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
-            _permissionValidation = new PermissionValidation(_dbContext, _userName);
+            permissionValidation = new PermissionValidation(dbContext, userName);
         }
-        
+
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                _dbContext.Close();
-                _dbContext.Dispose();
+                dbContext.Close();
+                dbContext.Dispose();
             }
             base.Dispose(disposing);
         }
@@ -64,19 +67,28 @@ namespace Jube.App.Controllers.Helper
         [HttpGet]
         public ActionResult<List<IconDto>> GetIcons()
         {
-            if (!_permissionValidation.Validate(new[] {24})) return Forbid();
+            if (!permissionValidation.Validate(new[]
+                {
+                    24
+                }))
+            {
+                return Forbid();
+            }
 
             try
             {
-                var webRoot = _env.WebRootPath;
-                var directoryPath = Path.Combine(webRoot,"icons");
-                
-                return Directory.GetFiles(directoryPath).Select(file => new IconDto {Name = Path.GetFileName(file)})
+                var webRoot = env.WebRootPath;
+                var directoryPath = Path.Combine(webRoot, "icons");
+
+                return Directory.GetFiles(directoryPath).Select(file => new IconDto
+                    {
+                        Name = Path.GetFileName(file)
+                    })
                     .ToList();
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }

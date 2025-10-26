@@ -14,36 +14,37 @@
 using FluentMigrator;
 using FluentMigrator.Postgres;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220602122100)]
-public class AddCacheAbstractionTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220602122100)]
+    public class AddCacheAbstractionTableIndex : Migration
     {
-        Create.Table("CacheAbstraction")
-            .WithColumn("Id").AsInt64().PrimaryKey().Identity()
-            .WithColumn("EntityAnalysisModelId").AsInt64().Nullable()
-            .WithColumn("SearchKey").AsString().Nullable()
-            .WithColumn("SearchValue").AsString().Nullable()
-            .WithColumn("Name").AsString().Nullable()
-            .WithColumn("Value").AsDouble().Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable();
+        public override void Up()
+        {
+            Create.Table("CacheAbstraction")
+                .WithColumn("Id").AsInt64().PrimaryKey().Identity()
+                .WithColumn("EntityAnalysisModelId").AsInt64().Nullable()
+                .WithColumn("SearchKey").AsString().Nullable()
+                .WithColumn("SearchValue").AsString().Nullable()
+                .WithColumn("Name").AsString().Nullable()
+                .WithColumn("Value").AsDouble().Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable();
 
-        Create.Index().OnTable("CacheAbstraction")
-            .OnColumn("EntityAnalysisModelId").Ascending()
-            .OnColumn("SearchKey").Ascending()
-            .OnColumn("SearchValue").Ascending()
-            .OnColumn("Name").Ascending()
-            .WithOptions().Include("Value").Include("Id");
+            Create.Index().OnTable("CacheAbstraction")
+                .OnColumn("EntityAnalysisModelId").Ascending()
+                .OnColumn("SearchKey").Ascending()
+                .OnColumn("SearchValue").Ascending()
+                .OnColumn("Name").Ascending()
+                .WithOptions().Include("Value").Include("Id");
 
-        Create.Index().OnTable("CacheAbstraction")
-            .OnColumn("EntityAnalysisModelId").Ascending()
-            .OnColumn("CreatedDate").Ascending();
-    }
+            Create.Index().OnTable("CacheAbstraction")
+                .OnColumn("EntityAnalysisModelId").Ascending()
+                .OnColumn("CreatedDate").Ascending();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("CacheSanction");
+        public override void Down()
+        {
+            Delete.Table("CacheSanction");
+        }
     }
 }

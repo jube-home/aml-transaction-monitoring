@@ -11,34 +11,44 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using Accord.MachineLearning.VectorMachines;
-using Accord.MachineLearning.VectorMachines.Learning;
-using Accord.Statistics.Kernels;
-using log4net;
-
-namespace Jube.Engine.Exhaustive.Algorithms;
-
-public static class Unsupervised
+namespace Jube.Engine.Exhaustive.Algorithms
 {
-    public static SupportVectorMachine<Gaussian> Learn(double[][] data, ILog log)
+    using Accord.MachineLearning.VectorMachines;
+    using Accord.MachineLearning.VectorMachines.Learning;
+    using Accord.Statistics.Kernels;
+    using log4net;
+
+    public static class Unsupervised
     {
-        log.Info(
-            "Exhaustive Training: Is about to start looking for a Gaussian estimate for the Kernel Trick using the dataset.");
-
-        var estimate = Gaussian.Estimate(data, data.Length);
-
-        log.Info(
-            $"Exhaustive Training: Has estimated as Gamma {estimate.Gamma} and Sigma {estimate.Sigma}.  Will now proceed to train the One Class Support Vector Machine with Gaussian Kernel Trick.");
-
-        var svm = new OneclassSupportVectorLearning<Gaussian>
+        public static SupportVectorMachine<Gaussian> Learn(double[][] data, ILog log)
         {
-            Kernel = estimate
-        };
+            if (log.IsInfoEnabled)
+            {
+                log.Info(
+                    "Exhaustive Training: Is about to start looking for a Gaussian estimate for the Kernel Trick using the dataset.");
+            }
 
-        var model = svm.Learn(data);
+            var estimate = Gaussian.Estimate(data, data.Length);
 
-        log.Info("Exhaustive Training: Has finished training and will return model.");
+            if (log.IsInfoEnabled)
+            {
+                log.Info(
+                    $"Exhaustive Training: Has estimated as Gamma {estimate.Gamma} and Sigma {estimate.Sigma}.  Will now proceed to train the One Class Support Vector Machine with Gaussian Kernel Trick.");
+            }
 
-        return model;
+            var svm = new OneclassSupportVectorLearning<Gaussian>
+            {
+                Kernel = estimate
+            };
+
+            var model = svm.Learn(data);
+
+            if (log.IsInfoEnabled)
+            {
+                log.Info("Exhaustive Training: Has finished training and will return model.");
+            }
+
+            return model;
+        }
     }
 }

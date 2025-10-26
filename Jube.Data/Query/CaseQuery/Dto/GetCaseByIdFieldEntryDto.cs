@@ -11,16 +11,17 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-namespace Jube.Data.Query.CaseQuery.Dto;
-
-public class GetCaseByIdFieldEntryDto
+namespace Jube.Data.Query.CaseQuery.Dto
 {
-    public string Name { get; set; }
-    public string Value { get; set; }
-    public string CellFormatForeColor { get; set; }
-    public bool CellFormatForeRow { get; set; }
-    public string CellFormatBackColor { get; set; }
-    public bool CellFormatBackRow { get; set; }
-    public bool ExistsMatch { get; set; }
-    public bool ConditionalRegularExpressionFormatting { get; set; }
+    public class GetCaseByIdFieldEntryDto
+    {
+        public string Name { get; set; }
+        public string Value { get; set; }
+        public string CellFormatForeColor { get; set; }
+        public bool CellFormatForeRow { get; set; }
+        public string CellFormatBackColor { get; set; }
+        public bool CellFormatBackRow { get; set; }
+        public bool ExistsMatch { get; set; }
+        public bool ConditionalRegularExpressionFormatting { get; set; }
+    }
 }

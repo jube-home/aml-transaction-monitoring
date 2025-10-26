@@ -11,491 +11,346 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Accord.Statistics;
-using Jube.Data.Extension;
-using Jube.Engine.Helpers;
-using Jube.Engine.Model;
-using Jube.Engine.Model.Processing.Payload;
-using log4net;
-
-namespace Jube.Engine.Invoke.Abstraction;
-
-public static class EntityAnalysisModelAbstractionRuleAggregator
+namespace Jube.Engine.Invoke.Abstraction
 {
-    public static double Aggregate(EntityAnalysisModelInstanceEntryPayload payload,
-        Dictionary<int, List<Dictionary<string, object>>> abstractionRuleMatches,
-        EntityAnalysisModelAbstractionRule abstractionRule, ILog log)
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Accord.Statistics;
+    using Dictionary;
+    using Helpers;
+    using log4net;
+    using Model;
+    using Model.Processing.Payload;
+
+    public static class EntityAnalysisModelAbstractionRuleAggregator
     {
-        double abstractionValue = 0;
-        try
+        public static double Aggregate(EntityAnalysisModelInstanceEntryPayload payload,
+            Dictionary<int, List<DictionaryNoBoxing>> abstractionRuleMatches,
+            EntityAnalysisModelAbstractionRule abstractionRule, ILog log)
         {
-            log.Debug(
-                $"Abstraction Aggregation: The aggregator has been called for GUID payload {payload.EntityAnalysisModelInstanceGuid} to aggregate {abstractionRuleMatches.Count} on Abstraction rule {abstractionRule.Id}.");
-
-            if (abstractionRuleMatches.ContainsKey(abstractionRule.Id))
+            double abstractionValue = 0;
+            try
             {
-                var skip = 0;
-                var fetch = 0;
-
-                if (abstractionRule.EnableOffset)
-                    switch (abstractionRule.OffsetType)
-                    {
-                        case 0: //'No Offset.
-                            skip = 0;
-                            fetch = abstractionRuleMatches[abstractionRule.Id].Count;
-                            break;
-                        case 1: //'First
-                            skip = abstractionRule.OffsetValue;
-                            fetch = 1;
-                            break;
-                        case 2: //'Last
-                            skip = abstractionRuleMatches[abstractionRule.Id].Count -
-                                   (1 + abstractionRule.OffsetValue);
-                            fetch = 1;
-                            break;
-                        case 3: //'Skip First
-                            skip = abstractionRule.OffsetValue;
-                            fetch = abstractionRuleMatches[abstractionRule.Id].Count -
-                                    abstractionRule.OffsetValue;
-                            break;
-                        case 4: //'Skip Last
-                            skip = abstractionRuleMatches[abstractionRule.Id].Count -
-                                   abstractionRule.OffsetValue;
-                            fetch = abstractionRule.OffsetValue;
-                            break;
-                    }
-                else
-                    fetch = abstractionRuleMatches[abstractionRule.Id].Count;
-
-                var rangeCacheDocumentsList =
-                    abstractionRuleMatches[abstractionRule.Id].Skip(skip).Take(fetch);
-
-                log.Debug(
-                    $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id}.");
-
-                switch (abstractionRule.AbstractionRuleAggregationFunctionType)
+                if (log.IsDebugEnabled)
                 {
-                    //'Count
-                    case 1:
-                        log.Debug(
-                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} and will count the entries in the collection.");
+                    log.Debug(
+                        $"Abstraction Aggregation: The aggregator has been called for GUID payload {payload.EntityAnalysisModelInstanceGuid} to aggregate {abstractionRuleMatches.Count} on Abstraction rule {abstractionRule.Id}.");
+                }
 
-                        abstractionValue = rangeCacheDocumentsList.Count();
+                if (abstractionRuleMatches.TryGetValue(abstractionRule.Id, out var matches))
+                {
+                    var matchesCount = matches.Count;
 
-                        log.Debug(
-                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} and{abstractionRule.Id} has a count value of {abstractionValue}.");
+                    var (skip, fetch) = abstractionRule.EnableOffset
+                        ? abstractionRule.OffsetType switch
+                        {
+                            0 => (0, matchesCount),
+                            1 => (abstractionRule.OffsetValue, 1),
+                            2 => (matchesCount - (1 + abstractionRule.OffsetValue), 1),
+                            3 => (abstractionRule.OffsetValue, matchesCount - abstractionRule.OffsetValue),
+                            4 => (matchesCount - abstractionRule.OffsetValue, abstractionRule.OffsetValue),
+                            _ => (0, matchesCount)
+                        }
+                        : (0, matchesCount);
 
-                        break;
-                    //'Distinct Count
-                    case 2:
+                    var rangeCacheDocumentsList = matches.Skip(skip).Take(fetch).ToList();
+
+                    if (log.IsDebugEnabled)
                     {
                         log.Debug(
-                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} and will distinct count the entries in the collection.");
+                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id}.");
+                    }
 
-                        var distinctList = new List<string>();
-
-                        foreach (var cacheDocumentEntry in rangeCacheDocumentsList)
-                        foreach (var (key, value) in cacheDocumentEntry)
-                            if (string.Equals(key, abstractionRule.SearchFunctionKey,
-                                    StringComparison.CurrentCultureIgnoreCase))
+                    switch (abstractionRule.AbstractionRuleAggregationFunctionType)
+                    {
+                        case 1:// Count
+                            if (log.IsDebugEnabled)
                             {
-                                if (!distinctList.Contains(value.ToString()))
-                                    distinctList.Add(value.ToString());
+                                log.Debug(
+                                    $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} and will count the entries in the collection.");
+                            }
+
+                            abstractionValue = rangeCacheDocumentsList.Count;
+
+                            if (log.IsDebugEnabled)
+                            {
+                                log.Debug(
+                                    $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} and{abstractionRule.Id} has a count value of {abstractionValue}.");
+                            }
+
+                            break;
+                        case 2:// Distinct Count
+                        {
+                            if (log.IsDebugEnabled)
+                            {
+                                log.Debug(
+                                    $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} and will distinct count the entries in the collection.");
+                            }
+
+                            var distinctSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                            foreach (var cacheDocumentEntry in rangeCacheDocumentsList)
+                            foreach (var (key, value) in cacheDocumentEntry)
+                            {
+                                if (!String.Equals(key, abstractionRule.SearchFunctionKey,
+                                        StringComparison.OrdinalIgnoreCase))
+                                {
+                                    continue;
+                                }
+                                
+                                distinctSet.Add(value.ToString());
                                 break;
                             }
 
-                        abstractionValue = distinctList.Count;
+                            abstractionValue = distinctSet.Count;
 
-                        log.Debug(
-                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} and{abstractionRule.Id} has a distinct count value of {abstractionValue}.");
+                            if (log.IsDebugEnabled)
+                            {
+                                log.Debug(
+                                    $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} and{abstractionRule.Id} has a distinct count value of {abstractionValue}.");
+                            }
 
-                        break;
-                    }
-                    //'Same Count
-                    case 12:
-                    {
-                        log.Debug(
-                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} and will same count the entries in the collection.");
-
-                        foreach (var cacheDocumentEntry in rangeCacheDocumentsList)
-                        foreach (var (key, value) in cacheDocumentEntry
-                                     .Where(cacheElement => string.Equals(cacheElement.Key,
-                                         abstractionRule.SearchFunctionKey,
-                                         StringComparison.CurrentCultureIgnoreCase)))
-                        {
-                            if (payload.Payload[key].ToString()?.ToUpper() ==
-                                value.ToString()?.ToUpper()) abstractionValue += 1;
                             break;
                         }
-
-                        log.Debug(
-                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} and{abstractionRule.Id} has a same count value of {abstractionValue}.");
-
-                        break;
-                    }
-                    default:
-                    {
-                        var cacheDocumentsList = rangeCacheDocumentsList as Dictionary<string, object>[] ??
-                                                 rangeCacheDocumentsList.ToArray();
-                        var cacheDocumentAbstractionForRules =
-                            rangeCacheDocumentsList as Dictionary<string, object>[] ??
-                            cacheDocumentsList.ToArray();
-                        switch (abstractionRule.AbstractionRuleAggregationFunctionType)
+                        case 12:// Same Count
                         {
-                            //Raw
-                            case 13:
+                            if (log.IsDebugEnabled)
+                            {
                                 log.Debug(
-                                    $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} and will raw value the entries in the collection.");
+                                    $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} and will same count the entries in the collection.");
+                            }
 
-                                try
+                            foreach (var cacheDocumentEntry in rangeCacheDocumentsList)
+                            foreach (var (key, value) in cacheDocumentEntry)
+                            {
+                                if (!String.Equals(key,
+                                        abstractionRule.SearchFunctionKey,
+                                        StringComparison.OrdinalIgnoreCase))
                                 {
-                                    var elementAt =
-                                        cacheDocumentAbstractionForRules.ElementAt(
-                                            cacheDocumentAbstractionForRules.Length - 1);
-                                    if (elementAt.ContainsKey(abstractionRule.SearchFunctionKey))
-                                    {
-                                        abstractionValue = elementAt[abstractionRule.SearchFunctionKey].AsDouble();
+                                    continue;
+                                }
 
+                                if (String.Equals(payload.Payload[key].ToString(), value.ToString(),
+                                        StringComparison.OrdinalIgnoreCase))
+                                {
+                                    abstractionValue += 1;
+                                }
+
+                                break;
+                            }
+
+                            if (log.IsDebugEnabled)
+                            {
+                                log.Debug(
+                                    $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} and{abstractionRule.Id} has a same count value of {abstractionValue}.");
+                            }
+
+                            break;
+                        }
+                        default:
+                        {
+                            var cacheDocumentsList = rangeCacheDocumentsList.ToList();
+
+                            switch (abstractionRule.AbstractionRuleAggregationFunctionType)
+                            {
+                                case 13:// Raw
+                                    if (log.IsDebugEnabled)
+                                    {
                                         log.Debug(
-                                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} found the key for raw value {abstractionRule.SearchFunctionKey}.");
+                                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} and will raw value the entries in the collection.");
+                                    }
+
+                                    try
+                                    {
+                                        var lastElement = cacheDocumentsList[^1];
+                                        if (lastElement.TryGetValue(abstractionRule.SearchFunctionKey, out var value))
+                                        {
+                                            abstractionValue = value.AsDouble();
+
+                                            if (log.IsDebugEnabled)
+                                            {
+                                                log.Debug(
+                                                    $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} found the key for raw value {abstractionRule.SearchFunctionKey}.");
+                                            }
+                                        }
+                                        else
+                                        {
+                                            abstractionValue = 0;
+
+                                            if (log.IsDebugEnabled)
+                                            {
+                                                log.Debug(
+                                                    $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} Could not find the key for raw value {abstractionRule.SearchFunctionKey}.");
+                                            }
+                                        }
+                                    }
+                                    catch (Exception)
+                                    {
+                                        abstractionValue = 0;
+                                    }
+
+                                    if (log.IsDebugEnabled)
+                                    {
+                                        log.Debug(
+                                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} and{abstractionRule.Id} has a raw value of {abstractionValue}.");
+                                    }
+
+                                    break;
+                                case 16:// Since
+                                {
+                                    if (log.IsDebugEnabled)
+                                    {
+                                        log.Debug(
+                                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} and will Since date the entries in the collection.");
+                                    }
+
+                                    var lastMatch = matches[^1];
+
+                                    if (lastMatch.TryGetValue(abstractionRule.SearchFunctionKey, out var currentDateValue) &&
+                                        DateTime.TryParse(currentDateValue.ToString(), out var sinceCurrentDate))
+                                    {
+                                        if (log.IsDebugEnabled)
+                                        {
+                                            log.Debug(
+                                                $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} is using the {abstractionRule.SearchFunctionKey} for the Current Date Value.");
+                                        }
                                     }
                                     else
                                     {
-                                        abstractionValue = 0;
+                                        sinceCurrentDate = lastMatch["CreatedDate"];
 
-                                        log.Debug(
-                                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} Could not find the key for raw value {abstractionRule.SearchFunctionKey}.");
+                                        if (log.IsDebugEnabled)
+                                        {
+                                            log.Debug(
+                                                $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} is using the CreatedDate for the Current Date Value.");
+                                        }
                                     }
-                                }
-                                catch (Exception)
-                                {
-                                    abstractionValue = 0;
-                                }
 
-                                log.Debug(
-                                    $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} and{abstractionRule.Id} has a raw value of {abstractionValue}.");
+                                    var lastElement = cacheDocumentsList[^1];
 
-                                break;
-                            //Since
-                            case 16:
-                            {
-                                log.Debug(
-                                    $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} and will Since date the entries in the collection.");
+                                    if (lastElement.TryGetValue(abstractionRule.SearchFunctionKey, out var testDateValue) &&
+                                        DateTime.TryParse(testDateValue.ToString(), out var sinceTestDate))
+                                    {
+                                        if (log.IsDebugEnabled)
+                                        {
+                                            log.Debug(
+                                                $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} is using the {abstractionRule.SearchFunctionKey} for the Test Date Value.");
+                                        }
+                                    }
+                                    else
+                                    {
+                                        sinceTestDate = lastElement["CreatedDate"];
 
-                                DateTime sinceCurrentDate;
-                                if (abstractionRuleMatches[abstractionRule.Id][
-                                        abstractionRuleMatches[abstractionRule.Id].Count - 1]
-                                    .ContainsKey(abstractionRule.SearchFunctionKey))
-                                {
-                                    sinceCurrentDate =
-                                        Convert.ToDateTime(
-                                            abstractionRuleMatches[abstractionRule.Id][
-                                                abstractionRuleMatches[abstractionRule.Id].Count -
-                                                1][
-                                                abstractionRule.SearchFunctionKey]);
+                                        if (log.IsDebugEnabled)
+                                        {
+                                            log.Debug(
+                                                $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} is using the CreatedDate for the Test Date Value.");
+                                        }
+                                    }
 
-                                    log.Debug(
-                                        $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} is using the {abstractionRule.SearchFunctionKey} for the Current Date Value.");
-                                }
-                                else
-                                {
-                                    sinceCurrentDate =
-                                        Convert.ToDateTime(
-                                            abstractionRuleMatches[abstractionRule.Id][
-                                                abstractionRuleMatches[abstractionRule.Id].Count -
-                                                1][
-                                                "CreatedDate"]);
+                                    abstractionValue = abstractionRule.AbstractionRuleAggregationFunctionIntervalType switch
+                                    {
+                                        "s" => DateHelper.DateDiff(DateHelper.DateInterval.Second, sinceTestDate, sinceCurrentDate),
+                                        "h" => DateHelper.DateDiff(DateHelper.DateInterval.Hour, sinceTestDate, sinceCurrentDate),
+                                        "m" => DateHelper.DateDiff(DateHelper.DateInterval.Minute, sinceTestDate, sinceCurrentDate),
+                                        "d" => DateHelper.DateDiff(DateHelper.DateInterval.Day, sinceTestDate, sinceCurrentDate),
+                                        _ => 0
+                                    };
 
-                                    log.Debug(
-                                        $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} is using the CreatedDate for the Current Date Value.");
-                                }
-
-                                DateTime sinceTestDate;
-                                var elementAt =
-                                    cacheDocumentsList.ElementAt(cacheDocumentAbstractionForRules.Length - 1);
-
-                                if (elementAt.TryGetValue(abstractionRule.SearchFunctionKey, out var value))
-                                {
-                                    sinceTestDate =
-                                        Convert.ToDateTime(value);
-
-                                    log.Debug(
-                                        $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} is using the {abstractionRule.SearchFunctionKey} for the Test Date Value.");
-                                }
-                                else
-                                {
-                                    sinceTestDate = Convert.ToDateTime(elementAt["CreatedDate"]);
-
-                                    log.Debug(
-                                        $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} is using the CreatedDate for the Test Date Value.");
-                                }
-
-                                switch (abstractionRule.AbstractionRuleAggregationFunctionIntervalType)
-                                {
-                                    case "s":
-                                        //AbstractionValue = SinceCurrentDate.Subtract(SinceTestDate).Seconds
-                                        abstractionValue = DateHelper.DateDiff(DateHelper.DateInterval.Second,
-                                            sinceTestDate,
-                                            sinceCurrentDate);
-
+                                    if (log.IsDebugEnabled)
+                                    {
                                         log.Debug(
-                                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} and will Since date the entries in the collection using seconds and a date from {sinceTestDate} to {sinceCurrentDate}.");
+                                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} and{abstractionRule.Id} has a since date value of {abstractionValue}.");
+                                    }
 
-                                        break;
-                                    case "h":
-                                        //AbstractionValue = SinceCurrentDate.Subtract(SinceTestDate).Hours
-                                        DateHelper.DateDiff(DateHelper.DateInterval.Hour, sinceTestDate,
-                                            sinceCurrentDate);
-
-                                        log.Debug(
-                                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} and will Since date the entries in the collection using hours and a date from {sinceTestDate} to {sinceCurrentDate}.");
-
-                                        break;
-                                    case "m":
-                                        //AbstractionValue = SinceCurrentDate.Subtract(SinceTestDate).Minutes
-                                        DateHelper.DateDiff(DateHelper.DateInterval.Minute, sinceTestDate,
-                                            sinceCurrentDate);
-
-                                        log.Debug(
-                                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} and will Since date the entries in the collection using minutes and a date from {sinceTestDate} to {sinceCurrentDate}.");
-
-                                        break;
-                                    case "d":
-                                        //AbstractionValue = SinceCurrentDate.Subtract(SinceTestDate).Days
-                                        DateHelper.DateDiff(DateHelper.DateInterval.Day, sinceTestDate,
-                                            sinceCurrentDate);
-
-                                        log.Debug(
-                                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} and will Since date the entries in the collection using days and a date from {sinceTestDate} to {sinceCurrentDate}.");
-
-                                        break;
-                                    default:
-                                        abstractionValue = 0;
-
-                                        log.Debug(
-                                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} and will Since date the entries in the collection using nothing \\ null and a date from {sinceTestDate} to {sinceCurrentDate}.");
-
-                                        break;
+                                    break;
                                 }
-
-                                log.Debug(
-                                    $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} and{abstractionRule.Id} has a since date value of {abstractionValue}.");
-
-                                break;
-                            }
-                            default:
-                            {
-                                log.Debug(
-                                    $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} and will use Extreme stats on an array.");
-
-                                var i = 0;
-                                var values = new double[cacheDocumentsList.Length];
-                                foreach (var cacheDocumentAbstractionForRule in cacheDocumentAbstractionForRules)
+                                default:
                                 {
-                                    foreach (var cacheElement in cacheDocumentAbstractionForRule
-                                                 .Where(cacheElement => string.Equals(cacheElement.Key,
-                                                     abstractionRule.SearchFunctionKey,
-                                                     StringComparison.CurrentCultureIgnoreCase)))
+                                    if (log.IsDebugEnabled)
+                                    {
+                                        log.Debug(
+                                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} and will use Extreme stats on an array.");
+                                    }
+
+                                    var values = new double[cacheDocumentsList.Count];
+                                    for (var i = 0; i < cacheDocumentsList.Count; i++)
+                                    {
+                                        var document = cacheDocumentsList[i];
+                                        if (!document.TryGetValue(abstractionRule.SearchFunctionKey, out var value))
+                                        {
+                                            continue;
+                                        }
                                         try
                                         {
-                                            values[i] = cacheElement.Value.AsDouble();
-                                            break;
+                                            values[i] = value.AsDouble();
                                         }
                                         catch (Exception ex)
                                         {
-                                            log.Info(
-                                                $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found error on {abstractionRule.Id} as " +
-                                                ex +
-                                                "."); //'At Info Level because it has the potential to flood logging.
+                                            if (log.IsInfoEnabled)
+                                            {
+                                                log.Info(
+                                                    $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found error on {abstractionRule.Id} as {ex}.");
+                                            }
                                         }
+                                    }
 
-                                    i += 1;
+                                    abstractionValue = abstractionRule.AbstractionRuleAggregationFunctionType switch
+                                    {
+                                        3 => values.Sum(),
+                                        4 => values.Mean(),
+                                        5 => values.Median(),
+                                        6 => values.Kurtosis(),
+                                        7 => values.Skewness(),
+                                        8 => values.StandardDeviation(),
+                                        9 => values.StandardDeviation() + values.Mean(),
+                                        10 or 12 => values.StandardDeviation() * 2 + values.Mean(),
+                                        11 => values.Mode(),
+                                        14 => values.Max(),
+                                        15 => values.Min(),
+                                        _ => 0
+                                    };
+
+                                    break;
                                 }
-
-                                switch (abstractionRule.AbstractionRuleAggregationFunctionType)
-                                {
-                                    case 3: //'Sum
-                                    {
-                                        log.Debug(
-                                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} and will Sum the entries in the collection.");
-
-                                        abstractionValue = values.Sum();
-
-                                        log.Debug(
-                                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} and{abstractionRule.Id} has a Sum value of {abstractionValue}.");
-
-                                        break;
-                                    }
-                                    case 4: //'Avg
-                                    {
-                                        log.Debug(
-                                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} and will Mean the entries in the collection.");
-
-                                        abstractionValue = values.Mean();
-
-                                        log.Debug(
-                                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} and{abstractionRule.Id} has a Mean value of {abstractionValue}.");
-
-                                        break;
-                                    }
-                                    case 5: //'Median
-                                    {
-                                        log.Debug(
-                                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} and will Median the entries in the collection.");
-
-                                        abstractionValue = values.Median();
-
-                                        log.Debug(
-                                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} and{abstractionRule.Id} has a Median value of {abstractionValue}.");
-
-                                        break;
-                                    }
-                                    case 6: //'Kurtosis
-                                    {
-                                        log.Debug(
-                                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} and will Kurtosis the entries in the collection.");
-
-                                        abstractionValue = values.Kurtosis();
-
-                                        log.Debug(
-                                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} and{abstractionRule.Id} has a Kurtosis value of {abstractionValue}.");
-
-                                        break;
-                                    }
-                                    case 7: //'Skew
-                                    {
-                                        log.Debug(
-                                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} and will Skew the entries in the collection.");
-
-                                        abstractionValue = values.Skewness();
-
-                                        log.Debug(
-                                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} and{abstractionRule.Id} has a Skew value of {abstractionValue}.");
-                                        break;
-                                    }
-                                    case 8: //'SD
-                                    {
-                                        log.Debug(
-                                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} and will Standard Deviation the entries in the collection.");
-
-                                        abstractionValue = values.StandardDeviation();
-
-                                        log.Debug(
-                                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} and{abstractionRule.Id} has a Standard Deviation value of {abstractionValue}.");
-                                        break;
-                                    }
-                                    case 9: //'SD1
-                                    {
-                                        log.Debug(
-                                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} and will Standard Deviation 1 the entries in the collection.");
-
-                                        abstractionValue = values.StandardDeviation() + values.Mean();
-
-                                        log.Debug(
-                                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} and{abstractionRule.Id} has a Standard Deviation 1 value of {abstractionValue}.");
-                                        break;
-                                    }
-                                    case 10: //'SD2
-                                    {
-                                        log.Debug(
-                                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} and will Standard Deviation 2 the entries in the collection.");
-
-                                        var sd = values.StandardDeviation();
-                                        abstractionValue = sd * 2 + values.Mean();
-
-                                        log.Debug(
-                                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} and{abstractionRule.Id} has a Standard Deviation 2 value of {abstractionValue}.");
-                                        break;
-                                    }
-                                    case 11: //'Mode
-                                    {
-                                        log.Debug(
-                                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} and will Mode the entries in the collection.");
-
-                                        abstractionValue = values.Mode();
-
-                                        log.Debug(
-                                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} and{abstractionRule.Id} has a Mode value of {abstractionValue}.");
-                                        break;
-                                    }
-                                    case 12:
-                                    {
-                                        log.Debug(
-                                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} and will Standard Deviation 2 the entries in the collection.");
-
-                                        var sd = values.StandardDeviation();
-                                        abstractionValue = sd * 2 + values.Mean();
-
-                                        log.Debug(
-                                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} and{abstractionRule.Id} has a Standard Deviation 2 value of {abstractionValue}.");
-                                        break;
-                                    }
-                                    case 14:
-                                    {
-                                        log.Debug(
-                                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} and will Max the entries in the collection.");
-
-                                        abstractionValue = values.Max();
-
-                                        log.Debug(
-                                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} and{abstractionRule.Id} has a Max value of {abstractionValue}.");
-                                        break;
-                                    }
-                                    case 15:
-                                    {
-                                        log.Debug(
-                                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found matches for {abstractionRule.Id} and will Min the entries in the collection.");
-
-                                        abstractionValue = values.Min();
-
-                                        log.Debug(
-                                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} and{abstractionRule.Id} has a Min value of {abstractionValue}.");
-                                        break;
-                                    }
-                                }
-
-                                break;
                             }
-                        }
 
-                        break;
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    abstractionValue = 0;
+
+                    if (log.IsDebugEnabled)
+                    {
+                        log.Debug(
+                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found no matches for {abstractionRule.Id} returned zero.");
+                    }
+                }
+
+                if (Double.IsNaN(abstractionValue) || Double.IsInfinity(abstractionValue))
+                {
+                    abstractionValue = 0;
+
+                    if (log.IsDebugEnabled)
+                    {
+                        log.Debug(
+                            $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} seems to be a NaN or Infinity. Swapped to Zero.");
                     }
                 }
             }
-            else
+            catch (Exception ex)
             {
-                abstractionValue = 0;
+                log.Error(
+                    $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} for {abstractionRule.Id} is in error as{ex}.");
 
-                log.Debug(
-                    $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} has found no matches for {abstractionRule.Id} returned zero.");
+                abstractionValue = 0;
             }
 
-            if (double.IsNaN(abstractionValue))
-            {
-                abstractionValue = 0;
-
-                log.Debug(
-                    $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} seems to be a NaN.  Swapped to Zero.");
-            }
-            else if (double.IsInfinity(abstractionValue))
-            {
-                abstractionValue = 0;
-
-                log.Debug(
-                    $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} seems to be Infinity.  Swapped to Zero.");
-            }
+            return abstractionValue;
         }
-        catch (Exception ex)
-        {
-            log.Error(
-                $"Abstraction Aggregation: payload GUID {payload.EntityAnalysisModelInstanceGuid} for {abstractionRule.Id} is in error as{ex}.");
-
-            abstractionValue = 0;
-        }
-
-        return abstractionValue;
     }
 }

@@ -11,24 +11,26 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System.Collections.Generic;
-using System.Reflection;
-using log4net;
-
-namespace Jube.Engine.Model;
-
-public class EntityAnalysisModelRuleReprocessingInstance
+namespace Jube.Engine.Model
 {
-    public delegate bool Match(IDictionary<string, object> data, Dictionary<string, List<string>> list,
-        Dictionary<string, double> kvp, ILog log);
+    using System.Collections.Generic;
+    using System.Reflection;
+    using Dictionary;
+    using log4net;
 
-    public int ReprocessingIntervalValue { get; set; }
-    public string ReprocessingIntervalType { get; set; }
-    public int EntityAnalysisModelId { get; set; }
-    public int EntityAnalysisModelsReprocessingRuleInstanceId { get; set; }
-    public Assembly ReprocessingRuleCompile { get; set; }
-    public Match ReprocessingRuleCompileDelegate { get; set; }
-    public string ReprocessingRuleScript { get; set; }
-    public int RuleScriptTypeId { get; set; }
-    public double ReprocessingSample { get; set; }
+    public class EntityAnalysisModelRuleReprocessingInstance
+    {
+        public delegate bool Match(DictionaryNoBoxing data, Dictionary<string, List<string>> list,
+            Dictionary<string, double> kvp, ILog log);
+
+        public int ReprocessingIntervalValue { get; set; }
+        public string ReprocessingIntervalType { get; set; }
+        public int EntityAnalysisModelId { get; set; }
+        public int EntityAnalysisModelsReprocessingRuleInstanceId { get; set; }
+        public Assembly ReprocessingRuleCompile { get; set; }
+        public Match ReprocessingRuleCompileDelegate { get; set; }
+        public string ReprocessingRuleScript { get; set; }
+        public int RuleScriptTypeId { get; set; }
+        public double ReprocessingSample { get; set; }
+    }
 }

@@ -15,13 +15,14 @@ using Jube.Data.Context;
 using Jube.Data.Poco;
 using LinqToDB;
 
-namespace Jube.Data.Repository;
-
-public class EntityAnalysisModelInstanceRepository(DbContext dbContext)
+namespace Jube.Data.Repository
 {
-    public EntityAnalysisModelInstance Insert(EntityAnalysisModelInstance model)
+    public class EntityAnalysisModelInstanceRepository(DbContext dbContext)
     {
-        model.Id = dbContext.InsertWithInt32Identity(model);
-        return model;
+        public EntityAnalysisModelInstance Insert(EntityAnalysisModelInstance model)
+        {
+            model.Id = dbContext.InsertWithInt32Identity(model);
+            return model;
+        }
     }
 }

@@ -11,120 +11,122 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using Jube.Data.Repository;
-using Jube.Data.Security;
-using Jube.Service.Dto.Authentication;
-using Jube.Service.Exceptions.Authentication;
-
-namespace Jube.Service.Authentication;
-
-public class Authentication(DbContext dbContext)
+namespace Jube.Service.Authentication
 {
-    public UserRegistry AuthenticateByUserNamePassword(AuthenticationRequestDto authenticationRequestDto,
-        string? passwordHashingKey)
+    using Data.Context;
+    using Data.Poco;
+    using Data.Repository;
+    using Data.Security;
+    using Dto.Authentication;
+    using Exceptions.Authentication;
+
+    public class Authentication(DbContext dbContext)
     {
-        var userRegistryRepository = new UserRegistryRepository(dbContext);
-        var userRegistry = userRegistryRepository.GetByUserName(authenticationRequestDto.UserName);
-
-        var userLogin = new UserLogin
+        public void AuthenticateByUserNamePassword(AuthenticationRequestDto authenticationRequestDto,
+            string? passwordHashingKey)
         {
-            RemoteIp = authenticationRequestDto.RemoteIp,
-            LocalIp = authenticationRequestDto.UserAgent
-        };
+            var userRegistryRepository = new UserRegistryRepository(dbContext);
+            var userRegistry = userRegistryRepository.GetByUserName(authenticationRequestDto.UserName);
 
-        if (userRegistry == null)
-        {
-            LogLoginFailed(userLogin, authenticationRequestDto.UserName ?? "", 1);
-            throw new NoUserException();
-        }
-
-        if (userRegistry.Active != 1)
-        {
-            LogLoginFailed(userLogin, userRegistry.Name, 2);
-            throw new NotActiveException();
-        }
-
-        if (userRegistry.PasswordLocked == 1)
-        {
-            LogLoginFailed(userLogin, userRegistry.Name, 3);
-            throw new PasswordLockedException();
-        }
-
-        if (!userRegistry.PasswordExpiryDate.HasValue
-            || string.IsNullOrEmpty(userRegistry.Password)
-            || !userRegistry.PasswordCreatedDate.HasValue)
-        {
-            LogLoginFailed(userLogin, userRegistry.Name, 4);
-            throw new PasswordNewMustChangeException();
-        }
-
-        if (!HashPassword.Verify(userRegistry.Password, authenticationRequestDto.Password, passwordHashingKey))
-        {
-            userRegistryRepository.IncrementFailedPassword(userRegistry.Id);
-
-            if (userRegistry.FailedPasswordCount > 8)
+            var userLogin = new UserLogin
             {
-                userRegistryRepository.SetLocked(userRegistry.Id);
+                RemoteIp = authenticationRequestDto.RemoteIp,
+                LocalIp = authenticationRequestDto.UserAgent
+            };
+
+            if (userRegistry == null)
+            {
+                LogLoginFailed(userLogin, authenticationRequestDto.UserName ?? "", 1);
+                throw new NoUserException();
             }
 
-            LogLoginFailed(userLogin, userRegistry.Name, 5);
+            if (userRegistry.Active != 1)
+            {
+                LogLoginFailed(userLogin, userRegistry.Name, 2);
+                throw new NotActiveException();
+            }
 
-            throw new BadCredentialsException();
+            if (userRegistry.PasswordLocked == 1)
+            {
+                LogLoginFailed(userLogin, userRegistry.Name, 3);
+                throw new PasswordLockedException();
+            }
+
+            if (!userRegistry.PasswordExpiryDate.HasValue
+                || String.IsNullOrEmpty(userRegistry.Password)
+                || !userRegistry.PasswordCreatedDate.HasValue)
+            {
+                LogLoginFailed(userLogin, userRegistry.Name, 4);
+                throw new PasswordNewMustChangeException();
+            }
+
+            if (!HashPassword.Verify(userRegistry.Password, authenticationRequestDto.Password, passwordHashingKey))
+            {
+                userRegistryRepository.IncrementFailedPassword(userRegistry.Id);
+
+                if (userRegistry.FailedPasswordCount > 8)
+                {
+                    userRegistryRepository.SetLocked(userRegistry.Id);
+                }
+
+                LogLoginFailed(userLogin, userRegistry.Name, 5);
+
+                throw new BadCredentialsException();
+            }
+
+            if (!String.IsNullOrEmpty(authenticationRequestDto.NewPassword))
+            {
+                var hashedPassword = HashPassword.GenerateHash(authenticationRequestDto.NewPassword, passwordHashingKey);
+
+                userRegistryRepository.SetPassword(userRegistry.Id, hashedPassword, DateTime.Now.AddDays(90));
+            }
+            else
+            {
+                if (!(DateTime.Now <= userRegistry.PasswordExpiryDate.Value))
+                {
+                    throw new PasswordExpiredException();
+                }
+            }
+
+            LogLoginSuccess(userLogin, userRegistry.Name);
+
+            if (userRegistry.FailedPasswordCount > 0)
+            {
+                userRegistryRepository.ResetFailedPasswordCount(userRegistry.Id);
+            }
+
         }
 
-        if (!string.IsNullOrEmpty(authenticationRequestDto.NewPassword))
+        public void ChangePassword(string? userName, ChangePasswordRequestDto changePasswordRequestDto,
+            string? passwordHashingKey)
         {
-            var hashedPassword = HashPassword.GenerateHash(authenticationRequestDto.NewPassword, passwordHashingKey);
+            var userRegistryRepository = new UserRegistryRepository(dbContext);
+            var userRegistry = userRegistryRepository.GetByUserName(userName);
+
+            if (!HashPassword.Verify(userRegistry.Password,
+                    changePasswordRequestDto.Password, passwordHashingKey))
+            {
+                throw new BadCredentialsException();
+            }
+
+            var hashedPassword = HashPassword.GenerateHash(changePasswordRequestDto.NewPassword, passwordHashingKey);
 
             userRegistryRepository.SetPassword(userRegistry.Id, hashedPassword, DateTime.Now.AddDays(90));
         }
-        else
+
+        private void LogLoginFailed(UserLogin userLogin, string createdUser, int failureTypeId)
         {
-            if (!(DateTime.Now <= userRegistry.PasswordExpiryDate.Value))
-                throw new PasswordExpiredException();
+            var userLoginRepository = new UserLoginRepository(dbContext, createdUser);
+            userLogin.Failed = 1;
+            userLogin.FailureTypeId = failureTypeId;
+            userLoginRepository.Insert(userLogin);
         }
 
-        LogLoginSuccess(userLogin, userRegistry.Name);
-
-        if (userRegistry.FailedPasswordCount > 0)
+        private void LogLoginSuccess(UserLogin userLogin, string createdUser)
         {
-            userRegistryRepository.ResetFailedPasswordCount(userRegistry.Id);
+            var userLoginRepository = new UserLoginRepository(dbContext, createdUser);
+            userLogin.Failed = 0;
+            userLoginRepository.Insert(userLogin);
         }
-
-        return userRegistry;
-    }
-
-    public void ChangePassword(string? userName, ChangePasswordRequestDto changePasswordRequestDto,
-        string? passwordHashingKey)
-    {
-        var userRegistryRepository = new UserRegistryRepository(dbContext);
-        var userRegistry = userRegistryRepository.GetByUserName(userName);
-
-        if (!HashPassword.Verify(userRegistry.Password,
-                changePasswordRequestDto.Password, passwordHashingKey))
-        {
-            throw new BadCredentialsException();
-        }
-
-        var hashedPassword = HashPassword.GenerateHash(changePasswordRequestDto.NewPassword, passwordHashingKey);
-
-        userRegistryRepository.SetPassword(userRegistry.Id, hashedPassword, DateTime.Now.AddDays(90));
-    }
-
-    private void LogLoginFailed(UserLogin userLogin, string createdUser, int failureTypeId)
-    {
-        var userLoginRepository = new UserLoginRepository(dbContext, createdUser);
-        userLogin.Failed = 1;
-        userLogin.FailureTypeId = failureTypeId;
-        userLoginRepository.Insert(userLogin);
-    }
-
-    private void LogLoginSuccess(UserLogin userLogin, string createdUser)
-    {
-        var userLoginRepository = new UserLoginRepository(dbContext, createdUser);
-        userLogin.Failed = 0;
-        userLoginRepository.Insert(userLogin);
     }
 }

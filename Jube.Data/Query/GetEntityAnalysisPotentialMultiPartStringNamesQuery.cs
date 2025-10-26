@@ -11,54 +11,55 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Jube.Data.Context;
-
-namespace Jube.Data.Query;
-
-public class GetEntityAnalysisPotentialMultiPartStringNamesQuery
+namespace Jube.Data.Query
 {
-    private readonly DbContext _dbContext;
-    private readonly int _tenantRegistryId;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Context;
 
-    public GetEntityAnalysisPotentialMultiPartStringNamesQuery(DbContext dbContext, string userName)
+    public class GetEntityAnalysisPotentialMultiPartStringNamesQuery
     {
-        _dbContext = dbContext;
-        _tenantRegistryId = _dbContext.UserInTenant.Where(w => w.User == userName)
-            .Select(s => s.TenantRegistryId).FirstOrDefault();
-    }
+        private readonly DbContext dbContext;
+        private readonly int tenantRegistryId;
 
-    public IEnumerable<string> Execute(Guid entityAnalysisModelGuid)
-    {
-        return _dbContext.EntityAnalysisModelRequestXpath
-            .Where(w => w.EntityAnalysisModel.Guid == entityAnalysisModelGuid
-                        && w.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId
-                        && (w.Deleted == 0 || w.Deleted == null)
-                        && w.DataTypeId == 1)
-            .Select(s => s.Name)
-            .Union(_dbContext.EntityAnalysisModelInlineFunction
+        public GetEntityAnalysisPotentialMultiPartStringNamesQuery(DbContext dbContext, string userName)
+        {
+            this.dbContext = dbContext;
+            tenantRegistryId = this.dbContext.UserInTenant.Where(w => w.User == userName)
+                .Select(s => s.TenantRegistryId).FirstOrDefault();
+        }
+
+        public IEnumerable<string> Execute(Guid entityAnalysisModelGuid)
+        {
+            return dbContext.EntityAnalysisModelRequestXpath
                 .Where(w => w.EntityAnalysisModel.Guid == entityAnalysisModelGuid
-                            && w.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId
+                            && w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
                             && (w.Deleted == 0 || w.Deleted == null)
-                            && w.ReturnDataTypeId == 1)
-                .Select(s => s.Name));
-    }
+                            && w.DataTypeId == 1)
+                .Select(s => s.Name)
+                .Union(dbContext.EntityAnalysisModelInlineFunction
+                    .Where(w => w.EntityAnalysisModel.Guid == entityAnalysisModelGuid
+                                && w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
+                                && (w.Deleted == 0 || w.Deleted == null)
+                                && w.ReturnDataTypeId == 1)
+                    .Select(s => s.Name));
+        }
 
-    public IEnumerable<string> Execute(int entityAnalysisModelId)
-    {
-        return _dbContext.EntityAnalysisModelRequestXpath
-            .Where(w => w.EntityAnalysisModelId == entityAnalysisModelId
-                        && w.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId
-                        && (w.Deleted == 0 || w.Deleted == null)
-                        && w.DataTypeId == 1)
-            .Select(s => s.Name)
-            .Union(_dbContext.EntityAnalysisModelInlineFunction
+        public IEnumerable<string> Execute(int entityAnalysisModelId)
+        {
+            return dbContext.EntityAnalysisModelRequestXpath
                 .Where(w => w.EntityAnalysisModelId == entityAnalysisModelId
-                            && w.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId
+                            && w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
                             && (w.Deleted == 0 || w.Deleted == null)
-                            && w.ReturnDataTypeId == 1)
-                .Select(s => s.Name));
+                            && w.DataTypeId == 1)
+                .Select(s => s.Name)
+                .Union(dbContext.EntityAnalysisModelInlineFunction
+                    .Where(w => w.EntityAnalysisModelId == entityAnalysisModelId
+                                && w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
+                                && (w.Deleted == 0 || w.Deleted == null)
+                                && w.ReturnDataTypeId == 1)
+                    .Select(s => s.Name));
+        }
     }
 }

@@ -11,70 +11,71 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Jube.Data.Context;
-
-namespace Jube.Data.Query;
-
-public class GetCaseWorkflowXPathByCaseWorkflowIdQuery
+namespace Jube.Data.Query
 {
-    private readonly DbContext _dbContext;
-    private readonly int _tenantRegistryId;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Context;
 
-    public GetCaseWorkflowXPathByCaseWorkflowIdQuery(DbContext dbContext, string userName)
+    public class GetCaseWorkflowXPathByCaseWorkflowIdQuery
     {
-        _dbContext = dbContext;
-        _tenantRegistryId = _dbContext.UserInTenant.Where(w => w.User == userName)
-            .Select(s => s.TenantRegistryId).FirstOrDefault();
-    }
+        private readonly DbContext dbContext;
+        private readonly int tenantRegistryId;
 
-    public IEnumerable<Dto> Execute(Guid caseWorkflowGuid)
-    {
-        return _dbContext.CaseWorkflowXPath.Where(w
-                => w.CaseWorkflow.Guid == caseWorkflowGuid &&
-                   w.Active == 1 && (w.Deleted == 0 || w.Deleted == null) &&
-                   w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId
-            )
-            .Select(s => new Dto
-            {
-                Name = s.Name,
-                XPath = FormatXPath(s.XPath),
-                ConditionalRegularExpressionFormatting = s.ConditionalRegularExpressionFormatting == 1,
-                ConditionalFormatForeColor = s.ConditionalFormatForeColor,
-                ConditionalFormatBackColor = s.ConditionalFormatBackColor,
-                RegularExpression = s.RegularExpression,
-                ForeRowColorScope = s.ForeRowColorScope == 1,
-                BackRowColorScope = s.BackRowColorScope == 1,
-                BoldLineFormatForeColor = s.BoldLineFormatForeColor,
-                BoldLineFormatBackColor = s.BoldLineFormatBackColor,
-                BoldLineMatched = s.BoldLineMatched == 1
-            });
-    }
-
-    private string FormatXPath(string xPath)
-    {
-        var splits = xPath.Split(".");
-        return splits[0].ToLower() switch
+        public GetCaseWorkflowXPathByCaseWorkflowIdQuery(DbContext dbContext, string userName)
         {
-            "data" => splits[1],
-            _ => xPath
-        };
-    }
+            this.dbContext = dbContext;
+            tenantRegistryId = this.dbContext.UserInTenant.Where(w => w.User == userName)
+                .Select(s => s.TenantRegistryId).FirstOrDefault();
+        }
 
-    public class Dto
-    {
-        public string Name { get; set; }
-        public string XPath { get; set; }
-        public bool ConditionalRegularExpressionFormatting { get; set; }
-        public string ConditionalFormatForeColor { get; set; }
-        public string ConditionalFormatBackColor { get; set; }
-        public string RegularExpression { get; set; }
-        public bool ForeRowColorScope { get; set; }
-        public bool BackRowColorScope { get; set; }
-        public string BoldLineFormatForeColor { get; set; }
-        public string BoldLineFormatBackColor { get; set; }
-        public bool BoldLineMatched { get; set; }
+        public IEnumerable<Dto> Execute(Guid caseWorkflowGuid)
+        {
+            return dbContext.CaseWorkflowXPath.Where(w
+                    => w.CaseWorkflow.Guid == caseWorkflowGuid &&
+                       w.Active == 1 && (w.Deleted == 0 || w.Deleted == null) &&
+                       w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
+                )
+                .Select(s => new Dto
+                {
+                    Name = s.Name,
+                    XPath = FormatXPath(s.XPath),
+                    ConditionalRegularExpressionFormatting = s.ConditionalRegularExpressionFormatting == 1,
+                    ConditionalFormatForeColor = s.ConditionalFormatForeColor,
+                    ConditionalFormatBackColor = s.ConditionalFormatBackColor,
+                    RegularExpression = s.RegularExpression,
+                    ForeRowColorScope = s.ForeRowColorScope == 1,
+                    BackRowColorScope = s.BackRowColorScope == 1,
+                    BoldLineFormatForeColor = s.BoldLineFormatForeColor,
+                    BoldLineFormatBackColor = s.BoldLineFormatBackColor,
+                    BoldLineMatched = s.BoldLineMatched == 1
+                });
+        }
+
+        private string FormatXPath(string xPath)
+        {
+            var splits = xPath.Split(".");
+            return splits[0].ToLower() switch
+            {
+                "data" => splits[1],
+                _ => xPath
+            };
+        }
+
+        public class Dto
+        {
+            public string Name { get; set; }
+            public string XPath { get; set; }
+            public bool ConditionalRegularExpressionFormatting { get; set; }
+            public string ConditionalFormatForeColor { get; set; }
+            public string ConditionalFormatBackColor { get; set; }
+            public string RegularExpression { get; set; }
+            public bool ForeRowColorScope { get; set; }
+            public bool BackRowColorScope { get; set; }
+            public string BoldLineFormatForeColor { get; set; }
+            public string BoldLineFormatBackColor { get; set; }
+            public bool BoldLineMatched { get; set; }
+        }
     }
 }

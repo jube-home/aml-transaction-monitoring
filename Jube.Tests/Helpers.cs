@@ -11,31 +11,39 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System.IO;
-using System.Reflection;
-
-namespace Jube.Test;
-
-public static class Helpers
+namespace Jube.Test
 {
-    public static string ReadFileContents(string filePath)
-    {
-        return File.ReadAllText(Path.Combine(
-            GetParentDirectory(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!, 4) ?? string.Empty,
-            $"Jube.Tests/{filePath}"));
-    }
+    using System;
+    using System.IO;
+    using System.Reflection;
 
-    private static string? GetParentDirectory(string? path, int parentCount)
+    public static class Helpers
     {
-        while (true)
+        public static string ReadFileContents(string filePath)
         {
-            if (string.IsNullOrEmpty(path) || parentCount < 1) return path;
+            return File.ReadAllText(Path.Combine(
+                GetParentDirectory(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!, 4) ?? String.Empty,
+                $"Jube.Tests/{filePath}"));
+        }
 
-            var parent = Path.GetDirectoryName(path);
+        private static string? GetParentDirectory(string? path, int parentCount)
+        {
+            while (true)
+            {
+                if (String.IsNullOrEmpty(path) || parentCount < 1)
+                {
+                    return path;
+                }
 
-            if (--parentCount <= 0 || parent == null) return parent;
+                var parent = Path.GetDirectoryName(path);
 
-            path = parent;
+                if (--parentCount <= 0 || parent == null)
+                {
+                    return parent;
+                }
+
+                path = parent;
+            }
         }
     }
 }

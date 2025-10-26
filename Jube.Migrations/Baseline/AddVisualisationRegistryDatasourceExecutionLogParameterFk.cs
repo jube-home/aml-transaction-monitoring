@@ -13,22 +13,23 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220430125458)]
-public class AddVisualisationRegistryDatasourceExecutionLogParameterFk : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220430125458)]
+    public class AddVisualisationRegistryDatasourceExecutionLogParameterFk : Migration
     {
-        Create.ForeignKey().FromTable("VisualisationRegistryDatasourceExecutionLogParameter")
-            .ForeignColumn("VisualisationRegistryParameterId").ToTable("VisualisationRegistryParameter")
-            .PrimaryColumn("Id");
-    }
+        public override void Up()
+        {
+            Create.ForeignKey().FromTable("VisualisationRegistryDatasourceExecutionLogParameter")
+                .ForeignColumn("VisualisationRegistryParameterId").ToTable("VisualisationRegistryParameter")
+                .PrimaryColumn("Id");
+        }
 
-    public override void Down()
-    {
-        Delete.ForeignKey().FromTable("VisualisationRegistryDatasourceExecutionLogParameter")
-            .ForeignColumn("VisualisationRegistryParameterId").ToTable("VisualisationRegistryParameter")
-            .PrimaryColumn("Id");
+        public override void Down()
+        {
+            Delete.ForeignKey().FromTable("VisualisationRegistryDatasourceExecutionLogParameter")
+                .ForeignColumn("VisualisationRegistryParameterId").ToTable("VisualisationRegistryParameter")
+                .PrimaryColumn("Id");
+        }
     }
 }

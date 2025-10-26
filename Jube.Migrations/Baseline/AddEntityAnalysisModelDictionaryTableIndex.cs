@@ -14,48 +14,49 @@
 using System;
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124950)]
-public class AddEntityAnalysisModelDictionaryTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124950)]
+    public class AddEntityAnalysisModelDictionaryTableIndex : Migration
     {
-        Create.Table("EntityAnalysisModelDictionary")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
-            .WithColumn("Name").AsString().Nullable()
-            .WithColumn("Locked").AsByte().Nullable()
-            .WithColumn("Active").AsByte().Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("Deleted").AsByte().Nullable()
-            .WithColumn("DeletedDate").AsDateTime2().Nullable()
-            .WithColumn("DeletedUser").AsString().Nullable()
-            .WithColumn("Version").AsInt32().Nullable()
-            .WithColumn("InheritedId").AsInt32().Nullable()
-            .WithColumn("DataName").AsString().Nullable()
-            .WithColumn("ResponsePayload").AsByte().Nullable();
-
-        Create.Index().OnTable("EntityAnalysisModelDictionary")
-            .OnColumn("EntityAnalysisModelId").Ascending()
-            .OnColumn("Deleted").Ascending();
-
-        Insert.IntoTable("EntityAnalysisModelDictionary").Row(new
+        public override void Up()
         {
-            EntityAnalysisModelId = 1,
-            Name = "VolumeThresholdByAccountId",
-            Active = 1,
-            CreatedDate = DateTime.Now,
-            CreatedUser = "Administrator",
-            ResponsePayload = 1,
-            DataName = "AccountId",
-            Version = 1
-        });
-    }
+            Create.Table("EntityAnalysisModelDictionary")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
+                .WithColumn("Name").AsString().Nullable()
+                .WithColumn("Locked").AsByte().Nullable()
+                .WithColumn("Active").AsByte().Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("Deleted").AsByte().Nullable()
+                .WithColumn("DeletedDate").AsDateTime2().Nullable()
+                .WithColumn("DeletedUser").AsString().Nullable()
+                .WithColumn("Version").AsInt32().Nullable()
+                .WithColumn("InheritedId").AsInt32().Nullable()
+                .WithColumn("DataName").AsString().Nullable()
+                .WithColumn("ResponsePayload").AsByte().Nullable();
 
-    public override void Down()
-    {
-        Delete.Table("EntityAnalysisModelDictionary");
+            Create.Index().OnTable("EntityAnalysisModelDictionary")
+                .OnColumn("EntityAnalysisModelId").Ascending()
+                .OnColumn("Deleted").Ascending();
+
+            Insert.IntoTable("EntityAnalysisModelDictionary").Row(new
+            {
+                EntityAnalysisModelId = 1,
+                Name = "VolumeThresholdByAccountId",
+                Active = 1,
+                CreatedDate = DateTime.Now,
+                CreatedUser = "Administrator",
+                ResponsePayload = 1,
+                DataName = "AccountId",
+                Version = 1
+            });
+        }
+
+        public override void Down()
+        {
+            Delete.Table("EntityAnalysisModelDictionary");
+        }
     }
 }

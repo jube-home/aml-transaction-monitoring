@@ -11,24 +11,19 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB;
-
-namespace Jube.Data.Repository;
-
-public class EntityAnalysisInstanceRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
+    using Context;
+    using LinqToDB;
+    using Poco;
 
-    public EntityAnalysisInstanceRepository(DbContext dbContext)
+    public class EntityAnalysisInstanceRepository(DbContext dbContext)
     {
-        _dbContext = dbContext;
-    }
 
-    public EntityAnalysisInstance Insert(EntityAnalysisInstance model)
-    {
-        model.Id = _dbContext.InsertWithInt32Identity(model);
-        return model;
+        public EntityAnalysisInstance Insert(EntityAnalysisInstance model)
+        {
+            model.Id = dbContext.InsertWithInt32Identity(model);
+            return model;
+        }
     }
 }

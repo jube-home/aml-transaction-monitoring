@@ -13,27 +13,28 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124904)]
-public class AddCaseExecutionLogTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124904)]
+    public class AddCaseExecutionLogTableIndex : Migration
     {
-        Create.Table("CaseExecutionLog")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("Command").AsString().Nullable()
-            .WithColumn("InError").AsByte().Nullable()
-            .WithColumn("ErrorStack").AsString().Nullable()
-            .WithColumn("RowCount").AsInt32().Nullable()
-            .WithColumn("CreatedDate").AsDateTime().Nullable()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("ResponseMs").AsInt32().Nullable()
-            .WithColumn("TenantRegistryId").AsInt32().Nullable();
-    }
+        public override void Up()
+        {
+            Create.Table("CaseExecutionLog")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("Command").AsString().Nullable()
+                .WithColumn("InError").AsByte().Nullable()
+                .WithColumn("ErrorStack").AsString().Nullable()
+                .WithColumn("RowCount").AsInt32().Nullable()
+                .WithColumn("CreatedDate").AsDateTime().Nullable()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("ResponseMs").AsInt32().Nullable()
+                .WithColumn("TenantRegistryId").AsInt32().Nullable();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("CaseExecutionLog");
+        public override void Down()
+        {
+            Delete.Table("CaseExecutionLog");
+        }
     }
 }

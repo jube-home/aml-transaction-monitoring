@@ -14,60 +14,61 @@
 using FluentMigrator;
 using FluentMigrator.Postgres;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124902)]
-public class AddArchiveTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124902)]
+    public class AddArchiveTableIndex : Migration
     {
-        Create.Table("Archive")
-            .WithColumn("Id").AsInt64().PrimaryKey().Identity()
-            .WithColumn("Json").AsCustom("jsonb").Nullable()
-            .WithColumn("EntityAnalysisModelInstanceEntryGuid").AsGuid().Nullable()
-            .WithColumn("EntryKeyValue").AsString().Nullable()
-            .WithColumn("ResponseElevation").AsDouble().Nullable()
-            .WithColumn("EntityAnalysisModelActivationRuleId").AsInt32().Nullable()
-            .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
-            .WithColumn("ActivationRuleCount").AsInt32().Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable()
-            .WithColumn("ReferenceDate").AsDateTime2().Nullable();
+        public override void Up()
+        {
+            Create.Table("Archive")
+                .WithColumn("Id").AsInt64().PrimaryKey().Identity()
+                .WithColumn("Json").AsCustom("jsonb").Nullable()
+                .WithColumn("EntityAnalysisModelInstanceEntryGuid").AsGuid().Nullable()
+                .WithColumn("EntryKeyValue").AsString().Nullable()
+                .WithColumn("ResponseElevation").AsDouble().Nullable()
+                .WithColumn("EntityAnalysisModelActivationRuleId").AsInt32().Nullable()
+                .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
+                .WithColumn("ActivationRuleCount").AsInt32().Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable()
+                .WithColumn("ReferenceDate").AsDateTime2().Nullable();
 
-        Create.Index().OnTable("Archive")
-            .OnColumn("EntityAnalysisModelId").Ascending()
-            .OnColumn("EntityAnalysisModelActivationRuleId").Ascending()
-            .OnColumn("ActivationRuleCount").Ascending();
+            Create.Index().OnTable("Archive")
+                .OnColumn("EntityAnalysisModelId").Ascending()
+                .OnColumn("EntityAnalysisModelActivationRuleId").Ascending()
+                .OnColumn("ActivationRuleCount").Ascending();
 
-        Create.Index().OnTable("Archive")
-            .OnColumn("EntityAnalysisModelId").Ascending()
-            .OnColumn("EntryKeyValue").Ascending();
+            Create.Index().OnTable("Archive")
+                .OnColumn("EntityAnalysisModelId").Ascending()
+                .OnColumn("EntryKeyValue").Ascending();
 
-        Create.Index().OnTable("Archive")
-            .OnColumn("CreatedDate").Descending();
+            Create.Index().OnTable("Archive")
+                .OnColumn("CreatedDate").Descending();
 
-        Create.Index().OnTable("Archive")
-            .OnColumn("EntityAnalysisModelInstanceEntryGuid").Unique();
+            Create.Index().OnTable("Archive")
+                .OnColumn("EntityAnalysisModelInstanceEntryGuid").Unique();
 
-        Create.Index().OnTable("Archive")
-            .OnColumn("ReferenceDate").Descending();
+            Create.Index().OnTable("Archive")
+                .OnColumn("ReferenceDate").Descending();
 
-        Create.Index().OnTable("Archive")
-            .OnColumn("EntityAnalysisModelId").Ascending()
-            .OnColumn("ReferenceDate").Descending();
+            Create.Index().OnTable("Archive")
+                .OnColumn("EntityAnalysisModelId").Ascending()
+                .OnColumn("ReferenceDate").Descending();
 
-        Create.Index().OnTable("Archive")
-            .OnColumn("EntryKeyValue").Ascending()
-            .OnColumn("EntityAnalysisModelId").Descending();
+            Create.Index().OnTable("Archive")
+                .OnColumn("EntryKeyValue").Ascending()
+                .OnColumn("EntityAnalysisModelId").Descending();
 
-        Create.Index()
-            .OnTable("Archive")
-            .OnColumn("Json").Ascending()
-            .WithOptions()
-            .UsingGin();
-    }
+            Create.Index()
+                .OnTable("Archive")
+                .OnColumn("Json").Ascending()
+                .WithOptions()
+                .UsingGin();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("Archive");
+        public override void Down()
+        {
+            Delete.Table("Archive");
+        }
     }
 }

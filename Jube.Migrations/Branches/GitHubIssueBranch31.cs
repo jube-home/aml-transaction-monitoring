@@ -13,35 +13,36 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Branches;
-
-[Migration(20240414100000)]
-public class GitHubIssueBranch31 : Migration
+namespace Jube.Migrations.Branches
 {
-    public override void Up()
+    [Migration(20240414100000)]
+    public class GitHubIssueBranch31 : Migration
     {
-        Create.Table("CachePayloadLatest")
-            .WithColumn("Id").AsInt64().PrimaryKey().Identity()
-            .WithColumn("EntityAnalysisModelId").AsInt64().Nullable()
-            .WithColumn("Json").AsCustom("jsonb").Nullable()
-            .WithColumn("EntityAnalysisModelInstanceEntryGuid").AsGuid().Nullable()
-            .WithColumn("EntryKey").AsString().Nullable()
-            .WithColumn("EntryKeyValue").AsString().Nullable()
-            .WithColumn("ReferenceDate").AsDateTime2().Nullable()
-            .WithColumn("UpdatedDate").AsDateTime2().Nullable()
-            .WithColumn("Counter").AsInt64().Nullable();
+        public override void Up()
+        {
+            Create.Table("CachePayloadLatest")
+                .WithColumn("Id").AsInt64().PrimaryKey().Identity()
+                .WithColumn("EntityAnalysisModelId").AsInt64().Nullable()
+                .WithColumn("Json").AsCustom("jsonb").Nullable()
+                .WithColumn("EntityAnalysisModelInstanceEntryGuid").AsGuid().Nullable()
+                .WithColumn("EntryKey").AsString().Nullable()
+                .WithColumn("EntryKeyValue").AsString().Nullable()
+                .WithColumn("ReferenceDate").AsDateTime2().Nullable()
+                .WithColumn("UpdatedDate").AsDateTime2().Nullable()
+                .WithColumn("Counter").AsInt64().Nullable();
 
-        Create.Index().OnTable("CachePayloadLatest")
-            .OnColumn("EntityAnalysisModelId").Ascending().OnColumn("EntryKey").Ascending()
-            .OnColumn("EntryKeyValue").Ascending().WithOptions().Unique();
+            Create.Index().OnTable("CachePayloadLatest")
+                .OnColumn("EntityAnalysisModelId").Ascending().OnColumn("EntryKey").Ascending()
+                .OnColumn("EntryKeyValue").Ascending().WithOptions().Unique();
 
-        Create.Index().OnTable("CachePayloadLatest")
-            .OnColumn("EntityAnalysisModelId").Ascending().OnColumn("EntryKey").Ascending()
-            .OnColumn("UpdatedDate").Descending();
-    }
+            Create.Index().OnTable("CachePayloadLatest")
+                .OnColumn("EntityAnalysisModelId").Ascending().OnColumn("EntryKey").Ascending()
+                .OnColumn("UpdatedDate").Descending();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("CachePayloadLatest");
+        public override void Down()
+        {
+            Delete.Table("CachePayloadLatest");
+        }
     }
 }

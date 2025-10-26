@@ -11,31 +11,24 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB;
-
-namespace Jube.Data.Repository;
-
-public class SessionCaseSearchCompiledSqlExecutionRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
-    private readonly string _userName;
+    using System;
+    using Context;
+    using LinqToDB;
+    using Poco;
 
-    public SessionCaseSearchCompiledSqlExecutionRepository(DbContext dbContext, string userName)
+    public class SessionCaseSearchCompiledSqlExecutionRepository(DbContext dbContext, string userName)
     {
-        _dbContext = dbContext;
-        _userName = userName;
-    }
 
-    public SessionCaseSearchCompiledSqlExecution Insert(SessionCaseSearchCompiledSqlExecution model)
-    {
-        model.CreatedUser = _userName;
-        model.CreatedDate = DateTime.Now;
+        public SessionCaseSearchCompiledSqlExecution Insert(SessionCaseSearchCompiledSqlExecution model)
+        {
+            model.CreatedUser = userName;
+            model.CreatedDate = DateTime.Now;
 
-        model.Id = _dbContext.InsertWithInt32Identity(model);
+            model.Id = dbContext.InsertWithInt32Identity(model);
 
-        return model;
+            return model;
+        }
     }
 }

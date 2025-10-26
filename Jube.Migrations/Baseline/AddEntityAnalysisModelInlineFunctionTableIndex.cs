@@ -14,52 +14,53 @@
 using System;
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124932)]
-public class AddEntityAnalysisModelInlineFunctionTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124932)]
+    public class AddEntityAnalysisModelInlineFunctionTableIndex : Migration
     {
-        Create.Table("EntityAnalysisModelInlineFunction")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
-            .WithColumn("Name").AsString().Nullable()
-            .WithColumn("FunctionScript").AsString().Nullable()
-            .WithColumn("ReturnDataTypeId").AsInt32().Nullable()
-            .WithColumn("Locked").AsByte().Nullable()
-            .WithColumn("Active").AsByte().Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("Deleted").AsByte().Nullable()
-            .WithColumn("DeletedDate").AsDateTime2().Nullable()
-            .WithColumn("DeletedUser").AsString().Nullable()
-            .WithColumn("Version").AsInt32().Nullable()
-            .WithColumn("InheritedId").AsInt32().Nullable()
-            .WithColumn("ResponsePayload").AsByte().Nullable()
-            .WithColumn("ReportTable").AsByte().Nullable();
+        public override void Up()
+        {
+            Create.Table("EntityAnalysisModelInlineFunction")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
+                .WithColumn("Name").AsString().Nullable()
+                .WithColumn("FunctionScript").AsString().Nullable()
+                .WithColumn("ReturnDataTypeId").AsInt32().Nullable()
+                .WithColumn("Locked").AsByte().Nullable()
+                .WithColumn("Active").AsByte().Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("Deleted").AsByte().Nullable()
+                .WithColumn("DeletedDate").AsDateTime2().Nullable()
+                .WithColumn("DeletedUser").AsString().Nullable()
+                .WithColumn("Version").AsInt32().Nullable()
+                .WithColumn("InheritedId").AsInt32().Nullable()
+                .WithColumn("ResponsePayload").AsByte().Nullable()
+                .WithColumn("ReportTable").AsByte().Nullable();
 
-        Create.Index().OnTable("EntityAnalysisModelInlineFunction")
-            .OnColumn("EntityAnalysisModelId").Ascending()
-            .OnColumn("Deleted").Ascending();
+            Create.Index().OnTable("EntityAnalysisModelInlineFunction")
+                .OnColumn("EntityAnalysisModelId").Ascending()
+                .OnColumn("Deleted").Ascending();
 
-        Insert.IntoTable("EntityAnalysisModelInlineFunction").Row(
-            new
-            {
-                EntityAnalysisModelId = 1,
-                Name = "JoinedName",
-                FunctionScript = "Return Payload.BillingFirstName & \" \" & Payload.BillingLastName",
-                ReturnDataTypeId = 1,
-                Active = 1,
-                CreatedDate = DateTime.Now,
-                CreatedUser = "Administrator",
-                Version = 1,
-                ResponsePayload = 1
-            });
-    }
+            Insert.IntoTable("EntityAnalysisModelInlineFunction").Row(
+                new
+                {
+                    EntityAnalysisModelId = 1,
+                    Name = "JoinedName",
+                    FunctionScript = "Return Payload.BillingFirstName & \" \" & Payload.BillingLastName",
+                    ReturnDataTypeId = 1,
+                    Active = 1,
+                    CreatedDate = DateTime.Now,
+                    CreatedUser = "Administrator",
+                    Version = 1,
+                    ResponsePayload = 1
+                });
+        }
 
-    public override void Down()
-    {
-        Delete.Table("EntityAnalysisModelInlineFunction");
+        public override void Down()
+        {
+            Delete.Table("EntityAnalysisModelInlineFunction");
+        }
     }
 }

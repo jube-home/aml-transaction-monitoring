@@ -14,41 +14,42 @@
 using System;
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220426071437)]
-public class AddEntityAnalysisModelListValueTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220426071437)]
+    public class AddEntityAnalysisModelListValueTableIndex : Migration
     {
-        Create.Table("EntityAnalysisModelListValue")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("EntityAnalysisModelListId").AsInt32().Nullable()
-            .WithColumn("ListValue").AsString().Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("Deleted").AsByte().Nullable()
-            .WithColumn("DeletedDate").AsDateTime2().Nullable()
-            .WithColumn("DeletedUser").AsString().Nullable()
-            .WithColumn("InheritedId").AsInt32().Nullable()
-            .WithColumn("Version").AsInt32().Nullable();
-
-        Create.Index().OnTable("EntityAnalysisModelListValue")
-            .OnColumn("EntityAnalysisModelListId").Ascending()
-            .OnColumn("Deleted").Ascending();
-
-        Insert.IntoTable("EntityAnalysisModelListValue").Row(new
+        public override void Up()
         {
-            EntityAnalysisModelListId = 1,
-            ListValue = "123.456.789.123",
-            CreatedDate = DateTime.Now,
-            CreatedUser = "Administrator",
-            Version = 1
-        });
-    }
+            Create.Table("EntityAnalysisModelListValue")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("EntityAnalysisModelListId").AsInt32().Nullable()
+                .WithColumn("ListValue").AsString().Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("Deleted").AsByte().Nullable()
+                .WithColumn("DeletedDate").AsDateTime2().Nullable()
+                .WithColumn("DeletedUser").AsString().Nullable()
+                .WithColumn("InheritedId").AsInt32().Nullable()
+                .WithColumn("Version").AsInt32().Nullable();
 
-    public override void Down()
-    {
-        Delete.Table("EntityAnalysisModelListValue");
+            Create.Index().OnTable("EntityAnalysisModelListValue")
+                .OnColumn("EntityAnalysisModelListId").Ascending()
+                .OnColumn("Deleted").Ascending();
+
+            Insert.IntoTable("EntityAnalysisModelListValue").Row(new
+            {
+                EntityAnalysisModelListId = 1,
+                ListValue = "123.456.789.123",
+                CreatedDate = DateTime.Now,
+                CreatedUser = "Administrator",
+                Version = 1
+            });
+        }
+
+        public override void Down()
+        {
+            Delete.Table("EntityAnalysisModelListValue");
+        }
     }
 }

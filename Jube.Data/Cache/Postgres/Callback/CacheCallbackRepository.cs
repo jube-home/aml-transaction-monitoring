@@ -11,113 +11,116 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Concurrent;
-using System.Text;
-using System.Threading.Tasks;
-using log4net;
-using Npgsql;
-using Exception = System.Exception;
-
-namespace Jube.Data.Cache.Postgres.Callback;
-
-public class CacheCallbackRepository(
-    string connectionString,
-    ILog log,
-    ConcurrentDictionary<Guid, Callback> concurrentDictionary = null)
+namespace Jube.Data.Cache.Postgres.Callback
 {
-    private static void ManageDictionary(ConcurrentDictionary<Guid, Callback> concurrentDictionary, string value)
+    using System;
+    using System.Collections.Concurrent;
+    using System.Text;
+    using System.Threading.Tasks;
+    using log4net;
+    using Npgsql;
+
+    public class CacheCallbackRepository(
+        string connectionString,
+        ILog log,
+        ConcurrentDictionary<Guid, Callback> concurrentDictionary = null)
     {
-        var splits = value.Split(",", 2);
-
-        if (splits.Length > 1)
+        private static void ManageDictionary(ConcurrentDictionary<Guid, Callback> concurrentDictionary, string value)
         {
-            var callback = new Callback
+            var splits = value.Split(",", 2);
+
+            if (splits.Length > 1)
             {
-                CreatedDate = DateTime.Now,
-                Payload = splits[1]
-            };
+                var callback = new Callback
+                {
+                    CreatedDate = DateTime.Now,
+                    Payload = splits[1]
+                };
 
-            concurrentDictionary.TryAdd(Guid.Parse(splits[0]), callback);
-        }
-        else
-        {
-            concurrentDictionary.TryRemove(Guid.Parse(splits[0]), out _);
-        }
-    }
-
-    public async Task ListenForCallbacksAsync()
-    {
-        var connection = new NpgsqlConnection(connectionString);
-        try
-        {
-            await connection.OpenAsync().ConfigureAwait(false);
-
-            connection.Notification += (_, e)
-                => ManageDictionary(concurrentDictionary, e.Payload);
-
-            await using (var cmd = new NpgsqlCommand("LISTEN callback", connection))
+                concurrentDictionary.TryAdd(Guid.Parse(splits[0]), callback);
+            }
+            else
             {
-                await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+                concurrentDictionary.TryRemove(Guid.Parse(splits[0]), out _);
+            }
+        }
+
+        public async Task ListenForCallbacksAsync()
+        {
+            var connection = new NpgsqlConnection(connectionString);
+            try
+            {
+                await connection.OpenAsync().ConfigureAwait(false);
+
+                connection.Notification += (_, e)
+                    => ManageDictionary(concurrentDictionary, e.Payload);
+
+                await using (var cmd = new NpgsqlCommand("LISTEN callback", connection))
+                {
+                    await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+                }
+
+                while (true)
+                {
+                    await connection.WaitAsync().ConfigureAwait(false);
+                }
+            }
+            catch (Exception ex)
+            {
+                log.Error($"Cache SQL: Has created an exception as {ex}.");
             }
 
-            while (true) await connection.WaitAsync().ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            log.Error($"Cache SQL: Has created an exception as {ex}.");
-        }
-
-        await connection.CloseAsync().ConfigureAwait(false);
-        await connection.DisposeAsync().ConfigureAwait(false);
-    }
-
-    public async Task InsertAsync(byte[] json, Guid entityAnalysisModelInstanceEntryGuid)
-    {
-        var connection = new NpgsqlConnection(connectionString);
-        try
-        {
-            await connection.OpenAsync().ConfigureAwait(false);
-
-            var sqlNotify =
-                $"NOTIFY callback, '{entityAnalysisModelInstanceEntryGuid:N},{Encoding.UTF8.GetString(json)}'";
-
-            var commandNotify = new NpgsqlCommand(sqlNotify);
-            commandNotify.Connection = connection;
-            await commandNotify.ExecuteNonQueryAsync().ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            log.Error($"Cache SQL: Has created an exception as {ex}.");
-        }
-        finally
-        {
             await connection.CloseAsync().ConfigureAwait(false);
             await connection.DisposeAsync().ConfigureAwait(false);
         }
-    }
 
-    public async Task DeleteAsync(Guid entityAnalysisModelInstanceEntryGuid)
-    {
-        var connection = new NpgsqlConnection(connectionString);
-        try
+        public async Task InsertAsync(byte[] json, Guid entityAnalysisModelInstanceEntryGuid)
         {
-            await connection.OpenAsync().ConfigureAwait(false);
+            var connection = new NpgsqlConnection(connectionString);
+            try
+            {
+                await connection.OpenAsync().ConfigureAwait(false);
 
-            var sqlNotify = $"NOTIFY callback, '{entityAnalysisModelInstanceEntryGuid:N}'";
+                var sqlNotify =
+                    $"NOTIFY callback, '{entityAnalysisModelInstanceEntryGuid:N},{Encoding.UTF8.GetString(json)}'";
 
-            var commandNotify = new NpgsqlCommand(sqlNotify);
-            commandNotify.Connection = connection;
-            await commandNotify.ExecuteNonQueryAsync().ConfigureAwait(false);
+                var commandNotify = new NpgsqlCommand(sqlNotify);
+                commandNotify.Connection = connection;
+                await commandNotify.ExecuteNonQueryAsync().ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                log.Error($"Cache SQL: Has created an exception as {ex}.");
+            }
+            finally
+            {
+                await connection.CloseAsync().ConfigureAwait(false);
+                await connection.DisposeAsync().ConfigureAwait(false);
+            }
         }
-        catch (Exception ex)
+
+        public async Task DeleteAsync(Guid entityAnalysisModelInstanceEntryGuid)
         {
-            log.Error($"Cache SQL: Has created an exception as {ex}.");
-        }
-        finally
-        {
-            await connection.CloseAsync().ConfigureAwait(false);
-            await connection.DisposeAsync().ConfigureAwait(false);
+            var connection = new NpgsqlConnection(connectionString);
+            try
+            {
+                await connection.OpenAsync().ConfigureAwait(false);
+
+                var sqlNotify = $"NOTIFY callback, '{entityAnalysisModelInstanceEntryGuid:N}'";
+
+                var commandNotify = new NpgsqlCommand(sqlNotify);
+                commandNotify.Connection = connection;
+                await commandNotify.ExecuteNonQueryAsync().ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                log.Error($"Cache SQL: Has created an exception as {ex}.");
+            }
+            finally
+            {
+                await connection.CloseAsync().ConfigureAwait(false);
+                await connection.DisposeAsync().ConfigureAwait(false);
+            }
         }
     }
 }

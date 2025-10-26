@@ -11,30 +11,34 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using Accord.Statistics.Distributions.Univariate;
-
-namespace Jube.Engine.Exhaustive.Variables;
-
-[Serializable]
-public class TrialVariable
+namespace Jube.Engine.Exhaustive.Variables
 {
-    public string Name;
-    public int ExhaustiveSearchInstanceVariableId { get; set; }
-    public double Mean { get; set; }
-    public double Sd { get; set; }
-    public double Max { get; set; }
-    public double Min { get; set; }
-    public double Mode { get; set; }
-    public int ProcessingTypeId { get; set; }
-    public int ExhaustiveSearchInstanceTrialInstanceVariableId { get; set; }
-    public TriangularDistribution TriangularDistribution { get; set; }
-    public int NormalisationTypeId { get; set; }
+    using System;
+    using Accord.Statistics.Distributions.Univariate;
 
-    public double ReverseZScore(double value)
+    [Serializable]
+    public class TrialVariable
     {
-        if (NormalisationTypeId == 2) return Mean + value * Sd;
+        public string Name;
+        public int ExhaustiveSearchInstanceVariableId { get; set; }
+        public double Mean { get; set; }
+        public double Sd { get; set; }
+        public double Max { get; set; }
+        public double Min { get; set; }
+        public double Mode { get; set; }
+        public int ProcessingTypeId { get; set; }
+        public int ExhaustiveSearchInstanceTrialInstanceVariableId { get; set; }
+        public TriangularDistribution TriangularDistribution { get; set; }
+        public int NormalisationTypeId { get; set; }
 
-        return value;
+        public double ReverseZScore(double value)
+        {
+            if (NormalisationTypeId == 2)
+            {
+                return Mean + value * Sd;
+            }
+
+            return value;
+        }
     }
 }

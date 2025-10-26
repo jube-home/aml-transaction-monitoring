@@ -13,30 +13,31 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124943)]
-public class AddArchiveEntityAnalysisModelAbstractionEntryTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124943)]
+    public class AddArchiveEntityAnalysisModelAbstractionEntryTableIndex : Migration
     {
-        Create.Table("ArchiveEntityAnalysisModelAbstractionEntry")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("SearchKey").AsString().Nullable()
-            .WithColumn("SearchValue").AsString().Nullable()
-            .WithColumn("Value").AsDouble().Nullable()
-            .WithColumn("EntityAnalysisModelSearchKeyDistinctValueCalculationInstanceId").AsInt32().Nullable()
-            .WithColumn("EntityAnalysisModelAbstractionRuleId").AsInt32().Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable();
+        public override void Up()
+        {
+            Create.Table("ArchiveEntityAnalysisModelAbstractionEntry")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("SearchKey").AsString().Nullable()
+                .WithColumn("SearchValue").AsString().Nullable()
+                .WithColumn("Value").AsDouble().Nullable()
+                .WithColumn("EntityAnalysisModelSearchKeyDistinctValueCalculationInstanceId").AsInt32().Nullable()
+                .WithColumn("EntityAnalysisModelAbstractionRuleId").AsInt32().Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable();
 
-        Create.Index().OnTable("ArchiveEntityAnalysisModelAbstractionEntry")
-            .OnColumn("CreatedDate").Descending()
-            .OnColumn("SearchKey").Ascending()
-            .OnColumn("Value").Ascending();
-    }
+            Create.Index().OnTable("ArchiveEntityAnalysisModelAbstractionEntry")
+                .OnColumn("CreatedDate").Descending()
+                .OnColumn("SearchKey").Ascending()
+                .OnColumn("Value").Ascending();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("ArchiveEntityAnalysisModelAbstractionEntry");
+        public override void Down()
+        {
+            Delete.Table("ArchiveEntityAnalysisModelAbstractionEntry");
+        }
     }
 }

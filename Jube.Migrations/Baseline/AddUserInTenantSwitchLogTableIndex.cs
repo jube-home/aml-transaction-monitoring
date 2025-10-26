@@ -13,23 +13,24 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20221017113800)]
-public class AddUserInTenantSwitchLogTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20221017113800)]
+    public class AddUserInTenantSwitchLogTableIndex : Migration
     {
-        Create.Table("UserInTenantSwitchLog")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("UserInTenantId").AsInt32().Nullable()
-            .WithColumn("TenantRegistryId").AsInt32().Nullable()
-            .WithColumn("SwitchedUser").AsString().Nullable()
-            .WithColumn("SwitchedDate").AsDateTime().Nullable();
-    }
+        public override void Up()
+        {
+            Create.Table("UserInTenantSwitchLog")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("UserInTenantId").AsInt32().Nullable()
+                .WithColumn("TenantRegistryId").AsInt32().Nullable()
+                .WithColumn("SwitchedUser").AsString().Nullable()
+                .WithColumn("SwitchedDate").AsDateTime().Nullable();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("UserInTenantSwitchLog");
+        public override void Down()
+        {
+            Delete.Table("UserInTenantSwitchLog");
+        }
     }
 }

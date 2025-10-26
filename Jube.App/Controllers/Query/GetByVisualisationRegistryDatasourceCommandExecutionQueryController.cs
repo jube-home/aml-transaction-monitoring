@@ -11,57 +11,62 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
-using System.Threading.Tasks;
-using Jube.App.Code;
-using Jube.Data.Context;
-using Jube.Data.Query;
-using Jube.Engine.Helpers;
-using log4net;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-
 namespace Jube.App.Controllers.Query
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Text;
+    using System.Threading.Tasks;
+    using Code;
+    using Data.Context;
+    using Data.Query;
+    using DynamicEnvironment;
+    using log4net;
+    using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.AspNetCore.Mvc;
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
+
     [Route("api/[controller]")]
     [Produces("application/json")]
     [Authorize]
     public class GetByVisualisationRegistryDatasourceCommandExecutionQueryController : Controller
     {
-        private readonly DbContext _dbContext;
-        private readonly ILog _log;
-        private readonly PermissionValidation _permissionValidation;
-        private readonly GetByVisualisationRegistryDatasourceCommandExecutionQuery _query;
-        private readonly string _userName;
+        private readonly DbContext dbContext;
+        private readonly ILog log;
+        private readonly PermissionValidation permissionValidation;
+        private readonly GetByVisualisationRegistryDatasourceCommandExecutionQuery query;
+        private readonly string userName;
 
         public GetByVisualisationRegistryDatasourceCommandExecutionQueryController(ILog log,
-            IHttpContextAccessor httpContextAccessor, DynamicEnvironment.DynamicEnvironment dynamicEnvironment)
+            IHttpContextAccessor httpContextAccessor, DynamicEnvironment dynamicEnvironment)
         {
             if (httpContextAccessor.HttpContext?.User.Identity != null)
-                _userName = httpContextAccessor.HttpContext.User.Identity.Name;
-            _log = log;
+            {
+                userName = httpContextAccessor.HttpContext.User.Identity.Name;
+            }
 
-            _dbContext =
+            this.log = log;
+
+            dbContext =
                 DataConnectionDbContext.GetDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
-            _permissionValidation = new PermissionValidation(_dbContext, _userName);
+            permissionValidation = new PermissionValidation(dbContext, userName);
 
             if (dynamicEnvironment.AppSettings("ReportConnectionString") != null)
-                _query = new GetByVisualisationRegistryDatasourceCommandExecutionQuery(_dbContext,
-                    dynamicEnvironment.AppSettings("ReportConnectionString"), _userName);
+            {
+                query = new GetByVisualisationRegistryDatasourceCommandExecutionQuery(dbContext,
+                    dynamicEnvironment.AppSettings("ReportConnectionString"), userName);
+            }
         }
 
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                _dbContext.Close();
-                _dbContext.Dispose();
+                dbContext.Close();
+                dbContext.Dispose();
             }
 
             base.Dispose(disposing);
@@ -69,17 +74,27 @@ namespace Jube.App.Controllers.Query
 
         // ReSharper disable once RouteTemplates.RouteParameterIsNotPassedToMethod
         [HttpPost("{id}")]
+        // ReSharper disable once RouteTemplates.MethodMissingRouteParameters
         public async Task<ActionResult<dynamic>> ExecuteAsync()
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 28, 1 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        28, 1
+                    }))
+                {
+                    return Forbid();
+                }
 
                 var idFromRoute = Request.RouteValues["id"]?.ToString();
 
-                if (idFromRoute == null) return StatusCode(500);
+                if (idFromRoute == null)
+                {
+                    return StatusCode(500);
+                }
 
-                var idParsedToInt = int.Parse(idFromRoute);
+                var idParsedToInt = Int32.Parse(idFromRoute);
 
                 var ms = new MemoryStream();
                 await Request.Body.CopyToAsync(ms).ConfigureAwait(false);
@@ -89,7 +104,10 @@ namespace Jube.App.Controllers.Query
 
                 var parameters = new Dictionary<int, object>();
 
-                if (jArray == null) return Ok(await _query.ExecuteAsync(idParsedToInt, parameters).ConfigureAwait(false));
+                if (jArray == null)
+                {
+                    return Ok(await query.ExecuteAsync(idParsedToInt, parameters).ConfigureAwait(false));
+                }
 
                 foreach (var param in jArray)
                 {
@@ -97,15 +115,16 @@ namespace Jube.App.Controllers.Query
                     var id = param.SelectToken("id");
 
                     if (value != null && id != null)
+                    {
                         switch (value.Type)
                         {
                             case JTokenType.String:
-                                parameters.Add(int.Parse(id.ToString()),
+                                parameters.Add(Int32.Parse(id.ToString()),
                                     value.ToString());
                                 break;
                             case JTokenType.Integer:
-                                parameters.Add(int.Parse(id.ToString()),
-                                    int.Parse(value.ToString()));
+                                parameters.Add(Int32.Parse(id.ToString()),
+                                    Int32.Parse(value.ToString()));
                                 break;
                             case JTokenType.None:
                             case JTokenType.Object:
@@ -126,21 +145,27 @@ namespace Jube.App.Controllers.Query
                             default:
                             {
                                 if (id.Type == JTokenType.Float)
-                                    parameters.Add(int.Parse(id.ToString()),
-                                        double.Parse(value.ToString()));
+                                {
+                                    parameters.Add(Int32.Parse(id.ToString()),
+                                        Double.Parse(value.ToString()));
+                                }
                                 else
-                                    parameters.Add(int.Parse(id.ToString()),
+                                {
+                                    parameters.Add(Int32.Parse(id.ToString()),
                                         value.ToString());
+                                }
+
                                 break;
                             }
                         }
+                    }
                 }
 
-                return Ok(await _query.ExecuteAsync(idParsedToInt, parameters).ConfigureAwait(false));
+                return Ok(await query.ExecuteAsync(idParsedToInt, parameters).ConfigureAwait(false));
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }

@@ -11,10 +11,11 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-namespace Jube.Service.Dto.Authentication;
-
-public class ChangePasswordRequestDto
+namespace Jube.Service.Dto.Authentication
 {
-    public string? Password { get; set; }
-    public string? NewPassword { get; set; }
+    public class ChangePasswordRequestDto
+    {
+        public string? Password { get; set; }
+        public string? NewPassword { get; set; }
+    }
 }

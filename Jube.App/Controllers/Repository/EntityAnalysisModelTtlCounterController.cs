@@ -11,49 +11,52 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Net;
-using AutoMapper;
-using FluentValidation;
-using FluentValidation.Results;
-using Jube.App.Code;
-using Jube.App.Dto;
-using Jube.App.Validators;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using Jube.Data.Repository;
-using Jube.Engine.Helpers;
-using log4net;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-
 namespace Jube.App.Controllers.Repository
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Net;
+    using AutoMapper;
+    using Code;
+    using Data.Context;
+    using Data.Poco;
+    using Data.Repository;
+    using Dto;
+    using DynamicEnvironment;
+    using FluentValidation;
+    using FluentValidation.Results;
+    using log4net;
+    using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.AspNetCore.Mvc;
+    using Validators;
+
     [Route("api/[controller]")]
     [Produces("application/json")]
     [Authorize]
     public class EntityAnalysisModelTtlCounterController : Controller
     {
-        private readonly DbContext _dbContext;
-        private readonly ILog _log;
-        private readonly IMapper _mapper;
-        private readonly PermissionValidation _permissionValidation;
-        private readonly EntityAnalysisModelTtlCounterRepository _repository;
-        private readonly string _userName;
-        private readonly IValidator<EntityAnalysisModelTtlCounterDto> _validator;
+        private readonly DbContext dbContext;
+        private readonly ILog log;
+        private readonly IMapper mapper;
+        private readonly PermissionValidation permissionValidation;
+        private readonly EntityAnalysisModelTtlCounterRepository repository;
+        private readonly string userName;
+        private readonly IValidator<EntityAnalysisModelTtlCounterDto> validator;
 
         public EntityAnalysisModelTtlCounterController(ILog log,
-            IHttpContextAccessor httpContextAccessor, DynamicEnvironment.DynamicEnvironment dynamicEnvironment)
+            IHttpContextAccessor httpContextAccessor, DynamicEnvironment dynamicEnvironment)
         {
             if (httpContextAccessor.HttpContext?.User.Identity != null)
-                _userName = httpContextAccessor.HttpContext.User.Identity.Name;
-            _log = log;
+            {
+                userName = httpContextAccessor.HttpContext.User.Identity.Name;
+            }
 
-            _dbContext =
+            this.log = log;
+
+            dbContext =
                 DataConnectionDbContext.GetDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
-            _permissionValidation = new PermissionValidation(_dbContext, _userName);
+            permissionValidation = new PermissionValidation(dbContext, userName);
 
             var config = new MapperConfiguration(cfg =>
             {
@@ -62,17 +65,17 @@ namespace Jube.App.Controllers.Repository
                 cfg.CreateMap<List<EntityAnalysisModelTtlCounter>, List<EntityAnalysisModelTtlCounterDto>>()
                     .ForMember("Item", opt => opt.Ignore());
             });
-            _mapper = new Mapper(config);
-            _repository = new EntityAnalysisModelTtlCounterRepository(_dbContext, _userName);
-            _validator = new EntityAnalysisModelTtlCounterDtoValidator();
+            mapper = new Mapper(config);
+            repository = new EntityAnalysisModelTtlCounterRepository(dbContext, userName);
+            validator = new EntityAnalysisModelTtlCounterDtoValidator();
         }
 
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                _dbContext.Close();
-                _dbContext.Dispose();
+                dbContext.Close();
+                dbContext.Dispose();
             }
 
             base.Dispose(disposing);
@@ -83,13 +86,19 @@ namespace Jube.App.Controllers.Repository
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 12 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        12
+                    }))
+                {
+                    return Forbid();
+                }
 
-                return Ok(_mapper.Map<List<EntityAnalysisModelTtlCounterDto>>(_repository.Get()));
+                return Ok(mapper.Map<List<EntityAnalysisModelTtlCounterDto>>(repository.Get()));
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -99,14 +108,20 @@ namespace Jube.App.Controllers.Repository
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 12, 17 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        12, 17
+                    }))
+                {
+                    return Forbid();
+                }
 
-                return Ok(_mapper.Map<List<EntityAnalysisModelTtlCounterDto>>(
-                    _repository.GetByEntityAnalysisModelIdOrderById(id)));
+                return Ok(mapper.Map<List<EntityAnalysisModelTtlCounterDto>>(
+                    repository.GetByEntityAnalysisModelIdOrderById(id)));
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -116,14 +131,20 @@ namespace Jube.App.Controllers.Repository
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 12, 17 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        12, 17
+                    }))
+                {
+                    return Forbid();
+                }
 
-                return Ok(_mapper.Map<List<EntityAnalysisModelTtlCounterDto>>(
-                    _repository.GetByEntityAnalysisModelGuid(guid)));
+                return Ok(mapper.Map<List<EntityAnalysisModelTtlCounterDto>>(
+                    repository.GetByEntityAnalysisModelGuid(guid)));
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -133,13 +154,19 @@ namespace Jube.App.Controllers.Repository
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 12 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        12
+                    }))
+                {
+                    return Forbid();
+                }
 
-                return Ok(_mapper.Map<EntityAnalysisModelTtlCounterDto>(_repository.GetById(id)));
+                return Ok(mapper.Map<EntityAnalysisModelTtlCounterDto>(repository.GetById(id)));
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -151,16 +178,25 @@ namespace Jube.App.Controllers.Repository
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 12 }, true)) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        12
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var results = _validator.Validate(model);
-                if (results.IsValid) return Ok(_repository.Insert(_mapper.Map<EntityAnalysisModelTtlCounter>(model)));
+                var results = validator.Validate(model);
+                if (results.IsValid)
+                {
+                    return Ok(repository.Insert(mapper.Map<EntityAnalysisModelTtlCounter>(model)));
+                }
 
                 return BadRequest(results);
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -173,10 +209,19 @@ namespace Jube.App.Controllers.Repository
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 12 }, true)) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        12
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var results = _validator.Validate(model);
-                if (results.IsValid) return Ok(_repository.Update(_mapper.Map<EntityAnalysisModelTtlCounter>(model)));
+                var results = validator.Validate(model);
+                if (results.IsValid)
+                {
+                    return Ok(repository.Update(mapper.Map<EntityAnalysisModelTtlCounter>(model)));
+                }
 
                 return BadRequest(results);
             }
@@ -186,7 +231,7 @@ namespace Jube.App.Controllers.Repository
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -197,9 +242,15 @@ namespace Jube.App.Controllers.Repository
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 12 }, true)) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        12
+                    }))
+                {
+                    return Forbid();
+                }
 
-                _repository.Delete(id);
+                repository.Delete(id);
                 return Ok();
             }
             catch (KeyNotFoundException)
@@ -208,7 +259,7 @@ namespace Jube.App.Controllers.Repository
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }

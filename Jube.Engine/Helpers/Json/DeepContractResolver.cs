@@ -18,24 +18,25 @@ using System.Reflection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
-namespace Jube.Engine.Helpers.Json;
-
-public class DeepContractResolver : DefaultContractResolver
+namespace Jube.Engine.Helpers.Json
 {
-    protected override IList<JsonProperty> CreateProperties(Type type, MemberSerialization memberSerialization)
+    public class DeepContractResolver : DefaultContractResolver
     {
-        var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Select(p => base.CreateProperty(p, memberSerialization))
-            .Union(type.GetFields(BindingFlags.Public | BindingFlags.Instance)
-                .Select(f => base.CreateProperty(f, memberSerialization)))
-            .ToList();
-        
-        props.ForEach(p =>
+        protected override IList<JsonProperty> CreateProperties(Type type, MemberSerialization memberSerialization)
         {
-            p.Readable = true;
-            p.Writable = true;
-        });
+            var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                .Select(p => base.CreateProperty(p, memberSerialization))
+                .Union(type.GetFields(BindingFlags.Public | BindingFlags.Instance)
+                    .Select(f => base.CreateProperty(f, memberSerialization)))
+                .ToList();
         
-        return props;
+            props.ForEach(p =>
+            {
+                p.Readable = true;
+                p.Writable = true;
+            });
+        
+            return props;
+        }
     }
 }

@@ -11,27 +11,30 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-
 namespace Jube.App.Middlewares
 {
+    using System.Threading.Tasks;
+    using Microsoft.AspNetCore.Http;
+
     public class TransposeJwtFromCookieToHeaderMiddleware
     {
-        private readonly RequestDelegate _next;
+        private readonly RequestDelegate next;
 
         public TransposeJwtFromCookieToHeaderMiddleware(RequestDelegate next)
         {
-            _next = next;
+            this.next = next;
         }
 
         public async Task InvokeAsync(HttpContext context)
         {
-            var authenticationCookieName = "authentication";
+            const string authenticationCookieName = "authentication";
             var cookie = context.Request.Cookies[authenticationCookieName];
-            if (cookie != null) context.Request.Headers.Append("Authorization", "Bearer " + cookie);
+            if (cookie != null)
+            {
+                context.Request.Headers.Append("Authorization", "Bearer " + cookie);
+            }
 
-            await _next.Invoke(context).ConfigureAwait(false);
+            await next.Invoke(context).ConfigureAwait(false);
         }
     }
 }

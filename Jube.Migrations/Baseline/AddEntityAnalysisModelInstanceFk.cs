@@ -13,29 +13,30 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220430134300)]
-public class AddEntityAnalysisModelInstanceFk : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220430134300)]
+    public class AddEntityAnalysisModelInstanceFk : Migration
     {
-        Create.ForeignKey().FromTable("EntityAnalysisModelInstance").ForeignColumn("EntityAnalysisInstanceGuid")
-            .ToTable("EntityAnalysisInstance").PrimaryColumn("Guid");
+        public override void Up()
+        {
+            Create.ForeignKey().FromTable("EntityAnalysisModelInstance").ForeignColumn("EntityAnalysisInstanceGuid")
+                .ToTable("EntityAnalysisInstance").PrimaryColumn("Guid");
 
-        Create.ForeignKey().FromTable("EntityAnalysisModelInstance").ForeignColumn("EntityAnalysisModelId")
-            .ToTable("EntityAnalysisModel").PrimaryColumn("Id");
-    }
+            Create.ForeignKey().FromTable("EntityAnalysisModelInstance").ForeignColumn("EntityAnalysisModelId")
+                .ToTable("EntityAnalysisModel").PrimaryColumn("Id");
+        }
 
-    public override void Down()
-    {
-        Delete.ForeignKey().FromTable("EntityAnalysisModelInstance").ForeignColumn("EntityAnalysisModelInstanceGuid")
-            .ToTable("EntityAnalysisInstance").PrimaryColumn("Guid");
+        public override void Down()
+        {
+            Delete.ForeignKey().FromTable("EntityAnalysisModelInstance").ForeignColumn("EntityAnalysisModelInstanceGuid")
+                .ToTable("EntityAnalysisInstance").PrimaryColumn("Guid");
 
-        Delete.ForeignKey().FromTable("EntityAnalysisModelInstance").ForeignColumn("EntityAnalysisInstanceGuid")
-            .ToTable("EntityAnalysisInstance").PrimaryColumn("Guid");
+            Delete.ForeignKey().FromTable("EntityAnalysisModelInstance").ForeignColumn("EntityAnalysisInstanceGuid")
+                .ToTable("EntityAnalysisInstance").PrimaryColumn("Guid");
 
-        Delete.ForeignKey().FromTable("EntityAnalysisModelInstance").ForeignColumn("EntityAnalysisModelId")
-            .ToTable("EntityAnalysisModel").PrimaryColumn("Id");
+            Delete.ForeignKey().FromTable("EntityAnalysisModelInstance").ForeignColumn("EntityAnalysisModelId")
+                .ToTable("EntityAnalysisModel").PrimaryColumn("Id");
+        }
     }
 }

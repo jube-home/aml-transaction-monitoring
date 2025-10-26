@@ -13,20 +13,21 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220430125437)]
-public class AddEntityAnalysisModelSynchronisationScheduleFk : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220430125437)]
+    public class AddEntityAnalysisModelSynchronisationScheduleFk : Migration
     {
-        Create.ForeignKey().FromTable("EntityAnalysisModelSynchronisationSchedule")
-            .ForeignColumn("TenantRegistryId").ToTable("TenantRegistry").PrimaryColumn("Id");
-    }
+        public override void Up()
+        {
+            Create.ForeignKey().FromTable("EntityAnalysisModelSynchronisationSchedule")
+                .ForeignColumn("TenantRegistryId").ToTable("TenantRegistry").PrimaryColumn("Id");
+        }
 
-    public override void Down()
-    {
-        Delete.ForeignKey().FromTable("EntityAnalysisModelSynchronisationSchedule")
-            .ForeignColumn("TenantRegistryId").ToTable("TenantRegistry").PrimaryColumn("Id");
+        public override void Down()
+        {
+            Delete.ForeignKey().FromTable("EntityAnalysisModelSynchronisationSchedule")
+                .ForeignColumn("TenantRegistryId").ToTable("TenantRegistry").PrimaryColumn("Id");
+        }
     }
 }

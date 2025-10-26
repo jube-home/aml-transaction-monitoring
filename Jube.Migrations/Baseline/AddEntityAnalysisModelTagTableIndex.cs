@@ -14,46 +14,47 @@
 using System;
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220621091900)]
-public class AddEntityAnalysisModelTagTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220621091900)]
+    public class AddEntityAnalysisModelTagTableIndex : Migration
     {
-        Create.Table("EntityAnalysisModelTag")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
-            .WithColumn("Name").AsString().Nullable()
-            .WithColumn("Locked").AsByte().Nullable()
-            .WithColumn("Active").AsByte().Nullable()
-            .WithColumn("ReportTable").AsByte().Nullable()
-            .WithColumn("ResponsePayload").AsByte().Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("Deleted").AsByte().Nullable()
-            .WithColumn("DeletedDate").AsDateTime2().Nullable()
-            .WithColumn("DeletedUser").AsString().Nullable()
-            .WithColumn("Version").AsInt32().Nullable()
-            .WithColumn("InheritedId").AsInt32().Nullable();
-
-        Create.Index().OnTable("EntityAnalysisModelTag")
-            .OnColumn("EntityAnalysisModelId").Ascending()
-            .OnColumn("Deleted").Ascending();
-
-        Insert.IntoTable("EntityAnalysisModelTag").Row(new
+        public override void Up()
         {
-            EntityAnalysisModelId = 1,
-            Name = "Fraud",
-            Active = 1,
-            CreatedDate = DateTime.Now,
-            CreatedUser = "Administrator",
-            Version = 1
-        });
-    }
+            Create.Table("EntityAnalysisModelTag")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
+                .WithColumn("Name").AsString().Nullable()
+                .WithColumn("Locked").AsByte().Nullable()
+                .WithColumn("Active").AsByte().Nullable()
+                .WithColumn("ReportTable").AsByte().Nullable()
+                .WithColumn("ResponsePayload").AsByte().Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("Deleted").AsByte().Nullable()
+                .WithColumn("DeletedDate").AsDateTime2().Nullable()
+                .WithColumn("DeletedUser").AsString().Nullable()
+                .WithColumn("Version").AsInt32().Nullable()
+                .WithColumn("InheritedId").AsInt32().Nullable();
 
-    public override void Down()
-    {
-        Delete.Table("EntityAnalysisModelTag");
+            Create.Index().OnTable("EntityAnalysisModelTag")
+                .OnColumn("EntityAnalysisModelId").Ascending()
+                .OnColumn("Deleted").Ascending();
+
+            Insert.IntoTable("EntityAnalysisModelTag").Row(new
+            {
+                EntityAnalysisModelId = 1,
+                Name = "Fraud",
+                Active = 1,
+                CreatedDate = DateTime.Now,
+                CreatedUser = "Administrator",
+                Version = 1
+            });
+        }
+
+        public override void Down()
+        {
+            Delete.Table("EntityAnalysisModelTag");
+        }
     }
 }

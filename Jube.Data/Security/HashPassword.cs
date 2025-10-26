@@ -11,31 +11,36 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Text;
-using Isopoh.Cryptography.Argon2;
-using LinqToDB.Common;
-
-namespace Jube.Data.Security;
-
-public static class HashPassword
+namespace Jube.Data.Security
 {
-    public static string GenerateHash(string password, string key = null)
-    {
-        return key.IsNullOrEmpty() ? Argon2.Hash(password) : Argon2.Hash(password, key);
-    }
+    using System;
+    using System.Text;
+    using Dictionary.Extensions.System.String;
+    using Isopoh.Cryptography.Argon2;
 
-    public static bool Verify(string passwordHash, string password, string key = null)
+    public static class HashPassword
     {
-        return key.IsNullOrEmpty() ? Argon2.Verify(passwordHash, password) : Argon2.Verify(passwordHash, password, key);
-    }
+        public static string GenerateHash(string password, string key = null)
+        {
+            return key != null && key.IsNullOrEmpty() ? Argon2.Hash(password) : Argon2.Hash(password, key);
+        }
 
-    public static string CreatePasswordInClear(int length)
-    {
-        const string valid = "!@#$%^&*()abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
-        var res = new StringBuilder();
-        var rnd = new Random();
-        while (0 < length--) res.Append(valid[rnd.Next(valid.Length)]);
-        return res.ToString();
+        public static bool Verify(string passwordHash, string password, string key = null)
+        {
+            return key != null && (key.IsNullOrEmpty() ? Argon2.Verify(passwordHash, password) : Argon2.Verify(passwordHash, password, key));
+        }
+
+        public static string CreatePasswordInClear(int length)
+        {
+            const string valid = "!@#$%^&*()abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+            var res = new StringBuilder();
+            var rnd = new Random();
+            while (0 < length--)
+            {
+                res.Append(valid[rnd.Next(valid.Length)]);
+            }
+
+            return res.ToString();
+        }
     }
 }

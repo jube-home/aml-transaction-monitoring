@@ -14,33 +14,34 @@
 using System;
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220430125452)]
-public class AddUserInTenantTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220430125452)]
+    public class AddUserInTenantTableIndex : Migration
     {
-        Create.Table("UserInTenant")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("User").AsString().Nullable()
-            .WithColumn("TenantRegistryId").AsInt32().Nullable()
-            .WithColumn("SwitchedUser").AsString().Nullable()
-            .WithColumn("SwitchedDate").AsDateTime().Nullable();
-
-        Create.Index().OnTable("UserInTenant").OnColumn("User").Ascending();
-
-        Insert.IntoTable("UserInTenant").Row(new
+        public override void Up()
         {
-            User = "Administrator",
-            TenantRegistryId = 1,
-            SwitchedDate = DateTime.Now,
-            SwitchedUser = "Administrator"
-        });
-    }
+            Create.Table("UserInTenant")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("User").AsString().Nullable()
+                .WithColumn("TenantRegistryId").AsInt32().Nullable()
+                .WithColumn("SwitchedUser").AsString().Nullable()
+                .WithColumn("SwitchedDate").AsDateTime().Nullable();
 
-    public override void Down()
-    {
-        Delete.Table("UserInTenant");
+            Create.Index().OnTable("UserInTenant").OnColumn("User").Ascending();
+
+            Insert.IntoTable("UserInTenant").Row(new
+            {
+                User = "Administrator",
+                TenantRegistryId = 1,
+                SwitchedDate = DateTime.Now,
+                SwitchedUser = "Administrator"
+            });
+        }
+
+        public override void Down()
+        {
+            Delete.Table("UserInTenant");
+        }
     }
 }

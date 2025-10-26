@@ -13,25 +13,26 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124959)]
-public class AddExhaustiveSearchInstanceTrialInstanceActivationFunctionTrialTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124959)]
+    public class AddExhaustiveSearchInstanceTrialInstanceActivationFunctionTrialTableIndex : Migration
     {
-        Create.Table("ExhaustiveSearchInstanceTrialInstanceActivationFunctionTrial")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("ActivationFunctionId").AsInt32().Nullable()
-            .WithColumn("ExhaustiveSearchInstanceTrialInstanceId").AsInt32().Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable();
+        public override void Up()
+        {
+            Create.Table("ExhaustiveSearchInstanceTrialInstanceActivationFunctionTrial")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("ActivationFunctionId").AsInt32().Nullable()
+                .WithColumn("ExhaustiveSearchInstanceTrialInstanceId").AsInt32().Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable();
 
-        Create.Index().OnTable("ExhaustiveSearchInstanceTrialInstanceActivationFunctionTrial")
-            .OnColumn("ExhaustiveSearchInstanceTrialInstanceId").Ascending();
-    }
+            Create.Index().OnTable("ExhaustiveSearchInstanceTrialInstanceActivationFunctionTrial")
+                .OnColumn("ExhaustiveSearchInstanceTrialInstanceId").Ascending();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("ExhaustiveSearchInstanceTrialInstanceActivationFunctionTrial");
+        public override void Down()
+        {
+            Delete.Table("ExhaustiveSearchInstanceTrialInstanceActivationFunctionTrial");
+        }
     }
 }

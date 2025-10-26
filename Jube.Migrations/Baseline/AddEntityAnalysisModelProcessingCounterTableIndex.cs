@@ -13,33 +13,34 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124938)]
-public class AddAddEntityAnalysisModelProcessingCounterTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124938)]
+    public class AddAddEntityAnalysisModelProcessingCounterTableIndex : Migration
     {
-        Create.Table("EntityAnalysisModelProcessingCounter")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable()
-            .WithColumn("Instance").AsString().Nullable()
-            .WithColumn("ModelInvoke").AsInt32().Nullable()
-            .WithColumn("GatewayMatch").AsInt32().Nullable()
-            .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
-            .WithColumn("ResponseElevation").AsInt32().Nullable()
-            .WithColumn("ResponseElevationSum").AsDouble().Nullable()
-            .WithColumn("ResponseElevationValueLimit").AsInt32().Nullable()
-            .WithColumn("ResponseElevationLimit").AsInt32().Nullable()
-            .WithColumn("ActivationWatcher").AsInt32().Nullable()
-            .WithColumn("ResponseElevationValueGatewayLimit").AsInt32().Nullable();
+        public override void Up()
+        {
+            Create.Table("EntityAnalysisModelProcessingCounter")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable()
+                .WithColumn("Instance").AsString().Nullable()
+                .WithColumn("ModelInvoke").AsInt32().Nullable()
+                .WithColumn("GatewayMatch").AsInt32().Nullable()
+                .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
+                .WithColumn("ResponseElevation").AsInt32().Nullable()
+                .WithColumn("ResponseElevationSum").AsDouble().Nullable()
+                .WithColumn("ResponseElevationValueLimit").AsInt32().Nullable()
+                .WithColumn("ResponseElevationLimit").AsInt32().Nullable()
+                .WithColumn("ActivationWatcher").AsInt32().Nullable()
+                .WithColumn("ResponseElevationValueGatewayLimit").AsInt32().Nullable();
 
-        Create.Index().OnTable("EntityAnalysisModelProcessingCounter")
-            .OnColumn("EntityAnalysisModelId").Ascending();
-    }
+            Create.Index().OnTable("EntityAnalysisModelProcessingCounter")
+                .OnColumn("EntityAnalysisModelId").Ascending();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("EntityAnalysisModelProcessingCounter");
+        public override void Down()
+        {
+            Delete.Table("EntityAnalysisModelProcessingCounter");
+        }
     }
 }

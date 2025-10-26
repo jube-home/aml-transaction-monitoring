@@ -11,6 +11,7 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-namespace Jube.Service.Exceptions.Authentication;
-
-public class NoUserException : Exception;
+namespace Jube.Service.Exceptions.Authentication
+{
+    public class NoUserException : Exception;
+}

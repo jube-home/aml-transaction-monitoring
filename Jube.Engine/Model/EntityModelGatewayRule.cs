@@ -11,24 +11,26 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System.Collections.Generic;
-using System.Reflection;
-using log4net;
-
-namespace Jube.Engine.Model;
-
-public class EntityModelGatewayRule
+namespace Jube.Engine.Model
 {
-    public delegate bool Match(Dictionary<string, object> data, Dictionary<string, List<string>> list,
-        Dictionary<string, double> kvp, ILog log);
+    using System.Collections.Generic;
+    using System.Reflection;
+    using Dictionary;
+    using log4net;
 
-    public int EntityAnalysisModelGatewayRuleId { get; init; }
-    public int RuleScriptTypeId { get; set; }
-    public string GatewayRuleScript { get; set; }
-    public string Name { get; set; }
-    public double GatewaySample { get; set; }
-    public Assembly GatewayRuleCompile { get; set; }
-    public Match GatewayRuleCompileDelegate { get; set; }
-    public double MaxResponseElevation { get; set; }
-    public int Counter { get; set; }
+    public class EntityModelGatewayRule
+    {
+        public delegate bool Match(DictionaryNoBoxing data, Dictionary<string, List<string>> list,
+            PooledDictionary<string, double> kvp, ILog log);
+
+        public int EntityAnalysisModelGatewayRuleId { get; init; }
+        public int RuleScriptTypeId { get; set; }
+        public string GatewayRuleScript { get; set; }
+        public string Name { get; set; }
+        public double GatewaySample { get; set; }
+        public Assembly GatewayRuleCompile { get; set; }
+        public Match GatewayRuleCompileDelegate { get; set; }
+        public double MaxResponseElevation { get; set; }
+        public int Counter { get; set; }
+    }
 }

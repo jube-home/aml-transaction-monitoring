@@ -11,93 +11,94 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System.Collections.Generic;
-using System.Linq;
-using Jube.Data.Context;
-
-namespace Jube.Data.Query;
-
-public class GetExhaustiveSearchInstancePromotedTrialInstanceVariableQuery
+namespace Jube.Data.Query
 {
-    private readonly DbContext _dbContext;
-    private readonly int? _tenantRegistryId;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Context;
 
-    public GetExhaustiveSearchInstancePromotedTrialInstanceVariableQuery(DbContext dbContext, string userName)
+    public class GetExhaustiveSearchInstancePromotedTrialInstanceVariableQuery
     {
-        _dbContext = dbContext;
-        _tenantRegistryId = _dbContext.UserInTenant.Where(w => w.User == userName)
-            .Select(s => s.TenantRegistryId).FirstOrDefault();
-    }
+        private readonly DbContext dbContext;
+        private readonly int? tenantRegistryId;
 
-    public GetExhaustiveSearchInstancePromotedTrialInstanceVariableQuery(DbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
+        public GetExhaustiveSearchInstancePromotedTrialInstanceVariableQuery(DbContext dbContext, string userName)
+        {
+            this.dbContext = dbContext;
+            tenantRegistryId = this.dbContext.UserInTenant.Where(w => w.User == userName)
+                .Select(s => s.TenantRegistryId).FirstOrDefault();
+        }
 
-    private IEnumerable<Dto> Execute
-        (int promotedExhaustiveSearchInstanceTrialInstanceId)
-    {
-        var query = from v in
-                _dbContext.ExhaustiveSearchInstanceVariable
-            join t in _dbContext.ExhaustiveSearchInstanceTrialInstanceVariable
-                on v.Id equals t.ExhaustiveSearchInstanceVariableId
-            from p in _dbContext.ExhaustiveSearchInstanceTrialInstanceVariablePrescription
-                .Where(w1 => w1.ExhaustiveSearchInstanceTrialInstanceVariableId == t.Id).DefaultIfEmpty()
-            from s in _dbContext.ExhaustiveSearchInstancePromotedTrialInstanceSensitivity
-                .Where(w2 => w2.ExhaustiveSearchInstanceTrialInstanceVariableId == t.Id).DefaultIfEmpty()
-            where (t.Removed == 0 || t.Removed == null)
-                  && t.ExhaustiveSearchInstanceTrialInstanceId == promotedExhaustiveSearchInstanceTrialInstanceId
-            orderby t.VariableSequence
-            select new Dto
-            {
-                Id = v.Id,
-                Name = v.Name,
-                Mean = v.Mean ?? v.Mean.Value,
-                Maximum = v.Maximum ?? v.Maximum.Value,
-                Minimum = v.Minimum ?? v.Minimum.Value,
-                StandardDeviation = v.StandardDeviation ?? v.StandardDeviation.Value,
-                NormalisationTypeId = v.NormalisationTypeId.GetValueOrDefault(),
-                EmptyRange = v.Maximum + v.Minimum == 0,
-                VariableSequence = v.VariableSequence.GetValueOrDefault(),
-                ProcessingTypeId = v.ProcessingTypeId.GetValueOrDefault()
-            };
-        return query;
-    }
+        public GetExhaustiveSearchInstancePromotedTrialInstanceVariableQuery(DbContext dbContext)
+        {
+            this.dbContext = dbContext;
+        }
 
-    public IEnumerable<Dto> ExecuteByExhaustiveSearchInstanceTrialInstanceId(
-        int exhaustiveSearchInstanceTrialInstanceId)
-    {
-        return Execute(exhaustiveSearchInstanceTrialInstanceId);
-    }
+        private IEnumerable<Dto> Execute
+            (int promotedExhaustiveSearchInstanceTrialInstanceId)
+        {
+            var query = from v in
+                    dbContext.ExhaustiveSearchInstanceVariable
+                join t in dbContext.ExhaustiveSearchInstanceTrialInstanceVariable
+                    on v.Id equals t.ExhaustiveSearchInstanceVariableId
+                from p in dbContext.ExhaustiveSearchInstanceTrialInstanceVariablePrescription
+                    .Where(w1 => w1.ExhaustiveSearchInstanceTrialInstanceVariableId == t.Id).DefaultIfEmpty()
+                from s in dbContext.ExhaustiveSearchInstancePromotedTrialInstanceSensitivity
+                    .Where(w2 => w2.ExhaustiveSearchInstanceTrialInstanceVariableId == t.Id).DefaultIfEmpty()
+                where (t.Removed == 0 || t.Removed == null)
+                      && t.ExhaustiveSearchInstanceTrialInstanceId == promotedExhaustiveSearchInstanceTrialInstanceId
+                orderby t.VariableSequence
+                select new Dto
+                {
+                    Id = v.Id,
+                    Name = v.Name,
+                    Mean = v.Mean ?? v.Mean.Value,
+                    Maximum = v.Maximum ?? v.Maximum.Value,
+                    Minimum = v.Minimum ?? v.Minimum.Value,
+                    StandardDeviation = v.StandardDeviation ?? v.StandardDeviation.Value,
+                    NormalisationTypeId = v.NormalisationTypeId.GetValueOrDefault(),
+                    EmptyRange = v.Maximum + v.Minimum == 0,
+                    VariableSequence = v.VariableSequence.GetValueOrDefault(),
+                    ProcessingTypeId = v.ProcessingTypeId.GetValueOrDefault()
+                };
+            return query;
+        }
 
-    public IEnumerable<Dto> ExecuteByExhaustiveSearchInstanceId(
-        int exhaustiveSearchInstanceId)
-    {
-        var promotedExhaustiveSearchInstanceTrialInstanceId = _dbContext
-            .ExhaustiveSearchInstancePromotedTrialInstance
-            .Where(w =>
-                w.ExhaustiveSearchInstanceTrialInstance.ExhaustiveSearchInstance.Id == exhaustiveSearchInstanceId
-                && w.Active == 1
-                && (w.ExhaustiveSearchInstanceTrialInstance.ExhaustiveSearchInstance
-                    .EntityAnalysisModel.TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue))
-            .OrderByDescending(o => o.Id)
-            .Select(s => s.ExhaustiveSearchInstanceTrialInstanceId.GetValueOrDefault())
-            .FirstOrDefault();
+        public IEnumerable<Dto> ExecuteByExhaustiveSearchInstanceTrialInstanceId(
+            int exhaustiveSearchInstanceTrialInstanceId)
+        {
+            return Execute(exhaustiveSearchInstanceTrialInstanceId);
+        }
 
-        return Execute(promotedExhaustiveSearchInstanceTrialInstanceId);
-    }
+        public IEnumerable<Dto> ExecuteByExhaustiveSearchInstanceId(
+            int exhaustiveSearchInstanceId)
+        {
+            var promotedExhaustiveSearchInstanceTrialInstanceId = dbContext
+                .ExhaustiveSearchInstancePromotedTrialInstance
+                .Where(w =>
+                    w.ExhaustiveSearchInstanceTrialInstance.ExhaustiveSearchInstance.Id == exhaustiveSearchInstanceId
+                    && w.Active == 1
+                    && (w.ExhaustiveSearchInstanceTrialInstance.ExhaustiveSearchInstance
+                        .EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue))
+                .OrderByDescending(o => o.Id)
+                .Select(s => s.ExhaustiveSearchInstanceTrialInstanceId.GetValueOrDefault())
+                .FirstOrDefault();
 
-    public class Dto
-    {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public double Mean { get; set; }
-        public double Maximum { get; set; }
-        public double Minimum { get; set; }
-        public double StandardDeviation { get; set; }
-        public byte NormalisationTypeId { get; set; }
-        public bool EmptyRange { get; set; }
-        public int VariableSequence { get; set; }
-        public int ProcessingTypeId { get; set; }
+            return Execute(promotedExhaustiveSearchInstanceTrialInstanceId);
+        }
+
+        public class Dto
+        {
+            public int Id { get; set; }
+            public string Name { get; set; }
+            public double Mean { get; set; }
+            public double Maximum { get; set; }
+            public double Minimum { get; set; }
+            public double StandardDeviation { get; set; }
+            public byte NormalisationTypeId { get; set; }
+            public bool EmptyRange { get; set; }
+            public int VariableSequence { get; set; }
+            public int ProcessingTypeId { get; set; }
+        }
     }
 }

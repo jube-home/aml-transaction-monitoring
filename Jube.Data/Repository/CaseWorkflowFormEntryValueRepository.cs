@@ -11,52 +11,53 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System.Collections.Generic;
-using System.Linq;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB;
-
-namespace Jube.Data.Repository;
-
-public class CaseWorkflowFormEntryValueRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
-    private readonly int? _tenantRegistryId;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Context;
+    using LinqToDB;
+    using Poco;
 
-    public CaseWorkflowFormEntryValueRepository(DbContext dbContext, string userName)
+    public class CaseWorkflowFormEntryValueRepository
     {
-        _dbContext = dbContext;
-        _tenantRegistryId = dbContext.UserInTenant.Where(w => w.User == userName)
-            .Select(s => s.TenantRegistryId).FirstOrDefault();
-    }
+        private readonly DbContext dbContext;
+        private readonly int? tenantRegistryId;
 
-    public CaseWorkflowFormEntryValueRepository(DbContext dbContext, int tenantRegistryId)
-    {
-        _dbContext = dbContext;
-        _tenantRegistryId = tenantRegistryId;
-    }
+        public CaseWorkflowFormEntryValueRepository(DbContext dbContext, string userName)
+        {
+            this.dbContext = dbContext;
+            tenantRegistryId = dbContext.UserInTenant.Where(w => w.User == userName)
+                .Select(s => s.TenantRegistryId).FirstOrDefault();
+        }
 
-    public CaseWorkflowFormEntryValueRepository(DbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
+        public CaseWorkflowFormEntryValueRepository(DbContext dbContext, int tenantRegistryId)
+        {
+            this.dbContext = dbContext;
+            this.tenantRegistryId = tenantRegistryId;
+        }
 
-    public IEnumerable<CaseWorkflowFormEntryValue> GetByCaseWorkflowFormEntryId(int caseWorkflowFormEntryId)
-    {
-        return _dbContext.CaseWorkflowFormEntryValue.Where(w
-                => (w.CaseWorkflowsFormsEntry.Case.CaseWorkflow.EntityAnalysisModel.TenantRegistryId ==
-                    _tenantRegistryId ||
-                    !_tenantRegistryId.HasValue)
-                   && (w.CaseWorkflowFormEntryId == caseWorkflowFormEntryId)
-                   & (w.CaseWorkflowsFormsEntry.Case.CaseWorkflow.EntityAnalysisModel.Deleted == 0 ||
-                      w.CaseWorkflowsFormsEntry.Case.CaseWorkflow.EntityAnalysisModel.Deleted == null))
-            .OrderByDescending(o => o.Id);
-    }
+        public CaseWorkflowFormEntryValueRepository(DbContext dbContext)
+        {
+            this.dbContext = dbContext;
+        }
 
-    public CaseWorkflowFormEntryValue Insert(CaseWorkflowFormEntryValue model)
-    {
-        model.Id = _dbContext.InsertWithInt32Identity(model);
-        return model;
+        public IEnumerable<CaseWorkflowFormEntryValue> GetByCaseWorkflowFormEntryId(int caseWorkflowFormEntryId)
+        {
+            return dbContext.CaseWorkflowFormEntryValue.Where(w
+                    => (w.CaseWorkflowsFormsEntry.Case.CaseWorkflow.EntityAnalysisModel.TenantRegistryId ==
+                        tenantRegistryId ||
+                        !tenantRegistryId.HasValue)
+                       && w.CaseWorkflowFormEntryId == caseWorkflowFormEntryId
+                       & (w.CaseWorkflowsFormsEntry.Case.CaseWorkflow.EntityAnalysisModel.Deleted == 0 ||
+                          w.CaseWorkflowsFormsEntry.Case.CaseWorkflow.EntityAnalysisModel.Deleted == null))
+                .OrderByDescending(o => o.Id);
+        }
+
+        public CaseWorkflowFormEntryValue Insert(CaseWorkflowFormEntryValue model)
+        {
+            model.Id = dbContext.InsertWithInt32Identity(model);
+            return model;
+        }
     }
 }

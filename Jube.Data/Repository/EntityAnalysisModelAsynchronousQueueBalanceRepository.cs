@@ -11,55 +11,56 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB;
-
-namespace Jube.Data.Repository;
-
-public class EntityAnalysisModelAsynchronousQueueBalanceRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
-    private readonly int _tenantRegistryId;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Context;
+    using LinqToDB;
+    using Poco;
 
-    public EntityAnalysisModelAsynchronousQueueBalanceRepository(DbContext dbContext, string userName)
+    public class EntityAnalysisModelAsynchronousQueueBalanceRepository
     {
-        _dbContext = dbContext;
-        _tenantRegistryId = _dbContext.UserInTenant.Where(w => w.User == userName)
-            .Select(s => s.TenantRegistryId).FirstOrDefault();
-    }
+        private readonly DbContext dbContext;
+        private readonly int tenantRegistryId;
 
-    public EntityAnalysisModelAsynchronousQueueBalanceRepository(DbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
+        public EntityAnalysisModelAsynchronousQueueBalanceRepository(DbContext dbContext, string userName)
+        {
+            this.dbContext = dbContext;
+            tenantRegistryId = this.dbContext.UserInTenant.Where(w => w.User == userName)
+                .Select(s => s.TenantRegistryId).FirstOrDefault();
+        }
 
-    public IEnumerable<EntityAnalysisModelAsynchronousQueueBalance> Get(int limit)
-    {
-        return (IOrderedQueryable<EntityAnalysisModelAsynchronousQueueBalance>)_dbContext
-            .EntityAnalysisModelAsynchronousQueueBalance
-            .Where(w => w.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId)
-            .OrderByDescending(o => o.Id)
-            .Take(limit);
-    }
+        public EntityAnalysisModelAsynchronousQueueBalanceRepository(DbContext dbContext)
+        {
+            this.dbContext = dbContext;
+        }
 
-    public IEnumerable<EntityAnalysisModelAsynchronousQueueBalance> GetByEntityModelId(Guid entityAnalysisModelGuid,
-        int limit)
-    {
-        return (IOrderedQueryable<EntityAnalysisModelAsynchronousQueueBalance>)_dbContext
-            .EntityAnalysisModelAsynchronousQueueBalance
-            .Where(w => w.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId
-                        && w.EntityAnalysisModelGuid == entityAnalysisModelGuid)
-            .OrderByDescending(o => o.Id)
-            .Take(limit);
-    }
+        public IEnumerable<EntityAnalysisModelAsynchronousQueueBalance> Get(int limit)
+        {
+            return (IOrderedQueryable<EntityAnalysisModelAsynchronousQueueBalance>)dbContext
+                .EntityAnalysisModelAsynchronousQueueBalance
+                .Where(w => w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId)
+                .OrderByDescending(o => o.Id)
+                .Take(limit);
+        }
 
-    public EntityAnalysisModelAsynchronousQueueBalance Insert(EntityAnalysisModelAsynchronousQueueBalance model)
-    {
-        model.Id = _dbContext.InsertWithInt32Identity(model);
-        return model;
+        public IEnumerable<EntityAnalysisModelAsynchronousQueueBalance> GetByEntityModelId(Guid entityAnalysisModelGuid,
+            int limit)
+        {
+            return (IOrderedQueryable<EntityAnalysisModelAsynchronousQueueBalance>)dbContext
+                .EntityAnalysisModelAsynchronousQueueBalance
+                .Where(w => w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
+                            && w.EntityAnalysisModelGuid == entityAnalysisModelGuid)
+                .OrderByDescending(o => o.Id)
+                .Take(limit);
+        }
+
+        public EntityAnalysisModelAsynchronousQueueBalance Insert(EntityAnalysisModelAsynchronousQueueBalance model)
+        {
+            model.Id = dbContext.InsertWithInt32Identity(model);
+            return model;
+        }
     }
 }

@@ -14,50 +14,51 @@
 using FluentMigrator;
 using FluentMigrator.Postgres;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124907)]
-public class AddCaseTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124907)]
+    public class AddCaseTableIndex : Migration
     {
-        Create.Table("Case")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("EntityAnalysisModelInstanceEntryGuid").AsGuid().Nullable()
-            .WithColumn("DiaryDate").AsDateTime2().Nullable()
-            .WithColumn("CaseWorkflowId").AsInt32().Nullable()
-            .WithColumn("CaseWorkflowStatusId").AsInt32().Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable()
-            .WithColumn("Locked").AsByte().Nullable()
-            .WithColumn("LockedUser").AsString().Nullable()
-            .WithColumn("LockedDate").AsDateTime2().Nullable()
-            .WithColumn("ClosedStatusId").AsByte().Nullable()
-            .WithColumn("ClosedDate").AsDateTime2().Nullable()
-            .WithColumn("ClosedUser").AsString().Nullable()
-            .WithColumn("CaseKey").AsString().Nullable()
-            .WithColumn("Diary").AsByte().Nullable()
-            .WithColumn("DiaryUser").AsString().Nullable()
-            .WithColumn("Json").AsCustom("jsonb").Nullable()
-            .WithColumn("Rating").AsByte().Nullable()
-            .WithColumn("CaseKeyValue").AsString().Nullable()
-            .WithColumn("LastClosedStatus").AsByte().Nullable()
-            .WithColumn("ClosedStatusMigrationDate").AsDateTime2().Nullable();
+        public override void Up()
+        {
+            Create.Table("Case")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("EntityAnalysisModelInstanceEntryGuid").AsGuid().Nullable()
+                .WithColumn("DiaryDate").AsDateTime2().Nullable()
+                .WithColumn("CaseWorkflowId").AsInt32().Nullable()
+                .WithColumn("CaseWorkflowStatusId").AsInt32().Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable()
+                .WithColumn("Locked").AsByte().Nullable()
+                .WithColumn("LockedUser").AsString().Nullable()
+                .WithColumn("LockedDate").AsDateTime2().Nullable()
+                .WithColumn("ClosedStatusId").AsByte().Nullable()
+                .WithColumn("ClosedDate").AsDateTime2().Nullable()
+                .WithColumn("ClosedUser").AsString().Nullable()
+                .WithColumn("CaseKey").AsString().Nullable()
+                .WithColumn("Diary").AsByte().Nullable()
+                .WithColumn("DiaryUser").AsString().Nullable()
+                .WithColumn("Json").AsCustom("jsonb").Nullable()
+                .WithColumn("Rating").AsByte().Nullable()
+                .WithColumn("CaseKeyValue").AsString().Nullable()
+                .WithColumn("LastClosedStatus").AsByte().Nullable()
+                .WithColumn("ClosedStatusMigrationDate").AsDateTime2().Nullable();
 
-        Create.Index().OnTable("Case")
-            .OnColumn("CaseKey").Ascending()
-            .OnColumn("CaseKeyValue").Ascending()
-            .OnColumn("CaseWorkflowId").Ascending()
-            .OnColumn("ClosedStatusId").Ascending();
+            Create.Index().OnTable("Case")
+                .OnColumn("CaseKey").Ascending()
+                .OnColumn("CaseKeyValue").Ascending()
+                .OnColumn("CaseWorkflowId").Ascending()
+                .OnColumn("ClosedStatusId").Ascending();
 
-        Create.Index()
-            .OnTable("Case")
-            .OnColumn("Json").Ascending()
-            .WithOptions()
-            .UsingGin();
-    }
+            Create.Index()
+                .OnTable("Case")
+                .OnColumn("Json").Ascending()
+                .WithOptions()
+                .UsingGin();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("Case");
+        public override void Down()
+        {
+            Delete.Table("Case");
+        }
     }
 }

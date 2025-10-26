@@ -2,78 +2,87 @@
  *
  * This file is part of Jube™ software.
  *
- * Jube™ is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License 
+ * Jube™ is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License
  * as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
- * Jube™ is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty  
+ * Jube™ is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
 
- * You should have received a copy of the GNU Affero General Public License along with Jube™. If not, 
+ * You should have received a copy of the GNU Affero General Public License along with Jube™. If not,
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using Jube.App.Code;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using Jube.Data.Repository;
-using Jube.Engine.Helpers;
-using log4net;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-
 namespace Jube.App.Controllers.Helper
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using Code;
+    using Data.Context;
+    using Data.Poco;
+    using Data.Repository;
+    using DynamicEnvironment;
+    using log4net;
+    using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.AspNetCore.Mvc;
+
     [Route("api/[controller]")]
     [Produces("application/json")]
     [Authorize]
     public class EntityAnalysisModelDictionaryCsvFileUploadController : Controller
     {
-        private readonly EntityAnalysisModelDictionaryCsvFileUploadRepository
-            _entityAnalysisModelDictionaryCsvFileUploadRepository;
 
-        private readonly DbContext _dbContext;
-        private readonly EntityAnalysisModelDictionaryKvpRepository _entityAnalysisModelDictionaryKvpRepository;
-        private readonly ILog _log;
-        private readonly PermissionValidation _permissionValidation;
-        private readonly string _userName;
+        private readonly DbContext dbContext;
+        private readonly EntityAnalysisModelDictionaryCsvFileUploadRepository
+            entityAnalysisModelDictionaryCsvFileUploadRepository;
+        private readonly EntityAnalysisModelDictionaryKvpRepository entityAnalysisModelDictionaryKvpRepository;
+        private readonly ILog log;
+        private readonly PermissionValidation permissionValidation;
+        private readonly string userName;
 
         public EntityAnalysisModelDictionaryCsvFileUploadController(ILog log, IHttpContextAccessor httpContextAccessor,
-            DynamicEnvironment.DynamicEnvironment dynamicEnvironment)
+            DynamicEnvironment dynamicEnvironment)
         {
             if (httpContextAccessor.HttpContext?.User.Identity != null)
-                _userName = httpContextAccessor.HttpContext.User.Identity.Name;
-            _log = log;
+            {
+                userName = httpContextAccessor.HttpContext.User.Identity.Name;
+            }
 
-            _dbContext =
+            this.log = log;
+
+            dbContext =
                 DataConnectionDbContext.GetDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
-            _permissionValidation = new PermissionValidation(_dbContext, _userName);
+            permissionValidation = new PermissionValidation(dbContext, userName);
 
-            _entityAnalysisModelDictionaryKvpRepository =
-                new EntityAnalysisModelDictionaryKvpRepository(_dbContext, _userName);
+            entityAnalysisModelDictionaryKvpRepository =
+                new EntityAnalysisModelDictionaryKvpRepository(dbContext, userName);
 
-            _entityAnalysisModelDictionaryCsvFileUploadRepository =
-                new EntityAnalysisModelDictionaryCsvFileUploadRepository(_dbContext, _userName);
+            entityAnalysisModelDictionaryCsvFileUploadRepository =
+                new EntityAnalysisModelDictionaryCsvFileUploadRepository(dbContext, userName);
         }
-        
+
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                _dbContext.Close();
-                _dbContext.Dispose();
+                dbContext.Close();
+                dbContext.Dispose();
             }
             base.Dispose(disposing);
         }
-        
+
         [HttpPost]
         public IActionResult Upload(List<IFormFile> files, int entityAnalysisModelDictionaryId)
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] {4})) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        4
+                    }))
+                {
+                    return Forbid();
+                }
 
                 foreach (var file in files)
                 {
@@ -83,12 +92,13 @@ namespace Jube.App.Controllers.Helper
                     var errors = 0;
 
                     while (reader.Peek() >= 0)
+                    {
                         try
                         {
                             var splits = reader.ReadLine()?.Split(",");
                             if (splits != null)
                             {
-                                var entityAnalysisModelDictionaryKvp = _entityAnalysisModelDictionaryKvpRepository
+                                var entityAnalysisModelDictionaryKvp = entityAnalysisModelDictionaryKvpRepository
                                     .GetByIdKvpKey(entityAnalysisModelDictionaryId,
                                         splits[0]);
 
@@ -100,17 +110,17 @@ namespace Jube.App.Controllers.Helper
                                         {
                                             EntityAnalysisModelDictionaryId = entityAnalysisModelDictionaryId,
                                             KvpKey = splits[0],
-                                            KvpValue = double.Parse(splits[1])
+                                            KvpValue = Double.Parse(splits[1])
                                         };
-                                    
-                                        _entityAnalysisModelDictionaryKvpRepository.Insert(
+
+                                        entityAnalysisModelDictionaryKvpRepository.Insert(
                                             entityAnalysisModelsDictionaryKvp);
                                     }
                                     else
                                     {
-                                        entityAnalysisModelDictionaryKvp.KvpValue = double.Parse(splits[1]);
-                                        _entityAnalysisModelDictionaryKvpRepository.Update(entityAnalysisModelDictionaryKvp);
-                                    }   
+                                        entityAnalysisModelDictionaryKvp.KvpValue = Double.Parse(splits[1]);
+                                        entityAnalysisModelDictionaryKvpRepository.Update(entityAnalysisModelDictionaryKvp);
+                                    }
                                 }
                             }
 
@@ -118,8 +128,9 @@ namespace Jube.App.Controllers.Helper
                         }
                         catch (Exception e)
                         {
-                            _log.Error(e.ToString());
+                            log.Error(e.ToString());
                         }
+                    }
 
                     var entityAnalysisModelDictionaryCsvFileUpload = new EntityAnalysisModelDictionaryCsvFileUpload
                     {
@@ -130,7 +141,7 @@ namespace Jube.App.Controllers.Helper
                         EntityAnalysisModelDictionaryId = entityAnalysisModelDictionaryId
                     };
 
-                    _entityAnalysisModelDictionaryCsvFileUploadRepository.Insert(
+                    entityAnalysisModelDictionaryCsvFileUploadRepository.Insert(
                         entityAnalysisModelDictionaryCsvFileUpload);
                 }
 
@@ -138,7 +149,7 @@ namespace Jube.App.Controllers.Helper
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }

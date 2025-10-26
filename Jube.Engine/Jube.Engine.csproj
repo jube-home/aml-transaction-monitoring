@@ -14,9 +14,9 @@
         <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="3.8.0"/>
         <PackageReference Include="Microsoft.VisualBasic" Version="10.3.0"/>
         <PackageReference Include="NEST" Version="7.3.1"/>
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.1"/>
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.4"/>
         <PackageReference Include="RabbitMQ.Client" Version="6.2.1"/>
-        <PackageReference Include="StackExchange.Redis" Version="2.7.33"/>
+        <PackageReference Include="StackExchange.Redis" Version="2.9.32"/>
         <PackageReference Include="System.Buffers" Version="4.5.0"/>
         <PackageReference Include="System.ComponentModel.Composition" Version="5.0.0"/>
         <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0"/>
@@ -39,8 +39,10 @@
         <ProjectReference Include="..\Accord.Math\Accord.Math.csproj"/>
         <ProjectReference Include="..\Accord.Neuro\Accord.Neuro.csproj"/>
         <ProjectReference Include="..\Accord.Statistics\Accord.Statistics.csproj"/>
+        <ProjectReference Include="..\Jube.Cache\Jube.Cache.csproj"/>
         <ProjectReference Include="..\Jube.Data\Jube.Data.csproj"/>
         <ProjectReference Include="..\Jube.DynamicEnvironment\Jube.DynamicEnvironment.csproj"/>
+        <ProjectReference Include="..\Jube.Dictionary\Jube.Dictionary.csproj"/>
         <ProjectReference Include="..\Jube.Parser\Jube.Parser.csproj"/>
     </ItemGroup>
     <ItemGroup>

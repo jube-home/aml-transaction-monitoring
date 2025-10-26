@@ -14,65 +14,66 @@
 using FluentMigrator;
 using FluentMigrator.Postgres;
 
-namespace Jube.Migrations.Branches;
-
-[Migration(2024050107041100)]
-public class GitHubIssueBranch32 : Migration
+namespace Jube.Migrations.Branches
 {
-    public override void Up()
+    [Migration(2024050107041100)]
+    public class GitHubIssueBranch32 : Migration
     {
-        Alter.Table("CacheTtlCounterEntry")
-            .AddColumn("Value")
-            .AsInt32();
+        public override void Up()
+        {
+            Alter.Table("CacheTtlCounterEntry")
+                .AddColumn("Value")
+                .AsInt32();
 
-        Alter.Table("CacheTtlCounterEntry")
-            .AddColumn("UpdatedDate")
-            .AsDateTime2();
+            Alter.Table("CacheTtlCounterEntry")
+                .AddColumn("UpdatedDate")
+                .AsDateTime2();
 
-        Alter.Table("CacheAbstraction")
-            .AddColumn("UpdatedDate")
-            .AsDateTime2();
+            Alter.Table("CacheAbstraction")
+                .AddColumn("UpdatedDate")
+                .AsDateTime2();
 
-        Create.Index("IX_CacheTtlCounterEntry_Truncated_ReferenceDate_Value").OnTable("CacheTtlCounterEntry")
-            .OnColumn("EntityAnalysisModelId").Ascending()
-            .OnColumn("EntityAnalysisModelTtlCounterId").Ascending()
-            .OnColumn("DataName").Ascending()
-            .OnColumn("DataValue").Ascending()
-            .OnColumn("ReferenceDate")
-            .Ascending()
-            .WithOptions().Unique().Include("Value");
+            Create.Index("IX_CacheTtlCounterEntry_Truncated_ReferenceDate_Value").OnTable("CacheTtlCounterEntry")
+                .OnColumn("EntityAnalysisModelId").Ascending()
+                .OnColumn("EntityAnalysisModelTtlCounterId").Ascending()
+                .OnColumn("DataName").Ascending()
+                .OnColumn("DataValue").Ascending()
+                .OnColumn("ReferenceDate")
+                .Ascending()
+                .WithOptions().Unique().Include("Value");
 
-        Create.Table("CacheReferenceDate")
-            .WithColumn("Id").AsInt64().PrimaryKey().Identity()
-            .WithColumn("EntityAnalysisModelId").AsInt64().Nullable()
-            .WithColumn("ReferenceDate").AsDateTime2().Nullable()
-            .WithColumn("UpdatedDate").AsDateTime2().Nullable();
+            Create.Table("CacheReferenceDate")
+                .WithColumn("Id").AsInt64().PrimaryKey().Identity()
+                .WithColumn("EntityAnalysisModelId").AsInt64().Nullable()
+                .WithColumn("ReferenceDate").AsDateTime2().Nullable()
+                .WithColumn("UpdatedDate").AsDateTime2().Nullable();
 
-        Create.Index().OnTable("CacheReferenceDate")
-            .OnColumn("EntityAnalysisModelId").Ascending().OnColumn("EntityAnalysisModelId")
-            .Ascending().WithOptions().Unique().Include("ReferenceDate");
+            Create.Index().OnTable("CacheReferenceDate")
+                .OnColumn("EntityAnalysisModelId").Ascending().OnColumn("EntityAnalysisModelId")
+                .Ascending().WithOptions().Unique().Include("ReferenceDate");
 
-        Alter.Table("EntityAnalysisModelRequestXpath").AddColumn("SearchKeyTtlInterval").AsString().Nullable();
-        Update.Table("EntityAnalysisModelRequestXpath").Set(new {SearchKeyTtlInterval = "d"}).AllRows();
+            Alter.Table("EntityAnalysisModelRequestXpath").AddColumn("SearchKeyTtlInterval").AsString().Nullable();
+            Update.Table("EntityAnalysisModelRequestXpath").Set(new {SearchKeyTtlInterval = "d"}).AllRows();
 
-        Alter.Table("EntityAnalysisModelRequestXpath").AddColumn("SearchKeyTtlIntervalValue").AsInt32().Nullable();
-        Update.Table("EntityAnalysisModelRequestXpath").Set(new {SearchKeyTtlIntervalValue = 1}).AllRows();
+            Alter.Table("EntityAnalysisModelRequestXpath").AddColumn("SearchKeyTtlIntervalValue").AsInt32().Nullable();
+            Update.Table("EntityAnalysisModelRequestXpath").Set(new {SearchKeyTtlIntervalValue = 1}).AllRows();
 
-        Alter.Table("EntityAnalysisModelRequestXpath").AddColumn("SearchKeyFetchLimit").AsInt32().Nullable();
-        Update.Table("EntityAnalysisModelRequestXpath").Set(new {SearchKeyFetchLimit = 100}).AllRows();
+            Alter.Table("EntityAnalysisModelRequestXpath").AddColumn("SearchKeyFetchLimit").AsInt32().Nullable();
+            Update.Table("EntityAnalysisModelRequestXpath").Set(new {SearchKeyFetchLimit = 100}).AllRows();
 
-        Alter.Table("EntityAnalysisModel").AddColumn("CacheTtlInterval").AsString().Nullable();
-        Update.Table("EntityAnalysisModel").Set(new {CacheTtlInterval = "d"}).AllRows();
+            Alter.Table("EntityAnalysisModel").AddColumn("CacheTtlInterval").AsString().Nullable();
+            Update.Table("EntityAnalysisModel").Set(new {CacheTtlInterval = "d"}).AllRows();
 
-        Alter.Table("EntityAnalysisModel").AddColumn("CacheTtlIntervalValue").AsInt32().Nullable();
-        Update.Table("EntityAnalysisModel").Set(new {CacheTtlIntervalValue = 1}).AllRows();
-    }
+            Alter.Table("EntityAnalysisModel").AddColumn("CacheTtlIntervalValue").AsInt32().Nullable();
+            Update.Table("EntityAnalysisModel").Set(new {CacheTtlIntervalValue = 1}).AllRows();
+        }
 
-    public override void Down()
-    {
-        Delete.Column("Value")
-            .FromTable("CacheTtlCounterEntry");
+        public override void Down()
+        {
+            Delete.Column("Value")
+                .FromTable("CacheTtlCounterEntry");
 
-        Delete.Index("IX_CacheTtlCounterEntry_Truncated_ReferenceDate_Value");
+            Delete.Index("IX_CacheTtlCounterEntry_Truncated_ReferenceDate_Value");
+        }
     }
 }

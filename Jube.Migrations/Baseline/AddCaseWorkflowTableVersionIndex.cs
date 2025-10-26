@@ -13,37 +13,38 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220813080600)]
-public class AddCaseWorkflowVersionTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220813080600)]
+    public class AddCaseWorkflowVersionTableIndex : Migration
     {
-        Create.Table("CaseWorkflowVersion")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("CaseWorkflowId").AsInt32().Nullable()
-            .WithColumn("Name").AsString().Nullable()
-            .WithColumn("TenantRegistryId").AsInt32().Nullable()
-            .WithColumn("CaseStatusId").AsInt32().Nullable()
-            .WithColumn("Active").AsByte().Nullable()
-            .WithColumn("Locked").AsByte().Nullable()
-            .WithColumn("EnableVisualisation").AsByte().Nullable()
-            .WithColumn("VisualisationRegistryId").AsInt32().Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("UpdatedDate").AsDateTime2().Nullable()
-            .WithColumn("UpdatedUser").AsString().Nullable()
-            .WithColumn("Deleted").AsByte().Nullable()
-            .WithColumn("DeletedUser").AsString().Nullable()
-            .WithColumn("DeletedDate").AsDateTime2().Nullable()
-            .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
-            .WithColumn("Version").AsInt32().Nullable()
-            .WithColumn("InheritedId").AsInt32().Nullable();
-    }
+        public override void Up()
+        {
+            Create.Table("CaseWorkflowVersion")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("CaseWorkflowId").AsInt32().Nullable()
+                .WithColumn("Name").AsString().Nullable()
+                .WithColumn("TenantRegistryId").AsInt32().Nullable()
+                .WithColumn("CaseStatusId").AsInt32().Nullable()
+                .WithColumn("Active").AsByte().Nullable()
+                .WithColumn("Locked").AsByte().Nullable()
+                .WithColumn("EnableVisualisation").AsByte().Nullable()
+                .WithColumn("VisualisationRegistryId").AsInt32().Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("UpdatedDate").AsDateTime2().Nullable()
+                .WithColumn("UpdatedUser").AsString().Nullable()
+                .WithColumn("Deleted").AsByte().Nullable()
+                .WithColumn("DeletedUser").AsString().Nullable()
+                .WithColumn("DeletedDate").AsDateTime2().Nullable()
+                .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
+                .WithColumn("Version").AsInt32().Nullable()
+                .WithColumn("InheritedId").AsInt32().Nullable();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("CaseWorkflowVersion");
+        public override void Down()
+        {
+            Delete.Table("CaseWorkflowVersion");
+        }
     }
 }

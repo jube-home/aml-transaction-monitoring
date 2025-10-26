@@ -11,24 +11,19 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB;
-
-namespace Jube.Data.Repository;
-
-public class ArchiveEntityAnalysisModelAbstractionEntryRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
+    using Context;
+    using LinqToDB;
+    using Poco;
 
-    public ArchiveEntityAnalysisModelAbstractionEntryRepository(DbContext dbContext)
+    public class ArchiveEntityAnalysisModelAbstractionEntryRepository(DbContext dbContext)
     {
-        _dbContext = dbContext;
-    }
 
-    public ArchiveEntityAnalysisModelAbstractionEntry Insert(ArchiveEntityAnalysisModelAbstractionEntry model)
-    {
-        model.Id = _dbContext.InsertWithInt32Identity(model);
-        return model;
+        public ArchiveEntityAnalysisModelAbstractionEntry Insert(ArchiveEntityAnalysisModelAbstractionEntry model)
+        {
+            model.Id = dbContext.InsertWithInt32Identity(model);
+            return model;
+        }
     }
 }

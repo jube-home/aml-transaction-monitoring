@@ -11,71 +11,74 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Data;
-using System.Linq;
-using Jube.Data.Context;
-using LinqToDB;
-
-namespace Jube.Data.Query;
-
-public class GetNextExhaustiveSearchInstanceQuery(DbContext dbContext)
+namespace Jube.Data.Query
 {
-    public Dto Execute()
+    using System;
+    using System.Data;
+    using System.Linq;
+    using Context;
+    using LinqToDB;
+
+    public class GetNextExhaustiveSearchInstanceQuery(DbContext dbContext)
     {
-        dbContext.BeginTransaction(IsolationLevel.Serializable);
-        try
+        public Dto Execute()
         {
-            var query = dbContext.ExhaustiveSearchInstance
-                .Where(w => w.StatusId == 0
-                            && (w.Deleted == 0 || w.Deleted == null))
-                .OrderBy(o => o.Id)
-                .Select(s =>
-                    new Dto
-                    {
-                        Id = s.Id,
-                        EntityAnalysisModelId = s.EntityAnalysisModelId.Value,
-                        TenantRegistryId = s.EntityAnalysisModel.TenantRegistryId.Value,
-                        FilterJson = s.FilterJson,
-                        FilterTokens = s.FilterTokens,
-                        FilterSql = s.FilterSql,
-                        Anomaly = s.Anomaly == 1,
-                        AnomalyProbability = s.AnomalyProbability,
-                        Filter = s.Filter == 1
-                    }
-                )
-                .FirstOrDefault();
+            dbContext.BeginTransaction(IsolationLevel.Serializable);
+            try
+            {
+                var query = dbContext.ExhaustiveSearchInstance
+                    .Where(w => w.StatusId == 0
+                                && (w.Deleted == 0 || w.Deleted == null))
+                    .OrderBy(o => o.Id)
+                    .Select(s =>
+                        new Dto
+                        {
+                            Id = s.Id,
+                            EntityAnalysisModelId = s.EntityAnalysisModelId.Value,
+                            TenantRegistryId = s.EntityAnalysisModel.TenantRegistryId.Value,
+                            FilterJson = s.FilterJson,
+                            FilterTokens = s.FilterTokens,
+                            FilterSql = s.FilterSql,
+                            Anomaly = s.Anomaly == 1,
+                            AnomalyProbability = s.AnomalyProbability,
+                            Filter = s.Filter == 1
+                        }
+                    )
+                    .FirstOrDefault();
 
-            if (query != null)
-                dbContext.ExhaustiveSearchInstance
-                    .Where(d =>
-                        d.Id ==
-                        query.Id)
-                    .Set(s => s.StatusId, Convert.ToByte(1))
-                    .Set(s => s.UpdatedDate, DateTime.Now)
-                    .Update();
+                if (query != null)
+                {
+                    dbContext.ExhaustiveSearchInstance
+                        .Where(d =>
+                            d.Id ==
+                            query.Id)
+                        .Set(s => s.StatusId, Convert.ToByte(1))
+                        .Set(s => s.UpdatedDate, DateTime.Now)
+                        .Update();
+                }
 
-            dbContext.CommitTransaction();
+                dbContext.CommitTransaction();
 
-            return query;
+                return query;
+            }
+            catch
+            {
+                dbContext.RollbackTransaction();
+                throw;
+            }
         }
-        catch
+
+        public class Dto
         {
-            dbContext.RollbackTransaction();
-            throw;
+            public int Id { get; set; }
+            public int EntityAnalysisModelId { get; set; }
+            public int TenantRegistryId { get; set; }
+            public string FilterJson { get; set; }
+            public string FilterTokens { get; set; }
+            public string FilterSql { get; set; }
+            public bool Anomaly { get; set; }
+            public double AnomalyProbability { get; set; }
+            public bool Filter { get; set; }
         }
-    }
-
-    public class Dto
-    {
-        public int Id { get; set; }
-        public int EntityAnalysisModelId { get; set; }
-        public int TenantRegistryId { get; set; }
-        public string FilterJson { get; set; }
-        public string FilterTokens { get; set; }
-        public string FilterSql { get; set; }
-        public bool Anomaly { get; set; }
-        public double AnomalyProbability { get; set; }
-        public bool Filter { get; set; }
     }
 }

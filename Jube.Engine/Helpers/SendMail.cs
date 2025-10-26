@@ -11,54 +11,71 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Net;
-using System.Net.Mail;
-using log4net;
-
-namespace Jube.Engine.Helpers;
-
-public static class SendMail
+namespace Jube.Engine.Helpers
 {
-    public static void Send(string toEmail, string subject, string body, ILog log,
-        DynamicEnvironment.DynamicEnvironment jubeEnvironment)
+    using System;
+    using System.Net;
+    using System.Net.Mail;
+    using DynamicEnvironment;
+    using log4net;
+
+    public static class SendMail
     {
-        try
+        public static void Send(string toEmail, string subject, string body, ILog log,
+            DynamicEnvironment jubeEnvironment)
         {
-            log.Info(
-                $"SMTP Client: Message received with email of {toEmail} subject of {subject} and body of {body} a connection will now be made to the SMTP server.");
-
-            var smtpServer = new SmtpClient
+            try
             {
-                UseDefaultCredentials = jubeEnvironment.AppSettings("SMTPUseDefaultCredentials")
-                    .Equals("True", StringComparison.OrdinalIgnoreCase),
-                Credentials = new NetworkCredential(jubeEnvironment.AppSettings("SMTPUser"),
-                    jubeEnvironment.AppSettings("SMTPPassword")),
-                Port = int.Parse(jubeEnvironment.AppSettings("SMTPPort")),
-                EnableSsl = jubeEnvironment.AppSettings("SMTPEnableSsl")
-                    .Equals("True", StringComparison.OrdinalIgnoreCase),
-                Host = jubeEnvironment.AppSettings("SMTPHost")
-            };
+                if (log.IsInfoEnabled)
+                {
+                    log.Info(
+                        $"SMTP Client: Message received with email of {toEmail} subject of {subject} and body of {body} a connection will now be made to the SMTP server.");
+                }
 
-            log.Info(
-                $"SMTP Client: The SMTP Server has been configured with parameters UseDefaultCredentials: {smtpServer.UseDefaultCredentials}, Port {smtpServer.Port}, EnableSsl {smtpServer.EnableSsl}, Host {smtpServer.Host} and user {jubeEnvironment.AppSettings("SMTPUser")}.");
+                var smtpServer = new SmtpClient
+                {
+                    UseDefaultCredentials = jubeEnvironment.AppSettings("SMTPUseDefaultCredentials")
+                        .Equals("True", StringComparison.OrdinalIgnoreCase),
+                    Credentials = new NetworkCredential(jubeEnvironment.AppSettings("SMTPUser"),
+                        jubeEnvironment.AppSettings("SMTPPassword")),
+                    Port = Int32.Parse(jubeEnvironment.AppSettings("SMTPPort")),
+                    EnableSsl = jubeEnvironment.AppSettings("SMTPEnableSsl")
+                        .Equals("True", StringComparison.OrdinalIgnoreCase),
+                    Host = jubeEnvironment.AppSettings("SMTPHost")
+                };
 
-            var email = new MailMessage { From = new MailAddress(jubeEnvironment.AppSettings("SMTPFrom")) };
-            email.To.Add(toEmail);
-            email.Subject = subject;
-            email.IsBodyHtml = false;
-            email.Body = body;
+                if (log.IsInfoEnabled)
+                {
+                    log.Info(
+                        $"SMTP Client: The SMTP Server has been configured with parameters UseDefaultCredentials: {smtpServer.UseDefaultCredentials}, Port {smtpServer.Port}, EnableSsl {smtpServer.EnableSsl}, Host {smtpServer.Host} and user {jubeEnvironment.AppSettings("SMTPUser")}.");
+                }
 
-            log.Info(
-                $"SMTP Client:  The message has been compiled containing to address of {toEmail}, subject of {subject}, message body of {body},  set html {email.IsBodyHtml} and is being sent from {jubeEnvironment.AppSettings("SMTPFrom")}.");
+                var email = new MailMessage
+                {
+                    From = new MailAddress(jubeEnvironment.AppSettings("SMTPFrom"))
+                };
+                email.To.Add(toEmail);
+                email.Subject = subject;
+                email.IsBodyHtml = false;
+                email.Body = body;
 
-            smtpServer.Send(email);
+                if (log.IsInfoEnabled)
+                {
+                    log.Info(
+                        $"SMTP Client:  The message has been compiled containing to address of {toEmail}, subject of {subject}, message body of {body},  set html {email.IsBodyHtml} and is being sent from {jubeEnvironment.AppSettings("SMTPFrom")}.");
+                }
 
-            log.Info("SMTP Client: Message has been sent.");
-        }
-        catch (Exception ex)
-        {
-            log.Error($"SMTP Client: A message has failed to be sent with exception {ex}.");
+                smtpServer.Send(email);
+
+                if (log.IsInfoEnabled)
+                {
+                    log.Info("SMTP Client: Message has been sent.");
+                }
+            }
+            catch (Exception ex)
+            {
+                log.Error($"SMTP Client: A message has failed to be sent with exception {ex}.");
+            }
         }
     }
 }

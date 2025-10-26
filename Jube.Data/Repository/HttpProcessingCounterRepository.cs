@@ -11,34 +11,29 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System.Collections.Generic;
-using System.Linq;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB;
-
-namespace Jube.Data.Repository;
-
-public class HttpProcessingCounterRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Context;
+    using LinqToDB;
+    using Poco;
 
-    public HttpProcessingCounterRepository(DbContext dbContext)
+    public class HttpProcessingCounterRepository(DbContext dbContext)
     {
-        _dbContext = dbContext;
-    }
 
 
-    public IEnumerable<HttpProcessingCounter> Get(int limit)
-    {
-        return (IOrderedQueryable<HttpProcessingCounter>)_dbContext.HttpProcessingCounter
-            .OrderByDescending(o => o.Id)
-            .Take(limit);
-    }
+        public IEnumerable<HttpProcessingCounter> Get(int limit)
+        {
+            return (IOrderedQueryable<HttpProcessingCounter>)dbContext.HttpProcessingCounter
+                .OrderByDescending(o => o.Id)
+                .Take(limit);
+        }
 
-    public HttpProcessingCounter Insert(HttpProcessingCounter model)
-    {
-        model.Id = _dbContext.InsertWithInt32Identity(model);
-        return model;
+        public HttpProcessingCounter Insert(HttpProcessingCounter model)
+        {
+            model.Id = dbContext.InsertWithInt32Identity(model);
+            return model;
+        }
     }
 }

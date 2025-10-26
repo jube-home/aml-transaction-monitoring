@@ -11,50 +11,51 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Text;
-using System.Threading;
-using Jube.App.Code.signalr;
-using Jube.Data.Context;
-using Jube.Data.Repository;
-using LinqToDB.Configuration;
-using log4net;
-using Microsoft.AspNetCore.SignalR;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
-using Npgsql;
-using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
-
 namespace Jube.App.Code.WatcherDispatch
 {
+    using System;
+    using System.Text;
+    using System.Threading;
+    using Data.Context;
+    using Data.Repository;
+    using DynamicEnvironment;
+    using LinqToDB.Configuration;
+    using log4net;
+    using Microsoft.AspNetCore.SignalR;
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
+    using Newtonsoft.Json.Serialization;
+    using Npgsql;
+    using RabbitMQ.Client;
+    using RabbitMQ.Client.Events;
+    using signalr;
+
     public class Relay
     {
-        private DefaultContractResolver _contractResolver;
-        private DynamicEnvironment.DynamicEnvironment _environment;
-        private ILog _log;
-        private IModel _rabbitMqChannel;
-        private IHubContext<WatcherHub> _watcherHub;
+        private DefaultContractResolver contractResolver;
+        private DynamicEnvironment dynamicEnvironment;
+        private ILog log;
+        private IModel rabbitMqChannel;
+        private IHubContext<WatcherHub> watcherHub;
         private bool Stopping { get; set; }
 
-        public void Start(IHubContext<WatcherHub> watcherHub,
-            DynamicEnvironment.DynamicEnvironment environment, ILog log, IModel rabbitMqChannel,
-            DefaultContractResolver contractResolver)
+        public void Start(IHubContext<WatcherHub> watcherHubContext,
+            DynamicEnvironment dynamicEnvironmentContext, ILog logContext, IModel rabbitMqChannelContext,
+            DefaultContractResolver contractResolverContext)
         {
-            _watcherHub = watcherHub;
-            _log = log;
-            _environment = environment;
-            _contractResolver = contractResolver;
+            watcherHub = watcherHubContext;
+            log = logContext;
+            dynamicEnvironment = dynamicEnvironmentContext;
+            contractResolver = contractResolverContext;
 
-            if (environment.AppSettings("AMQP").Equals("True", StringComparison.OrdinalIgnoreCase))
+            if (dynamicEnvironment.AppSettings("AMQP").Equals("True", StringComparison.OrdinalIgnoreCase))
             {
-                _rabbitMqChannel = rabbitMqChannel;
+                rabbitMqChannel = rabbitMqChannelContext;
                 ConnectToAmqp();
             }
             else
             {
-                if (environment.AppSettings("StreamingActivationWatcher")
+                if (dynamicEnvironment.AppSettings("StreamingActivationWatcher")
                     .Equals("True", StringComparison.OrdinalIgnoreCase))
                 {
                     var fromDatabaseNotifications = new Thread(ConnectToDatabaseNotifications);
@@ -62,8 +63,11 @@ namespace Jube.App.Code.WatcherDispatch
                 }
                 else
                 {
-                    if (!environment.AppSettings("ActivationWatcherAllowPersist")
-                            .Equals("True", StringComparison.OrdinalIgnoreCase)) return;
+                    if (!dynamicEnvironment.AppSettings("ActivationWatcherAllowPersist")
+                            .Equals("True", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return;
+                    }
 
                     var fromDbContext = new Thread(FromDbContext);
                     fromDbContext.Start();
@@ -75,17 +79,20 @@ namespace Jube.App.Code.WatcherDispatch
         {
             try
             {
-                _log.Info("Activation Relay: String representation of body received is " + payload + " .");
+                if (log.IsInfoEnabled)
+                {
+                    log.Info("Activation Relay: String representation of body received is " + payload + " .");
+                }
 
                 var json = JObject.Parse(payload);
                 var tenantRegistryId = (json.SelectToken("tenantRegistryId") ?? 0).Value<string>();
 
-                _watcherHub.Clients.Group("Tenant_" + tenantRegistryId)
+                watcherHub.Clients.Group("Tenant_" + tenantRegistryId)
                     .SendAsync("ReceiveMessage", "RealTime", payload);
             }
             catch (Exception ex)
             {
-                _log.Error(ex.ToString());
+                log.Error(ex.ToString());
             }
         }
 
@@ -93,21 +100,27 @@ namespace Jube.App.Code.WatcherDispatch
         {
             try
             {
-                _log.Info("Activation Relay: Message Received.");
+                if (log.IsInfoEnabled)
+                {
+                    log.Info("Activation Relay: Message Received.");
+                }
 
                 var bodyString = Encoding.UTF8.GetString(e.Body.ToArray());
 
-                _log.Info("Activation Relay: String representation of body received is " + bodyString + " .");
+                if (log.IsInfoEnabled)
+                {
+                    log.Info("Activation Relay: String representation of body received is " + bodyString + " .");
+                }
 
                 var json = JObject.Parse(bodyString);
                 var tenantRegistryId = (json.SelectToken("tenantRegistryId") ?? 0).Value<string>();
 
-                _watcherHub.Clients.Group("Tenant_" + tenantRegistryId)
+                watcherHub.Clients.Group("Tenant_" + tenantRegistryId)
                     .SendAsync("ReceiveMessage", "RealTime", bodyString);
             }
             catch (Exception ex)
             {
-                _log.Error(ex.ToString());
+                log.Error(ex.ToString());
             }
         }
 
@@ -115,7 +128,7 @@ namespace Jube.App.Code.WatcherDispatch
         {
             try
             {
-                var connection = new NpgsqlConnection(_environment.AppSettings("ConnectionString"));
+                var connection = new NpgsqlConnection(dynamicEnvironment.AppSettings("ConnectionString"));
                 try
                 {
                     connection.Open();
@@ -128,11 +141,14 @@ namespace Jube.App.Code.WatcherDispatch
                         cmd.ExecuteNonQuery();
                     }
 
-                    while (true) connection.Wait();
+                    while (true)
+                    {
+                        connection.Wait();
+                    }
                 }
                 catch (Exception ex)
                 {
-                    _log.Error($"Streaming Activations Database: Has created an exception as {ex}.");
+                    log.Error($"Streaming Activations Database: Has created an exception as {ex}.");
                 }
                 finally
                 {
@@ -141,8 +157,8 @@ namespace Jube.App.Code.WatcherDispatch
             }
             catch (Exception ex)
             {
-                _log.Error("Dispatch to SignalR: Error making connections for the Activation Watcher relay " + ex +
-                           ".");
+                log.Error("Dispatch to SignalR: Error making connections for the Activation Watcher relay " + ex +
+                          ".");
             }
         }
 
@@ -150,42 +166,51 @@ namespace Jube.App.Code.WatcherDispatch
         {
             try
             {
-                _rabbitMqChannel.ExchangeDeclare("jubeActivations", ExchangeType.Fanout);
+                rabbitMqChannel.ExchangeDeclare("jubeActivations", ExchangeType.Fanout);
 
-                var rabbitMqQueueName = _rabbitMqChannel.QueueDeclare();
-                _rabbitMqChannel.QueueBind(rabbitMqQueueName, "jubeActivations", "");
+                var rabbitMqQueueName = rabbitMqChannel.QueueDeclare();
+                rabbitMqChannel.QueueBind(rabbitMqQueueName, "jubeActivations", "");
 
-                var consumer = new EventingBasicConsumer(_rabbitMqChannel);
+                var consumer = new EventingBasicConsumer(rabbitMqChannel);
                 consumer.Received += EventHandlerSignalR;
 
-                _rabbitMqChannel.BasicConsume(rabbitMqQueueName, true, consumer);
+                rabbitMqChannel.BasicConsume(rabbitMqQueueName, true, consumer);
             }
             catch (Exception ex)
             {
-                _log.Error("Dispatch to SignalR: Error making connections for the Activation Watcher relay " + ex +
-                           ".");
+                log.Error("Dispatch to SignalR: Error making connections for the Activation Watcher relay " + ex +
+                          ".");
             }
         }
 
         private void FromDbContext()
         {
-            _log.Info(
-                $"Data Connection DbContext: Is about to attempt construction of database context with {_environment.AppSettings("ConnectionString")}.");
+            if (log.IsInfoEnabled)
+            {
+                log.Info(
+                    $"Data Connection DbContext: Is about to attempt construction of database context with {dynamicEnvironment.AppSettings("ConnectionString")}.");
+            }
 
             var builder = new LinqToDbConnectionOptionsBuilder();
-            builder.UsePostgreSQL(_environment.AppSettings("ConnectionString"));
+            builder.UsePostgreSQL(dynamicEnvironment.AppSettings("ConnectionString"));
             var connection = builder.Build<DbContext>();
 
             var dbContext = new DbContext(connection);
 
-            _log.Info("Data Connection DbContext: Database context has been constructed.  Returning database context.");
+            if (log.IsInfoEnabled)
+            {
+                log.Info("Data Connection DbContext: Database context has been constructed.  Returning database context.");
+            }
 
             var activationWatcherRepository = new ActivationWatcherRepository(dbContext);
 
             var lastActivationWatcher = activationWatcherRepository.GetLast();
             var lastActivationWatcherId = 0;
 
-            if (lastActivationWatcher != null) lastActivationWatcherId = lastActivationWatcher.Id;
+            if (lastActivationWatcher != null)
+            {
+                lastActivationWatcherId = lastActivationWatcher.Id;
+            }
 
             while (!Stopping)
             {
@@ -197,14 +222,14 @@ namespace Jube.App.Code.WatcherDispatch
                     var stringRepresentationOfObj = JsonConvert.SerializeObject(activationWatcher,
                         new JsonSerializerSettings
                         {
-                            ContractResolver = _contractResolver
+                            ContractResolver = contractResolver
                         });
 
-                    _watcherHub.Clients.Group("Tenant_" + 1)
+                    watcherHub.Clients.Group("Tenant_" + 1)
                         .SendAsync("ReceiveMessage", "RealTime", stringRepresentationOfObj);
                 }
 
-                Thread.Sleep(int.Parse(_environment.AppSettings("WaitPollFromActivationWatcherTable")));
+                Thread.Sleep(Int32.Parse(dynamicEnvironment.AppSettings("WaitPollFromActivationWatcherTable")));
             }
         }
     }

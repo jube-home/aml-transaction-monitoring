@@ -11,52 +11,59 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using Jube.CLI.UserRegistry;
-
-namespace Jube.CLI;
-
-public static class CommandLine
+namespace Jube.CLI
 {
-    public static void Main(string?[] args)
+    using UserRegistry;
+
+    public static class CommandLine
     {
-        string? connectionString = null;
-
-        for (var i = 0; i < args.Length; i++)
+        public static void Main(string?[] args)
         {
-            if (args[i] == "-cs") //Connection String
-                connectionString = args[i + 1];
+            string? connectionString = null;
 
-            if (args[i] != "-urpr") continue; //User Registry Password Reset
-            var hash = args[i + 1];
-            var userName = args[i + 2];
-            var password = args[i + 3];
-
-            if (string.IsNullOrEmpty(hash))
+            for (var i = 0; i < args.Length; i++)
             {
-                Console.WriteLine(@"User Registry Password Reset: No hash passed in arguments.");
-                return;
-            }
+                if (args[i] == "-cs")//Connection String
+                {
+                    connectionString = args[i + 1];
+                }
 
-            if (string.IsNullOrEmpty(userName))
-            {
-                Console.WriteLine(@"User Registry Password Reset: No User Name passed in arguments.");
-                return;
-            }
+                if (args[i] != "-urpr")
+                {
+                    continue;//User Registry Password Reset
+                }
 
-            if (string.IsNullOrEmpty(password))
-            {
-                Console.WriteLine(@"User Registry Password Reset: No password passed in arguments.");
-                return;
-            }
+                var hash = args[i + 1];
+                var userName = args[i + 2];
+                var password = args[i + 3];
 
-            if (string.IsNullOrEmpty(connectionString))
-            {
-                Console.WriteLine(
-                    @"User Registry Password Reset: No database connection string passed in arguments.");
-                return;
-            }
+                if (String.IsNullOrEmpty(hash))
+                {
+                    Console.WriteLine(@"User Registry Password Reset: No hash passed in arguments.");
+                    return;
+                }
 
-            PasswordReset.Execute(connectionString, hash, userName, password);
+                if (String.IsNullOrEmpty(userName))
+                {
+                    Console.WriteLine(@"User Registry Password Reset: No User Name passed in arguments.");
+                    return;
+                }
+
+                if (String.IsNullOrEmpty(password))
+                {
+                    Console.WriteLine(@"User Registry Password Reset: No password passed in arguments.");
+                    return;
+                }
+
+                if (String.IsNullOrEmpty(connectionString))
+                {
+                    Console.WriteLine(
+                        @"User Registry Password Reset: No database connection string passed in arguments.");
+                    return;
+                }
+
+                PasswordReset.Execute(connectionString, hash, userName, password);
+            }
         }
     }
 }

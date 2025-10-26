@@ -11,55 +11,41 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Linq;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB;
-
-namespace Jube.Data.Repository;
-
-public class ExhaustiveSearchInstanceDataRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
-    private readonly int? _tenantRegistryId;
+    using System;
+    using System.Linq;
+    using Context;
+    using LinqToDB;
+    using Poco;
 
-    public ExhaustiveSearchInstanceDataRepository(DbContext dbContext)
+    public class ExhaustiveSearchInstanceDataRepository(DbContext dbContext)
     {
-        _dbContext = dbContext;
-    }
 
-    public ExhaustiveSearchInstanceDataRepository(DbContext dbContext, int tenantRegistryId)
-    {
-        _dbContext = dbContext;
-        _tenantRegistryId = tenantRegistryId;
-    }
+        public ExhaustiveSearchInstanceData Insert(ExhaustiveSearchInstanceData model)
+        {
+            model.Id = dbContext.InsertWithInt32Identity(model);
+            return model;
+        }
 
-    public ExhaustiveSearchInstanceData Insert(ExhaustiveSearchInstanceData model)
-    {
-        model.Id = _dbContext.InsertWithInt32Identity(model);
-        return model;
-    }
+        public IQueryable<ExhaustiveSearchInstanceData> GetByExhaustiveSearchInstanceIdOrderById(
+            int exhaustiveSearchInstanceId)
+        {
+            return dbContext.ExhaustiveSearchInstanceData.Where(w
+                    => w.ExhaustiveSearchInstanceId == exhaustiveSearchInstanceId)
+                .OrderBy(o => o.Id);
+        }
 
-    public IQueryable<ExhaustiveSearchInstanceData> GetByExhaustiveSearchInstanceIdOrderById(
-        int exhaustiveSearchInstanceId)
-    {
-        return _dbContext.ExhaustiveSearchInstanceData.Where(w
-                => w.ExhaustiveSearchInstanceId == exhaustiveSearchInstanceId)
-            .OrderBy(o => o.Id);
-    }
-
-    public void DeleteByTenantRegistryId(int tenantRegistryId, int importId)
-    {
-        _dbContext.ExhaustiveSearchInstanceData
-            .Where(d =>
-                (d.ExhaustiveSearchInstance.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId ||
-                 !_tenantRegistryId.HasValue)
-                && d.ExhaustiveSearchInstance.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
-                && (d.Deleted == 0 || d.Deleted == null))
-            .Set(s => s.ImportId, importId)
-            .Set(s => s.Deleted, Convert.ToByte(1))
-            .Set(s => s.DeletedDate, DateTime.Now)
-            .Update();
+        public void DeleteByTenantRegistryIdOutsideOfInstance(int tenantRegistryIdOutsideOfInstance, int importId)
+        {
+            dbContext.ExhaustiveSearchInstanceData
+                .Where(d =>
+                    d.ExhaustiveSearchInstance.EntityAnalysisModel.TenantRegistryId == tenantRegistryIdOutsideOfInstance
+                    && (d.Deleted == 0 || d.Deleted == null))
+                .Set(s => s.ImportId, importId)
+                .Set(s => s.Deleted, Convert.ToByte(1))
+                .Set(s => s.DeletedDate, DateTime.Now)
+                .Update();
+        }
     }
 }

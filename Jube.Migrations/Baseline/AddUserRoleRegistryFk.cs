@@ -13,20 +13,21 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220430125456)]
-public class AddUserRoleRegistryFk : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220430125456)]
+    public class AddUserRoleRegistryFk : Migration
     {
-        Create.ForeignKey().FromTable("UserRoleRegistry").ForeignColumn("RoleRegistryId")
-            .ToTable("RoleRegistry").PrimaryColumn("Id");
-    }
+        public override void Up()
+        {
+            Create.ForeignKey().FromTable("UserRoleRegistry").ForeignColumn("RoleRegistryId")
+                .ToTable("RoleRegistry").PrimaryColumn("Id");
+        }
 
-    public override void Down()
-    {
-        Delete.ForeignKey().FromTable("UserRoleRegistry").ForeignColumn("RoleRegistryId")
-            .ToTable("RoleRegistry").PrimaryColumn("Id");
+        public override void Down()
+        {
+            Delete.ForeignKey().FromTable("UserRoleRegistry").ForeignColumn("RoleRegistryId")
+                .ToTable("RoleRegistry").PrimaryColumn("Id");
+        }
     }
 }

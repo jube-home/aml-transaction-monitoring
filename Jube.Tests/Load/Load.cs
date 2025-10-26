@@ -11,166 +11,138 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using Xunit;
-
-namespace Jube.Test.Load;
-
-public class Load
+namespace Jube.Test.Load
 {
-    private readonly ConcurrentQueue<(double, long)> _responseTimes = new();
-    private readonly Stopwatch _swTotal = new();
-    private int _requests;
-    private bool _stop;
-    private Thread? _writerThreadRequests;
-    private Thread? _writerThreadTps;
+    using System;
+    using System.Collections.Concurrent;
+    using System.Collections.Generic;
+    using System.Diagnostics;
+    using System.IO;
+    using System.Net.Http;
+    using System.Text;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using Xunit;
 
-    [Theory]
-    [InlineData("https://localhost:5001/api/invoke/EntityAnalysisModel/90c425fd-101a-420b-91d1-cb7a24a969cc",
-        10000, 1000000, false, 10, false, 10)]
-    public Task LoadTest(string uriString, int httpTimeout, int iteration, bool async,
-        int maxConnectionsPerServer, bool saturateMaxConnections, int timeDriftSeconds)
+    public class Load
     {
-        var random = new Random();
-        var referenceDate = DateTime.Now.AddYears(-10);
-        var uri = async ? new Uri(uriString + "/async") : new Uri(uriString);
+        private readonly ConcurrentQueue<(double, long)> responseTimes = new ConcurrentQueue<(double, long)>();
+        private readonly Stopwatch swTotal = new Stopwatch();
+        private int requests;
+        private bool stop;
+        private Thread? writerThreadTps;
 
-        var stringTemplate = Helpers.ReadFileContents("Load/Mock.json");
-
-        var httpClientHandler = new HttpClientHandler();
-        httpClientHandler.MaxConnectionsPerServer = maxConnectionsPerServer;
-        httpClientHandler.ServerCertificateCustomValidationCallback = (_, _, _, _) => true;
-
-        using var client = new HttpClient(httpClientHandler);
-        client.Timeout = TimeSpan.FromMilliseconds(httpTimeout);
-
-        var iterationCount = 0;
-        var tasks = new List<Task>();
-
-        _writerThreadRequests = new Thread(WriterThreadWorker);
-        _writerThreadRequests.Start();
-
-        _writerThreadTps = new Thread(WriteTpsEstimates);
-        _writerThreadTps.Start();
-
-        _swTotal.Start();
-
-        while (iterationCount <= iteration)
+        [Theory]
+        [InlineData("http://localhost:5001/api/invoke/EntityAnalysisModel/90c425fd-101a-420b-91d1-cb7a24a969cc",
+            10000, 100000000, false, 10, 10)]
+        public async Task LoadTest(string uriString, int httpTimeout, long iteration, bool async,
+            int maxConnectionsPerServer, int timeDriftSeconds)
         {
-            for (var j = 0;
-                 j < (saturateMaxConnections
-                     ? maxConnectionsPerServer
-                     : random.NextInt64(0,
-                         httpClientHandler.MaxConnectionsPerServer - tasks.Count(c => !c.IsCompleted)));
-                 j++)
+            var random = new Random();
+            var referenceDate = DateTime.Now.AddYears(-10);
+            var uri = async ? new Uri(uriString + "/async") : new Uri(uriString);
+            var stringTemplate = Helpers.ReadFileContents("Load/Mock.json");
+
+            var clientCount = 6;
+            var baseIterationsPerClient = iteration / clientCount;
+            var remainder = iteration % clientCount;
+
+            writerThreadTps = new Thread(WriteTpsEstimates);
+            writerThreadTps.Start();
+            swTotal.Start();
+
+            var tasks = new List<Task>();
+            for (var clientIndex = 0; clientIndex < clientCount; clientIndex++)
             {
-                var stringReplaced = stringTemplate.Replace("[@AccountId@]", random.NextInt64(1, 100000).ToString());
-                stringReplaced = stringReplaced.Replace("[@TxnId@]", iterationCount.ToString());
+                var iterationsForThisClient = baseIterationsPerClient + (clientIndex == clientCount - 1 ? remainder : 0);
+                var startingIteration = clientIndex * baseIterationsPerClient;
 
-                referenceDate = referenceDate.AddSeconds(timeDriftSeconds);
-                stringReplaced = stringReplaced.Replace("[@TxnDateTime@]", referenceDate.ToString("o"));
-
-                tasks.Add(SendToJubeAndAwaitResponse(stringReplaced, uri, client, _responseTimes, _swTotal));
-
-                _requests += 1;
-                iterationCount += 1;
-            }
-
-            Task.WaitAny(tasks.ToArray());
-            tasks.RemoveAll(r => r.IsCompleted);
-        }
-
-        _stop = true;
-
-        return Task.CompletedTask;
-    }
-
-    private static async Task SendToJubeAndAwaitResponse(string stringReplaced, Uri uri, HttpClient client,
-        ConcurrentQueue<(double, long)> responseTimes, Stopwatch swTotal)
-    {
-        var stringContent = new StringContent(
-            stringReplaced,
-            Encoding.UTF8,
-            "application/json");
-
-        var request = new HttpRequestMessage
-        {
-            Method = HttpMethod.Post,
-            RequestUri = uri,
-            Content = stringContent
-        };
-
-        var sw = new Stopwatch();
-        sw.Start();
-        await client.SendAsync(request, HttpCompletionOption.ResponseContentRead);
-        sw.Stop();
-        responseTimes.Enqueue((swTotal.Elapsed.TotalSeconds, sw.ElapsedMilliseconds));
-    }
-
-    private async void WriteTpsEstimates()
-    {
-        try
-        {
-            var docPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-            var outputFileTpsSnapshot = new StreamWriter(Path.Combine(docPath, "WriteLinesTpsSnapshot.txt"));
-            outputFileTpsSnapshot.AutoFlush = true;
-
-            while (!_stop)
-            {
-                Thread.Sleep(1000);
-                await outputFileTpsSnapshot.WriteLineAsync(
-                    $"{Math.Round(_swTotal.Elapsed.TotalSeconds)},{_requests}");
-                _requests = 0;
-            }
-        }
-        catch (Exception ex)
-        {
-            //Not implemented
-        }
-    }
-
-    private async void WriterThreadWorker(object? o)
-    {
-        try
-        {
-            var docPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-            var outputFileRequests = new StreamWriter(Path.Combine(docPath, "WriteLinesRequests.txt"));
-
-            var flushInterval = 0;
-            while (!_stop)
-            {
-                while (_responseTimes.TryDequeue(out var response))
+                tasks.Add(Task.Run(async () =>
                 {
-                    await outputFileRequests.WriteLineAsync($"{response.Item1},{response.Item2}");
-
-                    if (flushInterval > 100)
+                    var clientHandler = new HttpClientHandler
                     {
-                        await outputFileRequests.FlushAsync();
-                        flushInterval = 0;
-                    }
-                    else
-                    {
-                        flushInterval += 1;
-                    }
-                }
+                        MaxConnectionsPerServer = maxConnectionsPerServer,
+                        ServerCertificateCustomValidationCallback = (_, _, _, _) => true
+                    };
 
-                Thread.Sleep(100);
+                    using var client = new HttpClient(clientHandler);
+                    client.Timeout = TimeSpan.FromMilliseconds(httpTimeout);
+
+                    var myReferenceDate = referenceDate.AddSeconds(startingIteration * timeDriftSeconds);
+
+                    for (var i = 0; i < iterationsForThisClient; i++)
+                    {
+                        var globalIteration = startingIteration + i;
+                        var replacements = new Dictionary<string, string>
+                        {
+                            ["[@AccountId@]"] = random.NextInt64(1, 100000).ToString(),
+                            ["[@TxnId@]"] = globalIteration.ToString(),
+                            //["[@TxnDateTime@]"] = myReferenceDate.AddSeconds(timeDriftSeconds).ToString("o")
+                            ["[@TxnDateTime@]"] = DateTime.Now.ToString("o")
+                        };
+
+                        var payload = stringTemplate;
+                        foreach (var kvp in replacements)
+                        {
+                            payload = payload.Replace(kvp.Key, kvp.Value);
+                        }
+
+                        myReferenceDate = myReferenceDate.AddSeconds(timeDriftSeconds);
+
+                        await SendToJubeAndAwaitResponse(payload, uri, client, responseTimes, swTotal);
+
+                        Interlocked.Increment(ref requests);
+                    }
+                }));
             }
 
-            await outputFileRequests.FlushAsync();
+            await Task.WhenAll(tasks);
+
+            stop = true;
         }
-        catch (Exception ex)
+
+        private static async Task SendToJubeAndAwaitResponse(string stringReplaced, Uri uri, HttpClient client,
+            ConcurrentQueue<(double, long)> responseTimes, Stopwatch swTotal)
         {
-            //Not implemented
+            var stringContent = new StringContent(
+                stringReplaced,
+                Encoding.UTF8,
+                "application/json");
+
+            var request = new HttpRequestMessage
+            {
+                Method = HttpMethod.Post,
+                RequestUri = uri,
+                Content = stringContent
+            };
+
+            var sw = new Stopwatch();
+            sw.Start();
+            await client.SendAsync(request, HttpCompletionOption.ResponseContentRead);
+            sw.Stop();
+            responseTimes.Enqueue((swTotal.Elapsed.TotalSeconds, (int)(sw.ElapsedTicks * 1000000 / Stopwatch.Frequency)));
+        }
+
+        private async void WriteTpsEstimates()
+        {
+            try
+            {
+                var docPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                var outputFileTpsSnapshot = new StreamWriter(Path.Combine(docPath, "WriteLinesTpsSnapshot.txt"));
+                outputFileTpsSnapshot.AutoFlush = true;
+
+                while (!stop)
+                {
+                    Thread.Sleep(1000);
+                    await outputFileTpsSnapshot.WriteLineAsync(
+                        $"{Math.Round(swTotal.Elapsed.TotalSeconds)},{requests}");
+                    requests = 0;
+                }
+            }
+            catch (Exception)
+            {
+                //Not implemented
+            }
         }
     }
 }

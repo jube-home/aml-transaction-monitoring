@@ -11,16 +11,17 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-namespace Jube.Engine.Model;
-
-public class EntityAnalysisModelSanction
+namespace Jube.Engine.Model
 {
-    public string Name { get; set; }
-    public string MultipartStringDataName { get; set; }
-    public int Distance { get; set; }
-    public int EntityAnalysisModelSanctionsId { get; init; }
-    public bool ResponsePayload { get; set; }
-    public bool ReportTable { get; set; }
-    public int CacheValue { get; set; }
-    public char CacheInterval { get; set; }
+    public class EntityAnalysisModelSanction
+    {
+        public string Name { get; set; }
+        public string MultipartStringDataName { get; set; }
+        public int Distance { get; set; }
+        public int EntityAnalysisModelSanctionsId { get; init; }
+        public bool ResponsePayload { get; set; }
+        public bool ReportTable { get; set; }
+        public int CacheValue { get; set; }
+        public char CacheInterval { get; set; }
+    }
 }

@@ -14,56 +14,57 @@
 using System;
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124951)]
-public class AddEntityAnalysisModelTtlCounterTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124951)]
+    public class AddEntityAnalysisModelTtlCounterTableIndex : Migration
     {
-        Create.Table("EntityAnalysisModelTtlCounter")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("Name").AsString().Nullable()
-            .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
-            .WithColumn("Active").AsByte().Nullable()
-            .WithColumn("Locked").AsByte().Nullable()
-            .WithColumn("CreatedDate").AsDateTime().Nullable()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("Version").AsInt32().Nullable()
-            .WithColumn("DeletedDate").AsDateTime().Nullable()
-            .WithColumn("DeletedUser").AsString().Nullable()
-            .WithColumn("Deleted").AsByte().Nullable()
-            .WithColumn("TtlCounterInterval").AsString().Nullable()
-            .WithColumn("TtlCounterValue").AsInt32().Nullable()
-            .WithColumn("ResponsePayload").AsByte().Nullable()
-            .WithColumn("ReportTable").AsString().Nullable()
-            .WithColumn("TtlCounterDataName").AsString().Nullable()
-            .WithColumn("OnlineAggregation").AsByte().Nullable()
-            .WithColumn("EnableLiveForever").AsByte().Nullable();
-
-        Create.Index().OnTable("EntityAnalysisModelTtlCounter")
-            .OnColumn("EntityAnalysisModelId").Ascending()
-            .OnColumn("Deleted").Ascending();
-
-        Insert.IntoTable("EntityAnalysisModelTtlCounter").Row(new
+        public override void Up()
         {
-            Name = "TtlCounterAll",
-            EntityAnalysisModelId = 1,
-            Active = 1,
-            CreatedDate = DateTime.Now,
-            CreatedUser = "Administrator",
-            Version = 1,
-            TtlCounterInterval = "h",
-            TtlCounterValue = 1,
-            ResponsePayload = 1,
-            TtlCounterDataName = "AccountId",
-            OnlineAggregation = 0,
-            EnableLiveForever = 0
-        });
-    }
+            Create.Table("EntityAnalysisModelTtlCounter")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("Name").AsString().Nullable()
+                .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
+                .WithColumn("Active").AsByte().Nullable()
+                .WithColumn("Locked").AsByte().Nullable()
+                .WithColumn("CreatedDate").AsDateTime().Nullable()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("Version").AsInt32().Nullable()
+                .WithColumn("DeletedDate").AsDateTime().Nullable()
+                .WithColumn("DeletedUser").AsString().Nullable()
+                .WithColumn("Deleted").AsByte().Nullable()
+                .WithColumn("TtlCounterInterval").AsString().Nullable()
+                .WithColumn("TtlCounterValue").AsInt32().Nullable()
+                .WithColumn("ResponsePayload").AsByte().Nullable()
+                .WithColumn("ReportTable").AsString().Nullable()
+                .WithColumn("TtlCounterDataName").AsString().Nullable()
+                .WithColumn("OnlineAggregation").AsByte().Nullable()
+                .WithColumn("EnableLiveForever").AsByte().Nullable();
 
-    public override void Down()
-    {
-        Delete.Table("EntityAnalysisModelTtlCounter");
+            Create.Index().OnTable("EntityAnalysisModelTtlCounter")
+                .OnColumn("EntityAnalysisModelId").Ascending()
+                .OnColumn("Deleted").Ascending();
+
+            Insert.IntoTable("EntityAnalysisModelTtlCounter").Row(new
+            {
+                Name = "TtlCounterAll",
+                EntityAnalysisModelId = 1,
+                Active = 1,
+                CreatedDate = DateTime.Now,
+                CreatedUser = "Administrator",
+                Version = 1,
+                TtlCounterInterval = "h",
+                TtlCounterValue = 1,
+                ResponsePayload = 1,
+                TtlCounterDataName = "AccountId",
+                OnlineAggregation = 0,
+                EnableLiveForever = 0
+            });
+        }
+
+        public override void Down()
+        {
+            Delete.Table("EntityAnalysisModelTtlCounter");
+        }
     }
 }

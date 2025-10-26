@@ -14,34 +14,37 @@
 using System;
 using System.Collections.Generic;
 
-namespace Jube.Data.Query.CaseQuery.Dto;
-
-public class CaseQueryDto
+namespace Jube.Data.Query.CaseQuery.Dto
 {
-    public int Id { get; set; }
-    public Guid EntityAnalysisModelInstanceEntryGuid { get; set; }
-    public DateTime DiaryDate { get; set; }
-    public Guid CaseWorkflowGuid { get; set; }
-    public Guid CaseWorkflowStatusGuid { get; set; }
-    public DateTime CreatedDate { get; set; }
-    public bool Locked { get; set; }
-    public string LockedUser { get; set; }
-    public DateTime LockedDate { get; set; }
-    public int ClosedStatusId { get; set; }
-    public DateTime ClosedDate { get; set; }
-    public string ClosedUser { get; set; }
-    public string CaseKey { get; set; }
-    public bool Diary { get; set; }
-    public string DiaryUser { get; set; }
-    public int Rating { get; set; }
-    public string CaseKeyValue { get; set; }
-    public int LastClosedStatus { get; set; }
-    public DateTime ClosedStatusMigrationDate { get; set; }
-    public string ForeColor { get; set; }
-    public string BackColor { get; set; }
-    public string Json { get; set; }
-    public List<GetCaseByIdFieldEntryDto> FormattedPayload { get; set; }
-    public List<GetCaseByIdActivationDto> Activation { get; set; }
-    public bool EnableVisualisation { get; set; }
-    public Guid VisualisationRegistryGuid { get; set; }
+    public class CaseQueryDto
+    {
+        public int Id { get; set; }
+        public Guid EntityAnalysisModelInstanceEntryGuid { get; set; }
+        public DateTime DiaryDate { get; set; }
+        public Guid CaseWorkflowGuid { get; set; }
+        public Guid CaseWorkflowStatusGuid { get; set; }
+        public DateTime CreatedDate { get; set; }
+        public bool Locked { get; set; }
+        public string LockedUser { get; set; }
+        public DateTime LockedDate { get; set; }
+        public int ClosedStatusId { get; set; }
+        public DateTime ClosedDate { get; set; }
+        public string ClosedUser { get; set; }
+        public string CaseKey { get; set; }
+        public bool Diary { get; set; }
+        public string DiaryUser { get; set; }
+        public int Rating { get; set; }
+        public string CaseKeyValue { get; set; }
+        public int LastClosedStatus { get; set; }
+        public DateTime ClosedStatusMigrationDate { get; set; }
+        public string ForeColor { get; set; }
+        public string BackColor { get; set; }
+        public string Json { get; set; }
+        // ReSharper disable once CollectionNeverQueried.Global
+        public List<GetCaseByIdFieldEntryDto> FormattedPayload { get; set; }
+        // ReSharper disable once CollectionNeverQueried.Global
+        public List<GetCaseByIdActivationDto> Activation { get; set; }
+        public bool EnableVisualisation { get; set; }
+        public Guid VisualisationRegistryGuid { get; set; }
+    }
 }

@@ -11,49 +11,50 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.IdentityModel.Tokens.Jwt;
-using System.Net;
-using Jube.App.Code;
-using Jube.Data.Context;
-using Jube.Engine.Helpers;
-using Jube.Service.Dto.Authentication;
-using Jube.Service.Exceptions.Authentication;
-using Jube.Validations.Authentication;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-
 namespace Jube.App.Controllers.Authentication
 {
+    using System;
+    using System.IdentityModel.Tokens.Jwt;
+    using System.Net;
+    using Code;
+    using Data.Context;
+    using DynamicEnvironment;
+    using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.AspNetCore.Mvc;
+    using Service.Authentication;
+    using Service.Dto.Authentication;
+    using Service.Exceptions.Authentication;
+    using Validations.Authentication;
+
     [Route("api/[controller]")]
     [Produces("application/json")]
     [AllowAnonymous]
     public class AuthenticationController : Controller
     {
-        private readonly IHttpContextAccessor _contextAccessor;
+        private readonly IHttpContextAccessor contextAccessor;
 
-        private readonly DbContext _dbContext;
-        private readonly DynamicEnvironment.DynamicEnvironment _dynamicEnvironment;
-        private readonly Service.Authentication.Authentication _service;
+        private readonly DbContext dbContext;
+        private readonly DynamicEnvironment dynamicEnvironment;
+        private readonly Authentication service;
 
-        public AuthenticationController(DynamicEnvironment.DynamicEnvironment dynamicEnvironment,
+        public AuthenticationController(DynamicEnvironment dynamicEnvironment,
             IHttpContextAccessor contextAccessor)
         {
-            _dynamicEnvironment = dynamicEnvironment;
-            _dbContext =
+            this.dynamicEnvironment = dynamicEnvironment;
+            dbContext =
                 DataConnectionDbContext.GetDbContextDataConnection(
-                    _dynamicEnvironment.AppSettings("ConnectionString"));
-            _contextAccessor = contextAccessor;
-            _service = new Service.Authentication.Authentication(_dbContext);
+                    this.dynamicEnvironment.AppSettings("ConnectionString"));
+            this.contextAccessor = contextAccessor;
+            service = new Authentication(dbContext);
         }
 
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                _dbContext.Close();
-                _dbContext.Dispose();
+                dbContext.Close();
+                dbContext.Dispose();
             }
 
             base.Dispose(disposing);
@@ -66,15 +67,18 @@ namespace Jube.App.Controllers.Authentication
         {
             var validator = new AuthenticationRequestDtoValidator();
             var results = validator.Validate(model);
-            if (!results.IsValid) return BadRequest(results);
+            if (!results.IsValid)
+            {
+                return BadRequest(results);
+            }
 
             try
             {
-                model.UserAgent = _contextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
-                model.LocalIp = _contextAccessor.HttpContext?.Connection.LocalIpAddress?.ToString();
+                model.UserAgent = contextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
+                model.LocalIp = contextAccessor.HttpContext?.Connection.LocalIpAddress?.ToString();
                 model.UserAgent = Request.Headers.UserAgent.ToString();
 
-                _service.AuthenticateByUserNamePassword(model, _dynamicEnvironment.AppSettings("PasswordHashingKey"));
+                service.AuthenticateByUserNamePassword(model, dynamicEnvironment.AppSettings("PasswordHashingKey"));
             }
             catch (PasswordExpiredException)
             {
@@ -96,9 +100,9 @@ namespace Jube.App.Controllers.Authentication
         private AuthenticationResponseDto SetAuthenticationCookie(AuthenticationRequestDto model)
         {
             var token = Jwt.CreateToken(model.UserName,
-                _dynamicEnvironment.AppSettings("JWTKey"),
-                _dynamicEnvironment.AppSettings("JWTValidIssuer"),
-                _dynamicEnvironment.AppSettings("JWTValidAudience")
+                dynamicEnvironment.AppSettings("JWTKey"),
+                dynamicEnvironment.AppSettings("JWTValidIssuer"),
+                dynamicEnvironment.AppSettings("JWTValidAudience")
             );
 
             var expiration = DateTime.Now.AddMinutes(15);
@@ -125,18 +129,24 @@ namespace Jube.App.Controllers.Authentication
         [ProducesResponseType(typeof(AuthenticationResponseDto), (int)HttpStatusCode.OK)]
         public ActionResult ChangePassword([FromBody] ChangePasswordRequestDto model)
         {
-            if (User.Identity == null) return Ok();
+            if (User.Identity == null)
+            {
+                return Ok();
+            }
 
             var validator = new ChangePasswordRequestDtoValidator();
 
             var results = validator.Validate(model);
 
-            if (!results.IsValid) return BadRequest(results);
+            if (!results.IsValid)
+            {
+                return BadRequest(results);
+            }
 
             try
             {
-                _service.ChangePassword(User.Identity.Name, model,
-                    _dynamicEnvironment.AppSettings("PasswordHashingKey"));
+                service.ChangePassword(User.Identity.Name, model,
+                    dynamicEnvironment.AppSettings("PasswordHashingKey"));
             }
             catch (BadCredentialsException)
             {

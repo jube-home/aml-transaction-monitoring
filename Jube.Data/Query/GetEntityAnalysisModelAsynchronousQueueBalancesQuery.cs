@@ -16,35 +16,36 @@ using System.Collections.Generic;
 using System.Linq;
 using Jube.Data.Context;
 
-namespace Jube.Data.Query;
-
-public class GetEntityAnalysisModelAsynchronousQueueBalancesQuery(DbContext dbContext)
+namespace Jube.Data.Query
 {
-    public IEnumerable<Dto> Execute(int limit)
+    public class GetEntityAnalysisModelAsynchronousQueueBalancesQuery(DbContext dbContext)
     {
-        var query = dbContext.EntityAnalysisModelAsynchronousQueueBalance
-            .OrderByDescending(o => o.Id)
-            .Take(limit)
-            .Select(s => new Dto
-            {
-                Name = s.EntityAnalysisModel.Name,
-                CreatedDate = s.CreatedDate,
-                Instance = s.Instance,
-                Archive = s.Archive,
-                EntityAnalysisModelGuid = s.EntityAnalysisModelGuid,
-                ActivationWatcher = s.ActivationWatcher
-            });
+        public IEnumerable<Dto> Execute(int limit)
+        {
+            var query = dbContext.EntityAnalysisModelAsynchronousQueueBalance
+                .OrderByDescending(o => o.Id)
+                .Take(limit)
+                .Select(s => new Dto
+                {
+                    Name = s.EntityAnalysisModel.Name,
+                    CreatedDate = s.CreatedDate,
+                    Instance = s.Instance,
+                    Archive = s.Archive,
+                    EntityAnalysisModelGuid = s.EntityAnalysisModelGuid,
+                    ActivationWatcher = s.ActivationWatcher
+                });
 
-        return query;
-    }
+            return query;
+        }
 
-    public class Dto
-    {
-        public string Name { get; set; }
-        public Guid EntityAnalysisModelGuid { get; set; }
-        public DateTime? CreatedDate { get; set; }
-        public int? Archive { get; set; }
-        public int? ActivationWatcher { get; set; }
-        public string Instance { get; set; }
+        public class Dto
+        {
+            public string Name { get; set; }
+            public Guid EntityAnalysisModelGuid { get; set; }
+            public DateTime? CreatedDate { get; set; }
+            public int? Archive { get; set; }
+            public int? ActivationWatcher { get; set; }
+            public string Instance { get; set; }
+        }
     }
 }

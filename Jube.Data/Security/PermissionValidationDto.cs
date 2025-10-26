@@ -13,11 +13,12 @@
 
 using System.Collections.Generic;
 
-namespace Jube.Data.Security;
-
-public class PermissionValidationDto
+namespace Jube.Data.Security
 {
-    public List<int> Permissions { get; set; } = [];
-    public bool Landlord { get; set; }
-    public int TenantRegistryId { get; set; }
+    public class PermissionValidationDto
+    {
+        public List<int> Permissions { get; set; } = [];
+        public bool Landlord { get; set; }
+        public int TenantRegistryId { get; set; }
+    }
 }

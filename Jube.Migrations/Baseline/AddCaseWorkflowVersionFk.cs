@@ -13,32 +13,33 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220813080900)]
-public class AddCaseWorkflowVersionFk : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220813080900)]
+    public class AddCaseWorkflowVersionFk : Migration
     {
-        Create.ForeignKey().FromTable("CaseWorkflowVersion").ForeignColumn("EntityAnalysisModelId")
-            .ToTable("EntityAnalysisModel").PrimaryColumn("Id");
+        public override void Up()
+        {
+            Create.ForeignKey().FromTable("CaseWorkflowVersion").ForeignColumn("EntityAnalysisModelId")
+                .ToTable("EntityAnalysisModel").PrimaryColumn("Id");
 
-        Create.ForeignKey().FromTable("CaseWorkflowVersion").ForeignColumn("CaseWorkflowId")
-            .ToTable("CaseWorkflow").PrimaryColumn("Id");
+            Create.ForeignKey().FromTable("CaseWorkflowVersion").ForeignColumn("CaseWorkflowId")
+                .ToTable("CaseWorkflow").PrimaryColumn("Id");
 
-        Create.ForeignKey().FromTable("CaseWorkflowVersion").ForeignColumn("TenantRegistryId").ToTable("TenantRegistry")
-            .PrimaryColumn("Id");
-    }
+            Create.ForeignKey().FromTable("CaseWorkflowVersion").ForeignColumn("TenantRegistryId").ToTable("TenantRegistry")
+                .PrimaryColumn("Id");
+        }
 
-    public override void Down()
-    {
-        Delete.ForeignKey().FromTable("CaseWorkflowVersion").ForeignColumn("EntityAnalysisModelId")
-            .ToTable("EntityAnalysisModel").PrimaryColumn("Id");
+        public override void Down()
+        {
+            Delete.ForeignKey().FromTable("CaseWorkflowVersion").ForeignColumn("EntityAnalysisModelId")
+                .ToTable("EntityAnalysisModel").PrimaryColumn("Id");
 
-        Delete.ForeignKey().FromTable("CaseWorkflowVersion").ForeignColumn("CaseWorkflowId")
-            .ToTable("CaseWorkflow").PrimaryColumn("Id");
+            Delete.ForeignKey().FromTable("CaseWorkflowVersion").ForeignColumn("CaseWorkflowId")
+                .ToTable("CaseWorkflow").PrimaryColumn("Id");
 
-        Delete.ForeignKey().FromTable("CaseWorkflowVersion").ForeignColumn("TenantRegistryId").ToTable("TenantRegistry")
-            .PrimaryColumn("Id");
+            Delete.ForeignKey().FromTable("CaseWorkflowVersion").ForeignColumn("TenantRegistryId").ToTable("TenantRegistry")
+                .PrimaryColumn("Id");
+        }
     }
 }

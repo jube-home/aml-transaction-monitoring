@@ -11,23 +11,18 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System.Collections.Generic;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-
-namespace Jube.Data.Repository;
-
-public class SanctionsEntriesSourcesRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
+    using System.Collections.Generic;
+    using Context;
+    using Poco;
 
-    public SanctionsEntriesSourcesRepository(DbContext dbContext)
+    public class SanctionsEntriesSourcesRepository(DbContext dbContext)
     {
-        _dbContext = dbContext;
-    }
 
-    public IEnumerable<SanctionEntrySource> Get()
-    {
-        return _dbContext.SanctionEntrySource;
+        public IEnumerable<SanctionEntrySource> Get()
+        {
+            return dbContext.SanctionEntrySource;
+        }
     }
 }

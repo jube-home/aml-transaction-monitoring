@@ -11,62 +11,63 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Jube.Data.Context;
-
-namespace Jube.Data.Query;
-
-public class GetExhaustiveSearchInstancePromotedTrialInstanceQuery
+namespace Jube.Data.Query
 {
-    private readonly DbContext _dbContext;
-    private readonly int? _tenantRegistryId;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Context;
 
-    public GetExhaustiveSearchInstancePromotedTrialInstanceQuery(DbContext dbContext, string userName)
+    public class GetExhaustiveSearchInstancePromotedTrialInstanceQuery
     {
-        _dbContext = dbContext;
-        _tenantRegistryId = _dbContext.UserInTenant.Where(w => w.User == userName)
-            .Select(s => s.TenantRegistryId).FirstOrDefault();
-    }
+        private readonly DbContext dbContext;
+        private readonly int? tenantRegistryId;
 
-    public GetExhaustiveSearchInstancePromotedTrialInstanceQuery(DbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
+        public GetExhaustiveSearchInstancePromotedTrialInstanceQuery(DbContext dbContext, string userName)
+        {
+            this.dbContext = dbContext;
+            tenantRegistryId = this.dbContext.UserInTenant.Where(w => w.User == userName)
+                .Select(s => s.TenantRegistryId).FirstOrDefault();
+        }
 
-    public IEnumerable<Dto> Execute(
-        int exhaustiveSearchInstanceId)
-    {
-        return _dbContext
-            .ExhaustiveSearchInstancePromotedTrialInstance
-            .Where(w =>
-                w.ExhaustiveSearchInstanceTrialInstance.ExhaustiveSearchInstance.Id == exhaustiveSearchInstanceId
-                && (w.ExhaustiveSearchInstanceTrialInstance.ExhaustiveSearchInstance
-                    .EntityAnalysisModel.TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue))
-            .OrderByDescending(o => o.Id)
-            .Select(s =>
-                new Dto
-                {
-                    Id = s.Id,
-                    Score = s.Score.Value,
-                    CreatedDate = s.CreatedDate.Value,
-                    Active = s.Active.Value == 1,
-                    TopologyComplexity = s.TopologyComplexity.Value,
-                    Json = s.Json,
-                    ExhaustiveSearchInstanceTrialInstanceId = s.ExhaustiveSearchInstanceTrialInstanceId.Value
-                }
-            );
-    }
+        public GetExhaustiveSearchInstancePromotedTrialInstanceQuery(DbContext dbContext)
+        {
+            this.dbContext = dbContext;
+        }
 
-    public class Dto
-    {
-        public int Id { get; set; }
-        public int ExhaustiveSearchInstanceTrialInstanceId { get; set; }
-        public bool Active { get; set; }
-        public double Score { get; set; }
-        public int TopologyComplexity { get; set; }
-        public string Json { get; set; }
-        public DateTime CreatedDate { get; set; }
+        public IEnumerable<Dto> Execute(
+            int exhaustiveSearchInstanceId)
+        {
+            return dbContext
+                .ExhaustiveSearchInstancePromotedTrialInstance
+                .Where(w =>
+                    w.ExhaustiveSearchInstanceTrialInstance.ExhaustiveSearchInstance.Id == exhaustiveSearchInstanceId
+                    && (w.ExhaustiveSearchInstanceTrialInstance.ExhaustiveSearchInstance
+                        .EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue))
+                .OrderByDescending(o => o.Id)
+                .Select(s =>
+                    new Dto
+                    {
+                        Id = s.Id,
+                        Score = s.Score.Value,
+                        CreatedDate = s.CreatedDate.Value,
+                        Active = s.Active.Value == 1,
+                        TopologyComplexity = s.TopologyComplexity.Value,
+                        Json = s.Json,
+                        ExhaustiveSearchInstanceTrialInstanceId = s.ExhaustiveSearchInstanceTrialInstanceId.Value
+                    }
+                );
+        }
+
+        public class Dto
+        {
+            public int Id { get; set; }
+            public int ExhaustiveSearchInstanceTrialInstanceId { get; set; }
+            public bool Active { get; set; }
+            public double Score { get; set; }
+            public int TopologyComplexity { get; set; }
+            public string Json { get; set; }
+            public DateTime CreatedDate { get; set; }
+        }
     }
 }

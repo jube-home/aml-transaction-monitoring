@@ -13,25 +13,26 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429125010)]
-public class AddLanguageStringTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429125010)]
+    public class AddLanguageStringTableIndex : Migration
     {
-        Create.Table("LanguageString")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("LanguageStringKey").AsString().Nullable()
-            .WithColumn("LanguageString").AsString().Nullable()
-            .WithColumn("LanguageId").AsInt32().Nullable();
+        public override void Up()
+        {
+            Create.Table("LanguageString")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("LanguageStringKey").AsString().Nullable()
+                .WithColumn("LanguageString").AsString().Nullable()
+                .WithColumn("LanguageId").AsInt32().Nullable();
 
-        Create.Index().OnTable("LanguageString")
-            .OnColumn("LanguageId");
-    }
+            Create.Index().OnTable("LanguageString")
+                .OnColumn("LanguageId");
+        }
 
-    public override void Down()
-    {
-        Delete.Table("LanguageString");
+        public override void Down()
+        {
+            Delete.Table("LanguageString");
+        }
     }
 }

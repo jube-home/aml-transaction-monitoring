@@ -13,37 +13,38 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429125007)]
-public class AddExhaustiveSearchInstanceVariableTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429125007)]
+    public class AddExhaustiveSearchInstanceVariableTableIndex : Migration
     {
-        Create.Table("ExhaustiveSearchInstanceVariable")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("ExhaustiveSearchInstanceId").AsInt32().Nullable()
-            .WithColumn("Name").AsString().Nullable()
-            .WithColumn("ProcessingTypeId").AsByte().Nullable()
-            .WithColumn("Mode").AsDouble().Nullable()
-            .WithColumn("Mean").AsDouble().Nullable()
-            .WithColumn("StandardDeviation").AsDouble().Nullable()
-            .WithColumn("Kurtosis").AsDouble().Nullable()
-            .WithColumn("Skewness").AsDouble().Nullable()
-            .WithColumn("Maximum").AsDouble().Nullable()
-            .WithColumn("Minimum").AsDouble().Nullable()
-            .WithColumn("Iqr").AsDouble().Nullable()
-            .WithColumn("PrescriptionSimulation").AsByte().Nullable()
-            .WithColumn("NormalisationTypeId").AsByte().Nullable()
-            .WithColumn("DistinctValues").AsInt32().Nullable()
-            .WithColumn("Correlation").AsDouble().Nullable()
-            .WithColumn("CorrelationAbsRank").AsInt32().Nullable()
-            .WithColumn("Bins").AsInt32().Nullable()
-            .WithColumn("VariableSequence").AsInt32().Nullable();
-    }
+        public override void Up()
+        {
+            Create.Table("ExhaustiveSearchInstanceVariable")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("ExhaustiveSearchInstanceId").AsInt32().Nullable()
+                .WithColumn("Name").AsString().Nullable()
+                .WithColumn("ProcessingTypeId").AsByte().Nullable()
+                .WithColumn("Mode").AsDouble().Nullable()
+                .WithColumn("Mean").AsDouble().Nullable()
+                .WithColumn("StandardDeviation").AsDouble().Nullable()
+                .WithColumn("Kurtosis").AsDouble().Nullable()
+                .WithColumn("Skewness").AsDouble().Nullable()
+                .WithColumn("Maximum").AsDouble().Nullable()
+                .WithColumn("Minimum").AsDouble().Nullable()
+                .WithColumn("Iqr").AsDouble().Nullable()
+                .WithColumn("PrescriptionSimulation").AsByte().Nullable()
+                .WithColumn("NormalisationTypeId").AsByte().Nullable()
+                .WithColumn("DistinctValues").AsInt32().Nullable()
+                .WithColumn("Correlation").AsDouble().Nullable()
+                .WithColumn("CorrelationAbsRank").AsInt32().Nullable()
+                .WithColumn("Bins").AsInt32().Nullable()
+                .WithColumn("VariableSequence").AsInt32().Nullable();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("ExhaustiveSearchInstanceVariable");
+        public override void Down()
+        {
+            Delete.Table("ExhaustiveSearchInstanceVariable");
+        }
     }
 }

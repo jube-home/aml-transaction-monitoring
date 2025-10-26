@@ -11,67 +11,73 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Jube.Data.Context;
-
-namespace Jube.Data.Query;
-
-public class GetEntityAnalysisModelActivationRuleSuppressionQuery
+namespace Jube.Data.Query
 {
-    private readonly DbContext _dbContext;
-    private readonly int _tenantRegistryId;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Context;
 
-    public GetEntityAnalysisModelActivationRuleSuppressionQuery(DbContext dbContext, string userName)
+    public class GetEntityAnalysisModelActivationRuleSuppressionQuery
     {
-        _dbContext = dbContext;
-        _tenantRegistryId = _dbContext.UserInTenant.Where(w => w.User == userName)
-            .Select(s => s.TenantRegistryId).FirstOrDefault();
-    }
+        private readonly DbContext dbContext;
+        private readonly int tenantRegistryId;
 
-    public IEnumerable<Dto> Execute(Guid entityAnalysisModelGuid, string suppressionKey, string suppressionKeyValue)
-    {
-        var suppressions = _dbContext.EntityAnalysisModelActivationRuleSuppression
-            .Where(w => w.SuppressionKey == suppressionKey && w.SuppressionKeyValue == suppressionKeyValue
-                                                           && w.EntityAnalysisModelGuid == entityAnalysisModelGuid
-                                                           && (w.Deleted == 0 || w.Deleted == null)
-                                                           && w.EntityAnalysisModel.TenantRegistryId ==
-                                                           _tenantRegistryId)
-            .Select(s => s.EntityAnalysisModelActivationRuleName).ToList();
+        public GetEntityAnalysisModelActivationRuleSuppressionQuery(DbContext dbContext, string userName)
+        {
+            this.dbContext = dbContext;
+            tenantRegistryId = this.dbContext.UserInTenant.Where(w => w.User == userName)
+                .Select(s => s.TenantRegistryId).FirstOrDefault();
+        }
 
-        var models =
-            (from m in _dbContext.EntityAnalysisModel
-                join x in _dbContext.EntityAnalysisModelRequestXpath
-                    on m.Id equals x.EntityAnalysisModelId
-                join r in _dbContext.EntityAnalysisModelActivationRule
-                    on m.Id equals r.EntityAnalysisModelId
-                where x.EnableSuppression == 1
-                      && (x.Deleted == 0 || x.Deleted == null)
-                      && (m.Deleted == 0 || m.Deleted == null)
-                      && (r.Deleted == 0 || r.Deleted == null)
-                      && m.TenantRegistryId == _tenantRegistryId
-                      && x.Name == suppressionKey
-                      && m.Guid == entityAnalysisModelGuid
-                select new { r.Name, m.Guid, r.Id }).Distinct().ToList();
+        public IEnumerable<Dto> Execute(Guid entityAnalysisModelGuid, string suppressionKey, string suppressionKeyValue)
+        {
+            var suppressions = dbContext.EntityAnalysisModelActivationRuleSuppression
+                .Where(w => w.SuppressionKey == suppressionKey && w.SuppressionKeyValue == suppressionKeyValue
+                                                               && w.EntityAnalysisModelGuid == entityAnalysisModelGuid
+                                                               && (w.Deleted == 0 || w.Deleted == null)
+                                                               && w.EntityAnalysisModel.TenantRegistryId ==
+                                                               tenantRegistryId)
+                .Select(s => s.EntityAnalysisModelActivationRuleName).ToList();
 
-        var responses = models
-            .Select(model => new Dto
-            {
-                Name = model.Name,
-                EntityAnalysisModelGuid = model.Guid,
-                EntityAnalysisModelActivationRuleSuppressionId = model.Id,
-                Suppression = suppressions.Contains(model.Name)
-            }).ToList();
+            var models =
+                (from m in dbContext.EntityAnalysisModel
+                    join x in dbContext.EntityAnalysisModelRequestXpath
+                        on m.Id equals x.EntityAnalysisModelId
+                    join r in dbContext.EntityAnalysisModelActivationRule
+                        on m.Id equals r.EntityAnalysisModelId
+                    where x.EnableSuppression == 1
+                          && (x.Deleted == 0 || x.Deleted == null)
+                          && (m.Deleted == 0 || m.Deleted == null)
+                          && (r.Deleted == 0 || r.Deleted == null)
+                          && m.TenantRegistryId == tenantRegistryId
+                          && x.Name == suppressionKey
+                          && m.Guid == entityAnalysisModelGuid
+                    select new
+                    {
+                        r.Name,
+                        m.Guid,
+                        r.Id
+                    }).Distinct().ToList();
 
-        return responses;
-    }
+            var responses = models
+                .Select(model => new Dto
+                {
+                    Name = model.Name,
+                    EntityAnalysisModelGuid = model.Guid,
+                    EntityAnalysisModelActivationRuleSuppressionId = model.Id,
+                    Suppression = suppressions.Contains(model.Name)
+                }).ToList();
 
-    public class Dto
-    {
-        public string Name { get; set; }
-        public bool Suppression { get; set; }
-        public int EntityAnalysisModelActivationRuleSuppressionId { get; set; }
-        public Guid EntityAnalysisModelGuid { get; set; }
+            return responses;
+        }
+
+        public class Dto
+        {
+            public string Name { get; set; }
+            public bool Suppression { get; set; }
+            public int EntityAnalysisModelActivationRuleSuppressionId { get; set; }
+            public Guid EntityAnalysisModelGuid { get; set; }
+        }
     }
 }

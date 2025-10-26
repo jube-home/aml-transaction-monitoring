@@ -11,103 +11,109 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB;
-
-namespace Jube.Data.Repository;
-
-public class EntityAnalysisModelDictionaryCsvFileUploadRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
-    private readonly int _tenantRegistryId;
-    private readonly string _userName;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Context;
+    using LinqToDB;
+    using Poco;
 
-    public EntityAnalysisModelDictionaryCsvFileUploadRepository(DbContext dbContext, string userName)
+    public class EntityAnalysisModelDictionaryCsvFileUploadRepository
     {
-        _dbContext = dbContext;
-        _userName = userName;
-        _tenantRegistryId = _dbContext.UserInTenant.Where(w => w.User == _userName)
-            .Select(s => s.TenantRegistryId).FirstOrDefault();
-    }
+        private readonly DbContext dbContext;
+        private readonly int tenantRegistryId;
+        private readonly string userName;
 
-    public IEnumerable<EntityAnalysisModelDictionaryCsvFileUpload> Get()
-    {
-        return _dbContext.EntityAnalysisModelDictionaryCsvFileUpload
-            .Where(w => w.EntityAnalysisModelDictionary.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId);
-    }
+        public EntityAnalysisModelDictionaryCsvFileUploadRepository(DbContext dbContext, string userName)
+        {
+            this.dbContext = dbContext;
+            this.userName = userName;
+            tenantRegistryId = this.dbContext.UserInTenant.Where(w => w.User == this.userName)
+                .Select(s => s.TenantRegistryId).FirstOrDefault();
+        }
 
-    public IEnumerable<EntityAnalysisModelDictionaryCsvFileUpload> GetByEntityAnalysisModelDictionaryId(
-        int entityAnalysisModelDictionaryId)
-    {
-        return _dbContext.EntityAnalysisModelDictionaryCsvFileUpload
-            .Where(w => w.EntityAnalysisModelDictionary.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId
-                        && w.EntityAnalysisModelDictionary.Id == entityAnalysisModelDictionaryId &&
-                        (w.EntityAnalysisModelDictionary.Deleted == 0 ||
-                         w.EntityAnalysisModelDictionary.Deleted == null));
-    }
+        public IEnumerable<EntityAnalysisModelDictionaryCsvFileUpload> Get()
+        {
+            return dbContext.EntityAnalysisModelDictionaryCsvFileUpload
+                .Where(w => w.EntityAnalysisModelDictionary.EntityAnalysisModel.TenantRegistryId == tenantRegistryId);
+        }
 
-    public EntityAnalysisModelDictionaryCsvFileUpload GetById(int id)
-    {
-        return _dbContext.EntityAnalysisModelDictionaryCsvFileUpload.FirstOrDefault(w =>
-            w.EntityAnalysisModelDictionary.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId
-            && w.EntityAnalysisModelDictionary.Id == id && (w.EntityAnalysisModelDictionary.Deleted == 0 ||
-                                                            w.EntityAnalysisModelDictionary.Deleted == null));
-    }
+        public IEnumerable<EntityAnalysisModelDictionaryCsvFileUpload> GetByEntityAnalysisModelDictionaryId(
+            int entityAnalysisModelDictionaryId)
+        {
+            return dbContext.EntityAnalysisModelDictionaryCsvFileUpload
+                .Where(w => w.EntityAnalysisModelDictionary.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
+                            && w.EntityAnalysisModelDictionary.Id == entityAnalysisModelDictionaryId &&
+                            (w.EntityAnalysisModelDictionary.Deleted == 0 ||
+                             w.EntityAnalysisModelDictionary.Deleted == null));
+        }
 
-    public EntityAnalysisModelDictionaryCsvFileUpload Insert(EntityAnalysisModelDictionaryCsvFileUpload model)
-    {
-        model.CreatedUser = _userName;
-        model.CreatedDate = DateTime.Now;
-        model.InheritedId = _dbContext.InsertWithInt32Identity(model);
-        return model;
-    }
+        public EntityAnalysisModelDictionaryCsvFileUpload GetById(int id)
+        {
+            return dbContext.EntityAnalysisModelDictionaryCsvFileUpload.FirstOrDefault(w =>
+                w.EntityAnalysisModelDictionary.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
+                && w.EntityAnalysisModelDictionary.Id == id && (w.EntityAnalysisModelDictionary.Deleted == 0 ||
+                                                                w.EntityAnalysisModelDictionary.Deleted == null));
+        }
 
-    //TODO[RC]: Check the upload treatment.
-    public EntityAnalysisModelDictionaryCsvFileUpload
-        Update(
-            EntityAnalysisModelDictionaryCsvFileUpload
-                model)
-    {
-        var existing = _dbContext.EntityAnalysisModelDictionaryCsvFileUpload
-            .FirstOrDefault(w => w.Id
-                                 == model.Id
-                                 && w.EntityAnalysisModelDictionary.EntityAnalysisModel.TenantRegistryId ==
-                                 _tenantRegistryId
-                                 && (w.EntityAnalysisModelDictionary.Deleted == 0 ||
-                                     w.EntityAnalysisModelDictionary.Deleted == null));
+        public EntityAnalysisModelDictionaryCsvFileUpload Insert(EntityAnalysisModelDictionaryCsvFileUpload model)
+        {
+            model.CreatedUser = userName;
+            model.CreatedDate = DateTime.Now;
+            model.InheritedId = dbContext.InsertWithInt32Identity(model);
+            return model;
+        }
+        
+        public EntityAnalysisModelDictionaryCsvFileUpload
+            Update(
+                EntityAnalysisModelDictionaryCsvFileUpload
+                    model)
+        {
+            var existing = dbContext.EntityAnalysisModelDictionaryCsvFileUpload
+                .FirstOrDefault(w => w.Id
+                                     == model.Id
+                                     && w.EntityAnalysisModelDictionary.EntityAnalysisModel.TenantRegistryId ==
+                                     tenantRegistryId
+                                     && (w.EntityAnalysisModelDictionary.Deleted == 0 ||
+                                         w.EntityAnalysisModelDictionary.Deleted == null));
 
-        if (existing == null) throw new KeyNotFoundException();
+            if (existing == null)
+            {
+                throw new KeyNotFoundException();
+            }
 
-        model.Version = existing.Version + 1;
-        model.CreatedUser = _userName;
-        model.CreatedDate = DateTime.Now;
-        model.InheritedId = existing.Id;
+            model.Version = existing.Version + 1;
+            model.CreatedUser = userName;
+            model.CreatedDate = DateTime.Now;
+            model.InheritedId = existing.Id;
 
-        Delete(existing.Id);
+            Delete(existing.Id);
 
-        var id = _dbContext.InsertWithInt32Identity(model);
+            var id = dbContext.InsertWithInt32Identity(model);
 
-        model.Id = id;
+            model.Id = id;
 
-        return model;
-    }
+            return model;
+        }
 
-    public void Delete(int id)
-    {
-        var records = _dbContext.EntityAnalysisModelDictionaryCsvFileUpload
-            .Where(d => d.EntityAnalysisModelDictionary.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId
-                        && d.Id == id
-                        && (d.EntityAnalysisModelDictionary.Deleted == 0 ||
-                            d.EntityAnalysisModelDictionary.Deleted == null))
-            .Set(s => s.Deleted, Convert.ToByte(1))
-            .Set(s => s.DeletedDate, DateTime.Now)
-            .Set(s => s.DeletedUser, _userName)
-            .Update();
+        public void Delete(int id)
+        {
+            var records = dbContext.EntityAnalysisModelDictionaryCsvFileUpload
+                .Where(d => d.EntityAnalysisModelDictionary.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
+                            && d.Id == id
+                            && (d.EntityAnalysisModelDictionary.Deleted == 0 ||
+                                d.EntityAnalysisModelDictionary.Deleted == null))
+                .Set(s => s.Deleted, Convert.ToByte(1))
+                .Set(s => s.DeletedDate, DateTime.Now)
+                .Set(s => s.DeletedUser, userName)
+                .Update();
 
-        if (records == 0) throw new KeyNotFoundException();
+            if (records == 0)
+            {
+                throw new KeyNotFoundException();
+            }
+        }
     }
 }

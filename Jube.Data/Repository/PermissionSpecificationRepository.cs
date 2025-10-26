@@ -11,23 +11,18 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System.Collections.Generic;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-
-namespace Jube.Data.Repository;
-
-public class PermissionSpecificationRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
+    using System.Collections.Generic;
+    using Context;
+    using Poco;
 
-    public PermissionSpecificationRepository(DbContext dbContext)
+    public class PermissionSpecificationRepository(DbContext dbContext)
     {
-        _dbContext = dbContext;
-    }
 
-    public IEnumerable<PermissionSpecification> Get()
-    {
-        return _dbContext.PermissionSpecification;
+        public IEnumerable<PermissionSpecification> Get()
+        {
+            return dbContext.PermissionSpecification;
+        }
     }
 }

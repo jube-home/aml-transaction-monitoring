@@ -11,72 +11,71 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB;
-
-namespace Jube.Data.Repository;
-
-public class UserInTenantRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
-    private readonly UserInTenant _userInTenant;
-    private readonly string _userName;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Context;
+    using LinqToDB;
+    using Poco;
 
-    public UserInTenantRepository(DbContext dbContext, string userName)
+    public class UserInTenantRepository
     {
-        _dbContext = dbContext;
-        _userInTenant = _dbContext.UserInTenant.FirstOrDefault(w => w.User == userName);
-        _userName = userName;
-    }
+        private readonly DbContext dbContext;
+        private readonly UserInTenant userInTenant;
+        private readonly string userName;
 
-    public void Update(string user, int tenantRegistryId)
-    {
-        var existing = _dbContext.UserInTenant
-            .FirstOrDefault(w => w.User == user);
-
-        if (existing != null)
+        public UserInTenantRepository(DbContext dbContext, string userName)
         {
-            existing.TenantRegistryId = tenantRegistryId;
-            existing.SwitchedUser = _userName;
-            existing.SwitchedDate = DateTime.Now;
-
-            _dbContext.Update(existing);
-
-            var userInTenantSwitchLog = new UserInTenantSwitchLog
-            {
-                TenantRegistryId = tenantRegistryId,
-                SwitchedDate = existing.SwitchedDate,
-                SwitchedUser = _userName,
-                UserInTenantId = existing.Id
-            };
-
-            _dbContext.Insert(userInTenantSwitchLog);
+            this.dbContext = dbContext;
+            userInTenant = this.dbContext.UserInTenant.FirstOrDefault(w => w.User == userName);
+            this.userName = userName;
         }
-        else
+
+        public void Update(string user, int tenantRegistryId)
         {
-            var userInTenant = new UserInTenant
+            var existing = dbContext.UserInTenant
+                .FirstOrDefault(w => w.User == user);
+
+            if (existing != null)
             {
-                TenantRegistryId = tenantRegistryId,
-                SwitchedUser = _userName,
-                SwitchedDate = DateTime.Now
-            };
+                existing.TenantRegistryId = tenantRegistryId;
+                existing.SwitchedUser = userName;
+                existing.SwitchedDate = DateTime.Now;
 
-            _dbContext.Insert(userInTenant);
+                dbContext.Update(existing);
+
+                var userInTenantSwitchLog = new UserInTenantSwitchLog
+                {
+                    TenantRegistryId = tenantRegistryId,
+                    SwitchedDate = existing.SwitchedDate,
+                    SwitchedUser = userName,
+                    UserInTenantId = existing.Id
+                };
+
+                dbContext.Insert(userInTenantSwitchLog);
+            }
+            else
+            {
+                dbContext.Insert(new UserInTenant
+                {
+                    TenantRegistryId = tenantRegistryId,
+                    SwitchedUser = userName,
+                    SwitchedDate = DateTime.Now
+                });
+            }
         }
-    }
 
-    public UserInTenant GetCurrentTenantRegistry()
-    {
-        return _userInTenant;
-    }
+        public UserInTenant GetCurrentTenantRegistry()
+        {
+            return userInTenant;
+        }
 
-    public IEnumerable<UserInTenant> Get()
-    {
-        return _dbContext.UserInTenant.Where(w =>
-            w.TenantRegistryId == _userInTenant.TenantRegistryId);
+        public IEnumerable<UserInTenant> Get()
+        {
+            return dbContext.UserInTenant.Where(w =>
+                w.TenantRegistryId == userInTenant.TenantRegistryId);
+        }
     }
 }

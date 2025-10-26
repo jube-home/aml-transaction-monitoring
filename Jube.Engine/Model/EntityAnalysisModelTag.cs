@@ -11,12 +11,13 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-namespace Jube.Engine.Model;
-
-public class EntityAnalysisModelTag
+namespace Jube.Engine.Model
 {
-    public int Id { get; set; }
-    public string Name { get; set; }
-    public bool ResponsePayload { get; set; }
-    public bool ReportTable { get; set; }
+    public class EntityAnalysisModelTag
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public bool ResponsePayload { get; set; }
+        public bool ReportTable { get; set; }
+    }
 }

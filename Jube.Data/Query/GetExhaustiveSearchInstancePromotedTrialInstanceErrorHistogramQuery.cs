@@ -11,60 +11,61 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Accord.Statistics.Visualizations;
-using Jube.Data.Context;
-
-namespace Jube.Data.Query;
-
-public class GetExhaustiveSearchInstancePromotedTrialInstanceErrorHistogramQuery
+namespace Jube.Data.Query
 {
-    private readonly DbContext _dbContext;
-    private readonly int _tenantRegistryId;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Accord.Statistics.Visualizations;
+    using Context;
 
-    public GetExhaustiveSearchInstancePromotedTrialInstanceErrorHistogramQuery(DbContext dbContext, string userName)
+    public class GetExhaustiveSearchInstancePromotedTrialInstanceErrorHistogramQuery
     {
-        _dbContext = dbContext;
-        _tenantRegistryId = _dbContext.UserInTenant.Where(w => w.User == userName)
-            .Select(s => s.TenantRegistryId).FirstOrDefault();
-    }
+        private readonly DbContext dbContext;
+        private readonly int tenantRegistryId;
 
-    public IEnumerable<Dto> Execute(
-        int exhaustiveSearchInstanceId)
-    {
-        var promotedExhaustiveSearchInstanceTrialInstanceId = _dbContext
-            .ExhaustiveSearchInstancePromotedTrialInstance
-            .Where(w =>
-                w.ExhaustiveSearchInstanceTrialInstance.ExhaustiveSearchInstance.Id == exhaustiveSearchInstanceId
-                && w.Active == 1
-                && w.ExhaustiveSearchInstanceTrialInstance.ExhaustiveSearchInstance
-                    .EntityAnalysisModel.TenantRegistryId == _tenantRegistryId)
-            .OrderByDescending(o => o.Id)
-            .Select(s => s.ExhaustiveSearchInstanceTrialInstanceId)
-            .FirstOrDefault();
+        public GetExhaustiveSearchInstancePromotedTrialInstanceErrorHistogramQuery(DbContext dbContext, string userName)
+        {
+            this.dbContext = dbContext;
+            tenantRegistryId = this.dbContext.UserInTenant.Where(w => w.User == userName)
+                .Select(s => s.TenantRegistryId).FirstOrDefault();
+        }
 
-        var errors = _dbContext.ExhaustiveSearchInstancePromotedTrialInstancePredictedActual
-            .Where(w =>
-                w.ExhaustiveSearchInstanceTrialInstanceId == promotedExhaustiveSearchInstanceTrialInstanceId)
-            .OrderBy(o => o.Id)
-            .Select(s => s.Actual.Value - s.Predicted.Value).ToArray();
+        public IEnumerable<Dto> Execute(
+            int exhaustiveSearchInstanceId)
+        {
+            var promotedExhaustiveSearchInstanceTrialInstanceId = dbContext
+                .ExhaustiveSearchInstancePromotedTrialInstance
+                .Where(w =>
+                    w.ExhaustiveSearchInstanceTrialInstance.ExhaustiveSearchInstance.Id == exhaustiveSearchInstanceId
+                    && w.Active == 1
+                    && w.ExhaustiveSearchInstanceTrialInstance.ExhaustiveSearchInstance
+                        .EntityAnalysisModel.TenantRegistryId == tenantRegistryId)
+                .OrderByDescending(o => o.Id)
+                .Select(s => s.ExhaustiveSearchInstanceTrialInstanceId)
+                .FirstOrDefault();
 
-        var histogram = new Histogram();
-        histogram.Compute(errors, 10);
+            var errors = dbContext.ExhaustiveSearchInstancePromotedTrialInstancePredictedActual
+                .Where(w =>
+                    w.ExhaustiveSearchInstanceTrialInstanceId == promotedExhaustiveSearchInstanceTrialInstanceId)
+                .OrderBy(o => o.Id)
+                .Select(s => s.Actual.Value - s.Predicted.Value).ToArray();
 
-        return histogram.Bins
-            .Select(s => new Dto
-            {
-                Bin = Math.Round(s.Range.Min, 2),
-                Frequency = s.Value
-            }).ToList();
-    }
+            var histogram = new Histogram();
+            histogram.Compute(errors, 10);
 
-    public class Dto
-    {
-        public double Bin { get; set; }
-        public int Frequency { get; set; }
+            return histogram.Bins
+                .Select(s => new Dto
+                {
+                    Bin = Math.Round(s.Range.Min, 2),
+                    Frequency = s.Value
+                }).ToList();
+        }
+
+        public class Dto
+        {
+            public double Bin { get; set; }
+            public int Frequency { get; set; }
+        }
     }
 }

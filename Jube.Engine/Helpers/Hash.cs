@@ -11,23 +11,26 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System.Security.Cryptography;
-using System.Text;
-
-namespace Jube.Engine.Helpers;
-
-public static class Hash
+namespace Jube.Engine.Helpers
 {
-    public static string GetHash(string theInput)
+    using System.Security.Cryptography;
+    using System.Text;
+
+    public static class Hash
     {
-        using var hasher = MD5.Create();
-        var bytes = hasher.ComputeHash(Encoding.UTF8.GetBytes(theInput));
+        public static string GetHash(string theInput)
+        {
+            using var hasher = MD5.Create();
+            var bytes = hasher.ComputeHash(Encoding.UTF8.GetBytes(theInput));
 
-        var sBuilder = new StringBuilder();
+            var sBuilder = new StringBuilder();
 
-        foreach (var t in bytes)
-            sBuilder.Append(t.ToString("X2"));
+            foreach (var t in bytes)
+            {
+                sBuilder.Append(t.ToString("X2"));
+            }
 
-        return sBuilder.ToString();
+            return sBuilder.ToString();
+        }
     }
 }

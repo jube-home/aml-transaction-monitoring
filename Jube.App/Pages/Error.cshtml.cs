@@ -17,12 +17,20 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace Jube.App.Pages
 {
+    using System;
+
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public class ErrorModel : PageModel
     {
         public string RequestId { get; set; }
 
-        public bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
+        public bool ShowRequestId
+        {
+            get
+            {
+                return !String.IsNullOrEmpty(RequestId);
+            }
+        }
 
         public void OnGet()
         {

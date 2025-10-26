@@ -14,54 +14,55 @@
 using System;
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124910)]
-public class AddCaseWorkflowDisplayTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124910)]
+    public class AddCaseWorkflowDisplayTableIndex : Migration
     {
-        Create.Table("CaseWorkflowDisplay")
-            .WithColumn("Id").AsInt64().PrimaryKey().Identity()
-            .WithColumn("CaseWorkflowId").AsInt32().Nullable()
-            .WithColumn("Name").AsString().Nullable()
-            .WithColumn("Active").AsByte().Nullable()
-            .WithColumn("Locked").AsByte().Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("UpdatedDate").AsDateTime2().Nullable()
-            .WithColumn("UpdatedUser").AsString().Nullable()
-            .WithColumn("Deleted").AsByte().Nullable()
-            .WithColumn("DeletedUser").AsString().Nullable()
-            .WithColumn("DeletedDate").AsDateTime2().Nullable()
-            .WithColumn("InheritedId").AsInt32().Nullable()
-            .WithColumn("Html").AsString().Nullable()
-            .WithColumn("Version").AsInt32().Nullable();
-
-        Create.Index().OnTable("CaseWorkflowDisplay")
-            .OnColumn("CaseWorkflowId").Ascending()
-            .OnColumn("Deleted").Ascending();
-
-        Insert.IntoTable("CaseWorkflowDisplay").Row(new
+        public override void Up()
         {
-            CaseWorkflowId = 1,
-            Name = "ExampleDisplayCurrencyAmount",
-            Active = 1,
-            CreatedUser = "Administrator",
-            CreatedDate = DateTime.Now,
-            Version = 1,
-            Html = "This is an example Cases Workflow Display:" + Environment.NewLine +
-                   "The transaction amount is:" + Environment.NewLine +
-                   "<br/>" + Environment.NewLine +
-                   "<br/>" + Environment.NewLine +
-                   "<div style='font-size:30px'>[@CurrencyAmount@]</div>" + Environment.NewLine +
-                   "<br/>" + Environment.NewLine +
-                   "The tokens are taken from the Cases Workflows XPath and can be laid out in HTML."
-        });
-    }
+            Create.Table("CaseWorkflowDisplay")
+                .WithColumn("Id").AsInt64().PrimaryKey().Identity()
+                .WithColumn("CaseWorkflowId").AsInt32().Nullable()
+                .WithColumn("Name").AsString().Nullable()
+                .WithColumn("Active").AsByte().Nullable()
+                .WithColumn("Locked").AsByte().Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("UpdatedDate").AsDateTime2().Nullable()
+                .WithColumn("UpdatedUser").AsString().Nullable()
+                .WithColumn("Deleted").AsByte().Nullable()
+                .WithColumn("DeletedUser").AsString().Nullable()
+                .WithColumn("DeletedDate").AsDateTime2().Nullable()
+                .WithColumn("InheritedId").AsInt32().Nullable()
+                .WithColumn("Html").AsString().Nullable()
+                .WithColumn("Version").AsInt32().Nullable();
 
-    public override void Down()
-    {
-        Delete.Table("CaseWorkflowDisplay");
+            Create.Index().OnTable("CaseWorkflowDisplay")
+                .OnColumn("CaseWorkflowId").Ascending()
+                .OnColumn("Deleted").Ascending();
+
+            Insert.IntoTable("CaseWorkflowDisplay").Row(new
+            {
+                CaseWorkflowId = 1,
+                Name = "ExampleDisplayCurrencyAmount",
+                Active = 1,
+                CreatedUser = "Administrator",
+                CreatedDate = DateTime.Now,
+                Version = 1,
+                Html = "This is an example Cases Workflow Display:" + Environment.NewLine +
+                       "The transaction amount is:" + Environment.NewLine +
+                       "<br/>" + Environment.NewLine +
+                       "<br/>" + Environment.NewLine +
+                       "<div style='font-size:30px'>[@CurrencyAmount@]</div>" + Environment.NewLine +
+                       "<br/>" + Environment.NewLine +
+                       "The tokens are taken from the Cases Workflows XPath and can be laid out in HTML."
+            });
+        }
+
+        public override void Down()
+        {
+            Delete.Table("CaseWorkflowDisplay");
+        }
     }
 }

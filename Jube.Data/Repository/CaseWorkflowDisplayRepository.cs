@@ -11,144 +11,150 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using AutoMapper;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB;
-
-namespace Jube.Data.Repository;
-
-public class CaseWorkflowDisplayRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
-    private readonly int _tenantRegistryId;
-    private readonly string _userName;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using AutoMapper;
+    using Context;
+    using LinqToDB;
+    using Poco;
 
-    public CaseWorkflowDisplayRepository(DbContext dbContext, string userName)
+    public class CaseWorkflowDisplayRepository
     {
-        _dbContext = dbContext;
-        _userName = userName;
-        _tenantRegistryId = _dbContext.UserInTenant.Where(w => w.User == _userName)
-            .Select(s => s.TenantRegistryId).FirstOrDefault();
-    }
+        private readonly DbContext dbContext;
+        private readonly int tenantRegistryId;
+        private readonly string userName;
 
-    public CaseWorkflowDisplayRepository(DbContext dbContext, int tenantRegistryId)
-    {
-        _dbContext = dbContext;
-        _tenantRegistryId = tenantRegistryId;
-    }
-
-    public IEnumerable<CaseWorkflowDisplay> Get()
-    {
-        return _dbContext.CaseWorkflowDisplay
-            .Where(w => w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId);
-    }
-
-    public IEnumerable<CaseWorkflowDisplay> GetByCasesWorkflowIdOrderById(int casesWorkflowId)
-    {
-        return _dbContext.CaseWorkflowDisplay
-            .Where(w => w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId
-                        && w.CaseWorkflowId == casesWorkflowId && (w.Deleted == 0 || w.Deleted == null))
-            .OrderBy(o => o.Id);
-    }
-
-    public IEnumerable<CaseWorkflowDisplay> GetByCasesWorkflowIdActiveOnly(int casesWorkflowId)
-    {
-        return _dbContext.CaseWorkflowDisplay
-            .Where(w => w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId
-                        && w.Active == 1
-                        && w.CaseWorkflowId == casesWorkflowId
-                        && (w.Deleted == 0 || w.Deleted == null));
-    }
-
-    public IEnumerable<CaseWorkflowDisplay> GetByCasesWorkflowGuidActiveOnly(Guid casesWorkflowGuid)
-    {
-        return _dbContext.CaseWorkflowDisplay
-            .Where(w => w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId
-                        && w.Active == 1
-                        && w.CaseWorkflow.Guid == casesWorkflowGuid
-                        && (w.CaseWorkflow.EntityAnalysisModel.Deleted == 0 ||
-                            w.CaseWorkflow.EntityAnalysisModel.Deleted == null)
-                        && (w.Deleted == 0 || w.Deleted == null));
-    }
-
-    public CaseWorkflowDisplay GetById(int id)
-    {
-        return _dbContext.CaseWorkflowDisplay.FirstOrDefault(w =>
-            w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId
-            && w.Id == id && (w.Deleted == 0 || w.Deleted == null));
-    }
-
-    public CaseWorkflowDisplay Insert(CaseWorkflowDisplay model)
-    {
-        model.CreatedUser = _userName;
-        model.CreatedDate = DateTime.Now;
-        model.Version = 1;
-        model.Guid = Guid.NewGuid();
-        model.Id = _dbContext.InsertWithInt32Identity(model);
-        return model;
-    }
-
-    public CaseWorkflowDisplay Update(CaseWorkflowDisplay model)
-    {
-        var existing = _dbContext.CaseWorkflowDisplay
-            .FirstOrDefault(w => w.Id
-                                 == model.Id
-                                 && w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId ==
-                                 _tenantRegistryId
-                                 && (w.Deleted == 0 || w.Deleted == null)
-                                 && (w.Locked == 0 || w.Locked == null));
-
-        if (existing == null) throw new KeyNotFoundException();
-
-        model.Version = existing.Version + 1;
-        model.CreatedUser = _userName ?? model.CreatedUser;
-        model.Guid = model.Guid == Guid.Empty ? Guid.NewGuid() : model.Guid;
-        model.CreatedDate = DateTime.Now;
-
-        _dbContext.Update(model);
-
-        var config = new MapperConfiguration(cfg =>
+        public CaseWorkflowDisplayRepository(DbContext dbContext, string userName)
         {
-            cfg.CreateMap<CaseWorkflowDisplay, CaseWorkflowDisplayVersion>();
-        });
-        var mapper = new Mapper(config);
+            this.dbContext = dbContext;
+            this.userName = userName;
+            tenantRegistryId = this.dbContext.UserInTenant.Where(w => w.User == this.userName)
+                .Select(s => s.TenantRegistryId).FirstOrDefault();
+        }
 
-        var audit = mapper.Map<CaseWorkflowDisplayVersion>(existing);
-        audit.CaseWorkflowDisplayId = existing.Id;
+        public CaseWorkflowDisplayRepository(DbContext dbContext, int tenantRegistryId)
+        {
+            this.dbContext = dbContext;
+            this.tenantRegistryId = tenantRegistryId;
+        }
 
-        _dbContext.Insert(audit);
+        public IEnumerable<CaseWorkflowDisplay> Get()
+        {
+            return dbContext.CaseWorkflowDisplay
+                .Where(w => w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == tenantRegistryId);
+        }
 
-        return model;
-    }
+        public IEnumerable<CaseWorkflowDisplay> GetByCasesWorkflowIdOrderById(int casesWorkflowId)
+        {
+            return dbContext.CaseWorkflowDisplay
+                .Where(w => w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
+                            && w.CaseWorkflowId == casesWorkflowId && (w.Deleted == 0 || w.Deleted == null))
+                .OrderBy(o => o.Id);
+        }
 
-    public void Delete(int id)
-    {
-        var records = _dbContext.CaseWorkflowDisplay
-            .Where(d => d.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId
-                        && d.Id == id
-                        && (d.Locked == 0 || d.Locked == null)
-                        && (d.Deleted == 0 || d.Deleted == null))
-            .Set(s => s.Deleted, Convert.ToByte(1))
-            .Set(s => s.DeletedDate, DateTime.Now)
-            .Set(s => s.DeletedUser, _userName)
-            .Update();
+        public IEnumerable<CaseWorkflowDisplay> GetByCasesWorkflowIdActiveOnly(int casesWorkflowId)
+        {
+            return dbContext.CaseWorkflowDisplay
+                .Where(w => w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
+                            && w.Active == 1
+                            && w.CaseWorkflowId == casesWorkflowId
+                            && (w.Deleted == 0 || w.Deleted == null));
+        }
 
-        if (records == 0) throw new KeyNotFoundException();
-    }
+        public IEnumerable<CaseWorkflowDisplay> GetByCasesWorkflowGuidActiveOnly(Guid casesWorkflowGuid)
+        {
+            return dbContext.CaseWorkflowDisplay
+                .Where(w => w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
+                            && w.Active == 1
+                            && w.CaseWorkflow.Guid == casesWorkflowGuid
+                            && (w.CaseWorkflow.EntityAnalysisModel.Deleted == 0 ||
+                                w.CaseWorkflow.EntityAnalysisModel.Deleted == null)
+                            && (w.Deleted == 0 || w.Deleted == null));
+        }
 
-    public void DeleteByTenantRegistryId(int tenantRegistryId, int importId)
-    {
-        _dbContext.CaseWorkflowDisplay
-            .Where(d => d.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId
-                        && d.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
-                        && (d.Deleted == 0 || d.Deleted == null))
-            .Set(s => s.ImportId, importId)
-            .Set(s => s.Deleted, Convert.ToByte(1))
-            .Set(s => s.DeletedDate, DateTime.Now)
-            .Update();
+        public CaseWorkflowDisplay GetById(int id)
+        {
+            return dbContext.CaseWorkflowDisplay.FirstOrDefault(w =>
+                w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
+                && w.Id == id && (w.Deleted == 0 || w.Deleted == null));
+        }
+
+        public CaseWorkflowDisplay Insert(CaseWorkflowDisplay model)
+        {
+            model.CreatedUser = userName;
+            model.CreatedDate = DateTime.Now;
+            model.Version = 1;
+            model.Guid = Guid.NewGuid();
+            model.Id = dbContext.InsertWithInt32Identity(model);
+            return model;
+        }
+
+        public CaseWorkflowDisplay Update(CaseWorkflowDisplay model)
+        {
+            var existing = dbContext.CaseWorkflowDisplay
+                .FirstOrDefault(w => w.Id
+                                     == model.Id
+                                     && w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId ==
+                                     tenantRegistryId
+                                     && (w.Deleted == 0 || w.Deleted == null)
+                                     && (w.Locked == 0 || w.Locked == null));
+
+            if (existing == null)
+            {
+                throw new KeyNotFoundException();
+            }
+
+            model.Version = existing.Version + 1;
+            model.CreatedUser = userName ?? model.CreatedUser;
+            model.Guid = model.Guid == Guid.Empty ? Guid.NewGuid() : model.Guid;
+            model.CreatedDate = DateTime.Now;
+
+            dbContext.Update(model);
+
+            var config = new MapperConfiguration(cfg =>
+            {
+                cfg.CreateMap<CaseWorkflowDisplay, CaseWorkflowDisplayVersion>();
+            });
+            var mapper = new Mapper(config);
+
+            var audit = mapper.Map<CaseWorkflowDisplayVersion>(existing);
+            audit.CaseWorkflowDisplayId = existing.Id;
+
+            dbContext.Insert(audit);
+
+            return model;
+        }
+
+        public void Delete(int id)
+        {
+            var records = dbContext.CaseWorkflowDisplay
+                .Where(d => d.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
+                            && d.Id == id
+                            && (d.Locked == 0 || d.Locked == null)
+                            && (d.Deleted == 0 || d.Deleted == null))
+                .Set(s => s.Deleted, Convert.ToByte(1))
+                .Set(s => s.DeletedDate, DateTime.Now)
+                .Set(s => s.DeletedUser, userName)
+                .Update();
+
+            if (records == 0)
+            {
+                throw new KeyNotFoundException();
+            }
+        }
+
+        public void DeleteByTenantRegistryIdOutsideOfInstance(int tenantRegistryIdOutsideOfInstance, int importId)
+        {
+            dbContext.CaseWorkflowDisplay
+                .Where(d => d.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == tenantRegistryIdOutsideOfInstance
+                            && (d.Deleted == 0 || d.Deleted == null))
+                .Set(s => s.ImportId, importId)
+                .Set(s => s.Deleted, Convert.ToByte(1))
+                .Set(s => s.DeletedDate, DateTime.Now)
+                .Update();
+        }
     }
 }

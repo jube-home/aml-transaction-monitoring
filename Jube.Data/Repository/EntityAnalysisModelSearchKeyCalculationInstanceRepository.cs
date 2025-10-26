@@ -11,66 +11,61 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Linq;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB;
-
-namespace Jube.Data.Repository;
-
-public class EntityAnalysisModelSearchKeyCalculationInstanceRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
+    using System;
+    using System.Linq;
+    using Context;
+    using LinqToDB;
+    using Poco;
 
-    public EntityAnalysisModelSearchKeyCalculationInstanceRepository(DbContext dbContext)
+    public class EntityAnalysisModelSearchKeyCalculationInstanceRepository(DbContext dbContext)
     {
-        _dbContext = dbContext;
-    }
 
-    public EntityAnalysisModelSearchKeyCalculationInstance Insert(
-        EntityAnalysisModelSearchKeyCalculationInstance model)
-    {
-        model.Id = _dbContext.InsertWithInt32Identity(model);
-        return model;
-    }
+        public EntityAnalysisModelSearchKeyCalculationInstance Insert(
+            EntityAnalysisModelSearchKeyCalculationInstance model)
+        {
+            model.Id = dbContext.InsertWithInt32Identity(model);
+            return model;
+        }
 
-    public void UpdateDistinctValuesCount(int id,
-        int distinctValuesCount)
-    {
-        _dbContext.EntityAnalysisModelSearchKeyCalculationInstance
-            .Where(d => d.Id == id)
-            .Set(s => s.DistinctValuesCount, distinctValuesCount)
-            .Set(s => s.DistinctValuesUpdatedDate, DateTime.Now)
-            .Update();
-    }
+        public void UpdateDistinctValuesCount(int id,
+            int distinctValuesCount)
+        {
+            dbContext.EntityAnalysisModelSearchKeyCalculationInstance
+                .Where(d => d.Id == id)
+                .Set(s => s.DistinctValuesCount, distinctValuesCount)
+                .Set(s => s.DistinctValuesUpdatedDate, DateTime.Now)
+                .Update();
+        }
 
-    public void UpdateExpiredSearchKeyCacheCount(int id,
-        int expiredSearchKeyCacheCount)
-    {
-        _dbContext.EntityAnalysisModelSearchKeyCalculationInstance
-            .Where(d => d.Id == id)
-            .Set(s => s.ExpiredSearchKeyCacheCount, expiredSearchKeyCacheCount)
-            .Set(s => s.ExpiredSearchKeyCacheDate, DateTime.Now)
-            .Update();
-    }
+        public void UpdateExpiredSearchKeyCacheCount(int id,
+            int expiredSearchKeyCacheCount)
+        {
+            dbContext.EntityAnalysisModelSearchKeyCalculationInstance
+                .Where(d => d.Id == id)
+                .Set(s => s.ExpiredSearchKeyCacheCount, expiredSearchKeyCacheCount)
+                .Set(s => s.ExpiredSearchKeyCacheDate, DateTime.Now)
+                .Update();
+        }
 
-    public void UpdateDistinctValuesProcessedValuesCount(int id,
-        int distinctValuesProcessedValuesCount)
-    {
-        _dbContext.EntityAnalysisModelSearchKeyCalculationInstance
-            .Where(d => d.Id == id)
-            .Set(s => s.DistinctValuesProcessedValuesCount, distinctValuesProcessedValuesCount)
-            .Set(s => s.DistinctValuesProcessedValuesUpdatedDate, DateTime.Now)
-            .Update();
-    }
+        public void UpdateDistinctValuesProcessedValuesCount(int id,
+            int distinctValuesProcessedValuesCount)
+        {
+            dbContext.EntityAnalysisModelSearchKeyCalculationInstance
+                .Where(d => d.Id == id)
+                .Set(s => s.DistinctValuesProcessedValuesCount, distinctValuesProcessedValuesCount)
+                .Set(s => s.DistinctValuesProcessedValuesUpdatedDate, DateTime.Now)
+                .Update();
+        }
 
-    public void UpdateCompleted(int id)
-    {
-        _dbContext.EntityAnalysisModelSearchKeyCalculationInstance
-            .Where(d => d.Id == id)
-            .Set(s => s.Completed, (byte)1)
-            .Set(s => s.CompletedDate, DateTime.Now)
-            .Update();
+        public void UpdateCompleted(int id)
+        {
+            dbContext.EntityAnalysisModelSearchKeyCalculationInstance
+                .Where(d => d.Id == id)
+                .Set(s => s.Completed, (byte)1)
+                .Set(s => s.CompletedDate, DateTime.Now)
+                .Update();
+        }
     }
 }

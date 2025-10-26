@@ -13,23 +13,24 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124947)]
-public class AddEntityAnalysisModelSynchronisationNodeStatusEntryTable : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124947)]
+    public class AddEntityAnalysisModelSynchronisationNodeStatusEntryTable : Migration
     {
-        Create.Table("EntityAnalysisModelSynchronisationNodeStatusEntry")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("Instance").AsString().Nullable()
-            .WithColumn("HeartbeatDate").AsDateTime().Nullable()
-            .WithColumn("SynchronisedDate").AsDateTime().Nullable()
-            .WithColumn("TenantRegistryId").AsInt32().Nullable();
-    }
+        public override void Up()
+        {
+            Create.Table("EntityAnalysisModelSynchronisationNodeStatusEntry")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("Instance").AsString().Nullable()
+                .WithColumn("HeartbeatDate").AsDateTime().Nullable()
+                .WithColumn("SynchronisedDate").AsDateTime().Nullable()
+                .WithColumn("TenantRegistryId").AsInt32().Nullable();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("EntityAnalysisModelSynchronisationNodeStatusEntry");
+        public override void Down()
+        {
+            Delete.Table("EntityAnalysisModelSynchronisationNodeStatusEntry");
+        }
     }
 }

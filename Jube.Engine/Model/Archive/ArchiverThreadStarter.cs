@@ -11,46 +11,58 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using log4net;
-
-namespace Jube.Engine.Model.Archive;
-
-public class ArchiverThreadStarter
+namespace Jube.Engine.Model.Archive
 {
-    private bool _stopping;
-    public Dictionary<int, EntityAnalysisModel> ActiveModels;
-    public ILog Log;
-    public int ThreadSequence { get; init; }
+    using System;
+    using System.Collections.Generic;
+    using System.Threading;
+    using log4net;
 
-    public void StopMe()
+    public class ArchiverThreadStarter
     {
-        _stopping = true;
-    }
+        public Dictionary<int, EntityAnalysisModel> ActiveModels;
+        public ILog Log;
+        private bool stopping;
+        public int ThreadSequence { get; init; }
 
-    public void Start()
-    {
-        var found = false;
-        while (!_stopping)
-            try
+        public void StopMe()
+        {
+            stopping = true;
+        }
+
+        public void Start()
+        {
+            var found = false;
+            while (!stopping)
             {
-                if (ActiveModels == null) continue;
+                try
+                {
+                    if (ActiveModels == null)
+                    {
+                        continue;
+                    }
 
-                foreach (var activeModelKvp in ActiveModels)
-                    found = activeModelKvp.Value.TryProcessSingleDequeueForCaseCreationAndArchiver(
-                        ThreadSequence);
+                    foreach (var activeModelKvp in ActiveModels)
+                    {
+                        found = activeModelKvp.Value.TryProcessSingleDequeueForCaseCreationAndArchiver(
+                            ThreadSequence);
+                    }
 
-                if (found)
-                    found = false;
-                else
+                    if (found)
+                    {
+                        found = false;
+                    }
+                    else
+                    {
+                        Thread.Sleep(100);
+                    }
+                }
+                catch (Exception ex)
+                {
                     Thread.Sleep(100);
+                    Log.Error($"All Entity Models Database Storage: Error{ex}");
+                }
             }
-            catch (Exception ex)
-            {
-                Thread.Sleep(100);
-                Log.Error($"All Entity Models Database Storage: Error{ex}");
-            }
+        }
     }
 }

@@ -13,27 +13,28 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429125005)]
-public class AddExhaustiveSearchInstanceVariableHistogramTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429125005)]
+    public class AddExhaustiveSearchInstanceVariableHistogramTableIndex : Migration
     {
-        Create.Table("ExhaustiveSearchInstanceVariableHistogram")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("ExhaustiveSearchInstanceVariableId").AsInt32().Nullable()
-            .WithColumn("BinSequence").AsInt32().Nullable()
-            .WithColumn("BinRangeStart").AsDouble().Nullable()
-            .WithColumn("BinRangeEnd").AsDouble().Nullable()
-            .WithColumn("Frequency").AsInt32().Nullable();
+        public override void Up()
+        {
+            Create.Table("ExhaustiveSearchInstanceVariableHistogram")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("ExhaustiveSearchInstanceVariableId").AsInt32().Nullable()
+                .WithColumn("BinSequence").AsInt32().Nullable()
+                .WithColumn("BinRangeStart").AsDouble().Nullable()
+                .WithColumn("BinRangeEnd").AsDouble().Nullable()
+                .WithColumn("Frequency").AsInt32().Nullable();
 
-        Create.Index().OnTable("ExhaustiveSearchInstanceVariableHistogram")
-            .OnColumn("ExhaustiveSearchInstanceVariableId");
-    }
+            Create.Index().OnTable("ExhaustiveSearchInstanceVariableHistogram")
+                .OnColumn("ExhaustiveSearchInstanceVariableId");
+        }
 
-    public override void Down()
-    {
-        Delete.Table("ExhaustiveSearchInstanceVariableHistogram");
+        public override void Down()
+        {
+            Delete.Table("ExhaustiveSearchInstanceVariableHistogram");
+        }
     }
 }

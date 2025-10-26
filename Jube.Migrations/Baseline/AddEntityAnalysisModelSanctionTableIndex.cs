@@ -14,55 +14,56 @@
 using System;
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124942)]
-public class AddEntityAnalysisModelSanctionTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124942)]
+    public class AddEntityAnalysisModelSanctionTableIndex : Migration
     {
-        Create.Table("EntityAnalysisModelSanction")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
-            .WithColumn("MultipartStringDataName").AsString().Nullable()
-            .WithColumn("Distance").AsByte().Nullable()
-            .WithColumn("Name").AsString().Nullable()
-            .WithColumn("Locked").AsByte().Nullable()
-            .WithColumn("Active").AsByte().Nullable()
-            .WithColumn("CreatedDate").AsDateTime().Nullable()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("Deleted").AsByte().Nullable()
-            .WithColumn("DeletedDate").AsDateTime().Nullable()
-            .WithColumn("DeletedUser").AsString().Nullable()
-            .WithColumn("Version").AsInt32().Nullable()
-            .WithColumn("InheritedId").AsInt32().Nullable()
-            .WithColumn("ResponsePayload").AsByte().Nullable()
-            .WithColumn("ReportTable").AsByte().Nullable()
-            .WithColumn("CacheValue").AsInt32().Nullable()
-            .WithColumn("CacheInterval").AsString().Nullable();
-
-        Create.Index().OnTable("EntityAnalysisModelSanction")
-            .OnColumn("EntityAnalysisModelId").Ascending()
-            .OnColumn("Deleted").Ascending();
-
-        Insert.IntoTable("EntityAnalysisModelSanction").Row(new
+        public override void Up()
         {
-            Name = "FuzzyMatchDistance2JoinedName",
-            EntityAnalysisModelId = 1,
-            MultipartStringDataName = "JoinedName",
-            Distance = 2,
-            Active = 1,
-            CreatedDate = DateTime.Now,
-            CreatedUser = "Administrator",
-            Version = 1,
-            ResponsePayload = 1,
-            CacheValue = 1,
-            CacheInterval = "h"
-        });
-    }
+            Create.Table("EntityAnalysisModelSanction")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
+                .WithColumn("MultipartStringDataName").AsString().Nullable()
+                .WithColumn("Distance").AsByte().Nullable()
+                .WithColumn("Name").AsString().Nullable()
+                .WithColumn("Locked").AsByte().Nullable()
+                .WithColumn("Active").AsByte().Nullable()
+                .WithColumn("CreatedDate").AsDateTime().Nullable()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("Deleted").AsByte().Nullable()
+                .WithColumn("DeletedDate").AsDateTime().Nullable()
+                .WithColumn("DeletedUser").AsString().Nullable()
+                .WithColumn("Version").AsInt32().Nullable()
+                .WithColumn("InheritedId").AsInt32().Nullable()
+                .WithColumn("ResponsePayload").AsByte().Nullable()
+                .WithColumn("ReportTable").AsByte().Nullable()
+                .WithColumn("CacheValue").AsInt32().Nullable()
+                .WithColumn("CacheInterval").AsString().Nullable();
 
-    public override void Down()
-    {
-        Delete.Table("EntityAnalysisModelSanction");
+            Create.Index().OnTable("EntityAnalysisModelSanction")
+                .OnColumn("EntityAnalysisModelId").Ascending()
+                .OnColumn("Deleted").Ascending();
+
+            Insert.IntoTable("EntityAnalysisModelSanction").Row(new
+            {
+                Name = "FuzzyMatchDistance2JoinedName",
+                EntityAnalysisModelId = 1,
+                MultipartStringDataName = "JoinedName",
+                Distance = 2,
+                Active = 1,
+                CreatedDate = DateTime.Now,
+                CreatedUser = "Administrator",
+                Version = 1,
+                ResponsePayload = 1,
+                CacheValue = 1,
+                CacheInterval = "h"
+            });
+        }
+
+        public override void Down()
+        {
+            Delete.Table("EntityAnalysisModelSanction");
+        }
     }
 }

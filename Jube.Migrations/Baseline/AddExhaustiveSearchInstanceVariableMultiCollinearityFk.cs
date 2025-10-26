@@ -13,22 +13,23 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220430125451)]
-public class AddExhaustiveSearchInstanceVariableMultiCollinearityFk : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220430125451)]
+    public class AddExhaustiveSearchInstanceVariableMultiCollinearityFk : Migration
     {
-        Create.ForeignKey().FromTable("ExhaustiveSearchInstanceVariableMultiCollinearity")
-            .ForeignColumn("ExhaustiveSearchInstanceVariableId").ToTable("ExhaustiveSearchInstanceVariable")
-            .PrimaryColumn("Id");
-    }
+        public override void Up()
+        {
+            Create.ForeignKey().FromTable("ExhaustiveSearchInstanceVariableMultiCollinearity")
+                .ForeignColumn("ExhaustiveSearchInstanceVariableId").ToTable("ExhaustiveSearchInstanceVariable")
+                .PrimaryColumn("Id");
+        }
 
-    public override void Down()
-    {
-        Delete.ForeignKey().FromTable("ExhaustiveSearchInstanceVariableMultiCollinearity")
-            .ForeignColumn("ExhaustiveSearchInstanceVariableId").ToTable("ExhaustiveSearchInstanceVariable")
-            .PrimaryColumn("Id");
+        public override void Down()
+        {
+            Delete.ForeignKey().FromTable("ExhaustiveSearchInstanceVariableMultiCollinearity")
+                .ForeignColumn("ExhaustiveSearchInstanceVariableId").ToTable("ExhaustiveSearchInstanceVariable")
+                .PrimaryColumn("Id");
+        }
     }
 }

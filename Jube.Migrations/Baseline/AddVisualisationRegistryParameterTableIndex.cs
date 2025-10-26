@@ -14,77 +14,78 @@
 using System;
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429125026)]
-public class AddVisualisationRegistryParameterTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429125026)]
+    public class AddVisualisationRegistryParameterTableIndex : Migration
     {
-        Create.Table("VisualisationRegistryParameter")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("VisualisationRegistryId").AsInt32().Nullable()
-            .WithColumn("Name").AsString().Nullable()
-            .WithColumn("Active").AsByte().Nullable()
-            .WithColumn("Locked").AsByte().Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("UpdatedDate").AsDateTime2().Nullable()
-            .WithColumn("UpdatedUser").AsString().Nullable()
-            .WithColumn("Deleted").AsByte().Nullable()
-            .WithColumn("DeletedUser").AsString().Nullable()
-            .WithColumn("DeletedDate").AsDateTime2().Nullable()
-            .WithColumn("InheritedId").AsInt32().Nullable()
-            .WithColumn("Version").AsInt32().Nullable()
-            .WithColumn("DataTypeId").AsByte().Nullable()
-            .WithColumn("DefaultValue").AsString().Nullable()
-            .WithColumn("Required").AsByte().Nullable();
-
-        Create.Index().OnTable("VisualisationRegistryParameter")
-            .OnColumn("VisualisationRegistryId");
-
-        Insert.IntoTable("VisualisationRegistryParameter").Row(new
+        public override void Up()
         {
-            VisualisationRegistryId = 1,
-            Name = "Percentage Contribution Greater Than",
-            Active = 1,
-            CreatedDate = DateTime.Now,
-            CreatedUser = "Administrator",
-            Version = 1,
-            DataTypeId = 3,
-            Required = 1,
-            DefaultValue = 0
-        });
+            Create.Table("VisualisationRegistryParameter")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("VisualisationRegistryId").AsInt32().Nullable()
+                .WithColumn("Name").AsString().Nullable()
+                .WithColumn("Active").AsByte().Nullable()
+                .WithColumn("Locked").AsByte().Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("UpdatedDate").AsDateTime2().Nullable()
+                .WithColumn("UpdatedUser").AsString().Nullable()
+                .WithColumn("Deleted").AsByte().Nullable()
+                .WithColumn("DeletedUser").AsString().Nullable()
+                .WithColumn("DeletedDate").AsDateTime2().Nullable()
+                .WithColumn("InheritedId").AsInt32().Nullable()
+                .WithColumn("Version").AsInt32().Nullable()
+                .WithColumn("DataTypeId").AsByte().Nullable()
+                .WithColumn("DefaultValue").AsString().Nullable()
+                .WithColumn("Required").AsByte().Nullable();
 
-        Insert.IntoTable("VisualisationRegistryParameter").Row(new
+            Create.Index().OnTable("VisualisationRegistryParameter")
+                .OnColumn("VisualisationRegistryId");
+
+            Insert.IntoTable("VisualisationRegistryParameter").Row(new
+            {
+                VisualisationRegistryId = 1,
+                Name = "Percentage Contribution Greater Than",
+                Active = 1,
+                CreatedDate = DateTime.Now,
+                CreatedUser = "Administrator",
+                Version = 1,
+                DataTypeId = 3,
+                Required = 1,
+                DefaultValue = 0
+            });
+
+            Insert.IntoTable("VisualisationRegistryParameter").Row(new
+            {
+                VisualisationRegistryId = 1,
+                Name = "Frequency Greater Than",
+                Active = 1,
+                CreatedDate = DateTime.Now,
+                CreatedUser = "Administrator",
+                Version = 1,
+                DataTypeId = 2,
+                Required = 1,
+                DefaultValue = 0
+            });
+
+            Insert.IntoTable("VisualisationRegistryParameter").Row(new
+            {
+                VisualisationRegistryId = 2,
+                Name = "AccountId",
+                Active = 1,
+                CreatedDate = DateTime.Now,
+                CreatedUser = "Administrator",
+                Version = 1,
+                DataTypeId = 1,
+                Required = 1,
+                DefaultValue = "Test1"
+            });
+        }
+
+        public override void Down()
         {
-            VisualisationRegistryId = 1,
-            Name = "Frequency Greater Than",
-            Active = 1,
-            CreatedDate = DateTime.Now,
-            CreatedUser = "Administrator",
-            Version = 1,
-            DataTypeId = 2,
-            Required = 1,
-            DefaultValue = 0
-        });
-
-        Insert.IntoTable("VisualisationRegistryParameter").Row(new
-        {
-            VisualisationRegistryId = 2,
-            Name = "AccountId",
-            Active = 1,
-            CreatedDate = DateTime.Now,
-            CreatedUser = "Administrator",
-            Version = 1,
-            DataTypeId = 1,
-            Required = 1,
-            DefaultValue = "Test1"
-        });
-    }
-
-    public override void Down()
-    {
-        Delete.Table("VisualisationRegistryParameter");
+            Delete.Table("VisualisationRegistryParameter");
+        }
     }
 }

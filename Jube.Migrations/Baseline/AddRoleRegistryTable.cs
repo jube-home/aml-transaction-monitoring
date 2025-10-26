@@ -14,43 +14,44 @@
 using System;
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429125013)]
-public class AddRoleRegistryTable : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429125013)]
+    public class AddRoleRegistryTable : Migration
     {
-        Create.Table("RoleRegistry")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("Name").AsString().Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("UpdatedDate").AsDateTime2().Nullable()
-            .WithColumn("UpdatedUser").AsString().Nullable()
-            .WithColumn("DeletedDate").AsString().Nullable()
-            .WithColumn("DeletedUser").AsString().Nullable()
-            .WithColumn("Active").AsByte().Nullable()
-            .WithColumn("Locked").AsByte().Nullable()
-            .WithColumn("Deleted").AsByte().Nullable()
-            .WithColumn("Version").AsInt32().Nullable()
-            .WithColumn("TenantRegistryId").AsInt32().Nullable();
-
-        var roleRegistryEntry = new
+        public override void Up()
         {
-            Name = "Administrator",
-            Active = 1,
-            CreatedDate = DateTime.Now,
-            CreatedUser = "Administrator",
-            Version = 1,
-            TenantRegistryId = 1
-        };
+            Create.Table("RoleRegistry")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("Name").AsString().Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("UpdatedDate").AsDateTime2().Nullable()
+                .WithColumn("UpdatedUser").AsString().Nullable()
+                .WithColumn("DeletedDate").AsString().Nullable()
+                .WithColumn("DeletedUser").AsString().Nullable()
+                .WithColumn("Active").AsByte().Nullable()
+                .WithColumn("Locked").AsByte().Nullable()
+                .WithColumn("Deleted").AsByte().Nullable()
+                .WithColumn("Version").AsInt32().Nullable()
+                .WithColumn("TenantRegistryId").AsInt32().Nullable();
 
-        Insert.IntoTable("RoleRegistry").Row(roleRegistryEntry);
-    }
+            var roleRegistryEntry = new
+            {
+                Name = "Administrator",
+                Active = 1,
+                CreatedDate = DateTime.Now,
+                CreatedUser = "Administrator",
+                Version = 1,
+                TenantRegistryId = 1
+            };
 
-    public override void Down()
-    {
-        Delete.Table("RoleRegistry");
+            Insert.IntoTable("RoleRegistry").Row(roleRegistryEntry);
+        }
+
+        public override void Down()
+        {
+            Delete.Table("RoleRegistry");
+        }
     }
 }

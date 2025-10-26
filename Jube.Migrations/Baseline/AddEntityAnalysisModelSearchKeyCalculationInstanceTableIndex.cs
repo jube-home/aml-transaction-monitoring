@@ -13,35 +13,36 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124944)]
-public class AddEntityAnalysisModelSearchKeyCalculationInstanceTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124944)]
+    public class AddEntityAnalysisModelSearchKeyCalculationInstanceTableIndex : Migration
     {
-        Create.Table("EntityAnalysisModelSearchKeyCalculationInstance")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("SearchKey").AsString().Nullable()
-            .WithColumn("CreatedDate").AsDateTime().Nullable()
-            .WithColumn("Completed").AsByte().Nullable()
-            .WithColumn("CompletedDate").AsDateTime().Nullable()
-            .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
-            .WithColumn("Priority").AsByte().Nullable()
-            .WithColumn("DistinctValuesCount").AsInt32().Nullable()
-            .WithColumn("DistinctValuesUpdatedDate").AsDateTime().Nullable()
-            .WithColumn("DistinctValuesProcessedValuesCount").AsInt32().Nullable()
-            .WithColumn("DistinctValuesProcessedValuesUpdatedDate").AsDateTime().Nullable()
-            .WithColumn("DistinctFetchToDate").AsDateTime().Nullable()
-            .WithColumn("ExpiredSearchKeyCacheDate").AsDateTime().Nullable()
-            .WithColumn("ExpiredSearchKeyCacheCount").AsInt32().Nullable();
+        public override void Up()
+        {
+            Create.Table("EntityAnalysisModelSearchKeyCalculationInstance")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("SearchKey").AsString().Nullable()
+                .WithColumn("CreatedDate").AsDateTime().Nullable()
+                .WithColumn("Completed").AsByte().Nullable()
+                .WithColumn("CompletedDate").AsDateTime().Nullable()
+                .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
+                .WithColumn("Priority").AsByte().Nullable()
+                .WithColumn("DistinctValuesCount").AsInt32().Nullable()
+                .WithColumn("DistinctValuesUpdatedDate").AsDateTime().Nullable()
+                .WithColumn("DistinctValuesProcessedValuesCount").AsInt32().Nullable()
+                .WithColumn("DistinctValuesProcessedValuesUpdatedDate").AsDateTime().Nullable()
+                .WithColumn("DistinctFetchToDate").AsDateTime().Nullable()
+                .WithColumn("ExpiredSearchKeyCacheDate").AsDateTime().Nullable()
+                .WithColumn("ExpiredSearchKeyCacheCount").AsInt32().Nullable();
 
-        Create.Index().OnTable("EntityAnalysisModelSearchKeyCalculationInstance")
-            .OnColumn("EntityAnalysisModelId").Ascending();
-    }
+            Create.Index().OnTable("EntityAnalysisModelSearchKeyCalculationInstance")
+                .OnColumn("EntityAnalysisModelId").Ascending();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("EntityAnalysisModelSearchKeyCalculationInstance");
+        public override void Down()
+        {
+            Delete.Table("EntityAnalysisModelSearchKeyCalculationInstance");
+        }
     }
 }

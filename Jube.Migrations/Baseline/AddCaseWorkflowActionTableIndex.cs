@@ -14,84 +14,85 @@
 using System;
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220611123500)]
-public class AddCaseWorkflowActionTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220611123500)]
+    public class AddCaseWorkflowActionTableIndex : Migration
     {
-        Create.Table("CaseWorkflowAction")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("CaseWorkflowId").AsInt32().Nullable()
-            .WithColumn("Name").AsString().Nullable()
-            .WithColumn("Active").AsByte().Nullable()
-            .WithColumn("Locked").AsByte().Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("UpdatedDate").AsDateTime2().Nullable()
-            .WithColumn("UpdatedUser").AsString().Nullable()
-            .WithColumn("Deleted").AsByte().Nullable()
-            .WithColumn("DeletedUser").AsString().Nullable()
-            .WithColumn("DeletedDate").AsDateTime2().Nullable()
-            .WithColumn("Version").AsInt32().Nullable()
-            .WithColumn("EnableHttpEndpoint").AsByte().Nullable()
-            .WithColumn("HttpEndpoint").AsString().Nullable()
-            .WithColumn("HttpEndpointTypeId").AsByte().Nullable()
-            .WithColumn("EnableNotification").AsByte().Nullable()
-            .WithColumn("NotificationTypeId").AsByte().Nullable()
-            .WithColumn("NotificationDestination").AsString().Nullable()
-            .WithColumn("NotificationSubject").AsString().Nullable()
-            .WithColumn("NotificationBody").AsString().Nullable()
-            .WithColumn("InheritedId").AsInt32().Nullable();
-
-        Create.Index().OnTable("CaseWorkflowAction")
-            .OnColumn("CaseWorkflowId").Ascending()
-            .OnColumn("Deleted").Ascending();
-
-        Insert.IntoTable("CaseWorkflowAction").Row(new
+        public override void Up()
         {
-            Name = "Call Customer",
-            CaseWorkflowId = 1,
-            Active = 1,
-            CreatedDate = DateTime.Now,
-            CreatedUser = "Administrator",
-            Version = 1
-        });
+            Create.Table("CaseWorkflowAction")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("CaseWorkflowId").AsInt32().Nullable()
+                .WithColumn("Name").AsString().Nullable()
+                .WithColumn("Active").AsByte().Nullable()
+                .WithColumn("Locked").AsByte().Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("UpdatedDate").AsDateTime2().Nullable()
+                .WithColumn("UpdatedUser").AsString().Nullable()
+                .WithColumn("Deleted").AsByte().Nullable()
+                .WithColumn("DeletedUser").AsString().Nullable()
+                .WithColumn("DeletedDate").AsDateTime2().Nullable()
+                .WithColumn("Version").AsInt32().Nullable()
+                .WithColumn("EnableHttpEndpoint").AsByte().Nullable()
+                .WithColumn("HttpEndpoint").AsString().Nullable()
+                .WithColumn("HttpEndpointTypeId").AsByte().Nullable()
+                .WithColumn("EnableNotification").AsByte().Nullable()
+                .WithColumn("NotificationTypeId").AsByte().Nullable()
+                .WithColumn("NotificationDestination").AsString().Nullable()
+                .WithColumn("NotificationSubject").AsString().Nullable()
+                .WithColumn("NotificationBody").AsString().Nullable()
+                .WithColumn("InheritedId").AsInt32().Nullable();
 
-        Insert.IntoTable("CaseWorkflowAction").Row(new
+            Create.Index().OnTable("CaseWorkflowAction")
+                .OnColumn("CaseWorkflowId").Ascending()
+                .OnColumn("Deleted").Ascending();
+
+            Insert.IntoTable("CaseWorkflowAction").Row(new
+            {
+                Name = "Call Customer",
+                CaseWorkflowId = 1,
+                Active = 1,
+                CreatedDate = DateTime.Now,
+                CreatedUser = "Administrator",
+                Version = 1
+            });
+
+            Insert.IntoTable("CaseWorkflowAction").Row(new
+            {
+                Name = "Email Customer",
+                CaseWorkflowId = 1,
+                Active = 1,
+                CreatedDate = DateTime.Now,
+                CreatedUser = "Administrator",
+                Version = 1
+            });
+
+            Insert.IntoTable("CaseWorkflowAction").Row(new
+            {
+                Name = "Escalation",
+                CaseWorkflowId = 1,
+                Active = 1,
+                CreatedDate = DateTime.Now,
+                CreatedUser = "Administrator",
+                Version = 1
+            });
+
+            Insert.IntoTable("CaseWorkflowAction").Row(new
+            {
+                Name = "General Action",
+                CaseWorkflowId = 1,
+                Active = 1,
+                CreatedDate = DateTime.Now,
+                CreatedUser = "Administrator",
+                Version = 1
+            });
+        }
+
+        public override void Down()
         {
-            Name = "Email Customer",
-            CaseWorkflowId = 1,
-            Active = 1,
-            CreatedDate = DateTime.Now,
-            CreatedUser = "Administrator",
-            Version = 1
-        });
-
-        Insert.IntoTable("CaseWorkflowAction").Row(new
-        {
-            Name = "Escalation",
-            CaseWorkflowId = 1,
-            Active = 1,
-            CreatedDate = DateTime.Now,
-            CreatedUser = "Administrator",
-            Version = 1
-        });
-
-        Insert.IntoTable("CaseWorkflowAction").Row(new
-        {
-            Name = "General Action",
-            CaseWorkflowId = 1,
-            Active = 1,
-            CreatedDate = DateTime.Now,
-            CreatedUser = "Administrator",
-            Version = 1
-        });
-    }
-
-    public override void Down()
-    {
-        Delete.Table("CaseWorkflowAction");
+            Delete.Table("CaseWorkflowAction");
+        }
     }
 }

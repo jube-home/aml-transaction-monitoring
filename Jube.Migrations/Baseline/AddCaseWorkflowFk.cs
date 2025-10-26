@@ -13,26 +13,27 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220430125406)]
-public class AddCaseWorkflowFk : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220430125406)]
+    public class AddCaseWorkflowFk : Migration
     {
-        Create.ForeignKey().FromTable("CaseWorkflow").ForeignColumn("EntityAnalysisModelId")
-            .ToTable("EntityAnalysisModel").PrimaryColumn("Id");
+        public override void Up()
+        {
+            Create.ForeignKey().FromTable("CaseWorkflow").ForeignColumn("EntityAnalysisModelId")
+                .ToTable("EntityAnalysisModel").PrimaryColumn("Id");
 
-        Create.ForeignKey().FromTable("CaseWorkflow").ForeignColumn("TenantRegistryId").ToTable("TenantRegistry")
-            .PrimaryColumn("Id");
-    }
+            Create.ForeignKey().FromTable("CaseWorkflow").ForeignColumn("TenantRegistryId").ToTable("TenantRegistry")
+                .PrimaryColumn("Id");
+        }
 
-    public override void Down()
-    {
-        Delete.ForeignKey().FromTable("CaseWorkflow").ForeignColumn("EntityAnalysisModelId")
-            .ToTable("EntityAnalysisModel").PrimaryColumn("Id");
+        public override void Down()
+        {
+            Delete.ForeignKey().FromTable("CaseWorkflow").ForeignColumn("EntityAnalysisModelId")
+                .ToTable("EntityAnalysisModel").PrimaryColumn("Id");
 
-        Delete.ForeignKey().FromTable("CaseWorkflow").ForeignColumn("TenantRegistryId").ToTable("TenantRegistry")
-            .PrimaryColumn("Id");
+            Delete.ForeignKey().FromTable("CaseWorkflow").ForeignColumn("TenantRegistryId").ToTable("TenantRegistry")
+                .PrimaryColumn("Id");
+        }
     }
 }

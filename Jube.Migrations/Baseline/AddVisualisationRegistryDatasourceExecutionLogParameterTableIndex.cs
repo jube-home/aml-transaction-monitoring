@@ -13,28 +13,29 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429125022)]
-public class AddVisualisationRegistryDatasourceExecutionLogParameterTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429125022)]
+    public class AddVisualisationRegistryDatasourceExecutionLogParameterTableIndex : Migration
     {
-        Create.Table("VisualisationRegistryDatasourceExecutionLogParameter")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("Value").AsString().Nullable()
-            .WithColumn("VisualisationRegistryDatasourceExecutionLogId").AsInt32().Nullable()
-            .WithColumn("VisualisationRegistryParameterId").AsInt32().Nullable();
+        public override void Up()
+        {
+            Create.Table("VisualisationRegistryDatasourceExecutionLogParameter")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("Value").AsString().Nullable()
+                .WithColumn("VisualisationRegistryDatasourceExecutionLogId").AsInt32().Nullable()
+                .WithColumn("VisualisationRegistryParameterId").AsInt32().Nullable();
 
-        Create.Index("IX_Truncated_VRDELP_VRDELI").OnTable("VisualisationRegistryDatasourceExecutionLogParameter")
-            .OnColumn("VisualisationRegistryDatasourceExecutionLogId");
+            Create.Index("IX_Truncated_VRDELP_VRDELI").OnTable("VisualisationRegistryDatasourceExecutionLogParameter")
+                .OnColumn("VisualisationRegistryDatasourceExecutionLogId");
 
-        Create.Index().OnTable("VisualisationRegistryDatasourceExecutionLogParameter")
-            .OnColumn("VisualisationRegistryParameterId");
-    }
+            Create.Index().OnTable("VisualisationRegistryDatasourceExecutionLogParameter")
+                .OnColumn("VisualisationRegistryParameterId");
+        }
 
-    public override void Down()
-    {
-        Delete.Table("VisualisationRegistryDatasourceExecutionLogParameter");
+        public override void Down()
+        {
+            Delete.Table("VisualisationRegistryDatasourceExecutionLogParameter");
+        }
     }
 }

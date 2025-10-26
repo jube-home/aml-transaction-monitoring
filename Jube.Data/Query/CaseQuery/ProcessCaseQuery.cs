@@ -11,105 +11,109 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System.Text.RegularExpressions;
-using Jube.Data.Context;
-using Jube.Data.Query.CaseQuery.Dto;
-using Newtonsoft.Json.Linq;
-
-namespace Jube.Data.Query.CaseQuery;
-
-public class ProcessCaseQuery
+namespace Jube.Data.Query.CaseQuery
 {
-    private readonly DbContext _dbContext;
-    private readonly string _userName;
+    using System.Text.RegularExpressions;
+    using Context;
+    using Dto;
+    using Newtonsoft.Json.Linq;
 
-    public ProcessCaseQuery(DbContext dbContext, string userName)
+    public class ProcessCaseQuery(DbContext dbContext, string userName)
     {
-        _dbContext = dbContext;
-        _userName = userName;
-    }
 
-    public CaseQueryDto Process(CaseQueryDto getCaseByIdDto)
-    {
-        if (getCaseByIdDto == null) return null;
-
-        var caseWorkflowXPathByCaseWorkflowIdQuery =
-            new GetCaseWorkflowXPathByCaseWorkflowIdQuery(_dbContext, _userName);
-
-        var xPaths = caseWorkflowXPathByCaseWorkflowIdQuery
-            .Execute(getCaseByIdDto.CaseWorkflowGuid);
-
-        var json = JObject.Parse(getCaseByIdDto.Json);
-
-        if (json == null) return getCaseByIdDto;
-
-        getCaseByIdDto.FormattedPayload = [];
-
-        foreach (var xPath in xPaths)
+        public CaseQueryDto Process(CaseQueryDto getCaseByIdDto)
         {
-            var getCaseByIdFieldEntryDto = new GetCaseByIdFieldEntryDto();
-            var missing = false;
-            try
+            if (getCaseByIdDto == null)
             {
-                var jToken = json.SelectToken(xPath.XPath);
-                if (jToken != null)
+                return null;
+            }
+
+            var caseWorkflowXPathByCaseWorkflowIdQuery =
+                new GetCaseWorkflowXPathByCaseWorkflowIdQuery(dbContext, userName);
+
+            var xPaths = caseWorkflowXPathByCaseWorkflowIdQuery
+                .Execute(getCaseByIdDto.CaseWorkflowGuid);
+
+            var json = JObject.Parse(getCaseByIdDto.Json);
+
+            getCaseByIdDto.FormattedPayload = [];
+
+            foreach (var xPath in xPaths)
+            {
+                var getCaseByIdFieldEntryDto = new GetCaseByIdFieldEntryDto();
+                var missing = false;
+                try
                 {
-                    getCaseByIdFieldEntryDto.Value = jToken.Value<string>();
-                    getCaseByIdFieldEntryDto.Name = xPath.Name;
-                    getCaseByIdFieldEntryDto.ConditionalRegularExpressionFormatting
-                        = xPath.ConditionalRegularExpressionFormatting;
-                    getCaseByIdFieldEntryDto.CellFormatForeColor = xPath.ConditionalFormatForeColor;
-                    getCaseByIdFieldEntryDto.CellFormatBackColor = xPath.ConditionalFormatBackColor;
-                    getCaseByIdFieldEntryDto.CellFormatForeRow = xPath.ForeRowColorScope;
-                    getCaseByIdFieldEntryDto.CellFormatBackRow = xPath.BackRowColorScope;
-
-                    if (getCaseByIdFieldEntryDto.ConditionalRegularExpressionFormatting)
+                    var jToken = json.SelectToken(xPath.XPath);
+                    if (jToken != null)
                     {
-                        if (xPath.RegularExpression != null)
-                            try
-                            {
-                                var regex = new Regex(xPath.RegularExpression);
+                        getCaseByIdFieldEntryDto.Value = jToken.Value<string>();
+                        getCaseByIdFieldEntryDto.Name = xPath.Name;
+                        getCaseByIdFieldEntryDto.ConditionalRegularExpressionFormatting
+                            = xPath.ConditionalRegularExpressionFormatting;
+                        getCaseByIdFieldEntryDto.CellFormatForeColor = xPath.ConditionalFormatForeColor;
+                        getCaseByIdFieldEntryDto.CellFormatBackColor = xPath.ConditionalFormatBackColor;
+                        getCaseByIdFieldEntryDto.CellFormatForeRow = xPath.ForeRowColorScope;
+                        getCaseByIdFieldEntryDto.CellFormatBackRow = xPath.BackRowColorScope;
 
-                                var match = regex.Match(getCaseByIdFieldEntryDto.Value);
-                                getCaseByIdFieldEntryDto.ExistsMatch = match.Success;
+                        if (getCaseByIdFieldEntryDto.ConditionalRegularExpressionFormatting)
+                        {
+                            if (xPath.RegularExpression != null)
+                            {
+                                try
+                                {
+                                    var regex = new Regex(xPath.RegularExpression);
+
+                                    var match = regex.Match(getCaseByIdFieldEntryDto.Value);
+                                    getCaseByIdFieldEntryDto.ExistsMatch = match.Success;
+                                }
+                                catch
+                                {
+                                    getCaseByIdFieldEntryDto.ExistsMatch = false;
+                                }
                             }
-                            catch
+                            else
                             {
                                 getCaseByIdFieldEntryDto.ExistsMatch = false;
                             }
-                        else
-                            getCaseByIdFieldEntryDto.ExistsMatch = false;
+                        }
+                    }
+                    else
+                    {
+                        missing = true;
                     }
                 }
-                else
+                catch
                 {
                     missing = true;
                 }
+
+                if (!missing)
+                {
+                    getCaseByIdDto.FormattedPayload.Add(getCaseByIdFieldEntryDto);
+                }
             }
-            catch
+
+            getCaseByIdDto.Activation = [];
+            var jTokensActivation = json.SelectTokens("$.activation");
+            foreach (var activationJToken in jTokensActivation)
+            foreach (var x in activationJToken)
             {
-                missing = true;
+                var key = ((JProperty)x).Name;
+                var jValue = ((JProperty)x).Value;
+
+                var getCaseByIdActivationDto = new GetCaseByIdActivationDto
+                {
+                    Name = key
+                };
+
+                if ((int)jValue["visible"] == 1)
+                {
+                    getCaseByIdDto.Activation.Add(getCaseByIdActivationDto);
+                }
             }
 
-            if (!missing) getCaseByIdDto.FormattedPayload.Add(getCaseByIdFieldEntryDto);
+            return getCaseByIdDto;
         }
-
-        getCaseByIdDto.Activation = [];
-        var jTokensActivation = json.SelectTokens("$.activation");
-        foreach (var activationJToken in jTokensActivation)
-        foreach (var x in activationJToken)
-        {
-            var key = ((JProperty)x).Name;
-            var jValue = ((JProperty)x).Value;
-
-            var getCaseByIdActivationDto = new GetCaseByIdActivationDto
-            {
-                Name = key
-            };
-
-            if ((int)jValue["visible"] == 1) getCaseByIdDto.Activation.Add(getCaseByIdActivationDto);
-        }
-
-        return getCaseByIdDto;
     }
 }

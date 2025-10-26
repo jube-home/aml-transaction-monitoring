@@ -23,7 +23,7 @@ namespace Jube.App.Code.WatcherDispatch
 {
     public static class RelayExtension
     {
-        public static IApplicationBuilder StartRelay(this IApplicationBuilder app)
+        public static void StartRelay(this IApplicationBuilder app)
         {
             using var scope = app.ApplicationServices.CreateScope();
             var relay = scope.ServiceProvider.GetService<Relay>();
@@ -33,7 +33,6 @@ namespace Jube.App.Code.WatcherDispatch
             var log = scope.ServiceProvider.GetService<ILog>();
             var rabbitMqChannel = scope.ServiceProvider.GetService<IModel>();
             relay?.Start(hub, environment, log, rabbitMqChannel,contractResolver);
-            return app;
         }
     }
 }

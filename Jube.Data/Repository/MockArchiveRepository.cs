@@ -11,37 +11,32 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System.Collections.Generic;
-using System.Linq;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB;
-
-namespace Jube.Data.Repository;
-
-public class MockArchiveRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Context;
+    using LinqToDB;
+    using Poco;
 
-    public MockArchiveRepository(DbContext dbContext)
+    public class MockArchiveRepository(DbContext dbContext)
     {
-        _dbContext = dbContext;
-    }
 
-    public void Insert(MockArchive model)
-    {
-        _dbContext.Insert(model);
-    }
+        public void Insert(MockArchive model)
+        {
+            dbContext.Insert(model);
+        }
 
-    public IEnumerable<string> GetJsonByEntityAnalysisModelIdRandomLimit(int entityAnalysisModelId, int limit)
-    {
-        return _dbContext.MockArchive
-            .Where(w => w.EntityAnalysisModelId == entityAnalysisModelId)
-            .OrderBy(o => o.EntityAnalysisModelInstanceEntryGuid).Select(s => s.Json).Take(limit);
-    }
+        public IEnumerable<string> GetJsonByEntityAnalysisModelIdRandomLimit(int entityAnalysisModelId, int limit)
+        {
+            return dbContext.MockArchive
+                .Where(w => w.EntityAnalysisModelId == entityAnalysisModelId)
+                .OrderBy(o => o.EntityAnalysisModelInstanceEntryGuid).Select(s => s.Json).Take(limit);
+        }
 
-    public void Delete()
-    {
-        _dbContext.MockArchive.Delete();
+        public void Delete()
+        {
+            dbContext.MockArchive.Delete();
+        }
     }
 }

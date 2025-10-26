@@ -14,40 +14,41 @@
 using FluentMigrator;
 using FluentMigrator.Postgres;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220531133200)]
-public class AddCacheTtlCounterTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220531133200)]
+    public class AddCacheTtlCounterTableIndex : Migration
     {
-        Create.Table("CacheTtlCounter")
-            .WithColumn("Id").AsInt64().PrimaryKey().Identity()
-            .WithColumn("EntityAnalysisModelId").AsInt64().Nullable()
-            .WithColumn("DataName").AsString().Nullable()
-            .WithColumn("DataValue").AsString().Nullable()
-            .WithColumn("EntityAnalysisModelTtlCounterId").AsInt32().Nullable()
-            .WithColumn("Value").AsInt32().Nullable()
-            .WithColumn("UpdatedDate").AsDateTime2().Nullable()
-            .WithColumn("ReferenceDate").AsDateTime2().Nullable();
+        public override void Up()
+        {
+            Create.Table("CacheTtlCounter")
+                .WithColumn("Id").AsInt64().PrimaryKey().Identity()
+                .WithColumn("EntityAnalysisModelId").AsInt64().Nullable()
+                .WithColumn("DataName").AsString().Nullable()
+                .WithColumn("DataValue").AsString().Nullable()
+                .WithColumn("EntityAnalysisModelTtlCounterId").AsInt32().Nullable()
+                .WithColumn("Value").AsInt32().Nullable()
+                .WithColumn("UpdatedDate").AsDateTime2().Nullable()
+                .WithColumn("ReferenceDate").AsDateTime2().Nullable();
 
-        Create.Index("IX_Truncated_CacheTtlCounter_Access_Processing_ReferenceDate").OnTable("CacheTtlCounter")
-            .OnColumn("EntityAnalysisModelId").Ascending()
-            .OnColumn("EntityAnalysisModelTtlCounterId").Ascending()
-            .OnColumn("DataName").Ascending()
-            .OnColumn("ReferenceDate").Descending();
+            Create.Index("IX_Truncated_CacheTtlCounter_Access_Processing_ReferenceDate").OnTable("CacheTtlCounter")
+                .OnColumn("EntityAnalysisModelId").Ascending()
+                .OnColumn("EntityAnalysisModelTtlCounterId").Ascending()
+                .OnColumn("DataName").Ascending()
+                .OnColumn("ReferenceDate").Descending();
 
-        Create.Index("IX_Truncated_CacheTtlCounter_Access_Realtime").OnTable("CacheTtlCounter")
-            .OnColumn("EntityAnalysisModelId").Ascending()
-            .OnColumn("EntityAnalysisModelTtlCounterId").Ascending()
-            .OnColumn("DataName").Ascending()
-            .OnColumn("DataValue").Ascending()
-            .WithOptions().Unique()
-            .Include("Value");
-    }
+            Create.Index("IX_Truncated_CacheTtlCounter_Access_Realtime").OnTable("CacheTtlCounter")
+                .OnColumn("EntityAnalysisModelId").Ascending()
+                .OnColumn("EntityAnalysisModelTtlCounterId").Ascending()
+                .OnColumn("DataName").Ascending()
+                .OnColumn("DataValue").Ascending()
+                .WithOptions().Unique()
+                .Include("Value");
+        }
 
-    public override void Down()
-    {
-        Delete.Table("CacheTtlCounter");
+        public override void Down()
+        {
+            Delete.Table("CacheTtlCounter");
+        }
     }
 }

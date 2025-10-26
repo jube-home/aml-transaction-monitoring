@@ -11,12 +11,13 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-namespace Jube.Engine.Sanctions;
-
-public class SanctionEntryDto
+namespace Jube.Engine.Sanctions
 {
-    public int SanctionEntryId { get; set; }
-    public string[] SanctionElementValue { get; set; }
-    public int SanctionEntrySourceId { get; set; }
-    public string SanctionEntryReference { get; set; }
+    public class SanctionEntryDto
+    {
+        public int SanctionEntryId { get; set; }
+        public string[] SanctionElementValue { get; set; }
+        public int SanctionEntrySourceId { get; set; }
+        public string SanctionEntryReference { get; set; }
+    }
 }

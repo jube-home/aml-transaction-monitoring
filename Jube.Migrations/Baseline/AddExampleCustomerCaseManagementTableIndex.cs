@@ -13,68 +13,69 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20221011104600)]
-public class ExampleCustomerCaseManagementTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20221011104600)]
+    public class ExampleCustomerCaseManagementTableIndex : Migration
     {
-        Create.Table("ExampleCustomerCaseManagement")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("MCC").AsString().Nullable()
-            .WithColumn("AccountId").AsString().Nullable()
-            .WithColumn("Frequency").AsInt32().Nullable()
-            .WithColumn("Sum").AsDouble().Nullable();
+        public override void Up()
+        {
+            Create.Table("ExampleCustomerCaseManagement")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("MCC").AsString().Nullable()
+                .WithColumn("AccountId").AsString().Nullable()
+                .WithColumn("Frequency").AsInt32().Nullable()
+                .WithColumn("Sum").AsDouble().Nullable();
 
-        Insert.IntoTable("ExampleCustomerCaseManagement").Row(
-            new
-            {
-                MCC = "Supermarkets",
-                Frequency = (double)(int)(double)6,
-                Sum = (int)(double)(int)600.32,
-                AccountId = "Test1"
-            });
+            Insert.IntoTable("ExampleCustomerCaseManagement").Row(
+                new
+                {
+                    MCC = "Supermarkets",
+                    Frequency = (double)(int)(double)6,
+                    Sum = (int)(double)(int)600.32,
+                    AccountId = "Test1"
+                });
 
-        Insert.IntoTable("ExampleCustomerCaseManagement").Row(
-            new
-            {
-                MCC = "Restaurants",
-                Frequency = 250.56,
-                Sum = 5,
-                AccountId = "Test1"
-            });
+            Insert.IntoTable("ExampleCustomerCaseManagement").Row(
+                new
+                {
+                    MCC = "Restaurants",
+                    Frequency = 250.56,
+                    Sum = 5,
+                    AccountId = "Test1"
+                });
 
-        Insert.IntoTable("ExampleCustomerCaseManagement").Row(
-            new
-            {
-                MCC = "Transport",
-                Frequency = 5,
-                Sum = 258.87,
-                AccountId = "Test1"
-            });
+            Insert.IntoTable("ExampleCustomerCaseManagement").Row(
+                new
+                {
+                    MCC = "Transport",
+                    Frequency = 5,
+                    Sum = 258.87,
+                    AccountId = "Test1"
+                });
 
-        Insert.IntoTable("ExampleCustomerCaseManagement").Row(
-            new
-            {
-                MCC = "Entertainment",
-                Frequency = 4,
-                Sum = 128.89,
-                AccountId = "Test1"
-            });
+            Insert.IntoTable("ExampleCustomerCaseManagement").Row(
+                new
+                {
+                    MCC = "Entertainment",
+                    Frequency = 4,
+                    Sum = 128.89,
+                    AccountId = "Test1"
+                });
 
-        Insert.IntoTable("ExampleCustomerCaseManagement").Row(
-            new
-            {
-                MCC = "Other",
-                Frequency = 8,
-                Sum = 91.24,
-                AccountId = "Test1"
-            });
-    }
+            Insert.IntoTable("ExampleCustomerCaseManagement").Row(
+                new
+                {
+                    MCC = "Other",
+                    Frequency = 8,
+                    Sum = 91.24,
+                    AccountId = "Test1"
+                });
+        }
 
-    public override void Down()
-    {
-        Delete.Table("ExampleCaseVolumeEntry");
+        public override void Down()
+        {
+            Delete.Table("ExampleCaseVolumeEntry");
+        }
     }
 }

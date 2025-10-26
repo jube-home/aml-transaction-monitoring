@@ -14,49 +14,50 @@
 using System;
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124931)]
-public class AddEntityAnalysisModelHttpAdaptationTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124931)]
+    public class AddEntityAnalysisModelHttpAdaptationTableIndex : Migration
     {
-        Create.Table("EntityAnalysisModelHttpAdaptation")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
-            .WithColumn("Name").AsString().Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("Deleted").AsByte().Nullable()
-            .WithColumn("DeletedDate").AsDateTime2().Nullable()
-            .WithColumn("DeletedUser").AsString().Nullable()
-            .WithColumn("Version").AsInt32().Nullable()
-            .WithColumn("Locked").AsByte().Nullable()
-            .WithColumn("Active").AsByte().Nullable()
-            .WithColumn("InheritedId").AsInt32().Nullable()
-            .WithColumn("ResponsePayload").AsByte().Nullable()
-            .WithColumn("ReportTable").AsByte().Nullable()
-            .WithColumn("HttpEndpoint").AsString().Nullable();
-
-        Create.Index().OnTable("EntityAnalysisModelHttpAdaptation")
-            .OnColumn("EntityAnalysisModelId").Ascending()
-            .OnColumn("Deleted").Ascending();
-
-        Insert.IntoTable("EntityAnalysisModelHttpAdaptation").Row(new
+        public override void Up()
         {
-            EntityAnalysisModelId = 1,
-            Active = 0,
-            Name = "ExampleFraudScoreLocalEndpoint",
-            CreatedDate = DateTime.Now,
-            CreatedUser = "Administrator",
-            Version = 1,
-            ResponsePayload = 1,
-            HttpEndpoint = "/api/invoke/ExampleFraudScoreLocalEndpoint"
-        });
-    }
+            Create.Table("EntityAnalysisModelHttpAdaptation")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
+                .WithColumn("Name").AsString().Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("Deleted").AsByte().Nullable()
+                .WithColumn("DeletedDate").AsDateTime2().Nullable()
+                .WithColumn("DeletedUser").AsString().Nullable()
+                .WithColumn("Version").AsInt32().Nullable()
+                .WithColumn("Locked").AsByte().Nullable()
+                .WithColumn("Active").AsByte().Nullable()
+                .WithColumn("InheritedId").AsInt32().Nullable()
+                .WithColumn("ResponsePayload").AsByte().Nullable()
+                .WithColumn("ReportTable").AsByte().Nullable()
+                .WithColumn("HttpEndpoint").AsString().Nullable();
 
-    public override void Down()
-    {
-        Delete.Table("EntityAnalysisModelHttpAdaptation");
+            Create.Index().OnTable("EntityAnalysisModelHttpAdaptation")
+                .OnColumn("EntityAnalysisModelId").Ascending()
+                .OnColumn("Deleted").Ascending();
+
+            Insert.IntoTable("EntityAnalysisModelHttpAdaptation").Row(new
+            {
+                EntityAnalysisModelId = 1,
+                Active = 0,
+                Name = "ExampleFraudScoreLocalEndpoint",
+                CreatedDate = DateTime.Now,
+                CreatedUser = "Administrator",
+                Version = 1,
+                ResponsePayload = 1,
+                HttpEndpoint = "/api/invoke/ExampleFraudScoreLocalEndpoint"
+            });
+        }
+
+        public override void Down()
+        {
+            Delete.Table("EntityAnalysisModelHttpAdaptation");
+        }
     }
 }

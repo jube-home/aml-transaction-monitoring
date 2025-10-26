@@ -11,62 +11,97 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using log4net;
-using Npgsql;
-
-namespace Jube.Data.Query;
-
-public class GetArchiveSqlByKeyValueLimitQuery(string connectionString, ILog log)
+namespace Jube.Data.Query
 {
-    public async Task<List<Dictionary<string, object>>> Execute(string sql,
-        string key, string value, string order, int limit)
+    using System;
+    using System.Collections.Generic;
+    using System.Threading.Tasks;
+    using Dictionary;
+    using Extension;
+    using log4net;
+    using Npgsql;
+
+    public class GetArchiveSqlByKeyValueLimitQuery(string connectionString, ILog log)
     {
-        var connection = new NpgsqlConnection(connectionString);
-        var values = new List<Dictionary<string, object>>();
-        try
+        public async Task<List<DictionaryNoBoxing>> Execute(string sql,
+            string key, string value, string order, int limit)
         {
-            await connection.OpenAsync().ConfigureAwait(false);
-
-            var command = new NpgsqlCommand(sql);
-            command.Connection = connection;
-            command.Parameters.AddWithValue("key", key);
-            command.Parameters.AddWithValue("value", value);
-            command.Parameters.AddWithValue("order", order);
-            command.Parameters.AddWithValue("limit", limit);
-            await command.PrepareAsync().ConfigureAwait(false);
-
-            var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
-            while (await reader.ReadAsync().ConfigureAwait(false))
+            var connection = new NpgsqlConnection(connectionString);
+            var values = new List<DictionaryNoBoxing>();
+            try
             {
-                var document = new Dictionary<string, object>();
-                for (var index = 0; index < reader.FieldCount; index++)
-                    if (!reader.IsDBNull(index))
-                    {
-                        if (document.ContainsKey(reader.GetName(index))) continue;
+                await connection.OpenAsync().ConfigureAwait(false);
 
-                        document.Add(reader.GetName(index), reader.GetValue(index));
+                var command = new NpgsqlCommand(sql);
+                command.Connection = connection;
+                command.Parameters.AddWithValue("key", key);
+                command.Parameters.AddWithValue("value", value);
+                command.Parameters.AddWithValue("order", order);
+                command.Parameters.AddWithValue("limit", limit);
+                await command.PrepareAsync().ConfigureAwait(false);
+
+                var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+                while (await reader.ReadAsync().ConfigureAwait(false))
+                {
+                    var document = new DictionaryNoBoxing();
+                    for (var index = 0; index < reader.FieldCount; index++)
+                    {
+                        if (reader.IsDBNull(index))
+                        {
+                            continue;
+                        }
+                        
+                        if (document.ContainsKey(reader.GetName(index)))
+                        {
+                            continue;
+                        }
+
+                        var clrType = reader.GetFieldType(index);
+
+                        if (clrType == typeof(int))
+                        {
+                            document.TryAdd(reader.GetName(index), reader.GetValue(index).AsInt());
+                        }
+                        else if (clrType == typeof(decimal) || clrType == typeof(float) || clrType == typeof(double))
+                        {
+                            document.TryAdd(reader.GetName(index), reader.GetValue(index).AsDouble());
+                        }
+                        else if (clrType == typeof(bool))
+                        {
+                            document.TryAdd(reader.GetName(index), reader.GetBoolean(index));
+                        }
+                        else if (clrType == typeof(string))
+                        {
+                            document.TryAdd(reader.GetName(index), reader.GetValue(index).AsString());
+                        }
+                        else if (clrType == typeof(DateTime))
+                        {
+                            document.TryAdd(reader.GetName(index), reader.GetValue(index).AsDateTime());
+                        }
+                        else if (clrType == typeof(Guid))
+                        {
+                            document.TryAdd(reader.GetName(index), reader.GetValue(index).AsString());
+                        }
                     }
 
-                values.Add(document);
+                    values.Add(document);
+                }
+
+                await reader.CloseAsync().ConfigureAwait(false);
+                await reader.DisposeAsync().ConfigureAwait(false);
+                await command.DisposeAsync().ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                log.Error($"Archive SQL: Has created an exception as {ex}.");
+            }
+            finally
+            {
+                await connection.CloseAsync().ConfigureAwait(false);
+                await connection.DisposeAsync().ConfigureAwait(false);
             }
 
-            await reader.CloseAsync().ConfigureAwait(false);
-            await reader.DisposeAsync().ConfigureAwait(false);
-            await command.DisposeAsync().ConfigureAwait(false);
+            return values;
         }
-        catch (Exception ex)
-        {
-            log.Error($"Archive SQL: Has created an exception as {ex}.");
-        }
-        finally
-        {
-            await connection.CloseAsync().ConfigureAwait(false);
-            await connection.DisposeAsync().ConfigureAwait(false);
-        }
-
-        return values;
     }
 }

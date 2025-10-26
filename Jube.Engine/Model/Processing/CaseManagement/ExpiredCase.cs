@@ -11,13 +11,14 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-namespace Jube.Engine.Model.Processing.CaseManagement;
-
-public class ExpiredCase
+namespace Jube.Engine.Model.Processing.CaseManagement
 {
-    public int CaseId { get; set; }
-    public byte OldClosedStatus { get; set; }
-    public byte NewClosedStatus { get; set; }
-    public string CaseKey { get; set; }
-    public string CaseKeyValue { get; set; }
+    public class ExpiredCase
+    {
+        public int CaseId { get; set; }
+        public byte OldClosedStatus { get; set; }
+        public byte NewClosedStatus { get; set; }
+        public string CaseKey { get; set; }
+        public string CaseKeyValue { get; set; }
+    }
 }

@@ -13,42 +13,43 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124940)]
-public class AddEntityAnalysisModelReprocessingRuleTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124940)]
+    public class AddEntityAnalysisModelReprocessingRuleTableIndex : Migration
     {
-        Create.Table("EntityAnalysisModelReprocessingRule")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
-            .WithColumn("Active").AsByte().Nullable()
-            .WithColumn("Locked").AsByte().Nullable()
-            .WithColumn("Priority").AsByte().Nullable()
-            .WithColumn("BuilderRuleScript").AsString().Nullable()
-            .WithColumn("Json").AsCustom("jsonb").Nullable()
-            .WithColumn("Name").AsString().Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable()
-            .WithColumn("Version").AsByte().Nullable()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("Deleted").AsByte().Nullable()
-            .WithColumn("DeletedUser").AsString().Nullable()
-            .WithColumn("InheritedId").AsInt32().Nullable()
-            .WithColumn("DeletedDate").AsDateTime().Nullable()
-            .WithColumn("ReprocessingSample").AsDouble().Nullable()
-            .WithColumn("CoderRuleScript").AsString().Nullable()
-            .WithColumn("RuleScriptTypeId").AsByte().Nullable()
-            .WithColumn("ReprocessingValue").AsInt32().Nullable()
-            .WithColumn("ReprocessingInterval").AsString().Nullable();
+        public override void Up()
+        {
+            Create.Table("EntityAnalysisModelReprocessingRule")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
+                .WithColumn("Active").AsByte().Nullable()
+                .WithColumn("Locked").AsByte().Nullable()
+                .WithColumn("Priority").AsByte().Nullable()
+                .WithColumn("BuilderRuleScript").AsString().Nullable()
+                .WithColumn("Json").AsCustom("jsonb").Nullable()
+                .WithColumn("Name").AsString().Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable()
+                .WithColumn("Version").AsByte().Nullable()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("Deleted").AsByte().Nullable()
+                .WithColumn("DeletedUser").AsString().Nullable()
+                .WithColumn("InheritedId").AsInt32().Nullable()
+                .WithColumn("DeletedDate").AsDateTime().Nullable()
+                .WithColumn("ReprocessingSample").AsDouble().Nullable()
+                .WithColumn("CoderRuleScript").AsString().Nullable()
+                .WithColumn("RuleScriptTypeId").AsByte().Nullable()
+                .WithColumn("ReprocessingValue").AsInt32().Nullable()
+                .WithColumn("ReprocessingInterval").AsString().Nullable();
 
-        Create.Index().OnTable("EntityAnalysisModelReprocessingRule")
-            .OnColumn("EntityAnalysisModelId").Ascending()
-            .OnColumn("Deleted").Ascending();
-    }
+            Create.Index().OnTable("EntityAnalysisModelReprocessingRule")
+                .OnColumn("EntityAnalysisModelId").Ascending()
+                .OnColumn("Deleted").Ascending();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("EntityAnalysisModelReprocessingRule");
+        public override void Down()
+        {
+            Delete.Table("EntityAnalysisModelReprocessingRule");
+        }
     }
 }

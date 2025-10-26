@@ -13,25 +13,26 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220504092900)]
-public class AddExhaustiveSearchInstanceTrialInstanceSensitivityTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220504092900)]
+    public class AddExhaustiveSearchInstanceTrialInstanceSensitivityTableIndex : Migration
     {
-        Create.Table("ExhaustiveSearchInstanceTrialInstanceSensitivity")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("Sensitivity").AsFloat().Nullable()
-            .WithColumn("ExhaustiveSearchInstanceVariableId").AsInt32()
-            .WithColumn("ExhaustiveSearchInstanceTrialInstanceId").AsInt32().Nullable();
+        public override void Up()
+        {
+            Create.Table("ExhaustiveSearchInstanceTrialInstanceSensitivity")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("Sensitivity").AsFloat().Nullable()
+                .WithColumn("ExhaustiveSearchInstanceVariableId").AsInt32()
+                .WithColumn("ExhaustiveSearchInstanceTrialInstanceId").AsInt32().Nullable();
 
-        Create.Index().OnTable("ExhaustiveSearchInstanceTrialInstanceSensitivity")
-            .OnColumn("ExhaustiveSearchInstanceTrialInstanceId");
-    }
+            Create.Index().OnTable("ExhaustiveSearchInstanceTrialInstanceSensitivity")
+                .OnColumn("ExhaustiveSearchInstanceTrialInstanceId");
+        }
 
-    public override void Down()
-    {
-        Delete.Table("ExhaustiveSearchInstanceTrialInstanceSensitivity");
+        public override void Down()
+        {
+            Delete.Table("ExhaustiveSearchInstanceTrialInstanceSensitivity");
+        }
     }
 }

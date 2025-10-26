@@ -11,96 +11,103 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB;
-
-namespace Jube.Data.Repository;
-
-public class EntityAnalysisModelReprocessingRuleRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
-    private readonly int _tenantRegistryId;
-    private readonly string _userName;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Context;
+    using LinqToDB;
+    using Poco;
 
-    public EntityAnalysisModelReprocessingRuleRepository(DbContext dbContext, string userName)
+    public class EntityAnalysisModelReprocessingRuleRepository
     {
-        _dbContext = dbContext;
-        _userName = userName;
-        _tenantRegistryId = _dbContext.UserInTenant.Where(w => w.User == _userName)
-            .Select(s => s.TenantRegistryId).FirstOrDefault();
-    }
+        private readonly DbContext dbContext;
+        private readonly int tenantRegistryId;
+        private readonly string userName;
 
-    public IEnumerable<EntityAnalysisModelReprocessingRule> Get()
-    {
-        return _dbContext.EntityAnalysisModelReprocessingRule
-            .Where(w => w.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId);
-    }
+        public EntityAnalysisModelReprocessingRuleRepository(DbContext dbContext, string userName)
+        {
+            this.dbContext = dbContext;
+            this.userName = userName;
+            tenantRegistryId = this.dbContext.UserInTenant.Where(w => w.User == this.userName)
+                .Select(s => s.TenantRegistryId).FirstOrDefault();
+        }
 
-    public IEnumerable<EntityAnalysisModelReprocessingRule> GetByEntityAnalysisModelId(int entityAnalysisModelId)
-    {
-        return _dbContext.EntityAnalysisModelReprocessingRule
-            .Where(w => w.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId
-                        && w.EntityAnalysisModelId == entityAnalysisModelId &&
-                        (w.Deleted == 0 || w.Deleted == null));
-    }
+        public IEnumerable<EntityAnalysisModelReprocessingRule> Get()
+        {
+            return dbContext.EntityAnalysisModelReprocessingRule
+                .Where(w => w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId);
+        }
 
-    public EntityAnalysisModelReprocessingRule GetById(int id)
-    {
-        return _dbContext.EntityAnalysisModelReprocessingRule.FirstOrDefault(w =>
-            w.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId
-            && w.Id == id && (w.Deleted == 0 || w.Deleted == null));
-    }
+        public IEnumerable<EntityAnalysisModelReprocessingRule> GetByEntityAnalysisModelId(int entityAnalysisModelId)
+        {
+            return dbContext.EntityAnalysisModelReprocessingRule
+                .Where(w => w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
+                            && w.EntityAnalysisModelId == entityAnalysisModelId &&
+                            (w.Deleted == 0 || w.Deleted == null));
+        }
 
-    public EntityAnalysisModelReprocessingRule Insert(EntityAnalysisModelReprocessingRule model)
-    {
-        model.CreatedUser = _userName;
-        model.CreatedDate = DateTime.Now;
-        model.Version = 1;
-        model.Id = _dbContext.InsertWithInt32Identity(model);
-        return model;
-    }
+        public EntityAnalysisModelReprocessingRule GetById(int id)
+        {
+            return dbContext.EntityAnalysisModelReprocessingRule.FirstOrDefault(w =>
+                w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
+                && w.Id == id && (w.Deleted == 0 || w.Deleted == null));
+        }
 
-    public EntityAnalysisModelReprocessingRule Update(EntityAnalysisModelReprocessingRule model)
-    {
-        var existing = _dbContext.EntityAnalysisModelReprocessingRule
-            .FirstOrDefault(w => w.Id
-                                 == model.Id
-                                 && (w.Deleted == 0 || w.Deleted == null)
-                                 && (w.Locked == 0 || w.Locked == null));
+        public EntityAnalysisModelReprocessingRule Insert(EntityAnalysisModelReprocessingRule model)
+        {
+            model.CreatedUser = userName;
+            model.CreatedDate = DateTime.Now;
+            model.Version = 1;
+            model.Id = dbContext.InsertWithInt32Identity(model);
+            return model;
+        }
 
-        if (existing == null) throw new KeyNotFoundException();
+        public EntityAnalysisModelReprocessingRule Update(EntityAnalysisModelReprocessingRule model)
+        {
+            var existing = dbContext.EntityAnalysisModelReprocessingRule
+                .FirstOrDefault(w => w.Id
+                                     == model.Id
+                                     && (w.Deleted == 0 || w.Deleted == null)
+                                     && (w.Locked == 0 || w.Locked == null));
 
-        model.Version = existing.Version + 1;
-        model.CreatedUser = _userName;
-        model.CreatedDate = DateTime.Now;
-        model.Id = existing.Id;
+            if (existing == null)
+            {
+                throw new KeyNotFoundException();
+            }
 
-        var id = _dbContext
-            .InsertWithInt32Identity(model);
+            model.Version = existing.Version + 1;
+            model.CreatedUser = userName;
+            model.CreatedDate = DateTime.Now;
+            model.Id = existing.Id;
 
-        Delete(existing.Id);
+            var id = dbContext
+                .InsertWithInt32Identity(model);
 
-        model.Id = id;
+            Delete(existing.Id);
 
-        return model;
-    }
+            model.Id = id;
 
-    public void Delete(int id)
-    {
-        var records = _dbContext.EntityAnalysisModelReprocessingRule
-            .Where(d => d.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId
-                        && d.Id == id
-                        && (d.Locked == 0 || d.Locked == null)
-                        && (d.Deleted == 0 || d.Deleted == null))
-            .Set(s => s.Deleted, Convert.ToByte(1))
-            .Set(s => s.DeletedDate, DateTime.Now)
-            .Set(s => s.DeletedUser, _userName)
-            .Update();
+            return model;
+        }
 
-        if (records == 0) throw new KeyNotFoundException();
+        public void Delete(int id)
+        {
+            var records = dbContext.EntityAnalysisModelReprocessingRule
+                .Where(d => d.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
+                            && d.Id == id
+                            && (d.Locked == 0 || d.Locked == null)
+                            && (d.Deleted == 0 || d.Deleted == null))
+                .Set(s => s.Deleted, Convert.ToByte(1))
+                .Set(s => s.DeletedDate, DateTime.Now)
+                .Set(s => s.DeletedUser, userName)
+                .Update();
+
+            if (records == 0)
+            {
+                throw new KeyNotFoundException();
+            }
+        }
     }
 }

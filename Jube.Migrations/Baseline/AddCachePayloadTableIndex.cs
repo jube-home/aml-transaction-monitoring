@@ -13,30 +13,31 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220529090400)]
-public class AddCachePayloadTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220529090400)]
+    public class AddCachePayloadTableIndex : Migration
     {
-        Create.Table("CachePayload")
-            .WithColumn("Id").AsInt64().PrimaryKey().Identity()
-            .WithColumn("EntityAnalysisModelId").AsInt64().Nullable()
-            .WithColumn("Json").AsCustom("jsonb").Nullable()
-            .WithColumn("EntityAnalysisModelInstanceEntryGuid").AsGuid().Nullable()
-            .WithColumn("ReferenceDate").AsDateTime2().Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable()
-            .WithColumn("UpdatedDate").AsDateTime2().Nullable();
+        public override void Up()
+        {
+            Create.Table("CachePayload")
+                .WithColumn("Id").AsInt64().PrimaryKey().Identity()
+                .WithColumn("EntityAnalysisModelId").AsInt64().Nullable()
+                .WithColumn("Json").AsCustom("jsonb").Nullable()
+                .WithColumn("EntityAnalysisModelInstanceEntryGuid").AsGuid().Nullable()
+                .WithColumn("ReferenceDate").AsDateTime2().Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable()
+                .WithColumn("UpdatedDate").AsDateTime2().Nullable();
 
-        Create.Index().OnTable("CachePayload").OnColumn("EntityAnalysisModelId").Ascending().OnColumn("CreatedDate")
-            .Descending();
+            Create.Index().OnTable("CachePayload").OnColumn("EntityAnalysisModelId").Ascending().OnColumn("CreatedDate")
+                .Descending();
 
-        Create.Index().OnTable("CachePayload").OnColumn("EntityAnalysisModelInstanceEntryGuid").Unique();
-    }
+            Create.Index().OnTable("CachePayload").OnColumn("EntityAnalysisModelInstanceEntryGuid").Unique();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("CachePayload");
+        public override void Down()
+        {
+            Delete.Table("CachePayload");
+        }
     }
 }

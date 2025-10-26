@@ -11,63 +11,58 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Jube.Data.Context;
-using LinqToDB;
-
-namespace Jube.Data.Query;
-
-public class GetEntityAnalysisModelsSynchronisationSchedulesByInstanceNameQuery
+namespace Jube.Data.Query
 {
-    private readonly DbContext _dbContext;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Context;
+    using LinqToDB;
 
-    public GetEntityAnalysisModelsSynchronisationSchedulesByInstanceNameQuery(DbContext dbContext)
+    public class GetEntityAnalysisModelsSynchronisationSchedulesByInstanceNameQuery(DbContext dbContext)
     {
-        _dbContext = dbContext;
-    }
 
-    public List<Dto>
-        Execute(string instance)
-    {
-        var tenants = (from e
-                    in _dbContext.EntityAnalysisModelSynchronisationNodeStatusEntry
-                from t
-                    in _dbContext.TenantRegistry.RightJoin
-                    (t => t.Id == e.TenantRegistryId &&
-                          e.Instance == instance)
-                select new
-                {
-                    t.Id,
-                    SynchronisedDate = e.SynchronisedDate ?? default(DateTime)
-                })
-            .ToDictionary(s => s.Id, s => s.SynchronisedDate);
-
-        return (from y in _dbContext.EntityAnalysisModelSynchronisationSchedule
-                join m in from t in _dbContext.EntityAnalysisModelSynchronisationSchedule
-                    group t by t.TenantRegistryId
-                    into g
+        public List<Dto>
+            Execute(string instance)
+        {
+            var tenants = (from e
+                        in dbContext.EntityAnalysisModelSynchronisationNodeStatusEntry
+                    from t
+                        in dbContext.TenantRegistry.RightJoin
+                        (t => t.Id == e.TenantRegistryId &&
+                              e.Instance == instance)
                     select new
                     {
-                        TenantRegistryId = g.Key,
-                        EntityAnalysisModelSyncronisationScheduleId =
-                            (from t2 in g select t2.Id).Max()
-                    } on y.Id equals m
-                        .EntityAnalysisModelSyncronisationScheduleId
-                select
-                    new Dto
-                    {
-                        SynchronisationPending = y.ScheduleDate > tenants[y.TenantRegistryId.Value]
-                                                 && DateTime.Now > y.ScheduleDate,
-                        TenantRegistryId = y.TenantRegistryId.Value
-                    }
-            ).ToList();
-    }
+                        t.Id,
+                        SynchronisedDate = e.SynchronisedDate ?? default(DateTime)
+                    })
+                .ToDictionary(s => s.Id, s => s.SynchronisedDate);
 
-    public class Dto
-    {
-        public bool SynchronisationPending { get; set; }
-        public int TenantRegistryId { get; set; }
+            return (from y in dbContext.EntityAnalysisModelSynchronisationSchedule
+                    join m in from t in dbContext.EntityAnalysisModelSynchronisationSchedule
+                        group t by t.TenantRegistryId
+                        into g
+                        select new
+                        {
+                            TenantRegistryId = g.Key,
+                            EntityAnalysisModelSyncronisationScheduleId =
+                                (from t2 in g select t2.Id).Max()
+                        } on y.Id equals m
+                            .EntityAnalysisModelSyncronisationScheduleId
+                    select
+                        new Dto
+                        {
+                            SynchronisationPending = y.ScheduleDate > tenants[y.TenantRegistryId.Value]
+                                                     && DateTime.Now > y.ScheduleDate,
+                            TenantRegistryId = y.TenantRegistryId.Value
+                        }
+                ).ToList();
+        }
+
+        public class Dto
+        {
+            public bool SynchronisationPending { get; set; }
+            public int TenantRegistryId { get; set; }
+        }
     }
 }

@@ -11,61 +11,62 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Linq;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB;
-
-namespace Jube.Data.Repository;
-
-public class SessionCaseJournalRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
-    private readonly int _tenantRegistryId;
-    private readonly string _userName;
+    using System;
+    using System.Linq;
+    using Context;
+    using LinqToDB;
+    using Poco;
 
-    public SessionCaseJournalRepository(DbContext dbContext, string userName)
+    public class SessionCaseJournalRepository
     {
-        _dbContext = dbContext;
-        _userName = userName;
-        _tenantRegistryId = _dbContext.UserInTenant.Where(w => w.User == _userName)
-            .Select(s => s.TenantRegistryId).FirstOrDefault();
-    }
+        private readonly DbContext dbContext;
+        private readonly int tenantRegistryId;
+        private readonly string userName;
 
-    public SessionCaseJournal GetByCaseWorkflowId(int id)
-    {
-        return _dbContext.SessionCaseJournal.FirstOrDefault(w
-            => w.CreatedUser == _userName &&
-               w.CaseWorkflowId == id);
-    }
-
-    public SessionCaseJournal GetByCaseWorkflowGuid(Guid guid)
-    {
-        return _dbContext.SessionCaseJournal.FirstOrDefault(w
-            => w.CreatedUser == _userName &&
-               w.CaseWorkflow.Guid == guid);
-    }
-
-    public SessionCaseJournal Upsert(SessionCaseJournal model)
-    {
-        var existing = _dbContext.SessionCaseJournal
-            .FirstOrDefault(w => w.CaseWorkflowId == model.CaseWorkflowId
-                                 && w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId
-                                 && w.CreatedUser == _userName);
-
-
-        if (existing == null)
+        public SessionCaseJournalRepository(DbContext dbContext, string userName)
         {
-            model.CreatedDate = DateTime.Now;
-            model.CreatedUser = _userName;
-            model.Id = _dbContext.InsertWithInt32Identity(model);
-            return model;
+            this.dbContext = dbContext;
+            this.userName = userName;
+            tenantRegistryId = this.dbContext.UserInTenant.Where(w => w.User == this.userName)
+                .Select(s => s.TenantRegistryId).FirstOrDefault();
         }
 
-        existing.CreatedDate = DateTime.Now;
-        existing.Json = model.Json;
-        _dbContext.Update(existing);
-        return model;
+        public SessionCaseJournal GetByCaseWorkflowId(int id)
+        {
+            return dbContext.SessionCaseJournal.FirstOrDefault(w
+                => w.CreatedUser == userName &&
+                   w.CaseWorkflowId == id);
+        }
+
+        public SessionCaseJournal GetByCaseWorkflowGuid(Guid guid)
+        {
+            return dbContext.SessionCaseJournal.FirstOrDefault(w
+                => w.CreatedUser == userName &&
+                   w.CaseWorkflow.Guid == guid);
+        }
+
+        public SessionCaseJournal Upsert(SessionCaseJournal model)
+        {
+            var existing = dbContext.SessionCaseJournal
+                .FirstOrDefault(w => w.CaseWorkflowId == model.CaseWorkflowId
+                                     && w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
+                                     && w.CreatedUser == userName);
+
+
+            if (existing == null)
+            {
+                model.CreatedDate = DateTime.Now;
+                model.CreatedUser = userName;
+                model.Id = dbContext.InsertWithInt32Identity(model);
+                return model;
+            }
+
+            existing.CreatedDate = DateTime.Now;
+            existing.Json = model.Json;
+            dbContext.Update(existing);
+            return model;
+        }
     }
 }

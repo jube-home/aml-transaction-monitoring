@@ -14,107 +14,108 @@
 using System;
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429125029)]
-public class AddEntityAnalysisModelAbstractionRuleTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429125029)]
+    public class AddEntityAnalysisModelAbstractionRuleTableIndex : Migration
     {
-        Create.Table("EntityAnalysisModelAbstractionRule")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
-            .WithColumn("BuilderRuleScript").AsString().Nullable()
-            .WithColumn("Name").AsString().Nullable()
-            .WithColumn("SearchKey").AsString().Nullable()
-            .WithColumn("SearchFunctionTypeId").AsByte().Nullable()
-            .WithColumn("CreatedDate").AsDateTime().Nullable()
-            .WithColumn("SearchInterval").AsString().Nullable()
-            .WithColumn("SearchValue").AsInt32().Nullable()
-            .WithColumn("SearchFunctionKey").AsString().Nullable()
-            .WithColumn("Json").AsCustom("jsonb").Nullable()
-            .WithColumn("Active").AsByte().Nullable()
-            .WithColumn("Locked").AsByte().Nullable()
-            .WithColumn("Search").AsByte().Nullable()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("InheritedId").AsInt32().Nullable()
-            .WithColumn("Version").AsInt32().Nullable()
-            .WithColumn("DeletedDate").AsDateTime().Nullable()
-            .WithColumn("DeletedUser").AsString().Nullable()
-            .WithColumn("Deleted").AsByte().Nullable()
-            .WithColumn("ResponsePayload").AsByte().Nullable()
-            .WithColumn("ReportTable").AsByte().Nullable()
-            .WithColumn("Offset").AsByte().Nullable()
-            .WithColumn("OffsetTypeId").AsByte().Nullable()
-            .WithColumn("OffsetValue").AsInt32().Nullable()
-            .WithColumn("CoderRuleScript").AsString().Nullable()
-            .WithColumn("RuleScriptTypeId").AsByte().Nullable();
-
-        Create.Index().OnTable("EntityAnalysisModelAbstractionRule")
-            .OnColumn("EntityAnalysisModelId").Ascending()
-            .OnColumn("Deleted").Ascending();
-
-        var builderRuleScriptApproved = "If (Payload.ResponseCode = \"0\") Then " + Environment.NewLine +
-                                        "   Return True " + Environment.NewLine +
-                                        "End If";
-
-        var jsonApproved = "{\"not\": false, \"rules\": [{\"id\": \"Payload.ResponseCode\", \"type\": \"string\", " +
-                           "\"field\": \"Payload.ResponseCode\", \"input\": \"text\", \"value\": \"0\", " +
-                           "\"operator\": \"equal\"}], \"valid\": true, \"condition\": \"AND\"}";
-
-        Insert.IntoTable("EntityAnalysisModelAbstractionRule").Row(new
+        public override void Up()
         {
-            EntityAnalysisModelId = 1,
-            BuilderRuleScript = builderRuleScriptApproved,
-            CoderRuleScript = "Return True",
-            RuleScriptTypeId = 1,
-            Name = "ResponseCodeEqual0Volume",
-            Search = 1,
-            SearchFunctionTypeId = 3,
-            SearchFunctionKey = "CurrencyAmount",
-            SearchInterval = "h",
-            SearchValue = 1,
-            SearchKey = "AccountId",
-            Active = 1,
-            CreatedDate = DateTime.Now,
-            CreatedUser = "Administrator",
-            Version = 1,
-            ResponsePayload = 1,
-            Json = jsonApproved
-        });
+            Create.Table("EntityAnalysisModelAbstractionRule")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
+                .WithColumn("BuilderRuleScript").AsString().Nullable()
+                .WithColumn("Name").AsString().Nullable()
+                .WithColumn("SearchKey").AsString().Nullable()
+                .WithColumn("SearchFunctionTypeId").AsByte().Nullable()
+                .WithColumn("CreatedDate").AsDateTime().Nullable()
+                .WithColumn("SearchInterval").AsString().Nullable()
+                .WithColumn("SearchValue").AsInt32().Nullable()
+                .WithColumn("SearchFunctionKey").AsString().Nullable()
+                .WithColumn("Json").AsCustom("jsonb").Nullable()
+                .WithColumn("Active").AsByte().Nullable()
+                .WithColumn("Locked").AsByte().Nullable()
+                .WithColumn("Search").AsByte().Nullable()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("InheritedId").AsInt32().Nullable()
+                .WithColumn("Version").AsInt32().Nullable()
+                .WithColumn("DeletedDate").AsDateTime().Nullable()
+                .WithColumn("DeletedUser").AsString().Nullable()
+                .WithColumn("Deleted").AsByte().Nullable()
+                .WithColumn("ResponsePayload").AsByte().Nullable()
+                .WithColumn("ReportTable").AsByte().Nullable()
+                .WithColumn("Offset").AsByte().Nullable()
+                .WithColumn("OffsetTypeId").AsByte().Nullable()
+                .WithColumn("OffsetValue").AsInt32().Nullable()
+                .WithColumn("CoderRuleScript").AsString().Nullable()
+                .WithColumn("RuleScriptTypeId").AsByte().Nullable();
 
-        var builderRuleScriptDeclined = "If (NOT ( Payload.ResponseCode = \"0\" )) Then " + Environment.NewLine +
-                                        "   Return True" + Environment.NewLine +
-                                        "End If";
+            Create.Index().OnTable("EntityAnalysisModelAbstractionRule")
+                .OnColumn("EntityAnalysisModelId").Ascending()
+                .OnColumn("Deleted").Ascending();
 
-        var jsonDeclined = "{\"not\": true, \"rules\": [{\"id\": \"Payload.ResponseCode\", \"type\": \"string\", " +
-                           "\"field\": \"Payload.ResponseCode\", \"input\": \"text\", \"value\": \"0\", " +
-                           "\"operator\": \"equal\"}], \"valid\": true, \"condition\": \"AND\"}";
+            var builderRuleScriptApproved = "If (Payload.ResponseCode = \"0\") Then " + Environment.NewLine +
+                                            "   Return True " + Environment.NewLine +
+                                            "End If";
 
-        Insert.IntoTable("EntityAnalysisModelAbstractionRule").Row(new
+            var jsonApproved = "{\"not\": false, \"rules\": [{\"id\": \"Payload.ResponseCode\", \"type\": \"string\", " +
+                               "\"field\": \"Payload.ResponseCode\", \"input\": \"text\", \"value\": \"0\", " +
+                               "\"operator\": \"equal\"}], \"valid\": true, \"condition\": \"AND\"}";
+
+            Insert.IntoTable("EntityAnalysisModelAbstractionRule").Row(new
+            {
+                EntityAnalysisModelId = 1,
+                BuilderRuleScript = builderRuleScriptApproved,
+                CoderRuleScript = "Return True",
+                RuleScriptTypeId = 1,
+                Name = "ResponseCodeEqual0Volume",
+                Search = 1,
+                SearchFunctionTypeId = 3,
+                SearchFunctionKey = "CurrencyAmount",
+                SearchInterval = "h",
+                SearchValue = 1,
+                SearchKey = "AccountId",
+                Active = 1,
+                CreatedDate = DateTime.Now,
+                CreatedUser = "Administrator",
+                Version = 1,
+                ResponsePayload = 1,
+                Json = jsonApproved
+            });
+
+            var builderRuleScriptDeclined = "If (NOT ( Payload.ResponseCode = \"0\" )) Then " + Environment.NewLine +
+                                            "   Return True" + Environment.NewLine +
+                                            "End If";
+
+            var jsonDeclined = "{\"not\": true, \"rules\": [{\"id\": \"Payload.ResponseCode\", \"type\": \"string\", " +
+                               "\"field\": \"Payload.ResponseCode\", \"input\": \"text\", \"value\": \"0\", " +
+                               "\"operator\": \"equal\"}], \"valid\": true, \"condition\": \"AND\"}";
+
+            Insert.IntoTable("EntityAnalysisModelAbstractionRule").Row(new
+            {
+                EntityAnalysisModelId = 1,
+                BuilderRuleScript = builderRuleScriptDeclined,
+                CoderRuleScript = "Return True",
+                RuleScriptTypeId = 1,
+                Name = "NotResponseCodeEqual0Volume",
+                Search = 1,
+                SearchFunctionTypeId = 3,
+                SearchFunctionKey = "CurrencyAmount",
+                SearchInterval = "h",
+                SearchValue = 1,
+                SearchKey = "AccountId",
+                Active = 1,
+                CreatedDate = DateTime.Now,
+                CreatedUser = "Administrator",
+                Version = 1,
+                ResponsePayload = 1,
+                Json = jsonDeclined
+            });
+        }
+
+        public override void Down()
         {
-            EntityAnalysisModelId = 1,
-            BuilderRuleScript = builderRuleScriptDeclined,
-            CoderRuleScript = "Return True",
-            RuleScriptTypeId = 1,
-            Name = "NotResponseCodeEqual0Volume",
-            Search = 1,
-            SearchFunctionTypeId = 3,
-            SearchFunctionKey = "CurrencyAmount",
-            SearchInterval = "h",
-            SearchValue = 1,
-            SearchKey = "AccountId",
-            Active = 1,
-            CreatedDate = DateTime.Now,
-            CreatedUser = "Administrator",
-            Version = 1,
-            ResponsePayload = 1,
-            Json = jsonDeclined
-        });
-    }
-
-    public override void Down()
-    {
-        Delete.Table("EntityAnalysisModelAbstractionRule");
+            Delete.Table("EntityAnalysisModelAbstractionRule");
+        }
     }
 }

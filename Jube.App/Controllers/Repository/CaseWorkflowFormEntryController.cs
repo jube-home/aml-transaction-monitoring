@@ -11,51 +11,54 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Net;
-using AutoMapper;
-using FluentValidation;
-using FluentValidation.Results;
-using Jube.App.Code;
-using Jube.App.Dto;
-using Jube.App.Validators;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using Jube.Data.Repository;
-using Jube.Engine.Helpers;
-using log4net;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json.Linq;
-
 namespace Jube.App.Controllers.Repository
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Net;
+    using AutoMapper;
+    using Code;
+    using Data.Context;
+    using Data.Poco;
+    using Data.Repository;
+    using Dto;
+    using DynamicEnvironment;
+    using FluentValidation;
+    using FluentValidation.Results;
+    using log4net;
+    using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.AspNetCore.Mvc;
+    using Newtonsoft.Json.Linq;
+    using Validators;
+
     [Route("api/[controller]")]
     [Produces("application/json")]
     [Authorize]
     public class CaseWorkflowFormEntryController : Controller
     {
-        private readonly DbContext _dbContext;
-        private readonly DynamicEnvironment.DynamicEnvironment _dynamicEnvironment;
-        private readonly ILog _log;
-        private readonly IMapper _mapper;
-        private readonly PermissionValidation _permissionValidation;
-        private readonly CaseWorkflowFormEntryRepository _repository;
-        private readonly string _userName;
-        private readonly IValidator<CaseWorkflowFormEntryDto> _validator;
+        private readonly DbContext dbContext;
+        private readonly DynamicEnvironment dynamicEnvironment;
+        private readonly ILog log;
+        private readonly IMapper mapper;
+        private readonly PermissionValidation permissionValidation;
+        private readonly CaseWorkflowFormEntryRepository repository;
+        private readonly string userName;
+        private readonly IValidator<CaseWorkflowFormEntryDto> validator;
 
         public CaseWorkflowFormEntryController(ILog log,
-            DynamicEnvironment.DynamicEnvironment dynamicEnvironment, IHttpContextAccessor httpContextAccessor)
+            DynamicEnvironment dynamicEnvironment, IHttpContextAccessor httpContextAccessor)
         {
             if (httpContextAccessor.HttpContext?.User.Identity != null)
-                _userName = httpContextAccessor.HttpContext.User.Identity.Name;
-            _log = log;
+            {
+                userName = httpContextAccessor.HttpContext.User.Identity.Name;
+            }
 
-            _dbContext =
+            this.log = log;
+
+            dbContext =
                 DataConnectionDbContext.GetDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
-            _permissionValidation = new PermissionValidation(_dbContext, _userName);
+            permissionValidation = new PermissionValidation(dbContext, userName);
 
             var config = new MapperConfiguration(cfg =>
             {
@@ -64,18 +67,18 @@ namespace Jube.App.Controllers.Repository
                 cfg.CreateMap<List<CaseWorkflowFormEntry>, List<CaseWorkflowFormEntryDto>>()
                     .ForMember("Item", opt => opt.Ignore());
             });
-            _mapper = new Mapper(config);
-            _repository = new CaseWorkflowFormEntryRepository(_dbContext, _userName);
-            _validator = new CaseWorkflowFormEntryDtoValidator();
-            _dynamicEnvironment = dynamicEnvironment;
+            mapper = new Mapper(config);
+            repository = new CaseWorkflowFormEntryRepository(dbContext, userName);
+            validator = new CaseWorkflowFormEntryDtoValidator();
+            this.dynamicEnvironment = dynamicEnvironment;
         }
 
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                _dbContext.Close();
-                _dbContext.Dispose();
+                dbContext.Close();
+                dbContext.Dispose();
             }
 
             base.Dispose(disposing);
@@ -88,29 +91,47 @@ namespace Jube.App.Controllers.Repository
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 1 }, true)) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        1
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var results = _validator.Validate(model);
+                var results = validator.Validate(model);
 
-                if (!results.IsValid) return BadRequest(results);
+                if (!results.IsValid)
+                {
+                    return BadRequest(results);
+                }
 
-                var entry = _repository.Insert(_mapper.Map<CaseWorkflowFormEntry>(model));
+                var entry = repository.Insert(mapper.Map<CaseWorkflowFormEntry>(model));
 
-                if (model.Payload == null) return Ok(entry);
+                if (model.Payload == null)
+                {
+                    return Ok(entry);
+                }
 
                 var repositoryCaseWorkflowFormEntryValue =
-                    new CaseWorkflowFormEntryValueRepository(_dbContext, _userName);
+                    new CaseWorkflowFormEntryValueRepository(dbContext, userName);
 
                 var jObject = JObject.Parse(model.Payload);
 
                 var values = new Dictionary<string, string>();
                 foreach (var (key, value) in jObject)
                 {
-                    if (value == null) continue;
+                    if (value == null)
+                    {
+                        continue;
+                    }
 
                     values.Add(key, value.ToString());
 
-                    if (key == "CaseKey") continue;
+                    if (key == "CaseKey")
+                    {
+                        continue;
+                    }
 
                     var caseWorkflowFormEntryValue = new CaseWorkflowFormEntryValue
                     {
@@ -122,35 +143,42 @@ namespace Jube.App.Controllers.Repository
                     repositoryCaseWorkflowFormEntryValue.Insert(caseWorkflowFormEntryValue);
                 }
 
-                var caseWorkflowFormRepository = new CaseWorkflowFormRepository(_dbContext, _userName);
+                var caseWorkflowFormRepository = new CaseWorkflowFormRepository(dbContext, userName);
 
                 var caseWorkflowForm = caseWorkflowFormRepository.GetById(model.CaseWorkflowFormId);
 
                 if (caseWorkflowForm.EnableNotification != 1 && caseWorkflowForm.EnableHttpEndpoint != 1)
+                {
                     return Ok(entry);
+                }
 
                 if (caseWorkflowForm.EnableNotification == 1)
                 {
-                    var notification = new Notification(_log, _dynamicEnvironment);
+                    var notification = new Notification(log, dynamicEnvironment);
                     notification.Send(caseWorkflowForm.NotificationTypeId ?? 1,
                         caseWorkflowForm.NotificationDestination,
                         caseWorkflowForm.NotificationSubject,
                         caseWorkflowForm.NotificationBody, values);
                 }
 
-                if (caseWorkflowForm.EnableHttpEndpoint != 1) return Ok(entry);
+                if (caseWorkflowForm.EnableHttpEndpoint != 1)
+                {
+                    return Ok(entry);
+                }
 
                 var sendHttpEndpoint = new SendHttpEndpoint();
                 if (caseWorkflowForm.HttpEndpointTypeId != null)
+                {
                     sendHttpEndpoint.Send(caseWorkflowForm.HttpEndpoint,
                         caseWorkflowForm.HttpEndpointTypeId.Value
                         , values);
+                }
 
                 return Ok(entry);
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -160,13 +188,19 @@ namespace Jube.App.Controllers.Repository
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 1 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        1
+                    }))
+                {
+                    return Forbid();
+                }
 
-                return Ok(_mapper.Map<List<CaseWorkflowFormEntry>>(_repository.GetByCaseKeyValue(key, value)));
+                return Ok(mapper.Map<List<CaseWorkflowFormEntry>>(repository.GetByCaseKeyValue(key, value)));
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }

@@ -11,94 +11,100 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using FluentMigrator.Runner;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using Jube.Data.Reporting;
-using Jube.Data.Repository;
-
-namespace Jube.Data.Query;
-
-public class GetByVisualisationRegistryDatasourceCommandExecutionQuery(
-    DbContext dbContext,
-    string connectionString,
-    string user)
+namespace Jube.Data.Query
 {
-    public async Task<dynamic> ExecuteAsync(int id, Dictionary<int, object> parametersById)
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Threading.Tasks;
+    using Context;
+    using FluentMigrator.Runner;
+    using Poco;
+    using Reporting;
+    using Repository;
+
+    public class GetByVisualisationRegistryDatasourceCommandExecutionQuery(
+        DbContext dbContext,
+        string connectionString,
+        string user)
     {
-        var values = new List<IDictionary<string, object>>();
-        var visualisationRegistryDatasourceRepository =
-            new VisualisationRegistryDatasourceRepository(dbContext, user);
-        var visualisationRegistryDatasource = visualisationRegistryDatasourceRepository.GetById(id);
-
-        var visualisationRegistryParameterRepository =
-            new VisualisationRegistryParameterRepository(dbContext, user);
-
-        if (visualisationRegistryDatasource.VisualisationRegistryId == null) return values;
-
-        var visualisationRegistryParameter
-            = visualisationRegistryParameterRepository
-                .GetByVisualisationRegistryIdOrderById(visualisationRegistryDatasource.VisualisationRegistryId.Value);
-
-        var parametersByName = visualisationRegistryParameter.ToDictionary(
-            parameter => parameter.Name.Replace(" ", "_"), parameter =>
-                parametersById.TryGetValue(parameter.Id, out var value)
-                    ? value
-                    : parameter.DefaultValue);
-
-        var sw = new StopWatch();
-        sw.Start();
-
-        string error = null;
-        try
+        public async Task<dynamic> ExecuteAsync(int id, Dictionary<int, object> parametersById)
         {
-            var postgres = new Postgres(connectionString);
-            values = await postgres.ExecuteByNamedParametersAsync(visualisationRegistryDatasource.Command,
-                parametersByName).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            error = ex.ToString();
-        }
+            var values = new List<IDictionary<string, object>>();
+            var visualisationRegistryDatasourceRepository =
+                new VisualisationRegistryDatasourceRepository(dbContext, user);
+            var visualisationRegistryDatasource = visualisationRegistryDatasourceRepository.GetById(id);
 
-        sw.Stop();
+            var visualisationRegistryParameterRepository =
+                new VisualisationRegistryParameterRepository(dbContext, user);
 
-        var visualisationRegistryDatasourceExecutionLog =
-            new VisualisationRegistryDatasourceExecutionLog
+            if (visualisationRegistryDatasource.VisualisationRegistryId == null)
             {
-                Records = values.Count,
-                Error = error,
-                ResponseTime = sw.ElapsedTime().Milliseconds,
-                VisualisationRegistryDatasourceId = visualisationRegistryDatasource.Id,
-                CreatedDate = DateTime.Now,
-                CreatedUser = user
-            };
+                return values;
+            }
 
-        var visualisationRegistryDatasourceExecutionLogRepository
-            = new VisualisationRegistryDatasourceExecutionLogRepository(dbContext);
+            var visualisationRegistryParameter
+                = visualisationRegistryParameterRepository
+                    .GetByVisualisationRegistryIdOrderById(visualisationRegistryDatasource.VisualisationRegistryId.Value);
 
-        visualisationRegistryDatasourceExecutionLog =
-            visualisationRegistryDatasourceExecutionLogRepository.Insert(
-                visualisationRegistryDatasourceExecutionLog);
+            var parametersByName = visualisationRegistryParameter.ToDictionary(
+                parameter => parameter.Name.Replace(" ", "_"), parameter =>
+                    parametersById.TryGetValue(parameter.Id, out var value)
+                        ? value
+                        : parameter.DefaultValue);
 
-        var visualisationRegistryDatasourceExecutionLogParameterRepository
-            = new VisualisationRegistryDatasourceExecutionLogParameterRepository(dbContext);
+            var sw = new StopWatch();
+            sw.Start();
 
-        foreach (var visualisationRegistryDatasourceExecutionLogParameter in parametersById.Select(parameter =>
-                     new VisualisationRegistryDatasourceExecutionLogParameter
-                     {
-                         Value = parameter.Value.ToString(),
-                         VisualisationRegistryDatasourceExecutionLogId =
-                             visualisationRegistryDatasourceExecutionLog.Id,
-                         VisualisationRegistryParameterId = parameter.Key
-                     }))
-            visualisationRegistryDatasourceExecutionLogParameterRepository
-                .Insert(visualisationRegistryDatasourceExecutionLogParameter);
+            string error = null;
+            try
+            {
+                var postgres = new Postgres(connectionString);
+                values = await postgres.ExecuteByNamedParametersAsync(visualisationRegistryDatasource.Command,
+                    parametersByName).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                error = ex.ToString();
+            }
 
-        return values;
+            sw.Stop();
+
+            var visualisationRegistryDatasourceExecutionLog =
+                new VisualisationRegistryDatasourceExecutionLog
+                {
+                    Records = values.Count,
+                    Error = error,
+                    ResponseTime = sw.ElapsedTime().Milliseconds,
+                    VisualisationRegistryDatasourceId = visualisationRegistryDatasource.Id,
+                    CreatedDate = DateTime.Now,
+                    CreatedUser = user
+                };
+
+            var visualisationRegistryDatasourceExecutionLogRepository
+                = new VisualisationRegistryDatasourceExecutionLogRepository(dbContext);
+
+            visualisationRegistryDatasourceExecutionLog =
+                visualisationRegistryDatasourceExecutionLogRepository.Insert(
+                    visualisationRegistryDatasourceExecutionLog);
+
+            var visualisationRegistryDatasourceExecutionLogParameterRepository
+                = new VisualisationRegistryDatasourceExecutionLogParameterRepository(dbContext);
+
+            foreach (var visualisationRegistryDatasourceExecutionLogParameter in parametersById.Select(parameter =>
+                         new VisualisationRegistryDatasourceExecutionLogParameter
+                         {
+                             Value = parameter.Value.ToString(),
+                             VisualisationRegistryDatasourceExecutionLogId =
+                                 visualisationRegistryDatasourceExecutionLog.Id,
+                             VisualisationRegistryParameterId = parameter.Key
+                         }))
+            {
+                visualisationRegistryDatasourceExecutionLogParameterRepository
+                    .Insert(visualisationRegistryDatasourceExecutionLogParameter);
+            }
+
+            return values;
+        }
     }
 }

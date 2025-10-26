@@ -13,22 +13,23 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220430125430)]
-public class AddEntityAnalysisModelReprocessingRuleInstanceFk : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220430125430)]
+    public class AddEntityAnalysisModelReprocessingRuleInstanceFk : Migration
     {
-        Create.ForeignKey().FromTable("EntityAnalysisModelReprocessingRuleInstance")
-            .ForeignColumn("EntityAnalysisModelReprocessingRuleId")
-            .ToTable("EntityAnalysisModelReprocessingRule").PrimaryColumn("Id");
-    }
+        public override void Up()
+        {
+            Create.ForeignKey().FromTable("EntityAnalysisModelReprocessingRuleInstance")
+                .ForeignColumn("EntityAnalysisModelReprocessingRuleId")
+                .ToTable("EntityAnalysisModelReprocessingRule").PrimaryColumn("Id");
+        }
 
-    public override void Down()
-    {
-        Delete.ForeignKey().FromTable("EntityAnalysisModelReprocessingRuleInstance")
-            .ForeignColumn("EntityAnalysisModelReprocessingRuleId")
-            .ToTable("EntityAnalysisModelReprocessingRule").PrimaryColumn("Id");
+        public override void Down()
+        {
+            Delete.ForeignKey().FromTable("EntityAnalysisModelReprocessingRuleInstance")
+                .ForeignColumn("EntityAnalysisModelReprocessingRuleId")
+                .ToTable("EntityAnalysisModelReprocessingRule").PrimaryColumn("Id");
+        }
     }
 }

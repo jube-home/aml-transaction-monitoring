@@ -13,31 +13,32 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124935)]
-public class AddEntityAnalysisModelListCsvFileUploadTable : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124935)]
+    public class AddEntityAnalysisModelListCsvFileUploadTable : Migration
     {
-        Create.Table("EntityAnalysisModelListCsvFileUpload")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("EntityAnalysisModelListId").AsInt32().Nullable()
-            .WithColumn("FileName").AsString().Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("Records").AsInt32().Nullable()
-            .WithColumn("Errors").AsInt32().Nullable()
-            .WithColumn("Length").AsInt64().Nullable()
-            .WithColumn("Version").AsInt32().Nullable()
-            .WithColumn("InheritedId").AsInt32().Nullable()
-            .WithColumn("Deleted").AsByte().Nullable()
-            .WithColumn("DeletedUser").AsString().Nullable()
-            .WithColumn("DeletedDate").AsDateTime2().Nullable();
-    }
+        public override void Up()
+        {
+            Create.Table("EntityAnalysisModelListCsvFileUpload")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("EntityAnalysisModelListId").AsInt32().Nullable()
+                .WithColumn("FileName").AsString().Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("Records").AsInt32().Nullable()
+                .WithColumn("Errors").AsInt32().Nullable()
+                .WithColumn("Length").AsInt64().Nullable()
+                .WithColumn("Version").AsInt32().Nullable()
+                .WithColumn("InheritedId").AsInt32().Nullable()
+                .WithColumn("Deleted").AsByte().Nullable()
+                .WithColumn("DeletedUser").AsString().Nullable()
+                .WithColumn("DeletedDate").AsDateTime2().Nullable();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("EntityAnalysisModelListCsvFileUpload");
+        public override void Down()
+        {
+            Delete.Table("EntityAnalysisModelListCsvFileUpload");
+        }
     }
 }

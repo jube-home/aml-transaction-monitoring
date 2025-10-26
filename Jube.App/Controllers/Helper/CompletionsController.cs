@@ -11,50 +11,53 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Jube.App.Code;
-using Jube.App.Dto.Requests;
-using Jube.Data.Context;
-using Jube.Data.Query;
-using Jube.Data.Repository;
-using Jube.Engine.Helpers;
-using log4net;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-
 namespace Jube.App.Controllers.Helper
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Code;
+    using Data.Context;
+    using Data.Query;
+    using Data.Repository;
+    using Dto.Requests;
+    using DynamicEnvironment;
+    using log4net;
+    using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.AspNetCore.Mvc;
+
     [Route("api/[controller]")]
     [Produces("application/json")]
     [Authorize]
     public class CompletionsController : Controller
     {
-        private readonly DbContext _dbContext;
-        private readonly ILog _log;
-        private readonly PermissionValidation _permissionValidation;
-        private readonly string _userName;
+        private readonly DbContext dbContext;
+        private readonly ILog log;
+        private readonly PermissionValidation permissionValidation;
+        private readonly string userName;
 
         public CompletionsController(ILog log, IHttpContextAccessor httpContextAccessor,
-            DynamicEnvironment.DynamicEnvironment dynamicEnvironment)
+            DynamicEnvironment dynamicEnvironment)
         {
             if (httpContextAccessor.HttpContext?.User.Identity != null)
-                _userName = httpContextAccessor.HttpContext.User.Identity.Name;
-            _log = log;
+            {
+                userName = httpContextAccessor.HttpContext.User.Identity.Name;
+            }
 
-            _dbContext =
+            this.log = log;
+
+            dbContext =
                 DataConnectionDbContext.GetDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
-            _permissionValidation = new PermissionValidation(_dbContext, _userName);
+            permissionValidation = new PermissionValidation(dbContext, userName);
         }
 
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                _dbContext.Close();
-                _dbContext.Dispose();
+                dbContext.Close();
+                dbContext.Dispose();
             }
 
             base.Dispose(disposing);
@@ -65,20 +68,29 @@ namespace Jube.App.Controllers.Helper
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 25, 17, 20 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        25, 17, 20
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var caseWorkflowRepository = new CaseWorkflowRepository(_dbContext, _userName);
+                var caseWorkflowRepository = new CaseWorkflowRepository(dbContext, userName);
                 var entityAnalysisModelId = caseWorkflowRepository.GetById(caseWorkflowId).EntityAnalysisModelId;
 
-                if (entityAnalysisModelId == null) return NotFound();
+                if (entityAnalysisModelId == null)
+                {
+                    return NotFound();
+                }
 
-                var completionDtos = CompletionDtos(entityAnalysisModelId.Value, 5, _userName, true);
+                var completionDtos = CompletionDtos(entityAnalysisModelId.Value, 5, true);
 
                 return Ok(completionDtos);
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -88,15 +100,24 @@ namespace Jube.App.Controllers.Helper
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 1 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        1
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var caseWorkflowRepository = new CaseWorkflowRepository(_dbContext, _userName);
+                var caseWorkflowRepository = new CaseWorkflowRepository(dbContext, userName);
                 var entityAnalysisModelId =
                     caseWorkflowRepository.GetByGuidIncludingDeleted(caseWorkflowGuid).EntityAnalysisModelId;
 
-                if (entityAnalysisModelId == null) return NotFound();
+                if (entityAnalysisModelId == null)
+                {
+                    return NotFound();
+                }
 
-                var completionDtos = CompletionDtos(entityAnalysisModelId.Value, 5, _userName, true);
+                var completionDtos = CompletionDtos(entityAnalysisModelId.Value, 5, true);
 
                 return Ok(completionDtos);
             }
@@ -106,7 +127,7 @@ namespace Jube.App.Controllers.Helper
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -116,15 +137,24 @@ namespace Jube.App.Controllers.Helper
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 1 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        1
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var caseWorkflowRepository = new CaseWorkflowRepository(_dbContext, _userName);
+                var caseWorkflowRepository = new CaseWorkflowRepository(dbContext, userName);
                 var entityAnalysisModelId =
                     caseWorkflowRepository.GetByIdIncludingDeleted(caseWorkflowId).EntityAnalysisModelId;
 
-                if (entityAnalysisModelId == null) return NotFound();
+                if (entityAnalysisModelId == null)
+                {
+                    return NotFound();
+                }
 
-                var completionDtos = CompletionDtos(entityAnalysisModelId.Value, 5, _userName, true);
+                var completionDtos = CompletionDtos(entityAnalysisModelId.Value, 5, true);
 
                 return Ok(completionDtos);
             }
@@ -134,7 +164,7 @@ namespace Jube.App.Controllers.Helper
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -144,15 +174,21 @@ namespace Jube.App.Controllers.Helper
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 16 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        16
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var completionDtos = CompletionDtos(entityAnalysisModelId, 6, _userName, true);
+                var completionDtos = CompletionDtos(entityAnalysisModelId, 6, true);
 
                 return Ok(completionDtos);
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 throw;
             }
         }
@@ -163,24 +199,29 @@ namespace Jube.App.Controllers.Helper
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 8, 10, 13, 14, 17, 20, 26 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        8, 10, 13, 14, 17, 20, 26
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var completionDtos = CompletionDtos(entityAnalysisModelId, parseTypeId, _userName, false);
+                var completionDtos = CompletionDtos(entityAnalysisModelId, parseTypeId, false);
 
                 return Ok(completionDtos);
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 throw;
             }
         }
 
-        private List<CompletionDto> CompletionDtos(int entityAnalysisModelId, int parseTypeId, string userName,
-            bool reporting)
+        private List<CompletionDto> CompletionDtos(int entityAnalysisModelId, int parseTypeId, bool reporting)
         {
             var getModelFieldByEntityAnalysisModelIdParseTypeIdQuery
-                = new GetModelFieldByEntityAnalysisModelIdParseTypeIdQuery(_dbContext, userName);
+                = new GetModelFieldByEntityAnalysisModelIdParseTypeIdQuery(dbContext, userName);
 
             var completionDtos = getModelFieldByEntityAnalysisModelIdParseTypeIdQuery
                 .Execute(entityAnalysisModelId, parseTypeId, reporting)

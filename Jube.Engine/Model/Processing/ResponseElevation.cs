@@ -13,14 +13,15 @@
 
 using System;
 
-namespace Jube.Engine.Model.Processing;
-
-public class ResponseElevation
+namespace Jube.Engine.Model.Processing
 {
-    public double Value { get; set; }
-    public string Redirect { get; set; }
-    public string ForeColor { get; set; }
-    public string BackColor { get; set; }
-    public string Content { get; set; }
-    public DateTime CreatedDate { get; set; } = DateTime.Now;
+    public class ResponseElevation
+    {
+        public double Value { get; set; }
+        public string Redirect { get; set; }
+        public string ForeColor { get; set; }
+        public string BackColor { get; set; }
+        public string Content { get; set; }
+        public DateTime CreatedDate { get; set; } = DateTime.Now;
+    }
 }

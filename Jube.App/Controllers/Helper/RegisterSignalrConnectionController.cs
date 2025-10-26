@@ -11,51 +11,53 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System.Linq;
-using System.Threading.Tasks;
-using Jube.App.Code;
-using Jube.App.Code.signalr;
-using Jube.Data.Context;
-using Jube.Engine.Helpers;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
-
 namespace Jube.App.Controllers.Helper
 {
+    using System.Linq;
+    using System.Threading.Tasks;
+    using Code;
+    using Code.signalr;
+    using Data.Context;
+    using DynamicEnvironment;
+    using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.AspNetCore.Mvc;
+    using Microsoft.AspNetCore.SignalR;
+
     [Route("api/[controller]")]
     [Produces("application/json")]
     [Authorize]
     public class RegisterSignalrConnectionController : Controller
     {
-        private readonly DbContext _dbContext;
-        private readonly PermissionValidation _permissionValidation;
-        private readonly int _tenantRegistryId;
-        private readonly string _userName;
-        private readonly IHubContext<WatcherHub> _watcherHub;
+        private readonly DbContext dbContext;
+        private readonly PermissionValidation permissionValidation;
+        private readonly int tenantRegistryId;
+        private readonly string userName;
+        private readonly IHubContext<WatcherHub> watcherHub;
 
         public RegisterSignalrConnectionController(IHubContext<WatcherHub> watcherHub,
-            IHttpContextAccessor httpContextAccessor, DynamicEnvironment.DynamicEnvironment dynamicEnvironment)
+            IHttpContextAccessor httpContextAccessor, DynamicEnvironment dynamicEnvironment)
         {
             if (httpContextAccessor.HttpContext?.User.Identity != null)
-                _userName = httpContextAccessor.HttpContext.User.Identity.Name;
+            {
+                userName = httpContextAccessor.HttpContext.User.Identity.Name;
+            }
 
-            _dbContext =
+            dbContext =
                 DataConnectionDbContext.GetDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
-            _permissionValidation = new PermissionValidation(_dbContext, _userName);
+            permissionValidation = new PermissionValidation(dbContext, userName);
 
-            _tenantRegistryId = _dbContext.UserInTenant.Where(w => w.User == _userName)
+            tenantRegistryId = dbContext.UserInTenant.Where(w => w.User == userName)
                 .Select(s => s.TenantRegistryId).FirstOrDefault();
-            _watcherHub = watcherHub;
+            this.watcherHub = watcherHub;
         }
 
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                _dbContext.Close();
-                _dbContext.Dispose();
+                dbContext.Close();
+                dbContext.Dispose();
             }
 
             base.Dispose(disposing);
@@ -64,9 +66,15 @@ namespace Jube.App.Controllers.Helper
         [HttpGet("{id}")]
         public async Task<IActionResult> RegisterSignalrConnectionByConnectionIdAsync(string id)
         {
-            if (!_permissionValidation.Validate(new[] { 30 })) return Forbid();
+            if (!permissionValidation.Validate(new[]
+                {
+                    30
+                }))
+            {
+                return Forbid();
+            }
 
-            await _watcherHub.Groups.AddToGroupAsync(id, "Tenant_" + _tenantRegistryId).ConfigureAwait(false);
+            await watcherHub.Groups.AddToGroupAsync(id, "Tenant_" + tenantRegistryId).ConfigureAwait(false);
 
             return Ok();
         }

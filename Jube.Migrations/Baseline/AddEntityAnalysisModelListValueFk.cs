@@ -13,22 +13,23 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220430125427)]
-public class AddEntityAnalysisModelListValueFk : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220430125427)]
+    public class AddEntityAnalysisModelListValueFk : Migration
     {
-        Create.ForeignKey().FromTable("EntityAnalysisModelListValue")
-            .ForeignColumn("EntityAnalysisModelListId").ToTable("EntityAnalysisModelList")
-            .PrimaryColumn("Id");
-    }
+        public override void Up()
+        {
+            Create.ForeignKey().FromTable("EntityAnalysisModelListValue")
+                .ForeignColumn("EntityAnalysisModelListId").ToTable("EntityAnalysisModelList")
+                .PrimaryColumn("Id");
+        }
 
-    public override void Down()
-    {
-        Delete.ForeignKey().FromTable("EntityAnalysisModelListValue")
-            .ForeignColumn("EntityAnalysisModelListId").ToTable("EntityAnalysisModelList")
-            .PrimaryColumn("Id");
+        public override void Down()
+        {
+            Delete.ForeignKey().FromTable("EntityAnalysisModelListValue")
+                .ForeignColumn("EntityAnalysisModelListId").ToTable("EntityAnalysisModelList")
+                .PrimaryColumn("Id");
+        }
     }
 }

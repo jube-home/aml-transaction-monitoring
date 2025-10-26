@@ -11,47 +11,47 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.IdentityModel.Tokens.Jwt;
-using System.Net;
-using System.Threading.Tasks;
-using Jube.App.Code;
-using Jube.Data.Context;
-using Jube.Engine.Helpers;
-using Jube.Service.Authentication;
-using Jube.Service.Dto.Authentication;
-using Jube.Service.Exceptions.Authentication;
-using Jube.Validations.Authentication;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-
 namespace Jube.App.Controllers.Authentication
 {
+    using System;
+    using System.IdentityModel.Tokens.Jwt;
+    using System.Net;
+    using System.Threading.Tasks;
+    using Code;
+    using Data.Context;
+    using DynamicEnvironment;
+    using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.AspNetCore.Mvc;
+    using Service.Authentication;
+    using Service.Dto.Authentication;
+    using Service.Exceptions.Authentication;
+    using Validations.Authentication;
+
     [Route("api/[controller]")]
     [Produces("application/json")]
     [AllowAnonymous]
     public class SandboxRegistrationController : Controller
     {
-        private readonly DbContext _dbContext;
-        private readonly DynamicEnvironment.DynamicEnvironment _dynamicEnvironment;
-        private readonly SandboxRegistration _service;
+        private readonly DbContext dbContext;
+        private readonly DynamicEnvironment dynamicEnvironment;
+        private readonly SandboxRegistration service;
 
-        public SandboxRegistrationController(DynamicEnvironment.DynamicEnvironment dynamicEnvironment)
+        public SandboxRegistrationController(DynamicEnvironment dynamicEnvironment)
         {
-            _dynamicEnvironment = dynamicEnvironment;
-            _dbContext =
+            this.dynamicEnvironment = dynamicEnvironment;
+            dbContext =
                 DataConnectionDbContext.GetDbContextDataConnection(
-                    _dynamicEnvironment.AppSettings("ConnectionString"));
-            _service = new SandboxRegistration(_dbContext);
+                    this.dynamicEnvironment.AppSettings("ConnectionString"));
+            service = new SandboxRegistration(dbContext);
         }
 
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                _dbContext.Close();
-                _dbContext.Dispose();
+                dbContext.Close();
+                dbContext.Dispose();
             }
 
             base.Dispose(disposing);
@@ -62,16 +62,22 @@ namespace Jube.App.Controllers.Authentication
         public async Task<ActionResult<AuthenticationResponseDto>> Register(
             [FromBody] SandboxRegistrationRequestDto model)
         {
-            if (!_dynamicEnvironment.AppSettings("EnableSandbox").Equals("True")) return Unauthorized();
+            if (!dynamicEnvironment.AppSettings("EnableSandbox").Equals("True"))
+            {
+                return Unauthorized();
+            }
 
             var validator = new SandboxRegistrationRequestDtoValidator();
             var results = await validator.ValidateAsync(model);
-            if (!results.IsValid) return BadRequest(results);
+            if (!results.IsValid)
+            {
+                return BadRequest(results);
+            }
 
             try
             {
                 var sandboxRegistrationResponseDto =
-                    await _service.Register(model, _dynamicEnvironment.AppSettings("PasswordHashingKey"));
+                    await service.Register(model, dynamicEnvironment.AppSettings("PasswordHashingKey"));
                 SetAuthenticationCookie(model);
                 return Ok(sandboxRegistrationResponseDto);
             }
@@ -88,9 +94,9 @@ namespace Jube.App.Controllers.Authentication
         private void SetAuthenticationCookie(SandboxRegistrationRequestDto model)
         {
             var token = Jwt.CreateToken(model.UserName,
-                _dynamicEnvironment.AppSettings("JWTKey"),
-                _dynamicEnvironment.AppSettings("JWTValidIssuer"),
-                _dynamicEnvironment.AppSettings("JWTValidAudience")
+                dynamicEnvironment.AppSettings("JWTKey"),
+                dynamicEnvironment.AppSettings("JWTValidIssuer"),
+                dynamicEnvironment.AppSettings("JWTValidAudience")
             );
 
             var expiration = DateTime.Now.AddMinutes(15);

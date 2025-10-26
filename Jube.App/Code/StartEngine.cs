@@ -20,12 +20,11 @@ namespace Jube.App.Code
     {
         public static class EngineExtension
         {
-            public static IApplicationBuilder StartEngine(this IApplicationBuilder app)
+            public static void StartEngine(this IApplicationBuilder app)
             {
                 using var scope = app.ApplicationServices.CreateScope();
                 var engine = scope.ServiceProvider.GetService<Engine.Program>();
                 engine?.Start();
-                return app;
             }
         }
     }

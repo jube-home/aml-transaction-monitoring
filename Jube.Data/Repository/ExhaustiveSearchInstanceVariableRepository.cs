@@ -11,64 +11,50 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Linq;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using Jube.Data.Repository.Interface;
-using LinqToDB;
-
-namespace Jube.Data.Repository;
-
-public class ExhaustiveSearchInstanceVariableRepository : IGenericRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
-    private readonly int? _tenantRegistryId;
+    using System;
+    using System.Linq;
+    using Context;
+    using Interface;
+    using LinqToDB;
+    using Poco;
 
-    public ExhaustiveSearchInstanceVariableRepository(DbContext dbContext)
+    public class ExhaustiveSearchInstanceVariableRepository(DbContext dbContext) : IGenericRepository
     {
-        _dbContext = dbContext;
-    }
 
-    public ExhaustiveSearchInstanceVariableRepository(DbContext dbContext, int tenantRegistryId)
-    {
-        _dbContext = dbContext;
-        _tenantRegistryId = tenantRegistryId;
-    }
+        public int Insert(object arg)
+        {
+            return dbContext.InsertWithInt32Identity((ExhaustiveSearchInstanceVariable)arg);
+        }
 
-    public int Insert(object arg)
-    {
-        return _dbContext.InsertWithInt32Identity((ExhaustiveSearchInstanceVariable)arg);
-    }
+        public void UpdateCorrelation(int id, double correlation, int rank)
+        {
+            dbContext.ExhaustiveSearchInstanceVariable
+                .Where(d => d.Id == id)
+                .Set(s => s.Correlation, correlation)
+                .Set(s => s.CorrelationAbsRank, rank)
+                .Update();
+        }
 
-    public void UpdateCorrelation(int id, double correlation, int rank)
-    {
-        _dbContext.ExhaustiveSearchInstanceVariable
-            .Where(d => d.Id == id)
-            .Set(s => s.Correlation, correlation)
-            .Set(s => s.CorrelationAbsRank, rank)
-            .Update();
-    }
+        public IQueryable<ExhaustiveSearchInstanceVariable> GetByExhaustiveSearchInstanceIdOrderById(
+            int exhaustiveSearchInstanceId)
+        {
+            return dbContext.ExhaustiveSearchInstanceVariable.Where(w =>
+                    w.ExhaustiveSearchInstanceId == exhaustiveSearchInstanceId)
+                .OrderBy(o => o.Id);
+        }
 
-    public IQueryable<ExhaustiveSearchInstanceVariable> GetByExhaustiveSearchInstanceIdOrderById(
-        int exhaustiveSearchInstanceId)
-    {
-        return _dbContext.ExhaustiveSearchInstanceVariable.Where(w =>
-                w.ExhaustiveSearchInstanceId == exhaustiveSearchInstanceId)
-            .OrderBy(o => o.Id);
-    }
-
-    public void DeleteByTenantRegistryId(int tenantRegistryId, int importId)
-    {
-        var records = _dbContext.ExhaustiveSearchInstanceVariable
-            .Where(d =>
-                (d.ExhaustiveSearchInstance.EntityAnalysisModel.TenantRegistryId == _tenantRegistryId ||
-                 !_tenantRegistryId.HasValue)
-                && d.ExhaustiveSearchInstance.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
-                && (d.Deleted == 0 || d.Deleted == null))
-            .Set(s => s.ImportId, importId)
-            .Set(s => s.Deleted, Convert.ToByte(1))
-            .Set(s => s.DeletedDate, DateTime.Now)
-            .Update();
+        public void DeleteByTenantRegistryIdOutsideOfInstance(int tenantRegistryIdOutsideOfInstance, int importId)
+        {
+            dbContext.ExhaustiveSearchInstanceVariable
+                .Where(d =>
+                    d.ExhaustiveSearchInstance.EntityAnalysisModel.TenantRegistryId == tenantRegistryIdOutsideOfInstance
+                    && (d.Deleted == 0 || d.Deleted == null))
+                .Set(s => s.ImportId, importId)
+                .Set(s => s.Deleted, Convert.ToByte(1))
+                .Set(s => s.DeletedDate, DateTime.Now)
+                .Update();
+        }
     }
 }

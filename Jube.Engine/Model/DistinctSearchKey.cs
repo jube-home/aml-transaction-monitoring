@@ -14,22 +14,23 @@
 using System.Collections.Generic;
 using Jube.Parser;
 
-namespace Jube.Engine.Model;
-
-public class DistinctSearchKey
+namespace Jube.Engine.Model
 {
-    public readonly Dictionary<string, SelectedPayloadData> SelectedPayloadData = [];
-    public int SearchKeyFetchLimit;
-    public string SearchKeyTtlInterval;
-    public int SearchKeyTtlIntervalValue;
-    public string SqlSelect;
-    public string SqlSelectFrom;
-    public string SqlSelectOrderBy;
-    public string SearchKeyCacheIntervalType { get; set; }
-    public int SearchKeyCacheIntervalValue { get; set; }
-    public bool SearchKeyCache { get; set; }
-    public int SearchKeyCacheTtlIntervalValue { get; set; }
-    public int SearchKeyCacheFetchLimit { get; set; }
-    public string SearchKey { get; set; }
-    public bool SearchKeyCacheSample { get; set; }
+    public class DistinctSearchKey
+    {
+        public readonly Dictionary<string, SelectedPayloadData> SelectedPayloadData = [];
+        public int SearchKeyFetchLimit;
+        public string SearchKeyTtlInterval;
+        public int SearchKeyTtlIntervalValue;
+        public string SqlSelect;
+        public string SqlSelectFrom;
+        public string SqlSelectOrderBy;
+        public string SearchKeyCacheIntervalType { get; set; }
+        public int SearchKeyCacheIntervalValue { get; set; }
+        public bool SearchKeyCache { get; set; }
+        public int SearchKeyCacheTtlIntervalValue { get; set; }
+        public int SearchKeyCacheFetchLimit { get; set; }
+        public string SearchKey { get; set; }
+        public bool SearchKeyCacheSample { get; set; }
+    }
 }

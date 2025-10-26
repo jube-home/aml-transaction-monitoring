@@ -13,24 +13,25 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220610085400)]
-public class AddSessionCaseSearchCompiledSqlExecutionTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220610085400)]
+    public class AddSessionCaseSearchCompiledSqlExecutionTableIndex : Migration
     {
-        Create.Table("SessionCaseSearchCompiledSqlExecution")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("SessionCaseSearchCompiledSqlId").AsInt32().Nullable()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable()
-            .WithColumn("ResponseTime").AsInt32()
-            .WithColumn("Records").AsInt32();
-    }
+        public override void Up()
+        {
+            Create.Table("SessionCaseSearchCompiledSqlExecution")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("SessionCaseSearchCompiledSqlId").AsInt32().Nullable()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable()
+                .WithColumn("ResponseTime").AsInt32()
+                .WithColumn("Records").AsInt32();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("SessionCaseSearchCompiledSqlExecution");
+        public override void Down()
+        {
+            Delete.Table("SessionCaseSearchCompiledSqlExecution");
+        }
     }
 }

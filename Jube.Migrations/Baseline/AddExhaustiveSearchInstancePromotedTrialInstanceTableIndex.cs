@@ -13,32 +13,33 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124957)]
-public class AddExhaustiveSearchInstancePromotedTrialInstanceTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124957)]
+    public class AddExhaustiveSearchInstancePromotedTrialInstanceTableIndex : Migration
     {
-        Create.Table("ExhaustiveSearchInstancePromotedTrialInstance")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("Score").AsDouble().Nullable()
-            .WithColumn("TopologyComplexity").AsDouble().Nullable()
-            .WithColumn("TruePositive").AsInt32().Nullable()
-            .WithColumn("TrueNegative").AsInt32().Nullable()
-            .WithColumn("FalsePositive").AsInt32().Nullable()
-            .WithColumn("FalseNegative").AsInt32().Nullable()
-            .WithColumn("Object").AsBinary().Nullable()
-            .WithColumn("ExhaustiveSearchInstanceTrialInstanceId").AsInt32().Nullable()
-            .WithColumn("CreatedDate").AsDateTime().Nullable()
-            .WithColumn("Active").AsByte().Nullable();
+        public override void Up()
+        {
+            Create.Table("ExhaustiveSearchInstancePromotedTrialInstance")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("Score").AsDouble().Nullable()
+                .WithColumn("TopologyComplexity").AsDouble().Nullable()
+                .WithColumn("TruePositive").AsInt32().Nullable()
+                .WithColumn("TrueNegative").AsInt32().Nullable()
+                .WithColumn("FalsePositive").AsInt32().Nullable()
+                .WithColumn("FalseNegative").AsInt32().Nullable()
+                .WithColumn("Object").AsBinary().Nullable()
+                .WithColumn("ExhaustiveSearchInstanceTrialInstanceId").AsInt32().Nullable()
+                .WithColumn("CreatedDate").AsDateTime().Nullable()
+                .WithColumn("Active").AsByte().Nullable();
 
-        Create.Index().OnTable("ExhaustiveSearchInstancePromotedTrialInstance")
-            .OnColumn("ExhaustiveSearchInstanceTrialInstanceId");
-    }
+            Create.Index().OnTable("ExhaustiveSearchInstancePromotedTrialInstance")
+                .OnColumn("ExhaustiveSearchInstanceTrialInstanceId");
+        }
 
-    public override void Down()
-    {
-        Delete.Table("ExhaustiveSearchInstancePromotedTrialInstance");
+        public override void Down()
+        {
+            Delete.Table("ExhaustiveSearchInstancePromotedTrialInstance");
+        }
     }
 }

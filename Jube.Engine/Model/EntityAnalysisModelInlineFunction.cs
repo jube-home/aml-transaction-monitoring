@@ -11,23 +11,25 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System.Collections.Generic;
-using System.Reflection;
-using log4net;
-
-namespace Jube.Engine.Model;
-
-public class EntityAnalysisModelInlineFunction
+namespace Jube.Engine.Model
 {
-    public delegate object Match(Dictionary<string, object> data, Dictionary<string, List<string>> list,
-        Dictionary<string, double> kvp, ILog log);
+    using System.Collections.Generic;
+    using System.Reflection;
+    using Dictionary;
+    using log4net;
 
-    public int Id { get; init; }
-    public string Name { get; set; }
-    public bool ResponsePayload { get; set; }
-    public int ReturnDataTypeId { get; set; }
-    public bool ReportTable { get; set; }
-    public string FunctionScript { get; set; }
-    public Match FunctionCalculationCompileDelegate { get; set; }
-    public Assembly FunctionCalculationCompile { get; set; }
+    public class EntityAnalysisModelInlineFunction
+    {
+        public delegate object Match(DictionaryNoBoxing data, Dictionary<string, List<string>> list,
+            PooledDictionary<string, double> kvp, ILog log);
+
+        public int Id { get; init; }
+        public string Name { get; set; }
+        public bool ResponsePayload { get; set; }
+        public int ReturnDataTypeId { get; set; }
+        public bool ReportTable { get; set; }
+        public string FunctionScript { get; set; }
+        public Match FunctionCalculationCompileDelegate { get; set; }
+        public Assembly FunctionCalculationCompile { get; set; }
+    }
 }

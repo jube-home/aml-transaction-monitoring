@@ -11,84 +11,81 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Data;
-using System.Linq;
-using Jube.Data.Context;
-using LinqToDB;
-
-namespace Jube.Data.Query;
-
-public class GetNextEntityAnalysisModelsReprocessingRuleInstanceQuery
+namespace Jube.Data.Query
 {
-    private readonly DbContext _dbContext;
+    using System;
+    using System.Data;
+    using System.Linq;
+    using Context;
+    using LinqToDB;
 
-    public GetNextEntityAnalysisModelsReprocessingRuleInstanceQuery(DbContext dbContext)
+    public class GetNextEntityAnalysisModelsReprocessingRuleInstanceQuery(DbContext dbContext)
     {
-        _dbContext = dbContext;
-    }
 
-    public Dto Execute(int entityAnalysisModelId)
-    {
-        _dbContext.BeginTransaction(IsolationLevel.Serializable);
-        try
+        public Dto Execute(int entityAnalysisModelId)
         {
-            var query = _dbContext.EntityAnalysisModelReprocessingRuleInstance
-                .Where(w => w.StatusId == 0
-                            && (w.Deleted == 0 || w.Deleted == null)
-                            && w.EntityAnalysisModelReprocessingRule.Active == 1
-                            && w.EntityAnalysisModelReprocessingRule.EntityAnalysisModelId ==
-                            entityAnalysisModelId)
-                .OrderBy(o => o.Id)
-                .Select(s =>
-                    new Dto
-                    {
-                        EntityAnalysisModelsReprocessingRuleId = s.EntityAnalysisModelReprocessingRule
-                            .Id,
-                        ReprocessingIntervalValue =
-                            s.EntityAnalysisModelReprocessingRule.ReprocessingValue,
-                        ReprocessingSample = s.EntityAnalysisModelReprocessingRule.ReprocessingSample,
-                        RuleScriptTypeId = s.EntityAnalysisModelReprocessingRule.RuleScriptTypeId,
-                        CoderRuleScript = s.EntityAnalysisModelReprocessingRule.CoderRuleScript,
-                        BuilderRuleScript = s.EntityAnalysisModelReprocessingRule.BuilderRuleScript,
-                        EntityAnalysisModelId = s.EntityAnalysisModelReprocessingRule.EntityAnalysisModelId.Value,
-                        Id =
-                            s.Id,
-                        ReprocessingIntervalType = s.EntityAnalysisModelReprocessingRule.ReprocessingInterval
-                    }
-                )
-                .FirstOrDefault();
+            dbContext.BeginTransaction(IsolationLevel.Serializable);
+            try
+            {
+                var query = dbContext.EntityAnalysisModelReprocessingRuleInstance
+                    .Where(w => w.StatusId == 0
+                                && (w.Deleted == 0 || w.Deleted == null)
+                                && w.EntityAnalysisModelReprocessingRule.Active == 1
+                                && w.EntityAnalysisModelReprocessingRule.EntityAnalysisModelId ==
+                                entityAnalysisModelId)
+                    .OrderBy(o => o.Id)
+                    .Select(s =>
+                        new Dto
+                        {
+                            EntityAnalysisModelsReprocessingRuleId = s.EntityAnalysisModelReprocessingRule
+                                .Id,
+                            ReprocessingIntervalValue =
+                                s.EntityAnalysisModelReprocessingRule.ReprocessingValue,
+                            ReprocessingSample = s.EntityAnalysisModelReprocessingRule.ReprocessingSample,
+                            RuleScriptTypeId = s.EntityAnalysisModelReprocessingRule.RuleScriptTypeId,
+                            CoderRuleScript = s.EntityAnalysisModelReprocessingRule.CoderRuleScript,
+                            BuilderRuleScript = s.EntityAnalysisModelReprocessingRule.BuilderRuleScript,
+                            EntityAnalysisModelId = s.EntityAnalysisModelReprocessingRule.EntityAnalysisModelId.Value,
+                            Id =
+                                s.Id,
+                            ReprocessingIntervalType = s.EntityAnalysisModelReprocessingRule.ReprocessingInterval
+                        }
+                    )
+                    .FirstOrDefault();
 
-            if (query != null)
-                _dbContext.EntityAnalysisModelReprocessingRuleInstance
-                    .Where(d =>
-                        d.Id ==
-                        query.Id)
-                    .Set(s => s.StatusId, Convert.ToByte(1))
-                    .Set(s => s.StartedDate, DateTime.Now)
-                    .Update();
+                if (query != null)
+                {
+                    dbContext.EntityAnalysisModelReprocessingRuleInstance
+                        .Where(d =>
+                            d.Id ==
+                            query.Id)
+                        .Set(s => s.StatusId, Convert.ToByte(1))
+                        .Set(s => s.StartedDate, DateTime.Now)
+                        .Update();
+                }
 
-            _dbContext.CommitTransaction();
+                dbContext.CommitTransaction();
 
-            return query;
+                return query;
+            }
+            catch
+            {
+                dbContext.RollbackTransaction();
+                throw;
+            }
         }
-        catch
+
+        public class Dto
         {
-            _dbContext.RollbackTransaction();
-            throw;
+            public int EntityAnalysisModelsReprocessingRuleId { get; set; }
+            public int? ReprocessingIntervalValue { get; set; }
+            public string ReprocessingIntervalType { get; set; }
+            public double? ReprocessingSample { get; set; }
+            public int? RuleScriptTypeId { get; set; }
+            public string CoderRuleScript { get; set; }
+            public string BuilderRuleScript { get; set; }
+            public int EntityAnalysisModelId { get; set; }
+            public int Id { get; set; }
         }
-    }
-
-    public class Dto
-    {
-        public int EntityAnalysisModelsReprocessingRuleId { get; set; }
-        public int? ReprocessingIntervalValue { get; set; }
-        public string ReprocessingIntervalType { get; set; }
-        public double? ReprocessingSample { get; set; }
-        public int? RuleScriptTypeId { get; set; }
-        public string CoderRuleScript { get; set; }
-        public string BuilderRuleScript { get; set; }
-        public int EntityAnalysisModelId { get; set; }
-        public int Id { get; set; }
     }
 }

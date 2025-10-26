@@ -14,57 +14,58 @@
 using System;
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124924)]
-public class AddEntityAnalysisModelAbstractionCalculationTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124924)]
+    public class AddEntityAnalysisModelAbstractionCalculationTableIndex : Migration
     {
-        Create.Table("EntityAnalysisModelAbstractionCalculation")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
-            .WithColumn("Name").AsString().Nullable()
-            .WithColumn("EntityAnalysisModelAbstractionNameLeft").AsString().Nullable()
-            .WithColumn("EntityAnalysisModelAbstractionNameRight").AsString().Nullable()
-            .WithColumn("Locked").AsByte().Nullable()
-            .WithColumn("Active").AsByte().Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("Deleted").AsByte().Nullable()
-            .WithColumn("DeletedDate").AsDateTime2().Nullable()
-            .WithColumn("DeletedUser").AsString().Nullable()
-            .WithColumn("Version").AsInt32().Nullable()
-            .WithColumn("InheritedId").AsInt32().Nullable()
-            .WithColumn("ResponsePayload").AsByte().Nullable()
-            .WithColumn("AbstractionCalculationTypeId").AsByte().Nullable()
-            .WithColumn("ReportTable").AsByte().Nullable()
-            .WithColumn("FunctionScript").AsString().Nullable();
-
-        Create.Index().OnTable("EntityAnalysisModelAbstractionCalculation")
-            .OnColumn("EntityAnalysisModelId").Ascending()
-            .OnColumn("Deleted").Ascending();
-
-        var functionScript = "Return Abstraction.NotResponseCodeEqual0Volume / " + Environment.NewLine +
-                             " (Abstraction.NotResponseCodeEqual0Volume _  " + Environment.NewLine +
-                             "+ Abstraction.ResponseCodeEqual0Volume) _ " + Environment.NewLine;
-
-        Insert.IntoTable("EntityAnalysisModelAbstractionCalculation").Row(new
+        public override void Up()
         {
-            EntityAnalysisModelId = 1,
-            Name = "ResponseCodeVolumeRatio",
-            Active = 1,
-            AbstractionCalculationTypeId = 5,
-            Version = 1,
-            CreatedDate = DateTime.Now,
-            CreatedUser = "Administrator",
-            ResponsePayload = 1,
-            FunctionScript = functionScript
-        });
-    }
+            Create.Table("EntityAnalysisModelAbstractionCalculation")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
+                .WithColumn("Name").AsString().Nullable()
+                .WithColumn("EntityAnalysisModelAbstractionNameLeft").AsString().Nullable()
+                .WithColumn("EntityAnalysisModelAbstractionNameRight").AsString().Nullable()
+                .WithColumn("Locked").AsByte().Nullable()
+                .WithColumn("Active").AsByte().Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("Deleted").AsByte().Nullable()
+                .WithColumn("DeletedDate").AsDateTime2().Nullable()
+                .WithColumn("DeletedUser").AsString().Nullable()
+                .WithColumn("Version").AsInt32().Nullable()
+                .WithColumn("InheritedId").AsInt32().Nullable()
+                .WithColumn("ResponsePayload").AsByte().Nullable()
+                .WithColumn("AbstractionCalculationTypeId").AsByte().Nullable()
+                .WithColumn("ReportTable").AsByte().Nullable()
+                .WithColumn("FunctionScript").AsString().Nullable();
 
-    public override void Down()
-    {
-        Delete.Table("EntityAnalysisModelAbstractionCalculation");
+            Create.Index().OnTable("EntityAnalysisModelAbstractionCalculation")
+                .OnColumn("EntityAnalysisModelId").Ascending()
+                .OnColumn("Deleted").Ascending();
+
+            var functionScript = "Return Abstraction.NotResponseCodeEqual0Volume / " + Environment.NewLine +
+                                 " (Abstraction.NotResponseCodeEqual0Volume _  " + Environment.NewLine +
+                                 "+ Abstraction.ResponseCodeEqual0Volume) _ " + Environment.NewLine;
+
+            Insert.IntoTable("EntityAnalysisModelAbstractionCalculation").Row(new
+            {
+                EntityAnalysisModelId = 1,
+                Name = "ResponseCodeVolumeRatio",
+                Active = 1,
+                AbstractionCalculationTypeId = 5,
+                Version = 1,
+                CreatedDate = DateTime.Now,
+                CreatedUser = "Administrator",
+                ResponsePayload = 1,
+                FunctionScript = functionScript
+            });
+        }
+
+        public override void Down()
+        {
+            Delete.Table("EntityAnalysisModelAbstractionCalculation");
+        }
     }
 }

@@ -13,42 +13,43 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124900)]
-public class AddActivationWatcherTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124900)]
+    public class AddActivationWatcherTableIndex : Migration
     {
-        Create.Table("ActivationWatcher")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("TenantRegistryId").AsInt32().Nullable()
-            .WithColumn("Key").AsString()
-            .WithColumn("KeyValue").AsString()
-            .WithColumn("Longitude").AsDouble().Nullable()
-            .WithColumn("Latitude").AsDouble().Nullable()
-            .WithColumn("ActivationRuleSummary").AsString()
-            .WithColumn("ResponseElevationContent").AsString()
-            .WithColumn("ResponseElevation").AsDouble().Nullable()
-            .WithColumn("BackColor").AsString()
-            .WithColumn("ForeColor").AsString()
-            .WithColumn("CreatedDate").AsDateTime2();
+        public override void Up()
+        {
+            Create.Table("ActivationWatcher")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("TenantRegistryId").AsInt32().Nullable()
+                .WithColumn("Key").AsString()
+                .WithColumn("KeyValue").AsString()
+                .WithColumn("Longitude").AsDouble().Nullable()
+                .WithColumn("Latitude").AsDouble().Nullable()
+                .WithColumn("ActivationRuleSummary").AsString()
+                .WithColumn("ResponseElevationContent").AsString()
+                .WithColumn("ResponseElevation").AsDouble().Nullable()
+                .WithColumn("BackColor").AsString()
+                .WithColumn("ForeColor").AsString()
+                .WithColumn("CreatedDate").AsDateTime2();
 
-        Create.Index().OnTable("ActivationWatcher")
-            .OnColumn("TenantRegistryId");
+            Create.Index().OnTable("ActivationWatcher")
+                .OnColumn("TenantRegistryId");
 
-        Create.Index().OnTable("ActivationWatcher")
-            .OnColumn("CreatedDate").Descending()
-            .OnColumn("Key").Ascending()
-            .OnColumn("KeyValue").Ascending();
+            Create.Index().OnTable("ActivationWatcher")
+                .OnColumn("CreatedDate").Descending()
+                .OnColumn("Key").Ascending()
+                .OnColumn("KeyValue").Ascending();
 
-        Create.Index().OnTable("ActivationWatcher")
-            .OnColumn("CreatedDate").Descending()
-            .OnColumn("ResponseElevation").Descending();
-    }
+            Create.Index().OnTable("ActivationWatcher")
+                .OnColumn("CreatedDate").Descending()
+                .OnColumn("ResponseElevation").Descending();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("ActivationWatcher");
+        public override void Down()
+        {
+            Delete.Table("ActivationWatcher");
+        }
     }
 }

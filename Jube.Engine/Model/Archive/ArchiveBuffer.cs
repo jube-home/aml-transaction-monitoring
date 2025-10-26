@@ -15,11 +15,12 @@ using System;
 using System.Collections.Generic;
 using Jube.Data.Poco;
 
-namespace Jube.Engine.Model.Archive;
-
-public class ArchiveBuffer
+namespace Jube.Engine.Model.Archive
 {
-    public DateTime LastMessage { get; set; }
-    public List<Data.Poco.Archive> Archive { get; } = [];
-    public List<ArchiveKey> ArchiveKeys { get; } = [];
+    public class ArchiveBuffer
+    {
+        public DateTime LastMessage { get; set; }
+        public List<Data.Poco.Archive> Archive { get; } = [];
+        public List<ArchiveKey> ArchiveKeys { get; } = [];
+    }
 }

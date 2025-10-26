@@ -34,15 +34,16 @@
         <PackageReference Include="linq2db" Version="3.6.0"/>
         <PackageReference Include="log4net" Version="2.0.14"/>
         <PackageReference Include="MessagePack" Version="3.1.4"/>
-        <PackageReference Include="Microsoft.Extensions.Primitives" Version="6.0.0"/>
+        <PackageReference Include="Microsoft.Extensions.Primitives" Version="9.0.10"/>
         <PackageReference Include="Npgsql" Version="5.0.18"/>
         <PackageReference Include="Npgsql.Json.NET" Version="5.0.13"/>
-        <PackageReference Include="StackExchange.Redis" Version="2.7.33"/>
+        <PackageReference Include="StackExchange.Redis" Version="2.9.32"/>
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\Accord.Statistics\Accord.Statistics.csproj"/>
         <ProjectReference Include="..\Jube.Extensions\Jube.Extensions.csproj"/>
+        <ProjectReference Include="..\Jube.Dictionary\Jube.Dictionary.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -54,6 +55,7 @@
         <Compile Remove="Cache\CacheTtlCounterRepository.cs"/>
         <Compile Remove="Cache\Callback.cs"/>
         <Compile Remove="Cache\CachePayloadLatestRepository.cs"/>
+        <Compile Remove="Repository\LocalCacheInstanceKeyCounterRepository.cs"/>
     </ItemGroup>
 
 </Project>

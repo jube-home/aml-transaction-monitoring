@@ -11,23 +11,18 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System.Collections.Generic;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-
-namespace Jube.Data.Repository;
-
-public class RuleScriptTokenRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
+    using System.Collections.Generic;
+    using Context;
+    using Poco;
 
-    public RuleScriptTokenRepository(DbContext dbContext)
+    public class RuleScriptTokenRepository(DbContext dbContext)
     {
-        _dbContext = dbContext;
-    }
 
-    public IEnumerable<RuleScriptToken> Get()
-    {
-        return _dbContext.RuleScriptToken;
+        public IEnumerable<RuleScriptToken> Get()
+        {
+            return dbContext.RuleScriptToken;
+        }
     }
 }

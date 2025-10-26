@@ -11,12 +11,13 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-namespace Jube.Engine.Model.Processing;
-
-public class Notification
+namespace Jube.Engine.Model.Processing
 {
-    public string NotificationSubject { get; set; }
-    public string NotificationDestination { get; set; }
-    public string NotificationBody { get; set; }
-    public int NotificationTypeId { get; set; }
+    public class Notification
+    {
+        public string NotificationSubject { get; set; }
+        public string NotificationDestination { get; set; }
+        public string NotificationBody { get; set; }
+        public int NotificationTypeId { get; set; }
+    }
 }

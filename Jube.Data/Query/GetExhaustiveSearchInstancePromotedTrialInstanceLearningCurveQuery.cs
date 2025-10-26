@@ -11,47 +11,48 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Jube.Data.Context;
-
-namespace Jube.Data.Query;
-
-public class GetExhaustiveSearchInstancePromotedTrialInstanceLearningCurveQuery
+namespace Jube.Data.Query
 {
-    private readonly DbContext _dbContext;
-    private readonly int _tenantRegistryId;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Context;
 
-    public GetExhaustiveSearchInstancePromotedTrialInstanceLearningCurveQuery(DbContext dbContext, string userName)
+    public class GetExhaustiveSearchInstancePromotedTrialInstanceLearningCurveQuery
     {
-        _dbContext = dbContext;
-        _tenantRegistryId = _dbContext.UserInTenant.Where(w => w.User == userName)
-            .Select(s => s.TenantRegistryId).FirstOrDefault();
-    }
+        private readonly DbContext dbContext;
+        private readonly int tenantRegistryId;
 
-    public IEnumerable<Dto> Execute(
-        int exhaustiveSearchInstanceId)
-    {
-        return _dbContext
-            .ExhaustiveSearchInstancePromotedTrialInstance
-            .Where(w =>
-                w.ExhaustiveSearchInstanceTrialInstance.ExhaustiveSearchInstance.Id == exhaustiveSearchInstanceId
-                && w.ExhaustiveSearchInstanceTrialInstance.ExhaustiveSearchInstance
-                    .EntityAnalysisModel.TenantRegistryId == _tenantRegistryId)
-            .OrderBy(o => o.Id)
-            .Select(s =>
-                new Dto
-                {
-                    Score = Math.Round(s.Score.Value, 2),
-                    CreatedDate = s.CreatedDate.Value
-                }
-            );
-    }
+        public GetExhaustiveSearchInstancePromotedTrialInstanceLearningCurveQuery(DbContext dbContext, string userName)
+        {
+            this.dbContext = dbContext;
+            tenantRegistryId = this.dbContext.UserInTenant.Where(w => w.User == userName)
+                .Select(s => s.TenantRegistryId).FirstOrDefault();
+        }
 
-    public class Dto
-    {
-        public double Score { get; set; }
-        public DateTime CreatedDate { get; set; }
+        public IEnumerable<Dto> Execute(
+            int exhaustiveSearchInstanceId)
+        {
+            return dbContext
+                .ExhaustiveSearchInstancePromotedTrialInstance
+                .Where(w =>
+                    w.ExhaustiveSearchInstanceTrialInstance.ExhaustiveSearchInstance.Id == exhaustiveSearchInstanceId
+                    && w.ExhaustiveSearchInstanceTrialInstance.ExhaustiveSearchInstance
+                        .EntityAnalysisModel.TenantRegistryId == tenantRegistryId)
+                .OrderBy(o => o.Id)
+                .Select(s =>
+                    new Dto
+                    {
+                        Score = Math.Round(s.Score.Value, 2),
+                        CreatedDate = s.CreatedDate.Value
+                    }
+                );
+        }
+
+        public class Dto
+        {
+            public double Score { get; set; }
+            public DateTime CreatedDate { get; set; }
+        }
     }
 }

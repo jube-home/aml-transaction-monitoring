@@ -11,123 +11,129 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using AutoMapper;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using LinqToDB;
-
-namespace Jube.Data.Repository;
-
-public class EntityAnalysisModelRepository
+namespace Jube.Data.Repository
 {
-    private readonly DbContext _dbContext;
-    private readonly int? _tenantRegistryId;
-    private readonly string _userName;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using AutoMapper;
+    using Context;
+    using LinqToDB;
+    using Poco;
 
-    public EntityAnalysisModelRepository(DbContext dbContext, string userName)
+    public class EntityAnalysisModelRepository
     {
-        _dbContext = dbContext;
-        _userName = userName;
-        _tenantRegistryId = dbContext.UserInTenant.Where(w => w.User == _userName)
-            .Select(s => s.TenantRegistryId).FirstOrDefault();
-    }
+        private readonly DbContext dbContext;
+        private readonly int? tenantRegistryId;
+        private readonly string userName;
 
-    public EntityAnalysisModelRepository(DbContext dbContext, int tenantRegistryId)
-    {
-        _dbContext = dbContext;
-        _tenantRegistryId = tenantRegistryId;
-    }
-
-    public EntityAnalysisModelRepository(DbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
-
-    public IEnumerable<EntityAnalysisModel> Get()
-    {
-        return _dbContext.EntityAnalysisModel.Where(w =>
-            (w.TenantRegistryId == _tenantRegistryId || !_tenantRegistryId.HasValue)
-            && (w.Deleted == null || w.Deleted == 0));
-    }
-
-    public EntityAnalysisModel GetById(int id)
-    {
-        return _dbContext.EntityAnalysisModel.FirstOrDefault(w
-            => (w.TenantRegistryId == _tenantRegistryId || !w.TenantRegistryId.HasValue)
-               && w.Id == id && (w.Deleted == null || w.Deleted == 0));
-    }
-
-    public EntityAnalysisModel Insert(EntityAnalysisModel model)
-    {
-        model.CreatedUser = _userName ?? model.CreatedUser;
-        model.Guid = model.Guid == Guid.Empty ? Guid.NewGuid() : model.Guid;
-        model.TenantRegistryId = _tenantRegistryId;
-        model.Version = 1;
-        model.CreatedDate = DateTime.Now;
-        model.Id = _dbContext.InsertWithInt32Identity(model);
-        return model;
-    }
-
-    public EntityAnalysisModel Update(EntityAnalysisModel model)
-    {
-        var existing = _dbContext.EntityAnalysisModel
-            .FirstOrDefault(w => w.Id
-                                 == model.Id
-                                 && (w.TenantRegistryId == _tenantRegistryId || !w.TenantRegistryId.HasValue)
-                                 && (w.Deleted == 0 || w.Deleted == null)
-                                 && (w.Locked == 0 || w.Locked == null));
-
-        if (existing == null) throw new KeyNotFoundException();
-
-        model.TenantRegistryId = _tenantRegistryId;
-        model.CreatedUser = _userName;
-        model.CreatedDate = DateTime.Now;
-        model.Version = existing.Version + 1;
-        model.Guid = existing.Guid;
-
-        _dbContext.Update(model);
-
-        var config = new MapperConfiguration(cfg =>
+        public EntityAnalysisModelRepository(DbContext dbContext, string userName)
         {
-            cfg.CreateMap<EntityAnalysisModel, EntityAnalysisModelVersion>();
-        });
-        var mapper = new Mapper(config);
+            this.dbContext = dbContext;
+            this.userName = userName;
+            tenantRegistryId = dbContext.UserInTenant.Where(w => w.User == this.userName)
+                .Select(s => s.TenantRegistryId).FirstOrDefault();
+        }
 
-        var audit = mapper.Map<EntityAnalysisModelVersion>(existing);
-        audit.EntityAnalysisModelId = existing.Id;
+        public EntityAnalysisModelRepository(DbContext dbContext, int tenantRegistryId)
+        {
+            this.dbContext = dbContext;
+            this.tenantRegistryId = tenantRegistryId;
+        }
 
-        _dbContext.Insert(audit);
+        public EntityAnalysisModelRepository(DbContext dbContext)
+        {
+            this.dbContext = dbContext;
+        }
 
-        return model;
-    }
+        public IEnumerable<EntityAnalysisModel> Get()
+        {
+            return dbContext.EntityAnalysisModel.Where(w =>
+                (w.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                && (w.Deleted == null || w.Deleted == 0));
+        }
 
-    public void Delete(int id)
-    {
-        var records = _dbContext.EntityAnalysisModel
-            .Where(d => (d.TenantRegistryId == _tenantRegistryId || !d.TenantRegistryId.HasValue)
-                        && d.Id == id
-                        && (d.Deleted == 0 || d.Deleted == null)
-                        && (d.Locked == 0 || d.Locked == null))
-            .Set(s => s.Deleted, Convert.ToByte(1))
-            .Set(s => s.DeletedDate, DateTime.Now)
-            .Set(s => s.DeletedUser, _userName)
-            .Update();
+        public EntityAnalysisModel GetById(int id)
+        {
+            return dbContext.EntityAnalysisModel.FirstOrDefault(w
+                => (w.TenantRegistryId == tenantRegistryId || !w.TenantRegistryId.HasValue)
+                   && w.Id == id && (w.Deleted == null || w.Deleted == 0));
+        }
 
-        if (records == 0) throw new KeyNotFoundException();
-    }
+        public EntityAnalysisModel Insert(EntityAnalysisModel model)
+        {
+            model.CreatedUser = userName ?? model.CreatedUser;
+            model.Guid = model.Guid == Guid.Empty ? Guid.NewGuid() : model.Guid;
+            model.TenantRegistryId = tenantRegistryId;
+            model.Version = 1;
+            model.CreatedDate = DateTime.Now;
+            model.Id = dbContext.InsertWithInt32Identity(model);
+            return model;
+        }
 
-    public void DeleteByTenantRegistryId(int tenantRegistryId, int importId)
-    {
-        var records = _dbContext.EntityAnalysisModel
-            .Where(d => (d.TenantRegistryId == _tenantRegistryId || !d.TenantRegistryId.HasValue)
-                        && d.TenantRegistryId == tenantRegistryId
-                        && (d.Deleted == 0 || d.Deleted == null))
-            .Set(s => s.ImportId, importId)
-            .Set(s => s.Deleted, Convert.ToByte(1))
-            .Set(s => s.DeletedDate, DateTime.Now)
-            .Update();
+        public EntityAnalysisModel Update(EntityAnalysisModel model)
+        {
+            var existing = dbContext.EntityAnalysisModel
+                .FirstOrDefault(w => w.Id
+                                     == model.Id
+                                     && (w.TenantRegistryId == tenantRegistryId || !w.TenantRegistryId.HasValue)
+                                     && (w.Deleted == 0 || w.Deleted == null)
+                                     && (w.Locked == 0 || w.Locked == null));
+
+            if (existing == null)
+            {
+                throw new KeyNotFoundException();
+            }
+
+            model.TenantRegistryId = tenantRegistryId;
+            model.CreatedUser = userName;
+            model.CreatedDate = DateTime.Now;
+            model.Version = existing.Version + 1;
+            model.Guid = existing.Guid;
+
+            dbContext.Update(model);
+
+            var config = new MapperConfiguration(cfg =>
+            {
+                cfg.CreateMap<EntityAnalysisModel, EntityAnalysisModelVersion>();
+            });
+            var mapper = new Mapper(config);
+
+            var audit = mapper.Map<EntityAnalysisModelVersion>(existing);
+            audit.EntityAnalysisModelId = existing.Id;
+
+            dbContext.Insert(audit);
+
+            return model;
+        }
+
+        public void Delete(int id)
+        {
+            var records = dbContext.EntityAnalysisModel
+                .Where(d => (d.TenantRegistryId == tenantRegistryId || !d.TenantRegistryId.HasValue)
+                            && d.Id == id
+                            && (d.Deleted == 0 || d.Deleted == null)
+                            && (d.Locked == 0 || d.Locked == null))
+                .Set(s => s.Deleted, Convert.ToByte(1))
+                .Set(s => s.DeletedDate, DateTime.Now)
+                .Set(s => s.DeletedUser, userName)
+                .Update();
+
+            if (records == 0)
+            {
+                throw new KeyNotFoundException();
+            }
+        }
+
+        public void DeleteByTenantRegistryIdOutsideOfInstance(int tenantRegistryIdOutsideOfInstance, int importId)
+        {
+            dbContext.EntityAnalysisModel
+                .Where(d => d.TenantRegistryId == tenantRegistryIdOutsideOfInstance
+                            && (d.Deleted == 0 || d.Deleted == null))
+                .Set(s => s.ImportId, importId)
+                .Set(s => s.Deleted, Convert.ToByte(1))
+                .Set(s => s.DeletedDate, DateTime.Now)
+                .Update();
+        }
     }
 }

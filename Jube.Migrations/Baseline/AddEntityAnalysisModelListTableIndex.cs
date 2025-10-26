@@ -14,45 +14,46 @@
 using System;
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124936)]
-public class AddEntityAnalysisModelListTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124936)]
+    public class AddEntityAnalysisModelListTableIndex : Migration
     {
-        Create.Table("EntityAnalysisModelList")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
-            .WithColumn("Name").AsString().Nullable()
-            .WithColumn("Locked").AsByte().Nullable()
-            .WithColumn("Active").AsByte().Nullable()
-            .WithColumn("CreatedDate").AsDateTime2().Nullable()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("Deleted").AsByte().Nullable()
-            .WithColumn("DeletedDate").AsDateTime2().Nullable()
-            .WithColumn("DeletedUser").AsString().Nullable()
-            .WithColumn("Version").AsInt32().Nullable()
-            .WithColumn("InheritedId").AsInt32().Nullable();
+        public override void Up()
+        {
+            Create.Table("EntityAnalysisModelList")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("EntityAnalysisModelId").AsInt32().Nullable()
+                .WithColumn("Name").AsString().Nullable()
+                .WithColumn("Locked").AsByte().Nullable()
+                .WithColumn("Active").AsByte().Nullable()
+                .WithColumn("CreatedDate").AsDateTime2().Nullable()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("Deleted").AsByte().Nullable()
+                .WithColumn("DeletedDate").AsDateTime2().Nullable()
+                .WithColumn("DeletedUser").AsString().Nullable()
+                .WithColumn("Version").AsInt32().Nullable()
+                .WithColumn("InheritedId").AsInt32().Nullable();
 
-        Create.Index().OnTable("EntityAnalysisModelList")
-            .OnColumn("EntityAnalysisModelId").Ascending()
-            .OnColumn("Deleted").Ascending();
+            Create.Index().OnTable("EntityAnalysisModelList")
+                .OnColumn("EntityAnalysisModelId").Ascending()
+                .OnColumn("Deleted").Ascending();
 
-        Insert.IntoTable("EntityAnalysisModelList").Row(
-            new
-            {
-                EntityAnalysisModelId = 1,
-                Name = "IPDenyList",
-                Active = 1,
-                CreatedDate = DateTime.Now,
-                CreatedUser = "Administrator",
-                Version = 1
-            });
-    }
+            Insert.IntoTable("EntityAnalysisModelList").Row(
+                new
+                {
+                    EntityAnalysisModelId = 1,
+                    Name = "IPDenyList",
+                    Active = 1,
+                    CreatedDate = DateTime.Now,
+                    CreatedUser = "Administrator",
+                    Version = 1
+                });
+        }
 
-    public override void Down()
-    {
-        Delete.Table("EntityAnalysisModelList");
+        public override void Down()
+        {
+            Delete.Table("EntityAnalysisModelList");
+        }
     }
 }

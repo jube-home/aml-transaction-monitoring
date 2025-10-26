@@ -16,47 +16,48 @@ using System.Collections.Generic;
 using System.Linq;
 using Jube.Data.Context;
 
-namespace Jube.Data.Query;
-
-public class GetEntityAnalysisModelProcessingCountersQuery(DbContext dbContext)
+namespace Jube.Data.Query
 {
-    public IEnumerable<Dto> Execute(int limit)
+    public class GetEntityAnalysisModelProcessingCountersQuery(DbContext dbContext)
     {
-        var query = dbContext.EntityAnalysisModelProcessingCounter
-            .OrderByDescending(o => o.Id)
-            .Take(limit)
-            .Select(s => new Dto
-            {
-                Name = s.EntityAnalysisModel.Name,
-                CreatedDate = s.CreatedDate,
-                Instance = s.Instance,
-                ModelInvoke = s.ModelInvoke,
-                GatewayMatch = s.GatewayMatch,
-                EntityAnalysisModelGuid = s.EntityAnalysisModelGuid,
-                ResponseElevation = s.ResponseElevation,
-                ResponseElevationSum = s.ResponseElevationSum,
-                ActivationWatcher = s.ActivationWatcher,
-                ResponseElevationValueLimit = s.ResponseElevationValueLimit,
-                ResponseElevationLimit = s.ResponseElevationLimit,
-                ResponseElevationValueGatewayLimit = s.ResponseElevationValueGatewayLimit
-            });
+        public IEnumerable<Dto> Execute(int limit)
+        {
+            var query = dbContext.EntityAnalysisModelProcessingCounter
+                .OrderByDescending(o => o.Id)
+                .Take(limit)
+                .Select(s => new Dto
+                {
+                    Name = s.EntityAnalysisModel.Name,
+                    CreatedDate = s.CreatedDate,
+                    Instance = s.Instance,
+                    ModelInvoke = s.ModelInvoke,
+                    GatewayMatch = s.GatewayMatch,
+                    EntityAnalysisModelGuid = s.EntityAnalysisModelGuid,
+                    ResponseElevation = s.ResponseElevation,
+                    ResponseElevationSum = s.ResponseElevationSum,
+                    ActivationWatcher = s.ActivationWatcher,
+                    ResponseElevationValueLimit = s.ResponseElevationValueLimit,
+                    ResponseElevationLimit = s.ResponseElevationLimit,
+                    ResponseElevationValueGatewayLimit = s.ResponseElevationValueGatewayLimit
+                });
 
-        return query;
-    }
+            return query;
+        }
 
-    public class Dto
-    {
-        public string Name { get; set; }
-        public DateTime? CreatedDate { get; set; }
-        public string Instance { get; set; }
-        public int? ModelInvoke { get; set; }
-        public int? GatewayMatch { get; set; }
-        public Guid EntityAnalysisModelGuid { get; set; }
-        public int? ResponseElevation { get; set; }
-        public double? ResponseElevationSum { get; set; }
-        public double? ActivationWatcher { get; set; }
-        public int? ResponseElevationValueLimit { get; set; }
-        public int? ResponseElevationLimit { get; set; }
-        public int? ResponseElevationValueGatewayLimit { get; set; }
+        public class Dto
+        {
+            public string Name { get; set; }
+            public DateTime? CreatedDate { get; set; }
+            public string Instance { get; set; }
+            public int? ModelInvoke { get; set; }
+            public int? GatewayMatch { get; set; }
+            public Guid EntityAnalysisModelGuid { get; set; }
+            public int? ResponseElevation { get; set; }
+            public double? ResponseElevationSum { get; set; }
+            public double? ActivationWatcher { get; set; }
+            public int? ResponseElevationValueLimit { get; set; }
+            public int? ResponseElevationLimit { get; set; }
+            public int? ResponseElevationValueGatewayLimit { get; set; }
+        }
     }
 }

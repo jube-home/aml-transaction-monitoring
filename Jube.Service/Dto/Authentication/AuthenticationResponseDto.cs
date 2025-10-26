@@ -11,10 +11,11 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-namespace Jube.Service.Dto.Authentication;
-
-public class AuthenticationResponseDto
+namespace Jube.Service.Dto.Authentication
 {
-    public string? Token { get; set; }
-    public DateTime Expiration { get; set; }
+    public class AuthenticationResponseDto
+    {
+        public string? Token { get; set; }
+        public DateTime Expiration { get; set; }
+    }
 }

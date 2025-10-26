@@ -13,14 +13,15 @@
 
 using System.Collections.Generic;
 
-namespace Jube.Parser;
-
-public class ParsedRule
+namespace Jube.Parser
 {
-    public readonly Dictionary<string, SelectedPayloadData> SelectedPayloadData = [];
-    public int CharOffset;
-    public List<ErrorSpan> ErrorSpans;
-    public int LineOffset;
-    public string OriginalRuleText;
-    public string ParsedRuleText;
+    public class ParsedRule
+    {
+        public readonly Dictionary<string, SelectedPayloadData> SelectedPayloadData = [];
+        public int CharOffset;
+        public List<ErrorSpan> ErrorSpans;
+        public int LineOffset;
+        public string OriginalRuleText;
+        public string ParsedRuleText;
+    }
 }

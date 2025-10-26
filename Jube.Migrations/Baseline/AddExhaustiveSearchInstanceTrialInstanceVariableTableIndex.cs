@@ -13,26 +13,27 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429125004)]
-public class AddExhaustiveSearchInstanceTrialInstanceVariableTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429125004)]
+    public class AddExhaustiveSearchInstanceTrialInstanceVariableTableIndex : Migration
     {
-        Create.Table("ExhaustiveSearchInstanceTrialInstanceVariable")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("ExhaustiveSearchInstanceVariableId").AsInt32().Nullable()
-            .WithColumn("Removed").AsByte().Nullable()
-            .WithColumn("ExhaustiveSearchInstanceTrialInstanceId").AsInt32().Nullable()
-            .WithColumn("VariableSequence").AsInt32().Nullable();
+        public override void Up()
+        {
+            Create.Table("ExhaustiveSearchInstanceTrialInstanceVariable")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("ExhaustiveSearchInstanceVariableId").AsInt32().Nullable()
+                .WithColumn("Removed").AsByte().Nullable()
+                .WithColumn("ExhaustiveSearchInstanceTrialInstanceId").AsInt32().Nullable()
+                .WithColumn("VariableSequence").AsInt32().Nullable();
 
-        Create.Index().OnTable("ExhaustiveSearchInstanceTrialInstanceVariable")
-            .OnColumn("ExhaustiveSearchInstanceVariableId");
-    }
+            Create.Index().OnTable("ExhaustiveSearchInstanceTrialInstanceVariable")
+                .OnColumn("ExhaustiveSearchInstanceVariableId");
+        }
 
-    public override void Down()
-    {
-        Delete.Table("ExhaustiveSearchInstanceTrialInstanceVariable");
+        public override void Down()
+        {
+            Delete.Table("ExhaustiveSearchInstanceTrialInstanceVariable");
+        }
     }
 }

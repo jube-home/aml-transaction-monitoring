@@ -13,29 +13,30 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429125021)]
-public class AddUserRoleRegistryTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429125021)]
+    public class AddUserRoleRegistryTableIndex : Migration
     {
-        Create.Table("UserRoleRegistry")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("User").AsString().Nullable()
-            .WithColumn("RoleRegistryId").AsInt32().Nullable();
+        public override void Up()
+        {
+            Create.Table("UserRoleRegistry")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("User").AsString().Nullable()
+                .WithColumn("RoleRegistryId").AsInt32().Nullable();
 
-        Create.Index().OnTable("UserRoleRegistry")
-            .OnColumn("RoleRegistryId").Ascending();
+            Create.Index().OnTable("UserRoleRegistry")
+                .OnColumn("RoleRegistryId").Ascending();
 
-        Create.Index().OnTable("UserRoleRegistry")
-            .OnColumn("User").Ascending()
-            .OnColumn("RoleRegistryId").Ascending();
-    }
+            Create.Index().OnTable("UserRoleRegistry")
+                .OnColumn("User").Ascending()
+                .OnColumn("RoleRegistryId").Ascending();
+        }
 
 
-    public override void Down()
-    {
-        Delete.Table("UserRoleRegistry");
+        public override void Down()
+        {
+            Delete.Table("UserRoleRegistry");
+        }
     }
 }

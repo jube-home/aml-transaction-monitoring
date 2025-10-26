@@ -11,74 +11,97 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
-using log4net;
-using Newtonsoft.Json;
-
-namespace Jube.Engine.Model;
-
-public class EntityAnalysisModelHttpAdaptation
+namespace Jube.Engine.Model
 {
-    private readonly HttpClient _httpClient;
-    private Uri _uri;
+    using System;
+    using System.Collections.Generic;
+    using System.Net.Http;
+    using System.Text;
+    using System.Threading.Tasks;
+    using log4net;
+    using Newtonsoft.Json;
 
-    public EntityAnalysisModelHttpAdaptation(int maxConnections, bool validateSsl, int timeout)
+    public class EntityAnalysisModelHttpAdaptation
     {
-        var httpClientHandler = new HttpClientHandler();
-        if (!validateSsl) httpClientHandler.ServerCertificateCustomValidationCallback = (_, _, _, _) => true;
-        httpClientHandler.MaxConnectionsPerServer = maxConnections;
+        private readonly HttpClient httpClient;
+        private Uri uri;
 
-        _httpClient = new HttpClient(httpClientHandler);
-        _httpClient.Timeout = TimeSpan.FromMilliseconds(timeout);
-    }
-
-    public int Id { get; init; }
-    public string Name { get; set; }
-    public bool ResponsePayload { get; set; }
-    public bool ReportTable { get; set; }
-
-    public string HttpEndpoint
-    {
-        get => _uri.ToString();
-        set => _uri = new Uri(value);
-    }
-
-    public async Task<double> Post(Dictionary<string, object> jsonForPlumberAsync, ILog log)
-    {
-        log.Info($"R Plumber Hook: Is about to send to {_uri}.");
-
-        var stringContent = new StringContent(
-            JsonConvert.SerializeObject(jsonForPlumberAsync),
-            Encoding.UTF8,
-            "application/json");
-
-        var request = new HttpRequestMessage
+        public EntityAnalysisModelHttpAdaptation(int maxConnections, bool validateSsl, int timeout)
         {
-            Method = HttpMethod.Post,
-            RequestUri = _uri,
-            Content = stringContent
-        };
+            var httpClientHandler = new HttpClientHandler();
+            if (!validateSsl)
+            {
+                httpClientHandler.ServerCertificateCustomValidationCallback = (_, _, _, _) => true;
+            }
 
-        var task = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseContentRead).ConfigureAwait(false);
+            httpClientHandler.MaxConnectionsPerServer = maxConnections;
 
-        log.Info(
-            $"R Plumber Hook: Has received data from {_uri} with status {task.StatusCode}.");
+            httpClient = new HttpClient(httpClientHandler);
+            httpClient.Timeout = TimeSpan.FromMilliseconds(timeout);
+        }
 
-        var valueString = await task.Content.ReadAsStringAsync().ConfigureAwait(false);
+        public int Id { get; init; }
+        public string Name { get; set; }
+        public bool ResponsePayload { get; set; }
+        public bool ReportTable { get; set; }
 
-        log.Info(
-            $"R Plumber Hook: Has received data from {_uri} with payload {valueString}. The JSON decoration will now be removed.");
+        public string HttpEndpoint
+        {
+            get
+            {
+                return uri.ToString();
+            }
+            set
+            {
+                uri = new Uri(value);
+            }
+        }
 
-        valueString = valueString.Replace("[", "");
-        valueString = valueString.Replace("]", "");
-        var valueDouble = double.Parse(valueString);
+        public async Task<double> Post(Dictionary<string, object> jsonForPlumberAsync, ILog log)
+        {
+            if (log.IsInfoEnabled)
+            {
+                log.Info($"R Plumber Hook: Is about to send to {uri}.");
+            }
 
-        log.Info($"R Plumber Hook: Is returning {valueDouble}.");
+            var stringContent = new StringContent(
+                JsonConvert.SerializeObject(jsonForPlumberAsync),
+                Encoding.UTF8,
+                "application/json");
 
-        return valueDouble;
+            var request = new HttpRequestMessage
+            {
+                Method = HttpMethod.Post,
+                RequestUri = uri,
+                Content = stringContent
+            };
+
+            var task = await httpClient.SendAsync(request, HttpCompletionOption.ResponseContentRead).ConfigureAwait(false);
+
+            if (log.IsInfoEnabled)
+            {
+                log.Info(
+                    $"R Plumber Hook: Has received data from {uri} with status {task.StatusCode}.");
+            }
+
+            var valueString = await task.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+            if (log.IsInfoEnabled)
+            {
+                log.Info(
+                    $"R Plumber Hook: Has received data from {uri} with payload {valueString}. The JSON decoration will now be removed.");
+            }
+
+            valueString = valueString.Replace("[", "");
+            valueString = valueString.Replace("]", "");
+            var valueDouble = Double.Parse(valueString);
+
+            if (log.IsInfoEnabled)
+            {
+                log.Info($"R Plumber Hook: Is returning {valueDouble}.");
+            }
+
+            return valueDouble;
+        }
     }
 }

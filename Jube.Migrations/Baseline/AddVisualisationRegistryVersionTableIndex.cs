@@ -13,39 +13,40 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429125028)]
-public class AddVisualisationRegistryVersionTable : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429125028)]
+    public class AddVisualisationRegistryVersionTable : Migration
     {
-        Create.Table("VisualisationRegistryVersion")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("VisualisationRegistryId").AsInt32().Nullable()
-            .WithColumn("Name").AsString().Nullable()
-            .WithColumn("CreatedUser").AsString().Nullable()
-            .WithColumn("Active").AsByte().Nullable()
-            .WithColumn("Locked").AsByte().Nullable()
-            .WithColumn("CreatedDate").AsDateTime().Nullable()
-            .WithColumn("ShowInDirectory").AsByte().Nullable()
-            .WithColumn("Deleted").AsByte().Nullable()
-            .WithColumn("DeletedDate").AsDateTime().Nullable()
-            .WithColumn("DeletedUser").AsString().Nullable()
-            .WithColumn("UpdatedDate").AsDateTime().Nullable()
-            .WithColumn("UpdatedUser").AsString().Nullable()
-            .WithColumn("TenantRegistryId").AsInt32().Nullable()
-            .WithColumn("Columns").AsInt32().Nullable()
-            .WithColumn("ColumnWidth").AsInt32().Nullable()
-            .WithColumn("RowHeight").AsInt32().Nullable()
-            .WithColumn("Version").AsInt32().Nullable();
+        public override void Up()
+        {
+            Create.Table("VisualisationRegistryVersion")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("VisualisationRegistryId").AsInt32().Nullable()
+                .WithColumn("Name").AsString().Nullable()
+                .WithColumn("CreatedUser").AsString().Nullable()
+                .WithColumn("Active").AsByte().Nullable()
+                .WithColumn("Locked").AsByte().Nullable()
+                .WithColumn("CreatedDate").AsDateTime().Nullable()
+                .WithColumn("ShowInDirectory").AsByte().Nullable()
+                .WithColumn("Deleted").AsByte().Nullable()
+                .WithColumn("DeletedDate").AsDateTime().Nullable()
+                .WithColumn("DeletedUser").AsString().Nullable()
+                .WithColumn("UpdatedDate").AsDateTime().Nullable()
+                .WithColumn("UpdatedUser").AsString().Nullable()
+                .WithColumn("TenantRegistryId").AsInt32().Nullable()
+                .WithColumn("Columns").AsInt32().Nullable()
+                .WithColumn("ColumnWidth").AsInt32().Nullable()
+                .WithColumn("RowHeight").AsInt32().Nullable()
+                .WithColumn("Version").AsInt32().Nullable();
 
-        Create.Index().OnTable("VisualisationRegistryVersion")
-            .OnColumn("VisualisationRegistryId");
-    }
+            Create.Index().OnTable("VisualisationRegistryVersion")
+                .OnColumn("VisualisationRegistryId");
+        }
 
-    public override void Down()
-    {
-        Delete.Table("VisualisationRegistryVersion");
+        public override void Down()
+        {
+            Delete.Table("VisualisationRegistryVersion");
+        }
     }
 }

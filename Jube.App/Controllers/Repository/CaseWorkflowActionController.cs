@@ -11,49 +11,52 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Net;
-using AutoMapper;
-using FluentValidation;
-using FluentValidation.Results;
-using Jube.App.Code;
-using Jube.App.Dto;
-using Jube.App.Validators;
-using Jube.Data.Context;
-using Jube.Data.Poco;
-using Jube.Data.Repository;
-using Jube.Engine.Helpers;
-using log4net;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-
 namespace Jube.App.Controllers.Repository
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Net;
+    using AutoMapper;
+    using Code;
+    using Data.Context;
+    using Data.Poco;
+    using Data.Repository;
+    using Dto;
+    using DynamicEnvironment;
+    using FluentValidation;
+    using FluentValidation.Results;
+    using log4net;
+    using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.AspNetCore.Mvc;
+    using Validators;
+
     [Route("api/[controller]")]
     [Produces("application/json")]
     [Authorize]
     public class CaseWorkflowActionController : Controller
     {
-        private readonly DbContext _dbContext;
-        private readonly ILog _log;
-        private readonly IMapper _mapper;
-        private readonly PermissionValidation _permissionValidation;
-        private readonly CaseWorkflowActionRepository _repository;
-        private readonly string _userName;
-        private readonly IValidator<CaseWorkflowActionDto> _validator;
+        private readonly DbContext dbContext;
+        private readonly ILog log;
+        private readonly IMapper mapper;
+        private readonly PermissionValidation permissionValidation;
+        private readonly CaseWorkflowActionRepository repository;
+        private readonly string userName;
+        private readonly IValidator<CaseWorkflowActionDto> validator;
 
         public CaseWorkflowActionController(ILog log,
-            IHttpContextAccessor httpContextAccessor, DynamicEnvironment.DynamicEnvironment dynamicEnvironment)
+            IHttpContextAccessor httpContextAccessor, DynamicEnvironment dynamicEnvironment)
         {
             if (httpContextAccessor.HttpContext?.User.Identity != null)
-                _userName = httpContextAccessor.HttpContext.User.Identity.Name;
-            _log = log;
+            {
+                userName = httpContextAccessor.HttpContext.User.Identity.Name;
+            }
 
-            _dbContext =
+            this.log = log;
+
+            dbContext =
                 DataConnectionDbContext.GetDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
-            _permissionValidation = new PermissionValidation(_dbContext, _userName);
+            permissionValidation = new PermissionValidation(dbContext, userName);
 
             var config = new MapperConfiguration(cfg =>
             {
@@ -62,17 +65,17 @@ namespace Jube.App.Controllers.Repository
                 cfg.CreateMap<List<CaseWorkflowAction>, List<CaseWorkflowActionDto>>()
                     .ForMember("Item", opt => opt.Ignore());
             });
-            _mapper = new Mapper(config);
-            _repository = new CaseWorkflowActionRepository(_dbContext, _userName);
-            _validator = new CaseWorkflowActionDtoValidator();
+            mapper = new Mapper(config);
+            repository = new CaseWorkflowActionRepository(dbContext, userName);
+            validator = new CaseWorkflowActionDtoValidator();
         }
 
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                _dbContext.Close();
-                _dbContext.Dispose();
+                dbContext.Close();
+                dbContext.Dispose();
             }
 
             base.Dispose(disposing);
@@ -83,13 +86,19 @@ namespace Jube.App.Controllers.Repository
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 22 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        22
+                    }))
+                {
+                    return Forbid();
+                }
 
-                return Ok(_mapper.Map<List<CaseWorkflowActionDto>>(_repository.Get()));
+                return Ok(mapper.Map<List<CaseWorkflowActionDto>>(repository.Get()));
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -99,13 +108,19 @@ namespace Jube.App.Controllers.Repository
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 22, 1 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        22, 1
+                    }))
+                {
+                    return Forbid();
+                }
 
-                return Ok(_mapper.Map<List<CaseWorkflowActionDto>>(_repository.GetByCasesWorkflowIdActiveOnly(id)));
+                return Ok(mapper.Map<List<CaseWorkflowActionDto>>(repository.GetByCasesWorkflowIdActiveOnly(id)));
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -115,13 +130,19 @@ namespace Jube.App.Controllers.Repository
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 22, 1 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        22, 1
+                    }))
+                {
+                    return Forbid();
+                }
 
-                return Ok(_mapper.Map<List<CaseWorkflowActionDto>>(_repository.GetByCasesWorkflowGuidActiveOnly(guid)));
+                return Ok(mapper.Map<List<CaseWorkflowActionDto>>(repository.GetByCasesWorkflowGuidActiveOnly(guid)));
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -131,14 +152,20 @@ namespace Jube.App.Controllers.Repository
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 22 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        22
+                    }))
+                {
+                    return Forbid();
+                }
 
-                return Ok(_mapper.Map<List<CaseWorkflowActionDto>>(
-                    _repository.GetByCasesWorkflowIdOrderById(casesWorkflowId)));
+                return Ok(mapper.Map<List<CaseWorkflowActionDto>>(
+                    repository.GetByCasesWorkflowIdOrderById(casesWorkflowId)));
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -148,13 +175,19 @@ namespace Jube.App.Controllers.Repository
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 22 })) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        22
+                    }))
+                {
+                    return Forbid();
+                }
 
-                return Ok(_mapper.Map<CaseWorkflowActionDto>(_repository.GetById(id)));
+                return Ok(mapper.Map<CaseWorkflowActionDto>(repository.GetById(id)));
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -166,16 +199,25 @@ namespace Jube.App.Controllers.Repository
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 22 }, true)) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        22
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var results = _validator.Validate(model);
-                if (results.IsValid) return Ok(_repository.Insert(_mapper.Map<CaseWorkflowAction>(model)));
+                var results = validator.Validate(model);
+                if (results.IsValid)
+                {
+                    return Ok(repository.Insert(mapper.Map<CaseWorkflowAction>(model)));
+                }
 
                 return BadRequest(results);
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -187,10 +229,19 @@ namespace Jube.App.Controllers.Repository
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 22 }, true)) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        22
+                    }))
+                {
+                    return Forbid();
+                }
 
-                var results = _validator.Validate(model);
-                if (results.IsValid) return Ok(_repository.Update(_mapper.Map<CaseWorkflowAction>(model)));
+                var results = validator.Validate(model);
+                if (results.IsValid)
+                {
+                    return Ok(repository.Update(mapper.Map<CaseWorkflowAction>(model)));
+                }
 
                 return BadRequest(results);
             }
@@ -200,7 +251,7 @@ namespace Jube.App.Controllers.Repository
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }
@@ -211,9 +262,15 @@ namespace Jube.App.Controllers.Repository
         {
             try
             {
-                if (!_permissionValidation.Validate(new[] { 22 }, true)) return Forbid();
+                if (!permissionValidation.Validate(new[]
+                    {
+                        22
+                    }))
+                {
+                    return Forbid();
+                }
 
-                _repository.Delete(id);
+                repository.Delete(id);
                 return Ok();
             }
             catch (KeyNotFoundException)
@@ -222,7 +279,7 @@ namespace Jube.App.Controllers.Repository
             }
             catch (Exception e)
             {
-                _log.Error(e);
+                log.Error(e);
                 return StatusCode(500);
             }
         }

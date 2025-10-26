@@ -11,40 +11,39 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Linq;
-using Jube.Data.Context;
-
-namespace Jube.Data.Query;
-
-public class GetExistingCasePriorityQuery
+namespace Jube.Data.Query
 {
-    private readonly DbContext _dbContext;
+    using System;
+    using System.Linq;
+    using Context;
 
-    public GetExistingCasePriorityQuery(DbContext dbContext)
+    public class GetExistingCasePriorityQuery(DbContext dbContext)
     {
-        _dbContext = dbContext;
-    }
 
-    public Dto Execute(Guid casesWorkflowGuid, string caseKey, string caseKeyValue)
-    {
-        return (from c in _dbContext.Case
-            join s in _dbContext.CaseWorkflowStatus on c.CaseWorkflowStatusGuid
-                equals s.Guid
-            where c.CaseKey == caseKey
-                  && (c.CaseWorkflow.EntityAnalysisModel.Deleted == 0 ||
-                      c.CaseWorkflow.EntityAnalysisModel.Deleted == null)
-                  && c.CaseKeyValue == caseKeyValue
-                  && c.CaseWorkflowGuid == casesWorkflowGuid
-                  && (c.ClosedStatusId == 0 || c.ClosedStatusId == 1 || c.ClosedStatusId == 2 ||
-                      c.ClosedStatusId == 4)
-                  && (s.Deleted == 0 || s.Deleted == null)
-            select new Dto { Priority = s.Priority, CaseId = c.Id }).FirstOrDefault();
-    }
+        public Dto Execute(Guid casesWorkflowGuid, string caseKey, string caseKeyValue)
+        {
+            return (from c in dbContext.Case
+                join s in dbContext.CaseWorkflowStatus on c.CaseWorkflowStatusGuid
+                    equals s.Guid
+                where c.CaseKey == caseKey
+                      && (c.CaseWorkflow.EntityAnalysisModel.Deleted == 0 ||
+                          c.CaseWorkflow.EntityAnalysisModel.Deleted == null)
+                      && c.CaseKeyValue == caseKeyValue
+                      && c.CaseWorkflowGuid == casesWorkflowGuid
+                      && (c.ClosedStatusId == 0 || c.ClosedStatusId == 1 || c.ClosedStatusId == 2 ||
+                          c.ClosedStatusId == 4)
+                      && (s.Deleted == 0 || s.Deleted == null)
+                select new Dto
+                {
+                    Priority = s.Priority,
+                    CaseId = c.Id
+                }).FirstOrDefault();
+        }
 
-    public class Dto
-    {
-        public byte? Priority { get; set; }
-        public int CaseId { get; set; }
+        public class Dto
+        {
+            public byte? Priority { get; set; }
+            public int CaseId { get; set; }
+        }
     }
 }

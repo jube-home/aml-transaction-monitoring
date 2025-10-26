@@ -13,29 +13,30 @@
 
 using FluentMigrator;
 
-namespace Jube.Migrations.Baseline;
-
-[Migration(20220429124945)]
-public class AddEntityAnalysisModelSearchKeyDistinctValueCalculationInstanceTableIndex : Migration
+namespace Jube.Migrations.Baseline
 {
-    public override void Up()
+    [Migration(20220429124945)]
+    public class AddEntityAnalysisModelSearchKeyDistinctValueCalculationInstanceTableIndex : Migration
     {
-        Create.Table("EntityAnalysisModelSearchKeyDistinctValueCalculationInstance")
-            .WithColumn("Id").AsInt32().PrimaryKey().Identity()
-            .WithColumn("EntityAnalysisModelSearchKeyCalculationInstanceId").AsInt32().Nullable()
-            .WithColumn("SearchKeyValue").AsString().Nullable()
-            .WithColumn("CreatedDate").AsDateTime().Nullable()
-            .WithColumn("EntryCount").AsInt32().Nullable()
-            .WithColumn("EntryCountUpdatedDate").AsDateTime().Nullable()
-            .WithColumn("AbstractionRulesMatchesUpdatedDate").AsDateTime().Nullable()
-            .WithColumn("CompletedDate").AsDateTime().Nullable();
+        public override void Up()
+        {
+            Create.Table("EntityAnalysisModelSearchKeyDistinctValueCalculationInstance")
+                .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+                .WithColumn("EntityAnalysisModelSearchKeyCalculationInstanceId").AsInt32().Nullable()
+                .WithColumn("SearchKeyValue").AsString().Nullable()
+                .WithColumn("CreatedDate").AsDateTime().Nullable()
+                .WithColumn("EntryCount").AsInt32().Nullable()
+                .WithColumn("EntryCountUpdatedDate").AsDateTime().Nullable()
+                .WithColumn("AbstractionRulesMatchesUpdatedDate").AsDateTime().Nullable()
+                .WithColumn("CompletedDate").AsDateTime().Nullable();
 
-        Create.Index().OnTable("EntityAnalysisModelSearchKeyDistinctValueCalculationInstance")
-            .OnColumn("EntityAnalysisModelSearchKeyCalculationInstanceId").Ascending();
-    }
+            Create.Index().OnTable("EntityAnalysisModelSearchKeyDistinctValueCalculationInstance")
+                .OnColumn("EntityAnalysisModelSearchKeyCalculationInstanceId").Ascending();
+        }
 
-    public override void Down()
-    {
-        Delete.Table("EntityAnalysisModelSearchKeyDistinctValueCalculationInstance");
+        public override void Down()
+        {
+            Delete.Table("EntityAnalysisModelSearchKeyDistinctValueCalculationInstance");
+        }
     }
 }
