@@ -220,12 +220,12 @@ namespace Jube.Data.Reporting
                             }
                             else if (clrType == typeof(Guid))
                             {
-                                dictionaryNoBoxing.TryAdd(reader.GetName(index), reader.GetValue(index).AsString());
+                                dictionaryNoBoxing.TryAdd(reader.GetName(index), reader.GetValue(index).AsGuid());
                             }
                         }
-
-                        value.Add(dictionaryNoBoxing);
                     }
+                    
+                    value.Add(dictionaryNoBoxing);
                 }
 
                 await reader.CloseAsync().ConfigureAwait(false);

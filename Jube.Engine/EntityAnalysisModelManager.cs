@@ -30,7 +30,6 @@ namespace Jube.Engine
     using Cache;
     using Data.Cache.Postgres.Callback;
     using Data.Context;
-    using Data.Extension;
     using Data.Poco;
     using Data.Query;
     using Data.Reporting;
@@ -5442,8 +5441,9 @@ namespace Jube.Engine
                         key);
 
                 var shadowEntityAnalysisModelRequestXPath = new List<Model.EntityAnalysisModelRequestXPath>();
-                var archivePayloadSql = "select \"EntityAnalysisModelInstanceEntryGuid\"," +
-                                        $"\"CreatedDate\",\"ReferenceDate\" AS \"{value.ReferenceDateName}\"";
+                var archivePayloadSql = "select a.\"EntityAnalysisModelInstanceEntryGuid\"," +
+                                        $"a.\"CreatedDate\"," +
+                                        $"a.\"ReferenceDate\" AS \"{value.ReferenceDateName}\"";
                 foreach (var record in records)
                 {
                     try
@@ -5913,7 +5913,7 @@ namespace Jube.Engine
                         };
 
                         archivePayloadSql +=
-                            $",(\"Json\" -> 'payload' ->> '{entityAnalysisModelRequestXPath.Name}'){databaseType} AS \"{entityAnalysisModelRequestXPath.Name}\"";
+                            $",(a.\"Json\" -> 'payload' ->> '{entityAnalysisModelRequestXPath.Name}'){databaseType} AS \"{entityAnalysisModelRequestXPath.Name}\"";
 
                         shadowEntityAnalysisModelRequestXPath.Add(entityAnalysisModelRequestXPath);
 
@@ -5947,10 +5947,11 @@ namespace Jube.Engine
                     }
                 }
 
-                value.ArchivePayloadSql = archivePayloadSql + " From \"Archive\" where \"EntityAnalysisModelId\" = "
-                                                            + value.Id
+                value.ArchivePayloadSql = archivePayloadSql + " From \"Archive\" a" +
+                                          " inner join \"EntityAnalysisModel\" m on a.\"EntityAnalysisModelId\" = m.\"Id\"  where "
+                                                            + "m.\"Guid\" = '" + value.Guid + "'::uuid"
                                                             + " and \"ReferenceDate\" >= (@adjustedStartDate) " +
-                                                            "order by \"Id\" asc limit (@limit) offset (@skip);";
+                                                            "order by m.\"Id\" asc limit (@limit) offset (@skip);";
 
                 value.EntityAnalysisModelRequestXPaths = shadowEntityAnalysisModelRequestXPath;
                 value.DictionaryNoBoxingInitialSize = CalculateDictionaryNoBoxingInitialSize(value);
@@ -7228,7 +7229,6 @@ namespace Jube.Engine
         {
             try
             {
-                const long allCount = 0;
                 var lastUpdated = default(DateTime);
 
                 while (!stopping)
@@ -7285,9 +7285,8 @@ namespace Jube.Engine
                                     entityAnalysisModelRuleReprocessingInstance,
                                     documentsInitialCounts);
 
-                                UpdateEntityAnalysisModelsReprocessingRuleInstanceReferenceDateCount(dbContext,
-                                    entityAnalysisModelRuleReprocessingInstance, dateRangeAndCount.lastReferenceDate,
-                                    allCount);
+                                 UpdateEntityAnalysisModelsReprocessingRuleInstanceReferenceDateCount(dbContext,
+                                    entityAnalysisModelRuleReprocessingInstance, modelKvp.Value.Guid ,dateRangeAndCount.adjustedStartDate);
 
                                 var limit = Int32.Parse(JubeEnvironment.AppSettings("ReprocessingBulkLimit"));
 
@@ -7354,7 +7353,7 @@ namespace Jube.Engine
                                                 sampled += 1;
 
                                                 var entityInstanceEntryDictionaryKvPs =
-                                                    new Dictionary<string, double>();
+                                                    new PooledDictionary<string, DictionaryNoBoxing>();
 
                                                 if (entityAnalysisModelRuleReprocessingInstance
                                                     .ReprocessingRuleCompileDelegate(entry,
@@ -7639,7 +7638,7 @@ namespace Jube.Engine
         {
             entityAnalysisModelInstanceEntryPayloadStore = new EntityAnalysisModelInstanceEntryPayload
             {
-                EntityAnalysisModelInstanceEntryGuid = entry["EntityAnalysisModelInstanceEntryGuid"].AsGuid()
+                EntityAnalysisModelInstanceEntryGuid = entry["EntityAnalysisModelInstanceEntryGuid"]
             };
 
             if (Log.IsInfoEnabled)
@@ -7706,8 +7705,23 @@ namespace Jube.Engine
 
         private void UpdateEntityAnalysisModelsReprocessingRuleInstanceReferenceDateCount(DbContext dbContext,
             EntityAnalysisModelRuleReprocessingInstance entityAnalysisModelRuleReprocessingInstance,
-            DateTime lastReferenceDate, long allCount)
+            Guid entityAnalysisModelGuid,DateTime lastReferenceDate)
         {
+            if (Log.IsInfoEnabled)
+            {
+                Log.Info(
+                    $"Entity Reprocessing: Reprocessing instance {entityAnalysisModelRuleReprocessingInstance.EntityAnalysisModelsReprocessingRuleInstanceId} is about to make initial counts for monitoring as Reference_Date {lastReferenceDate}.");
+            }
+
+            var archiveRepository = new ArchiveRepository(dbContext);
+            var allCount = archiveRepository.GetCountsByReferenceDate(entityAnalysisModelGuid,lastReferenceDate);
+            
+            if (Log.IsInfoEnabled)
+            {
+                Log.Info(
+                    $"Entity Reprocessing: Reprocessing instance {entityAnalysisModelRuleReprocessingInstance.EntityAnalysisModelsReprocessingRuleInstanceId} has returned initial counts of {allCount} for monitoring as Reference_Date {lastReferenceDate} and Available_Count {allCount}.");
+            }
+            
             if (Log.IsInfoEnabled)
             {
                 Log.Info(
@@ -8039,7 +8053,7 @@ namespace Jube.Engine
                 gatewayRuleScript.Append("Imports System\r\n");
                 gatewayRuleScript.Append("Public Class GatewayRule\r\n");
                 gatewayRuleScript.Append(
-                    "Public Shared Function Match(Data As DictionaryNoBoxing, List As Dictionary(Of String, List(Of String)),KVP As PooledDictionary(Of String, Double),Log As ILog) As Boolean\r\n");
+                    "Public Shared Function Match(Data As DictionaryNoBoxing, List As Dictionary(Of String, List(Of String)),KVP As PooledDictionary(Of String, DictionaryNoBoxing),Log As ILog) As Boolean\r\n");
                 gatewayRuleScript.Append("Dim Matched As Boolean\r\n");
                 gatewayRuleScript.Append("Try\r\n");
                 gatewayRuleScript.Append(entityAnalysisModelRuleReprocessingInstance.ReprocessingRuleScript + "\r\n");

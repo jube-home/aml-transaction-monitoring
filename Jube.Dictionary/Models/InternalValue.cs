@@ -13,6 +13,7 @@
 
 namespace Jube.Dictionary.Models
 {
+    using System;
     using System.Globalization;
     using System.Runtime.CompilerServices;
     using System.Runtime.InteropServices;
@@ -27,7 +28,8 @@ namespace Jube.Dictionary.Models
             Int = 2,
             Double = 3,
             Bool = 4,
-            DateTime = 5
+            DateTime = 5,
+            Guid = 6
         }
 
         [FieldOffset(8)]
@@ -35,6 +37,9 @@ namespace Jube.Dictionary.Models
 
         [FieldOffset(16)]
         private readonly string? _stringValue;
+
+        [FieldOffset(24)]
+        private readonly Guid _guidValue;
 
         [field: FieldOffset(0)]
         public ValueType Type
@@ -47,8 +52,9 @@ namespace Jube.Dictionary.Models
         {
             Unsafe.SkipInit(out this);
             Type = ValueType.String;
-            _value = 0;// Initialize shared value space
+            _value = 0;
             _stringValue = value;
+            _guidValue = Guid.Empty;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -58,6 +64,7 @@ namespace Jube.Dictionary.Models
             Type = ValueType.Int;
             _value = value;
             _stringValue = null;
+            _guidValue = Guid.Empty;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -67,6 +74,7 @@ namespace Jube.Dictionary.Models
             Type = ValueType.Double;
             _value = Unsafe.As<double, long>(ref value);
             _stringValue = null;
+            _guidValue = Guid.Empty;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -76,6 +84,7 @@ namespace Jube.Dictionary.Models
             Type = ValueType.Bool;
             _value = value ? 1L : 0L;
             _stringValue = null;
+            _guidValue = Guid.Empty;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -83,25 +92,31 @@ namespace Jube.Dictionary.Models
         {
             Unsafe.SkipInit(out this);
             Type = ValueType.DateTime;
-
             _value = value.ToUniversalTime().Ticks;
             _stringValue = null;
+            _guidValue = Guid.Empty;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public InternalValue(Guid value)
+        {
+            Unsafe.SkipInit(out this);
+            Type = ValueType.Guid;
+            _value = 0;
+            _stringValue = null;
+            _guidValue = value;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public string AsString()
         {
-            return Type == ValueType.String ? _stringValue ?? String.Empty : String.Empty;
+            return Type == ValueType.String ? _stringValue ?? string.Empty : string.Empty;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int AsInt()
         {
-            if (Type == ValueType.Int)
-            {
-                return (int)_value;
-            }
-            return 0;
+            return Type == ValueType.Int ? (int)_value : 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -113,17 +128,21 @@ namespace Jube.Dictionary.Models
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool AsBool()
         {
-            if (Type == ValueType.Bool)
-            {
-                return _value != 0;
-            }
-            return false;
+            return Type == ValueType.Bool && _value != 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public DateTime AsDateTime()
         {
-            return Type == ValueType.DateTime ? new DateTime(_value, DateTimeKind.Utc).ToLocalTime() : default(DateTime);
+            return Type == ValueType.DateTime
+                ? new DateTime(_value, DateTimeKind.Utc).ToLocalTime()
+                : default;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Guid AsGuid()
+        {
+            return Type == ValueType.Guid ? _guidValue : Guid.Empty;
         }
 
         public override string ToString()
@@ -135,6 +154,7 @@ namespace Jube.Dictionary.Models
                 ValueType.Double => AsDouble().ToString(CultureInfo.InvariantCulture),
                 ValueType.Bool => AsBool().ToString(),
                 ValueType.DateTime => AsDateTime().ToString("o"),
+                ValueType.Guid => _guidValue.ToString(),
                 _ => "None"
             };
         }
@@ -148,6 +168,7 @@ namespace Jube.Dictionary.Models
                 ValueType.Double => AsDouble().GetHashCode(),
                 ValueType.Bool => _value.GetHashCode(),
                 ValueType.DateTime => _value.GetHashCode(),
+                ValueType.Guid => _guidValue.GetHashCode(),
                 _ => 0
             };
         }
@@ -167,11 +188,12 @@ namespace Jube.Dictionary.Models
 
             return Type switch
             {
-                ValueType.String => String.Equals(_stringValue, other._stringValue),
+                ValueType.String => string.Equals(_stringValue, other._stringValue),
                 ValueType.Int => _value == other._value,
                 ValueType.Double => Math.Abs(AsDouble() - other.AsDouble()) < 0.0001,
                 ValueType.Bool => _value == other._value,
                 ValueType.DateTime => _value == other._value,
+                ValueType.Guid => _guidValue == other._guidValue,
                 _ => true
             };
         }
@@ -189,33 +211,21 @@ namespace Jube.Dictionary.Models
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator string(InternalValue value)
-        {
-            return value.AsString();
-        }
+        public static implicit operator string(InternalValue value) => value.AsString();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator int(InternalValue value)
-        {
-            return value.AsInt();
-        }
+        public static implicit operator int(InternalValue value) => value.AsInt();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator double(InternalValue value)
-        {
-            return value.AsDouble();
-        }
+        public static implicit operator double(InternalValue value) => value.AsDouble();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator bool(InternalValue value)
-        {
-            return value.AsBool();
-        }
+        public static implicit operator bool(InternalValue value) => value.AsBool();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator DateTime(InternalValue value)
-        {
-            return value.AsDateTime();
-        }
+        public static implicit operator DateTime(InternalValue value) => value.AsDateTime();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Guid(InternalValue value) => value.AsGuid();
     }
 }

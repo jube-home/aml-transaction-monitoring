@@ -37,6 +37,11 @@ namespace Jube.Data.Repository
             dbContext.Update(model);
         }
 
+        public long GetCountsByReferenceDate(Guid entityAnalysisModelGuid,DateTime referenceDate)
+        {
+            return dbContext.Archive.Count(w => w.EntityAnalysisModel.Guid == entityAnalysisModelGuid && w.ReferenceDate >= referenceDate);
+        }
+        
         public void Insert(Archive model)
         {
             dbContext.Insert(model);

@@ -101,6 +101,12 @@ namespace Jube.Dictionary
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryAdd(string key, Guid value)
+        {
+            return TryAddInternal(key, new InternalValue(value));
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool ContainsKey(string key)
         {
             return IndexOfKey(key) >= 0;

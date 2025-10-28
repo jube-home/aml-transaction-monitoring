@@ -300,7 +300,7 @@ namespace Jube.Migrations.Baseline
                 EntityAnalysisModelId = 1,
                 Name = "OS",
                 XPath = "$.OS",
-                DataTypeId = 7,
+                DataTypeId = 1,
                 CreatedDate = DateTime.Now,
                 Version = 1,
                 EnableSuppression = 0,

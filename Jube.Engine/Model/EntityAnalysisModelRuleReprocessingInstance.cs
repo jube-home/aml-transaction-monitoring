@@ -21,7 +21,7 @@ namespace Jube.Engine.Model
     public class EntityAnalysisModelRuleReprocessingInstance
     {
         public delegate bool Match(DictionaryNoBoxing data, Dictionary<string, List<string>> list,
-            Dictionary<string, double> kvp, ILog log);
+            PooledDictionary<string,DictionaryNoBoxing> kvp, ILog log);
 
         public int ReprocessingIntervalValue { get; set; }
         public string ReprocessingIntervalType { get; set; }
