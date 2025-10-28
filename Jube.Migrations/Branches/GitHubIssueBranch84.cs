@@ -36,6 +36,16 @@ namespace Jube.Migrations.Branches
     {
         public override void Up()
         {
+            CreateLocalCacheInstance();
+            CreateLocalCacheInstanceKey();
+            CreateLocalCacheInstanceLru();
+            UpdateInlineScriptCodeForDictionaryNoBoxingAndDeprecatedAttributes();
+            ChangeKeyNamesIfNeededOrMigrateDataToEnvelopeNoBoxing();
+        }
+        
+        private void CreateLocalCacheInstance()
+        {
+
             Create.Table("LocalCacheInstance")
                 .WithColumn("Id").AsInt32().PrimaryKey().Identity()
                 .WithColumn("Instance").AsString().Nullable()
@@ -52,6 +62,10 @@ namespace Jube.Migrations.Branches
                 .WithColumn("HeapSizeBytes").AsInt64().Nullable()
                 .WithColumn("TotalCommittedBytes").AsInt64().Nullable()
                 .WithColumn("UpdatedDate").AsDateTime().Nullable();
+        }
+        
+        private void CreateLocalCacheInstanceKey()
+        {
 
             Create.Table("LocalCacheInstanceKey")
                 .WithColumn("Id").AsInt32().PrimaryKey().Identity()
@@ -75,6 +89,10 @@ namespace Jube.Migrations.Branches
 
             Create.ForeignKey().FromTable("LocalCacheInstanceKey").ForeignColumn("LocalCacheInstanceId")
                 .ToTable("LocalCacheInstance").PrimaryColumn("Id");
+        }
+        
+        private void CreateLocalCacheInstanceLru()
+        {
 
             Create.Table("LocalCacheInstanceLru")
                 .WithColumn("Id").AsInt32().PrimaryKey().Identity()
@@ -98,7 +116,48 @@ namespace Jube.Migrations.Branches
 
             Create.ForeignKey().FromTable("LocalCacheInstanceLru").ForeignColumn("LocalCacheInstanceId")
                 .ToTable("LocalCacheInstance").PrimaryColumn("Id");
+        }
+        
+        private void UpdateInlineScriptCodeForDictionaryNoBoxingAndDeprecatedAttributes()
+        {
 
+            var code = "Imports log4net\nI" +
+                       "mports System\n" +
+                       "Imports System.Collections.Generic\n" +
+                       "Imports Jube.Dictionary\n" +
+                       "Imports Jube.Dictionary.Attributes\n" +
+                       "Imports Microsoft.VisualBasic\n" +
+                       "Public Class IssueOTP\n" +
+                       "   Inherits System.Attribute\n\n" +
+                       "   <ResponsePayload>\n" +
+                       "   Public Property OTP As String\n\n" +
+                       "   Private _log as ILog\n" +
+                       "   Public Sub New(Log As ILog)\n" +
+                       "       _log = Log\n   End Sub\n\n" +
+                       "   Public Sub Execute(Data As DictionaryNoBoxing, Log As ILog)\n" +
+                       "       Data.Add(\"OTP\", RandomDigits(6))\n" +
+                       "   End Sub\n\n" +
+                       "   Private Function RandomDigits(ByVal length As Integer) As String\n" +
+                       "       Dim random = New Random()\n" +
+                       "       Dim s As String = String.Empty\n" +
+                       "       For i As Integer = 0 To length - 1\n" +
+                       "           s = String.Concat(s, random.[Next](10).ToString())\n" +
+                       "       Next\n" +
+                       "       Return s\n" +
+                       "   End Function\n" +
+                       "End Class";
+
+            Update.Table("EntityAnalysisInlineScript").Set(new
+            {
+                Code = code
+            }).Where(new
+            {
+                Id = 1
+            });
+        }
+        
+        private void ChangeKeyNamesIfNeededOrMigrateDataToEnvelopeNoBoxing()
+        {
             var redisServers = cacheService.ConnectionMultiplexer?.GetEndPoints()
                 .Select(redisEndpoint => cacheService.ConnectionMultiplexer.GetServer(redisEndpoint)).ToList();
 
@@ -107,10 +166,6 @@ namespace Jube.Migrations.Branches
                 return;
             }
 
-            ChangeKeyNamesIfNeededOrMigrateDataToEnvelopeNoBoxing(redisServers);
-        }
-        private void ChangeKeyNamesIfNeededOrMigrateDataToEnvelopeNoBoxing(List<IServer> redisServers)
-        {
             const string journalPrefix = "Journal";
             const string payloadLatestPrefix = "PayloadLatest";
 
@@ -153,6 +208,7 @@ namespace Jube.Migrations.Branches
                 }
             }
         }
+        
         private void CorrectWrongGuidFormatInThePayloadCountHashSet(string[] splits)
         {
 
@@ -176,6 +232,7 @@ namespace Jube.Migrations.Branches
                 }
             }
         }
+        
         private void RenameHashKeyForCorrectGuidFormat(HashEntry hashEntry, string redisKeyPayloadCount)
         {
 
@@ -201,6 +258,7 @@ namespace Jube.Migrations.Branches
             }
             return false;
         }
+        
         private void MigrateAllHashKeyValuesFromDictionaryToEnvelopeOfDictionaryNoBoxing(MessagePackSerializerOptions messagePackSerializerOptionsOld,
             MessagePackSerializerOptions messagePackSerializerOptionsNew, RedisKey key)
         {
@@ -221,6 +279,7 @@ namespace Jube.Migrations.Branches
                 }
             }
         }
+        
         private void MigrateHashKeyValueFromDictionaryToEnvelopeOfDictionaryNoBoxing(MessagePackSerializerOptions messagePackSerializerOptionsOld,
             MessagePackSerializerOptions messagePackSerializerOptionsNew, HashEntry hashEntry, RedisKey key)
         {
@@ -231,6 +290,7 @@ namespace Jube.Migrations.Branches
 
             cacheService.RedisDatabase.HashSetAsync(key, hashEntry.Name, bytes);
         }
+        
         private byte[] SerializeToMessagePackFormatForEnvelopeDictionaryNoBoxing(MessagePackSerializerOptions messagePackSerializerOptions, Dictionary<string, object> oldKeyValuePairs)
         {
             var ms = new MemoryStream();
@@ -239,6 +299,7 @@ namespace Jube.Migrations.Branches
             var bytes = ms.ToArray();
             return bytes;
         }
+        
         private static EnvelopeDictionaryNoBoxing MapToEnvelopeForDictionaryNoBoxing(Dictionary<string, object> oldKeyValuePairs)
         {
 
@@ -249,6 +310,7 @@ namespace Jube.Migrations.Branches
             };
             return dictionaryNoBoxingWrapper;
         }
+        
         private static DictionaryNoBoxing MapToDictionaryNoBoxing(Dictionary<string, object> oldKeyValuePairs)
         {
 

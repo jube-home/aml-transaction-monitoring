@@ -6728,49 +6728,8 @@ namespace Jube.Engine
 
                     inlineScript.CreatedDate = record.CreatedDate;
                     inlineScript.InlineScriptId = record.Id;
-                    inlineScript.InlineScriptCode = record.Code + "\r";
-                    inlineScript.InlineScriptCode =
-                        $"{inlineScript.InlineScriptCode}Public Class SearchKey\r\n";
-                    inlineScript.InlineScriptCode =
-                        $"{inlineScript.InlineScriptCode}Inherits System.Attribute\r\n";
-                    inlineScript.InlineScriptCode =
-                        $"{inlineScript.InlineScriptCode}Public CacheKey As Boolean\r\n";
-                    inlineScript.InlineScriptCode =
-                        $"{inlineScript.InlineScriptCode}Public CacheKeyIntervalType As String\r\n";
-                    inlineScript.InlineScriptCode =
-                        $"{inlineScript.InlineScriptCode}Public CacheKeyIntervalValue As Integer\r\n";
-                    inlineScript.InlineScriptCode =
-                        $"{inlineScript.InlineScriptCode}Public FetchLimit As Integer\r\n";
-                    inlineScript.InlineScriptCode =
-                        $"{inlineScript.InlineScriptCode}Public CacheKeyIntervalTTLType As String\r\n";
-                    inlineScript.InlineScriptCode =
-                        $"{inlineScript.InlineScriptCode}Public CacheKeyIntervalTTLValue As Integer\r\n";
-                    inlineScript.InlineScriptCode = $"{inlineScript.InlineScriptCode}End Class\r\n";
-                    inlineScript.InlineScriptCode =
-                        $"{inlineScript.InlineScriptCode}Public Class ResponsePayload\r\n";
-                    inlineScript.InlineScriptCode =
-                        $"{inlineScript.InlineScriptCode}Inherits System.Attribute\r\n";
-                    inlineScript.InlineScriptCode = $"{inlineScript.InlineScriptCode}End Class\r\n";
-                    inlineScript.InlineScriptCode = $"{inlineScript.InlineScriptCode}Public Class Latitude\r\n";
-                    inlineScript.InlineScriptCode =
-                        $"{inlineScript.InlineScriptCode}Inherits System.Attribute\r\n";
-                    inlineScript.InlineScriptCode = $"{inlineScript.InlineScriptCode}End Class\r\n";
-                    inlineScript.InlineScriptCode =
-                        $"{inlineScript.InlineScriptCode}Public Class Longitude\r\n";
-                    inlineScript.InlineScriptCode =
-                        $"{inlineScript.InlineScriptCode}Inherits System.Attribute\r\n";
-                    inlineScript.InlineScriptCode = $"{inlineScript.InlineScriptCode}End Class\r\n";
-                    inlineScript.InlineScriptCode =
-                        $"{inlineScript.InlineScriptCode}Public Class EncryptAtRest\r\n";
-                    inlineScript.InlineScriptCode =
-                        $"{inlineScript.InlineScriptCode}Inherits System.Attribute\r\n";
-                    inlineScript.InlineScriptCode = $"{inlineScript.InlineScriptCode}End Class\r\n";
-                    inlineScript.InlineScriptCode =
-                        $"{inlineScript.InlineScriptCode}Public Class ReportTable\r\n";
-                    inlineScript.InlineScriptCode =
-                        $"{inlineScript.InlineScriptCode}Inherits System.Attribute\r\n";
-                    inlineScript.InlineScriptCode = $"{inlineScript.InlineScriptCode}End Class\r\n";
-
+                    inlineScript.InlineScriptCode = record.Code;
+                    
                     if (Log.IsDebugEnabled)
                     {
                         Log.Debug(
@@ -6865,7 +6824,7 @@ namespace Jube.Engine
                             inlineScript.InlineScriptCompile.GetType(inlineScript.ClassName);
                         inlineScript.PreProcessingMethodInfo =
                             inlineScript.InlineScriptType.GetMethod(inlineScript.MethodName,
-                                [typeof(Dictionary<string, object>), typeof(ILog)]);
+                                [typeof(DictionaryNoBoxing), typeof(ILog)]);
 
                         if (Log.IsDebugEnabled)
                         {
@@ -6905,7 +6864,7 @@ namespace Jube.Engine
                                 inlineScript.InlineScriptCompile.GetType(inlineScript.ClassName);
                             inlineScript.PreProcessingMethodInfo =
                                 inlineScript.InlineScriptType.GetMethod(inlineScript.MethodName,
-                                    [typeof(Dictionary<string, object>), typeof(ILog)]);
+                                    [typeof(DictionaryNoBoxing), typeof(ILog)]);
 
                             inlineScripts.Add(inlineScript);
                             HashCacheAssembly.Add(inlineScriptHash, compile.CompiledAssembly);
