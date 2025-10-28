@@ -195,6 +195,16 @@ namespace Jube.Parser
             {
                 this.ruleScriptTokens.Add("Not");
             }
+            
+            if (!this.ruleScriptTokens.Contains("AND"))
+            {
+                this.ruleScriptTokens.Add("AND");
+            }
+            
+            if (!this.ruleScriptTokens.Contains("OR"))
+            {
+                this.ruleScriptTokens.Add("OR");
+            }
         }
 
         public ParsedRule Parse(ParsedRule parsedRule)
