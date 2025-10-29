@@ -60,6 +60,7 @@ namespace Jube.Data.Repository
                 .Set(s => s.FillCount, s => count)
                 .Set(s => s.HeapSizeBytes, heapSizeBytes)
                 .Set(s => s.TotalCommittedBytes, totalCommittedBytes)
+                .Set(s => s.UpdatedDate, DateTime.Now)
                 .Update();
         }
 
@@ -75,6 +76,7 @@ namespace Jube.Data.Repository
                 .Set(s => s.Bytes, bytes)
                 .Set(s => s.HeapSizeBytes, heapSizeBytes)
                 .Set(s => s.TotalCommittedBytes, totalCommittedBytes)
+                .Set(s => s.UpdatedDate, DateTime.Now)
                 .Update();
         }
 
@@ -89,6 +91,7 @@ namespace Jube.Data.Repository
                 .Set(s => s.Bytes, bytes)
                 .Set(s => s.HeapSizeBytes, heapSizeBytes)
                 .Set(s => s.TotalCommittedBytes, totalCommittedBytes)
+                .Set(s => s.UpdatedDate, DateTime.Now)
                 .Update();
         }
     }

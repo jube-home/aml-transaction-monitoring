@@ -261,7 +261,7 @@ namespace Jube.App
                     Int64.Parse(dynamicEnvironment.AppSettings("LocalCacheBytes")),
                     dynamicEnvironment.AppSettings("RedisMessagePackCompression").Equals("True", StringComparison.OrdinalIgnoreCase),
                     dynamicEnvironment.AppSettings("RedisStorePayloadCountsAndBytes").Equals("True", StringComparison.OrdinalIgnoreCase),
-                    dynamicEnvironment.AppSettings("RedisPublishEvents").Equals("True", StringComparison.OrdinalIgnoreCase),
+                    dynamicEnvironment.AppSettings("RedisPublishSubscribeEvents").Equals("True", StringComparison.OrdinalIgnoreCase),
                     log);
 
             if (dynamicEnvironment.AppSettings("EnableMigration").Equals("True", StringComparison.OrdinalIgnoreCase))
@@ -404,7 +404,7 @@ namespace Jube.App
         }
 
         private static CacheService ConnectToRedis(string redisConnectionString, string postgresConnectionString,
-            bool localCache, bool localCacheFill, long localCacheBytes, bool messagePackCompression, bool storePayloadCountsAndBytes,bool publish, ILog log)
+            bool localCache, bool localCacheFill, long localCacheBytes, bool messagePackCompression, bool storePayloadCountsAndBytes,bool publishSubscribe, ILog log)
         {
             const int retryRedisConnectionRetry = 10;
             for (var i = 0; i < retryRedisConnectionRetry; i++)
@@ -420,7 +420,7 @@ namespace Jube.App
                     }
 
                     var cacheService = new CacheService(redisConnectionString,
-                        postgresConnectionString, localCache, localCacheFill, localCacheBytes, messagePackCompression, storePayloadCountsAndBytes, publish,log);
+                        postgresConnectionString, localCache, localCacheFill, localCacheBytes, messagePackCompression, storePayloadCountsAndBytes, publishSubscribe,log);
 
                     if (log.IsInfoEnabled)
                     {

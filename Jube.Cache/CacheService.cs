@@ -27,10 +27,10 @@ namespace Jube.Cache
         private readonly bool localCacheFill;
         private readonly bool messagePackCompression;
         private readonly bool storePayloadCountsAndBytes;
-        private readonly bool publish;
+        private readonly bool publishSubscribe;
 
         public CacheService(string redisConnectionString, string postgresConnectionString, bool localCache, bool localCacheFill, long localCacheBytes,
-            bool messagePackCompression, bool storePayloadCountsAndBytes,bool publish, ILog log)
+            bool messagePackCompression, bool storePayloadCountsAndBytes,bool publishSubscribe, ILog log)
         {
             Log = log;
             this.localCache = localCache;
@@ -38,7 +38,7 @@ namespace Jube.Cache
             this.localCacheBytes = localCacheBytes;
             this.messagePackCompression = messagePackCompression;
             this.storePayloadCountsAndBytes = storePayloadCountsAndBytes;
-            this.publish = publish;
+            this.publishSubscribe = publishSubscribe;
 
             ConnectionMultiplexer =
                 ConnectionMultiplexer.Connect(redisConnectionString);
@@ -75,7 +75,7 @@ namespace Jube.Cache
 
             CachePayloadRepository = await CachePayloadRepository.CreateAsync(ConnectionMultiplexer, RedisDatabase,
                 DbContext, Log, CommandFlags.FireAndForget,
-                localCache, localCacheFill, localCacheBytes, messagePackCompression, storePayloadCountsAndBytes,publish);
+                localCache, localCacheFill, localCacheBytes, messagePackCompression, storePayloadCountsAndBytes,publishSubscribe);
 
             CacheReferenceDate = new CacheReferenceDate(RedisDatabase, Log);
             CacheSanctionRepository = new CacheSanctionRepository(RedisDatabase, Log);

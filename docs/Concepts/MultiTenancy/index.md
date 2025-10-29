@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Multi Tenancy
-nav_order: 6
+nav_order: 5
 has_children: true
 parent: Concepts
 ---

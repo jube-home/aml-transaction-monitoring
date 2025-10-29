@@ -24,10 +24,9 @@ namespace Jube.Cache.Redis.Models
         public int HashRemoveSubscription = 0;
         public int HashRemoveSubscriptionMiss = 0;
         public int HashSetSubscriptions = 0;
-        public long HashSetSubscriptionUnpackResponseTime = 0;
         public int Misses = 0;
         public long MissRemoteResponseTime = 0;
-        public long MissUnpackResponseTime = 0;
+        public long UnpackResponseTime = 0;
 
         public int Requests = 0;
     }

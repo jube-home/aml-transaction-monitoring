@@ -92,14 +92,13 @@ namespace Jube.Data.Poco
         [Column] [Nullable] [Key(4)] public int? Requests { get; set; }
         [Column] [Nullable] [Key(5)] public int? Misses { get; set; }
         [Column] [Nullable] [Key(6)] public long? MissRemoteResponseTime { get; set; }
-        [Column] [Nullable] [Key(7)] public long? MissUnpackResponseTime { get; set; }
+        [Column] [Nullable] [Key(7)] public long? UnpackResponseTime { get; set; }
         [Column] [Nullable] [Key(8)] public int? HashSetSubscriptions { get; set; }
-        [Column] [Nullable] [Key(9)] public long? HashSetSubscriptionUnpackResponseTime { get; set; }
-        [Column] [Nullable] [Key(10)] public int? HashRemove { get; set; }
-        [Column] [Nullable] [Key(11)] public int? HashRemoveMiss { get; set; }
-        [Column] [Nullable] [Key(12)] public int? HashRemoveSubscription { get; set; }
-        [Column] [Nullable] [Key(13)] public int? HashRemoveSubscriptionMiss { get; set; }
-        [Column] [Nullable] [Key(14)] public int? DualMiss { get; set; }
+        [Column] [Nullable] [Key(9)] public int? HashRemove { get; set; }
+        [Column] [Nullable] [Key(10)] public int? HashRemoveMiss { get; set; }
+        [Column] [Nullable] [Key(11)] public int? HashRemoveSubscription { get; set; }
+        [Column] [Nullable] [Key(12)] public int? HashRemoveSubscriptionMiss { get; set; }
+        [Column] [Nullable] [Key(13)] public int? DualMiss { get; set; }
     }
 
     [Table]

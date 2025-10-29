@@ -37,7 +37,7 @@ namespace Jube.Cache.Redis
         private readonly bool fill;
         private readonly bool localCache;
         private readonly long localCacheBytes;
-        private readonly bool publish;
+        private readonly bool publishSubscribe;
         private readonly ILog log;
         private readonly MessagePackSerializerOptions messagePackSerializerOptions;
         private readonly IDatabaseAsync redisDatabase;
@@ -57,7 +57,7 @@ namespace Jube.Cache.Redis
         private CachePayloadRepository(ConnectionMultiplexer connectionMultiplexer, IDatabaseAsync redisDatabase,
             DbContext dbContext, ILog log,
             CommandFlags commandFlag, bool fill, bool localCache, long localCacheBytes, bool messagePackCompression, bool storePayloadCountsAndBytes,
-            bool publish)
+            bool publishSubscribe)
         {
             this.connectionMultiplexer = connectionMultiplexer ?? throw new ArgumentNullException(nameof(connectionMultiplexer));
             this.redisDatabase = redisDatabase ?? throw new ArgumentNullException(nameof(redisDatabase));
@@ -68,7 +68,7 @@ namespace Jube.Cache.Redis
             this.localCache = localCache;
             this.localCacheBytes = localCacheBytes;
             this.storePayloadCountsAndBytes = storePayloadCountsAndBytes;
-            this.publish = publish;
+            this.publishSubscribe = publishSubscribe;
             
             messagePackSerializerOptions = MessagePackSerializerOptionsHelper.EnveloperMessagePackSerializerWithCompressionOptions(messagePackCompression);
             
@@ -112,7 +112,7 @@ namespace Jube.Cache.Redis
                         commandFlag)
                 };
 
-                if (publish)
+                if (publishSubscribe)
                 {
                     tasks.Add(redisDatabase.PublishAsync(
                         RedisChannel.Pattern($"HashSet:{Dns.GetHostName()}:{localCacheInstanceGuidString}:{keyPayload}:{hSetKey}"),
@@ -208,10 +208,10 @@ namespace Jube.Cache.Redis
             long localCacheBytes,
             bool messagePackCompression,
             bool storePayloadCountsAndBytes,
-            bool publish)
+            bool publishSubscribe)
         {
             var repository = new CachePayloadRepository(connectionMultiplexer, redisDatabase,
-                dbContext, log, commandFlag, localCacheFill, localCache, localCacheBytes, messagePackCompression, storePayloadCountsAndBytes, publish);
+                dbContext, log, commandFlag, localCacheFill, localCache, localCacheBytes, messagePackCompression, storePayloadCountsAndBytes, publishSubscribe);
             await repository.FullyInitializeAsync();
 
             return repository;
@@ -287,9 +287,8 @@ namespace Jube.Cache.Redis
             Interlocked.Exchange(ref entry.Value.Requests, 0);
             Interlocked.Exchange(ref entry.Value.Misses, 0);
             Interlocked.Exchange(ref entry.Value.MissRemoteResponseTime, 0);
-            Interlocked.Exchange(ref entry.Value.MissUnpackResponseTime, 0);
+            Interlocked.Exchange(ref entry.Value.UnpackResponseTime, 0);
             Interlocked.Exchange(ref entry.Value.HashSetSubscriptions, 0);
-            Interlocked.Exchange(ref entry.Value.HashSetSubscriptionUnpackResponseTime, 0);
             Interlocked.Exchange(ref entry.Value.HashRemove, 0);
             Interlocked.Exchange(ref entry.Value.HashRemoveMiss, 0);
             Interlocked.Exchange(ref entry.Value.HashRemoveSubscription, 0);
@@ -350,9 +349,8 @@ namespace Jube.Cache.Redis
                 Requests = entry.Value.Requests,
                 Misses = entry.Value.Misses,
                 MissRemoteResponseTime = entry.Value.MissRemoteResponseTime,
-                MissUnpackResponseTime = entry.Value.MissUnpackResponseTime,
+                UnpackResponseTime = entry.Value.UnpackResponseTime,
                 HashSetSubscriptions = entry.Value.HashSetSubscriptions,
-                HashSetSubscriptionUnpackResponseTime = entry.Value.HashSetSubscriptionUnpackResponseTime,
                 HashRemove = entry.Value.HashRemove,
                 HashRemoveMiss = entry.Value.HashRemoveMiss,
                 HashRemoveSubscription = entry.Value.HashRemoveSubscription,
@@ -366,8 +364,11 @@ namespace Jube.Cache.Redis
         private void SubscribeToRedisHashEvents()
         {
             {
-                SubscribeToHashSet();
-                SubscribeToHashRemove();
+                if (publishSubscribe)
+                {
+                    SubscribeToHashSet();
+                    SubscribeToHashRemove();   
+                }
             }
             return;
 
@@ -420,7 +421,7 @@ namespace Jube.Cache.Redis
 
             AddToLruCacheConcurrentSizedDictionaryForLocalCacheInstanceKey(localCacheForPayloadKey, splits[^1], value);
 
-            Interlocked.Add(ref localCacheForPayloadKey.HashSetSubscriptionUnpackResponseTime, sw.ElapsedTicks);
+            Interlocked.Add(ref localCacheForPayloadKey.UnpackResponseTime, sw.ElapsedTicks);
 
             sw.Stop();
         }
@@ -532,7 +533,7 @@ namespace Jube.Cache.Redis
 
             var unpacked = MessagePackSerializer
                 .Deserialize<EnvelopeDictionaryNoBoxing>(buffer, messagePackSerializerOptions);
-
+            
             return unpacked.Data ?? new DictionaryNoBoxing();
         }
 
@@ -620,7 +621,7 @@ namespace Jube.Cache.Redis
                 redisJournalValue
             ));
 
-            if (publish)
+            if (publishSubscribe)
             {
                 tasks.Add(redisDatabase.PublishAsync(
                     RedisChannel.Pattern(eventHashRemovePattern),
@@ -701,7 +702,15 @@ namespace Jube.Cache.Redis
                         if (localCacheForPayloadKey.LruCacheConcurrentSizedDictionary.TryGetValue(sortedSetKey.ToString(),
                                 out var dictionaryNoBoxing))
                         {
+                            var sw = new Stopwatch();
+                            sw.Start();
+                            
                             keyToDocumentMap[sortedSetKey.ToString()] = Unpack(dictionaryNoBoxing);
+                            
+                            Interlocked.Add(ref localCacheForPayloadKey.UnpackResponseTime, sw.ElapsedTicks);
+                            
+                            sw.Stop();
+                            
                             continue;
                         }
                     }
@@ -733,8 +742,8 @@ namespace Jube.Cache.Redis
                             sw.Reset();
                             
                             var unpacked = Unpack(redisKeyPayloadHashKeyValues[i]);
-
-                            Interlocked.Add(ref localCacheForPayloadKey.MissUnpackResponseTime, sw.ElapsedTicks);
+                            
+                            Interlocked.Add(ref localCacheForPayloadKey.UnpackResponseTime, sw.ElapsedTicks);
 
                             keyToDocumentMap[missedSortedSetKeys[i].ToString()] = unpacked;
 

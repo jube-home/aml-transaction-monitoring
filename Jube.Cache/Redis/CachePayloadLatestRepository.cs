@@ -85,7 +85,7 @@ namespace Jube.Cache.Redis
             var value = new List<string>();
             try
             {
-                var redisKey = $"Payload:{tenantRegistryId}:{entityAnalysisModelGuid:N}:{key}";
+                var redisKey = $"PayloadLatest:{tenantRegistryId}:{entityAnalysisModelGuid:N}:{key}";
                 var hashEntries = await redisDatabase.HashGetAllAsync(redisKey).ConfigureAwait(false);
 
                 value = (from hashEntry in hashEntries
@@ -112,7 +112,7 @@ namespace Jube.Cache.Redis
             var value = new List<string>();
             try
             {
-                var redisKey = $"Payload:{tenantRegistryId}:{entityAnalysisModelGuid:N}:{key}";
+                var redisKey = $"PayloadLatest:{tenantRegistryId}:{entityAnalysisModelGuid:N}:{key}";
                 var hashEntries = await redisDatabase.HashGetAllAsync(redisKey).ConfigureAwait(false);
 
                 value = (from hashEntry in hashEntries
@@ -137,7 +137,7 @@ namespace Jube.Cache.Redis
             var value = new List<string>();
             try
             {
-                var redisKey = $"Payload:{tenantRegistryId}:{entityAnalysisModelGuid:N}:{key}";
+                var redisKey = $"PayloadLatest:{tenantRegistryId}:{entityAnalysisModelGuid:N}:{key}";
                 var hashEntries = await redisDatabase.HashGetAllAsync(redisKey).ConfigureAwait(false);
                 return hashEntries.Select(hashEntry => hashEntry.Name).Select(s => (string)s).ToList();
             }

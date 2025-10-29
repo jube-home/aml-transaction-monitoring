@@ -282,10 +282,10 @@ namespace Jube.DynamicEnvironment
                     "RedisMessagePackCompression", "True"
                 },
                 {
-                    "RedisStorePayloadCountsAndBytes", "False"
+                    "RedisStorePayloadCountsAndBytes", "True"
                 },
                 {
-                    "RedisPublishEvents", "False"
+                    "RedisPublishSubscribeEvents", "False"
                 }
             };
             
