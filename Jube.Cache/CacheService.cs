@@ -44,7 +44,6 @@ namespace Jube.Cache
                 ConnectionMultiplexer.Connect(redisConnectionString);
 
             RedisDatabase = ConnectionMultiplexer.GetDatabase();
-            RedisDatabase.SetAdd(Dns.GetHostName(), DateTime.Now.ToUnixTimeMilliSeconds());
 
             DbContext =
                 DataConnectionDbContext.GetDbContextDataConnection(postgresConnectionString);
