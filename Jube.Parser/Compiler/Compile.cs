@@ -35,11 +35,8 @@ namespace Jube.Parser.Compiler
 
             if (log.IsInfoEnabled)
             {
-                if (log.IsInfoEnabled)
-                {
-                    log.Info("Roslyn Compilation in VB.net: Is about to compile the code " + code +
-                             " with the assembly GUID of " + assemblyGuid + ".");   
-                }
+                log.Info("Roslyn Compilation in VB.net: Is about to compile the code " + code +
+                         " with the assembly GUID of " + assemblyGuid + ".");   
             }
 
             var compilation = VisualBasicCompilationConfig(code, log, refs, assemblyGuid);

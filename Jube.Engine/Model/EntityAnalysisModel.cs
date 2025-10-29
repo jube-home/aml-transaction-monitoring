@@ -153,11 +153,8 @@ namespace Jube.Engine.Model
         {
             if (Log.IsInfoEnabled)
             {
-                if (Log.IsInfoEnabled)
-                {
-                    Log.Info(
-                        "Entity Start: Will try and make a connection to the Database to create the Search Key Cache.");
-                }
+                Log.Info(
+                    "Entity Start: Will try and make a connection to the Database to create the Search Key Cache.");
             }
 
             var dbContext =

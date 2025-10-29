@@ -63,13 +63,13 @@ namespace Jube.DynamicEnvironment
                     "EnableEntityModel", "True"
                 },
                 {
-                    "ArchiverPersistThreads", "8"
+                    "ArchiverPersistThreads", "1"
                 },
                 {
                     "ModelInvokeAsynchronousThreads", "1"
                 },
                 {
-                    "BulkCopyThreshold", "10000"
+                    "BulkCopyThreshold", "100"
                 },
                 {
                     "ActivationWatcherBulkCopyThreshold", "100"
@@ -78,7 +78,7 @@ namespace Jube.DynamicEnvironment
                     "ReprocessingThreads", "1"
                 },
                 {
-                    "ThreadPoolManualControl", "True"
+                    "ThreadPoolManualControl", "False"
                 },
                 {
                     "MinThreadPoolThreads", "40"
