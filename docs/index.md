@@ -44,19 +44,6 @@ A more comprehensive installation guide is available in
 the [Getting Started](https://jube-home.github.io/aml-fraud-transaction-monitoring/GettingStarted) of
 the [documentation](https://jube-home.github.io/aml-fraud-transaction-monitoring).
 
-## Public Training & Implementation Support (Kuala Lumpur – April 2026)
-
-Jube is a powerful platform and is typically deployed as part of a wider compliance and transaction monitoring infrastructure.  
-For teams looking to move beyond evaluation and into **production implementation**, there is in-person training and integration cohort in Kuala Lumpur (14–16 April 2026).
-
-The cohort is designed for engineers, architects, and compliance specialists and includes:
-- Deep technical training from the core Jube team
-- Guided integration workshops using real transaction flows
-- Architecture and rule design best practices
-- Up to **6 weeks of post-training pilot support**
-
-**Learn more and secure a seat:** https://jube.io/jube-training/
-
 # Licence
 
 Jube is licenced under AGPL-3.0-or-later.
