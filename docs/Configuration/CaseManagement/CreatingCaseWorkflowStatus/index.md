@@ -6,7 +6,9 @@ parent: Case Management
 grand_parent: Configuration
 ---
 
-🚀Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
+🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
+💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
+developer.
 
 # Cases Workflow Status
 When a case is created,  it can be allocated a status, which is helpful for filtering.  Furthermore,  when a case is being worked, changing the status allows for the sub allocation of the record (for example to a money laundering officer for review).  Statuses are separate from the closed status (i.e. Open,  Closed etc).

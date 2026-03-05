@@ -6,7 +6,9 @@ parent: Sanctions
 grand_parent: Configuration
 ---
 
-🚀Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
+🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
+💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
+developer.
 
 # Sanction Searching
 The Sanctions page in Jube exists for the purposes of performing individual and batch sanction name matching against the entries loaded by the engine.

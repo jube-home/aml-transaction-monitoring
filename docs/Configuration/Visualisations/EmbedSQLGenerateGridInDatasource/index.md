@@ -6,7 +6,9 @@ parent: Visualisations
 grand_parent: Configuration
 ---
 
-🚀Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
+🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
+💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
+developer.
 
 # Embed SQL and Generate Grid in Datasource
 Datasource's are the tiles inside the Visualisation which are in their core SQL statements executed against the database and returned for presentation as either a grid or some form of chart, map or tokenized HTML iteration.

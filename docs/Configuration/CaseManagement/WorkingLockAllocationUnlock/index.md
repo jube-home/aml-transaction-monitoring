@@ -6,7 +6,9 @@ parent: Case Management
 grand_parent: Configuration
 ---
 
-🚀Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
+🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
+💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
+developer.
 
 # Working Lock, Allocation and Unlock
 When a cases is locked to a user,  it is owned by that user until such a time that it is unlocked or the user allocates the locked status to another user.

@@ -6,7 +6,9 @@ parent: Models
 grand_parent: Configuration
 ---
 
-🚀Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
+🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
+💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
+developer.
 
 # Activation Rules Suppression
 In the previous procedure the Response Elevation was set as the result of an Activation Rule matching.  Response Elevations are commonly used initiate the decline of a transaction in real time.

@@ -6,7 +6,9 @@ parent: Models
 grand_parent: Configuration
 ---
 
-🚀Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
+🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
+💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
+developer.
 
 # Basic Activation Rules
 Hitherto all processing has served to create an abundance of data surrounding the processing of an event or transaction through at the model,  yet no tangible action has been taken.  For example,  in a transaction fraud prevention platform the requirement might be to decline a transaction if volume exceeds a certain threshold.

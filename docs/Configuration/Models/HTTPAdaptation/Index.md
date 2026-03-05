@@ -6,7 +6,9 @@ parent: Models
 grand_parent: Configuration
 ---
 
-🚀Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
+🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
+💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
+developer.
 
 # HTTP Adaptation
 HTTP Adaptation refers to the dispatch a JSON document in a POST body to a remote HTTP endpoint for the receipt of a single quantitative score in the JSON response body.  

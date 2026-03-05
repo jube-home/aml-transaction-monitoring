@@ -6,7 +6,9 @@ parent: Models
 grand_parent: Configuration
 ---
 
-🚀Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
+🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
+💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
+developer.
 
 # Abstraction Calculation
 An Abstraction Calculation compares one Abstraction Rule return value to another using reasonably simple arithmetic or functions based on VB .Net code fragments.  For example,  it is useful to take two values,  dividing one by another to create a ratio, which is oftentimes quite helpful in machine learning.

@@ -6,7 +6,9 @@ parent: Multi Tenancy
 grand_parent: Concepts
 ---
 
-🚀Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
+🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
+💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
+developer.
 
 # Enabling Multi Tenancy And Switching
 On each request the UserInTenant table is inspected for the authentication user to identify the allocated TenantRegistryId:

@@ -8,8 +8,6 @@ with all features available and no vendor lock-in, Jube is transparent,
 auditable, and extensible—keeping your data under your control while enabling rapid adaptation to new products,
 workflows, regulations, or payment schemes.
 
----
-
 Jube combines real-time transaction monitoring, adaptive machine learning, rule-based detection, and workflow-driven
 case management into a single, scalable system.
 
@@ -180,6 +178,14 @@ operation of the platform.
 Refer to the [Getting Started](https://jube-home.github.io/aml-fraud-transaction-monitoring/GettingStarted) guide in
 the [official documentation](https://jube-home.github.io/aml-fraud-transaction-monitoring) for step-by-step instructions
 on deploying and configuring Jube effectively.
+
+---
+
+## Support
+
+🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
+💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
+developer.
 
 ---
 

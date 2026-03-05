@@ -6,7 +6,9 @@ parent: Case Management
 grand_parent: Configuration
 ---
 
-🚀Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
+🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
+💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
+developer.
 
 # Working Case Rating
 To obtain case quality feedback from the end user there exists a star rating which is intended to capture the subjective judgement as to the quality of the case.   Case evaluation is a grading rather than a strict binary outcome.

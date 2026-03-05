@@ -6,7 +6,9 @@ parent: Visualisations
 grand_parent: Configuration
 ---
 
-🚀Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
+🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
+💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
+developer.
 
 # Generate Chart in Visualisation Datasource
 In all instances of Visualisation Datasource recall, SQL will be executed and returned as a dataset that can be switched to present as a grid.
