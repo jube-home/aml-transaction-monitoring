@@ -25,8 +25,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
     {
         public static async Task<Context> LogStartInstanceAsync(this Context context)
         {
-            var dbContext =
-                DataConnectionDbContext.GetDbContextDataConnection(context.Services.DynamicEnvironment.AppSettings("ConnectionString"));
+            var dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(context.Services.DynamicEnvironment.AppSettings("ConnectionString"), context.Services.Log);
 
             try
             {

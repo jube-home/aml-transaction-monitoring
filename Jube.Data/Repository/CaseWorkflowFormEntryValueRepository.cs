@@ -43,10 +43,20 @@ namespace Jube.Data.Repository
                        && w.CaseWorkflowFormEntryId == caseWorkflowFormEntryId
                        & (w.CaseWorkflowsFormsEntry.Case.CaseWorkflow.EntityAnalysisModel.Deleted == 0 ||
                           w.CaseWorkflowsFormsEntry.Case.CaseWorkflow.EntityAnalysisModel.Deleted == null)
-                       && (w.CaseWorkflowsFormsEntry.Case.CaseWorkflow.CaseWorkflowRole.RoleRegistry.UserRegistry.Name == userName
-                           && w.CaseWorkflowsFormsEntry.Case.CaseWorkflow.CaseWorkflowRole.Deleted == 0 || w.CaseWorkflowsFormsEntry.Case.CaseWorkflow.CaseWorkflowRole.Deleted == null)
-                       && (w.CaseWorkflowsFormsEntry.Case.CaseWorkflowStatus.CaseWorkflowStatusRole.RoleRegistry.UserRegistry.Name == userName
-                           && w.CaseWorkflowsFormsEntry.Case.CaseWorkflowStatus.CaseWorkflowStatusRole.Deleted == 0 || w.CaseWorkflowsFormsEntry.Case.CaseWorkflowStatus.CaseWorkflowStatusRole.Deleted == null)
+                       && dbContext.CaseWorkflowRole
+                           .Where(r => r.CaseWorkflowGuid == w.CaseWorkflowsFormsEntry.Case.CaseWorkflow.Guid
+                                       && (r.Deleted == 0 || r.Deleted == null))
+                           .Any(r => dbContext.RoleRegistry
+                               .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                               .Any(rr => dbContext.UserRegistry
+                                   .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                       && dbContext.CaseWorkflowStatusRole
+                           .Where(r => r.CaseWorkflowStatusGuid == w.CaseWorkflowsFormsEntry.Case.CaseWorkflowStatus.Guid
+                                       && (r.Deleted == 0 || r.Deleted == null))
+                           .Any(r => dbContext.RoleRegistry
+                               .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                               .Any(rr => dbContext.UserRegistry
+                                   .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
                 )
                 .OrderByDescending(o => o.Id).ToListAsync(token);
         }

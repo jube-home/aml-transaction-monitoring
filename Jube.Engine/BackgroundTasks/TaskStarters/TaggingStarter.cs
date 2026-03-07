@@ -29,8 +29,8 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
         {
             try
             {
-                var dbContext = DataConnectionDbContext.GetDbContextDataConnection(
-                    context.Services.DynamicEnvironment.AppSettings("ConnectionString"));
+                var dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(
+                    context.Services.DynamicEnvironment.AppSettings("ConnectionString"), context.Services.Log);
 
                 var repository = new ArchiveRepository(dbContext);
 

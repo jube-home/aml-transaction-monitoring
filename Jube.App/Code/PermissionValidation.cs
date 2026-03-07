@@ -16,16 +16,17 @@ namespace Jube.App.Code
     using System.Linq;
     using Data.Context;
     using Data.Security;
+    using log4net;
 
     public class PermissionValidation
     {
         private readonly PermissionValidationDto permissionValidationDto;
 
-        public PermissionValidation(DbContext dbContext, string userName)
+        public PermissionValidation(DbContext dbContext, string userName, ILog log)
         {
             var permissionValidation = new Data.Security.PermissionValidation();
             permissionValidationDto = permissionValidation
-                .GetPermissionsAsync(dbContext, userName)
+                .GetPermissionsAsync(dbContext, userName, log)
                 .ConfigureAwait(false)
                 .GetAwaiter()
  #pragma warning disable VSTHRD002
@@ -33,12 +34,12 @@ namespace Jube.App.Code
  #pragma warning restore VSTHRD002
         }
 
-        public PermissionValidation(string connectionString, string userName)
+        public PermissionValidation(string connectionString, string userName, ILog log)
         {
             var permissionValidation = new Data.Security.PermissionValidation();
 
             permissionValidationDto = permissionValidation
-                .GetPermissionsAsync(connectionString, userName)
+                .GetPermissionsAsync(connectionString, userName, log)
                 .ConfigureAwait(false)
                 .GetAwaiter()
  #pragma warning disable VSTHRD002

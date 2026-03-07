@@ -220,7 +220,7 @@ namespace Jube.Dictionary
 
             Interlocked.Add(ref totalSize, -entry.Size);
             Interlocked.Add(ref removeBytes, entry.Size);
-            Interlocked.Add(ref remove, 1);
+            Interlocked.Increment(ref remove);
 
             // ReSharper disable once RedundantAssignment
             entry = null;//This is important to make sure the GC identifies it.
@@ -270,12 +270,12 @@ namespace Jube.Dictionary
                 return Interlocked.Read(ref totalSize);
             }
         }
-        
+
         public long EstimatedSizeBytes()
         {
             return TotalSize;
         }
-        
+
         private long EstimateSize(TValue value)
         {
             return sizeEstimator(value);
@@ -309,9 +309,9 @@ namespace Jube.Dictionary
                 {
                     lruQueue.Enqueue(k);
                     Interlocked.Add(ref totalSize, newSize);
-                    Interlocked.Add(ref request, 1);
+                    Interlocked.Increment(ref request);
                     Interlocked.Add(ref requestBytes, newSize);
-                    Interlocked.Add(ref add, 1);
+                    Interlocked.Increment(ref add);
                     Interlocked.Add(ref addBytes, newSize);
                     EvictIfNeeded();
                     return new CacheEntry(value, newSize);
@@ -320,16 +320,16 @@ namespace Jube.Dictionary
                 {
                     var delta = newSize - existing.Size;
                     Interlocked.Add(ref totalSize, delta);
-                    Interlocked.Add(ref request, 1);
+                    Interlocked.Increment(ref request);
                     Interlocked.Add(ref requestBytes, delta);
-                    Interlocked.Add(ref update, 1);
+                    Interlocked.Increment(ref update);
                     Interlocked.Add(ref updateBytes, delta);
                     lruQueue.Enqueue(k);
                     EvictIfNeeded();
                     return new CacheEntry(value, newSize);
                 });
         }
-        
+
         private void EvictIfNeeded()
         {
             if (!IsFull || isEvicting)
@@ -356,7 +356,7 @@ namespace Jube.Dictionary
                 {
                     continue;
                 }
-                Interlocked.Add(ref evictionCount, 1);
+                Interlocked.Increment(ref evictionCount);
                 Interlocked.Add(ref evictionBytes, entry.Size);
                 Interlocked.Add(ref totalSize, -entry.Size);
             }

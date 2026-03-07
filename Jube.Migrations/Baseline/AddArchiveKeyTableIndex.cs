@@ -11,10 +11,11 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using FluentMigrator;
-
 namespace Jube.Migrations.Baseline
 {
+    using FluentMigrator;
+    using FluentMigrator.Postgres;
+
     [Migration(20220429124901)]
     public class AddArchiveKeyTableIndex : Migration
     {
@@ -33,23 +34,33 @@ namespace Jube.Migrations.Baseline
 
             Create.Index().OnTable("ArchiveKey")
                 .OnColumn("Key").Ascending()
-                .OnColumn("KeyValueString").Ascending();
+                .OnColumn("KeyValueString").Ascending()
+                .WithOptions()
+                .Include("EntityAnalysisModelInstanceEntryGuid");
 
             Create.Index().OnTable("ArchiveKey")
                 .OnColumn("Key").Ascending()
-                .OnColumn("KeyValueInteger").Ascending();
+                .OnColumn("KeyValueInteger").Ascending()
+                .WithOptions()
+                .Include("EntityAnalysisModelInstanceEntryGuid");
 
             Create.Index().OnTable("ArchiveKey")
                 .OnColumn("Key").Ascending()
-                .OnColumn("KeyValueFloat").Ascending();
+                .OnColumn("KeyValueFloat").Ascending()
+                .WithOptions()
+                .Include("EntityAnalysisModelInstanceEntryGuid");
 
             Create.Index().OnTable("ArchiveKey")
                 .OnColumn("Key").Ascending()
-                .OnColumn("KeyValueBoolean").Ascending();
+                .OnColumn("KeyValueBoolean").Ascending()
+                .WithOptions()
+                .Include("EntityAnalysisModelInstanceEntryGuid");
 
             Create.Index().OnTable("ArchiveKey")
                 .OnColumn("Key").Ascending()
-                .OnColumn("KeyValueDate").Ascending();
+                .OnColumn("KeyValueDate").Ascending()
+                .WithOptions()
+                .Include("EntityAnalysisModelInstanceEntryGuid");
         }
 
         public override void Down()

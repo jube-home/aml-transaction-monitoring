@@ -20,12 +20,46 @@ namespace Jube.Migrations.Branches.GitHubIssueBranch118
     {
         public override void Up()
         {
+            UpdateEntityAnalysisModelProcessingCounter();
             UpdateEntityAnalysisModelRequestXpath();
             UpdateEntityAnalysisModelRequestXpathVersion();
             UpdateEntityAnalysisModelTtlCounter();
             MigrateIntToDoubleForCacheTtlCounterEntryRemovalBatchEntry();
+            UpdateEntityAnalysisModelActivationRule();
+            UpdateEntityAnalysisModelActivationRuleVersion();
+            UpdateEntityAnalysisModelGatewayRule();
+            UpdateEntityAnalysisModelGatewayRuleVersion();
         }
         
+        private void UpdateEntityAnalysisModelGatewayRuleVersion()
+        {
+
+            Alter.Table("EntityAnalysisModelGatewayRuleVersion").AddColumn("EvaluationCounter").AsInt64().Nullable();
+        }
+        
+        private void UpdateEntityAnalysisModelGatewayRule()
+        {
+
+            Alter.Table("EntityAnalysisModelGatewayRule").AddColumn("EvaluationCounter").AsInt64().Nullable();
+        }
+        
+        private void UpdateEntityAnalysisModelActivationRuleVersion()
+        {
+
+            Alter.Table("EntityAnalysisModelActivationRuleVersion").AddColumn("EvaluationCounter").AsInt64().Nullable();
+        }
+        
+        private void UpdateEntityAnalysisModelActivationRule()
+        {
+
+            Alter.Table("EntityAnalysisModelActivationRule").AddColumn("EvaluationCounter").AsInt64().Nullable();
+        }
+
+        private void UpdateEntityAnalysisModelProcessingCounter()
+        {
+            Alter.Table("EntityAnalysisModelProcessingCounter").AddColumn("ModelTotalResponseTime").AsInt64().Nullable();
+        }
+
         private void MigrateIntToDoubleForCacheTtlCounterEntryRemovalBatchEntry()
         {
             Execute.Sql("""
@@ -42,17 +76,17 @@ namespace Jube.Migrations.Branches.GitHubIssueBranch118
             Alter.Table("EntityAnalysisModelTtlCounter").AddColumn("ResolutionInterval").AsString().Nullable();
             Alter.Table("EntityAnalysisModelTtlCounter").AddColumn("TtlCounterDataValue").AsString().Nullable();
             Alter.Table("EntityAnalysisModelTtlCounter").AddColumn("EnableSum").AsByte().Nullable();
-            
+
             Update.Table("EntityAnalysisModelTtlCounter").Set(new
             {
                 ResolutionInterval = "n",
                 EnableSum = 0
             }).AllRows();
-            
+
             Alter.Table("EntityAnalysisModelTtlCounterVersion").AddColumn("ResolutionInterval").AsString().Nullable();
             Alter.Table("EntityAnalysisModelTtlCounterVersion").AddColumn("TtlCounterDataValue").AsString().Nullable();
             Alter.Table("EntityAnalysisModelTtlCounterVersion").AddColumn("EnableSum").AsByte().Nullable();
-            
+
         }
 
         private void UpdateEntityAnalysisModelRequestXpathVersion()

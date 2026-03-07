@@ -127,8 +127,8 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters
                                 continue;
                             }
 
-                            var dbContext = DataConnectionDbContext.GetDbContextDataConnection(
-                                context.Services.DynamicEnvironment.AppSettings("ConnectionString"));
+                            var dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(
+                                context.Services.DynamicEnvironment.AppSettings("ConnectionString"), context.Services.Log);
 
                             try
                             {
@@ -207,9 +207,10 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters
                 }
             }
         }
-        private static async Task ProcessTtlCounterDeprecationAsync(EntityAnalysisModel entityAnalysisModel, TtlCounterAdministrationCacheService ttlCounterAdministrationCacheService, 
-            EntityAnalysisModelTtlCounter ttlCounterWithinLoop, ExpiredTtlCounterEntry expiredTtlCounterEntry, 
-            List<CacheTtlCounterEntryRemovalBatchEntry> cacheTtlCounterEntryRemovalBatchEntryList, 
+        
+        private static async Task ProcessTtlCounterDeprecationAsync(EntityAnalysisModel entityAnalysisModel, TtlCounterAdministrationCacheService ttlCounterAdministrationCacheService,
+            EntityAnalysisModelTtlCounter ttlCounterWithinLoop, ExpiredTtlCounterEntry expiredTtlCounterEntry,
+            List<CacheTtlCounterEntryRemovalBatchEntry> cacheTtlCounterEntryRemovalBatchEntryList,
             CacheTtlCounterEntryRemovalBatch cacheTtlCounterEntryRemovalBatch)
         {
 

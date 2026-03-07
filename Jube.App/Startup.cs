@@ -80,7 +80,7 @@ namespace Jube.App
             AddSingletonForEngine(services, dynamicEnvironment, log, rabbitMqConnection, cacheService, contractResolver, taskCoordinator);
             AddSingletonForIdentity(services);
             ConfigureAuthentication(services, dynamicEnvironment);
-            AddGenericServicesRequired(services);
+            AddGenericServicesRequired(services, dynamicEnvironment);
             AddSwagger(services);
             AddSingletonRelayToBeInstantiatedInConfigureServices(services, dynamicEnvironment);
             WriteWelcomeMessageToConsole();
@@ -140,7 +140,7 @@ namespace Jube.App
             services.AddSingleton<Relay>();
         }
 
-        private static void AddGenericServicesRequired(IServiceCollection services)
+        private static void AddGenericServicesRequired(IServiceCollection services, DynamicEnvironment dynamicEnvironment)
         {
 
             services.AddAuthorization();
@@ -154,7 +154,16 @@ namespace Jube.App
                 };
             });
             services.AddMvc();
-            services.AddSignalR();
+
+            if (dynamicEnvironment.AppSettings("RedisBackplane").Equals("True", StringComparison.OrdinalIgnoreCase))
+            {
+                services.AddSignalR().AddStackExchangeRedis(dynamicEnvironment.AppSettings("RedisConnectionString"));
+            }
+            else
+            {
+                services.AddSignalR();
+            }
+
             services.AddEndpointsApiExplorer();
         }
 
@@ -262,7 +271,7 @@ namespace Jube.App
                 return;
             }
 
-            var engine = new Engine(dynamicEnvironment, log, rabbitMqConnection, cacheService, jsonSerializationHelper, taskCoordinator);
+            var engine = new Engine(dynamicEnvironment, log, rabbitMqConnection, cacheService, jsonSerializationHelper, taskCoordinator, dynamicEnvironment.AppSettings("ReportConnectionString"));
 
             services.AddSingleton(engine);
         }
@@ -620,13 +629,28 @@ namespace Jube.App
         private static void RunFluentMigrator(DynamicEnvironment dynamicEnvironment,
             CacheService cacheService, ILog log)
         {
+            string connectionString;
+            if (dynamicEnvironment.AppSettings("MigrationConnectionString") != null)
+            {
+                connectionString = dynamicEnvironment.AppSettings("MigrationConnectionString");
+            }
+            else
+            {
+                connectionString = dynamicEnvironment.AppSettings("ConnectionString");
+
+                if (log.IsWarnEnabled)
+                {
+                    log.Warn("No MigrationConnectionString Environment Variable available.");
+                }
+            }
+
             var serviceCollection = new ServiceCollection().AddFluentMigratorCore()
                 .AddSingleton(dynamicEnvironment)
                 .AddSingleton(cacheService)
                 .AddSingleton(log)
                 .ConfigureRunner(rb => rb
                     .AddPostgres11_0()
-                    .WithGlobalConnectionString(dynamicEnvironment.AppSettings("ConnectionString"))
+                    .WithGlobalConnectionString(connectionString)
                     .ScanIn(typeof(AddActivationWatcherTableIndex).Assembly).For.Migrations())
                 .BuildServiceProvider(false);
 

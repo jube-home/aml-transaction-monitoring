@@ -57,6 +57,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jube.Sandbox", "Jube.Sandbo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jube.Case", "Jube.Case\Jube.Case.csproj", "{0F52BDA7-5117-48E9-8DB8-859221524B50}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jube.ResilientNpgsql", "Jube.ResilientNpgsql\Jube.ResilientNpgsql.csproj", "{8656A6E1-25FC-41E5-885B-824B5158C378}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jube.ResilientRedisConnection", "Jube.ResilientRedisConnection\Jube.ResilientRedisConnection.csproj", "{BB76862D-4122-42D6-9A47-34A32A5DDBC9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -171,6 +175,14 @@ Global
 		{0F52BDA7-5117-48E9-8DB8-859221524B50}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0F52BDA7-5117-48E9-8DB8-859221524B50}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0F52BDA7-5117-48E9-8DB8-859221524B50}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8656A6E1-25FC-41E5-885B-824B5158C378}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8656A6E1-25FC-41E5-885B-824B5158C378}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8656A6E1-25FC-41E5-885B-824B5158C378}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8656A6E1-25FC-41E5-885B-824B5158C378}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BB76862D-4122-42D6-9A47-34A32A5DDBC9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BB76862D-4122-42D6-9A47-34A32A5DDBC9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BB76862D-4122-42D6-9A47-34A32A5DDBC9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BB76862D-4122-42D6-9A47-34A32A5DDBC9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 	EndGlobalSection

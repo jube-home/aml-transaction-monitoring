@@ -16,6 +16,8 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ActivationRul
     using System;
     using System.Linq;
     using System.Text;
+    using System.Threading;
+    using System.Threading.Tasks;
     using Data.Messaging;
     using Data.Poco;
     using Newtonsoft.Json;
@@ -24,7 +26,7 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ActivationRul
 
     public static class ActivationRuleActivationWatcherExtensions
     {
-        public static void ActivationRuleActivationWatcher(this Context context, EntityAnalysisModelActivationRule evaluateActivationRule,
+        public static async Task ActivationRuleActivationWatcherAsync(this Context context, EntityAnalysisModelActivationRule evaluateActivationRule,
             bool suppressed, IModel rabbitMqChannel)
         {
             if (!evaluateActivationRule.SendToActivationWatcher || suppressed || context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelReprocessingRuleInstanceId.HasValue ||
@@ -130,9 +132,9 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ActivationRul
                 {
                     var messaging = new Messaging(context.Environment.AppSettings("ConnectionString"), context.Log);
 
-                    messaging.SendActivation(bodyBytes);
+                    await messaging.SendActivationAsync(bodyBytes);
 
-                    context.EntityAnalysisModel.Counters.ActivationWatcherCount += 1;
+                    Interlocked.Increment(ref context.EntityAnalysisModel.Counters.ActivationWatcherCount);
 
                     if (context.Log.IsInfoEnabled)
                     {

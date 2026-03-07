@@ -44,7 +44,9 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Extraction
 
             var entityAnalysisModelInstanceEntryPayload = EntityAnalysisModelInstanceEntryPayloadHelpers.Create(entityAnalysisModel);
             entityAnalysisModelInstanceEntryPayload.Payload = new DictionaryNoBoxing<string>(entityAnalysisModel.References.PayloadInitialSize);
+            
             var reportDatabaseValues = new List<ArchiveKey>();
+            entityAnalysisModelInstanceEntryPayload.ArchiveKeys = reportDatabaseValues;
 
             var json = ParseJson(inputStream, entityAnalysisModel, entityAnalysisModelInstanceEntryPayload);
 

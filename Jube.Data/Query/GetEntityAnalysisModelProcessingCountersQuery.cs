@@ -39,9 +39,8 @@ namespace Jube.Data.Query
                     ResponseElevation = s.ResponseElevation,
                     ResponseElevationSum = s.ResponseElevationSum,
                     ActivationWatcher = s.ActivationWatcher,
-                    ResponseElevationValueLimit = s.ResponseElevationValueLimit,
                     ResponseElevationLimit = s.ResponseElevationLimit,
-                    ResponseElevationValueGatewayLimit = s.ResponseElevationValueGatewayLimit
+                    ModelTotalResponseTime = s.ModelTotalResponseTime
                 }).ToListAsync(token);
 
             return query;
@@ -58,9 +57,8 @@ namespace Jube.Data.Query
             public int? ResponseElevation { get; set; }
             public double? ResponseElevationSum { get; set; }
             public double? ActivationWatcher { get; set; }
-            public int? ResponseElevationValueLimit { get; set; }
             public int? ResponseElevationLimit { get; set; }
-            public int? ResponseElevationValueGatewayLimit { get; set; }
+            public long? ModelTotalResponseTime { get; set; }
         }
     }
 }

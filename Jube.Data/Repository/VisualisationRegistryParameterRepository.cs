@@ -95,8 +95,20 @@ namespace Jube.Data.Repository
                     (w.VisualisationRegistry.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
                     && w.VisualisationRegistryId == visualisationRegistryId
                     && w.Active == 1
-                    && (w.VisualisationRegistry.VisualisationRegistryRole.RoleRegistry.UserRegistry.Name == userName && w.VisualisationRegistry.VisualisationRegistryRole.Deleted == 0 || w.VisualisationRegistry.VisualisationRegistryRole.Deleted == null)
-                    && (w.VisualisationRegistryParameterRole.RoleRegistry.UserRegistry.Name == userName && w.VisualisationRegistryParameterRole.Deleted == 0 || w.VisualisationRegistryParameterRole.Deleted == null)
+                    && dbContext.VisualisationRegistryRole
+                        .Where(r => r.VisualisationRegistryGuid == w.VisualisationRegistry.Guid
+                                    && (r.Deleted == 0 || r.Deleted == null))
+                        .Any(r => dbContext.RoleRegistry
+                            .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                            .Any(rr => dbContext.UserRegistry
+                                .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                    && dbContext.VisualisationRegistryParameterRole
+                        .Where(r => r.VisualisationRegistryParameterGuid == w.Guid
+                                    && (r.Deleted == 0 || r.Deleted == null))
+                        .Any(r => dbContext.RoleRegistry
+                            .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                            .Any(rr => dbContext.UserRegistry
+                                .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
                     && (w.Deleted == 0 || w.Deleted == null)).ToListAsync(token);
         }
 

@@ -46,7 +46,7 @@ namespace Jube.App.Pages.Administration.Frame
                 userName = httpContextAccessor.HttpContext.User.Identity.Name;
             }
 
-            permissionValidation = new PermissionValidation(dynamicEnvironment.AppSettings("ConnectionString"), userName);
+            permissionValidation = new PermissionValidation(dynamicEnvironment.AppSettings("ConnectionString"), userName, log);
         }
 
         public ActionResult OnGet()

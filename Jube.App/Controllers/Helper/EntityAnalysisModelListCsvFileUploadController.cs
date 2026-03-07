@@ -52,9 +52,8 @@ namespace Jube.App.Controllers.Helper
 
             this.log = log;
 
-            dbContext =
-                DataConnectionDbContext.GetDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
-            permissionValidation = new PermissionValidation(dbContext, userName);
+            dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"), log);
+            permissionValidation = new PermissionValidation(dbContext, userName, log);
 
             entityAnalysisModelListValueRepository = new EntityAnalysisModelListValueRepository(dbContext, userName);
             entityAnalysisModelListValueCsvFileUploadRepository =

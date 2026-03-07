@@ -47,9 +47,8 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters
                                         $"Entity Abstraction Rule Caching: The startup routine has not run for model {key} and the last dates will be fetched from the database.");
                                 }
 
-                                var dbContext =
-                                    DataConnectionDbContext.GetDbContextDataConnection(
-                                        context.Services.DynamicEnvironment.AppSettings("ConnectionString"));
+                                var dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(
+                                        context.Services.DynamicEnvironment.AppSettings("ConnectionString"), context.Services.Log);
                                 try
                                 {
                                     var query =

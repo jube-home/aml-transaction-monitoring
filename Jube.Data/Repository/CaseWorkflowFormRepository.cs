@@ -60,7 +60,13 @@ namespace Jube.Data.Repository
                             && w.Active == 1
                             && w.CaseWorkflowId == casesWorkflowId
                             && (w.Deleted == 0 || w.Deleted == null)
-                            && (w.CaseWorkflowFormRole.RoleRegistry.UserRegistry.Name == userName && w.CaseWorkflowFormRole.Deleted == 0 || w.CaseWorkflowFormRole.Deleted == null)
+                            && dbContext.CaseWorkflowFormRole
+                                .Where(r => r.CaseWorkflowFormGuid == w.Guid
+                                            && (r.Deleted == 0 || r.Deleted == null))
+                                .Any(r => dbContext.RoleRegistry
+                                    .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                                    .Any(rr => dbContext.UserRegistry
+                                        .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
                 ).ToListAsync(token);
         }
 
@@ -73,7 +79,13 @@ namespace Jube.Data.Repository
                             && (w.CaseWorkflow.EntityAnalysisModel.Deleted == 0 ||
                                 w.CaseWorkflow.EntityAnalysisModel.Deleted == null)
                             && (w.Deleted == 0 || w.Deleted == null)
-                            && (w.CaseWorkflowFormRole.RoleRegistry.UserRegistry.Name == userName && w.CaseWorkflowFormRole.Deleted == 0 || w.CaseWorkflowFormRole.Deleted == null)
+                            && dbContext.CaseWorkflowFormRole
+                                .Where(r => r.CaseWorkflowFormGuid == w.Guid
+                                            && (r.Deleted == 0 || r.Deleted == null))
+                                .Any(r => dbContext.RoleRegistry
+                                    .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                                    .Any(rr => dbContext.UserRegistry
+                                        .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
                 ).ToListAsync(token);
         }
 

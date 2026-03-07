@@ -16,13 +16,15 @@ namespace Jube.Data.Security
     using System.Threading.Tasks;
     using Context;
     using Extension;
-    using Npgsql;
+    using log4net;
+    using ResilientNpgsqlConnection;
+    using ResilientNpgsqlConnection.Extensions.Jube.ResilientNpgsqlConnection;
 
     public class PermissionValidation
     {
-        public async Task<PermissionValidationDto> GetPermissionsAsync(string connectionString, string userName)
+        public async Task<PermissionValidationDto> GetPermissionsAsync(string connectionString, string userName, ILog log)
         {
-            var connection = new NpgsqlConnection(connectionString);
+            var connection = new ResilientNpgsqlConnection(connectionString, log);
             PermissionValidationDto permissionValidationDto;
             try
             {
@@ -44,13 +46,13 @@ namespace Jube.Data.Security
             return permissionValidationDto;
         }
 
-        public Task<PermissionValidationDto> GetPermissionsAsync(DbContext dbContext, string userName)
+        public Task<PermissionValidationDto> GetPermissionsAsync(DbContext dbContext, string userName, ILog log)
         {
-            var connection = (NpgsqlConnection)dbContext.Connection;
+            var connection = (ResilientNpgsqlConnection)dbContext.Connection;
             return GetPermissionsFromDatabaseAsync(connection, userName);
         }
 
-        private async Task<bool> LandlordAsync(NpgsqlConnection connection, string userName)
+        private async Task<bool> LandlordAsync(ResilientNpgsqlConnection connection, string userName)
         {
             var landlord = false;
 
@@ -63,12 +65,11 @@ namespace Jube.Data.Security
                                        "and tr.\"Active\" = 1 " +
                                        "order by tr.\"Id\"";
 
-            var commandSqlLandlord = new NpgsqlCommand(sqlLandlord);
-            commandSqlLandlord.Connection = connection;
+            await using var commandSqlLandlord = new ResilientNpgsqlCommand(connection, sqlLandlord);
             commandSqlLandlord.Parameters.AddWithValue("userName", userName);
             await commandSqlLandlord.PrepareAsync().ConfigureAwait(false);
 
-            var readerLandlord = await commandSqlLandlord.ExecuteReaderAsync().ConfigureAwait(false);
+            await using var readerLandlord = await commandSqlLandlord.ExecuteReaderAsync().ConfigureAwait(false);
             while (await readerLandlord.ReadAsync().ConfigureAwait(false))
             {
                 if (!await readerLandlord.IsDBNullAsync(0))
@@ -83,19 +84,15 @@ namespace Jube.Data.Security
             }
 
             await readerLandlord.CloseAsync().ConfigureAwait(false);
-            await readerLandlord.DisposeAsync().ConfigureAwait(false);
-            await readerLandlord.DisposeAsync().ConfigureAwait(false);
-
             return landlord;
         }
 
-        private async Task<PermissionValidationDto> GetPermissionsFromDatabaseAsync(NpgsqlConnection connection,
+        private async Task<PermissionValidationDto> GetPermissionsFromDatabaseAsync(ResilientNpgsqlConnection connection,
             string userName)
         {
             var permissionValidationDto = new PermissionValidationDto();
 
-            var command = new NpgsqlCommand();
-            command.Connection = connection;
+            await using var command = new ResilientNpgsqlCommand(connection);
 
             permissionValidationDto.Landlord = await LandlordAsync(connection, userName).ConfigureAwait(false);
 
@@ -126,16 +123,13 @@ namespace Jube.Data.Security
 
             await command.PrepareAsync().ConfigureAwait(false);
 
-            var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+            await using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
             while (await reader.ReadAsync().ConfigureAwait(false))
             {
                 permissionValidationDto.Permissions.Add(reader.GetValue(0).AsInt());
             }
 
             await reader.CloseAsync().ConfigureAwait(false);
-            await reader.DisposeAsync().ConfigureAwait(false);
-            await command.DisposeAsync().ConfigureAwait(false);
-
             return permissionValidationDto;
         }
     }

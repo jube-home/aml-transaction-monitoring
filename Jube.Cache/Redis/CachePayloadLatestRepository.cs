@@ -232,7 +232,7 @@ namespace Jube.Cache.Redis
                 var expiredSortedSetMinTimestamp = (long)expiredSortedSetEntries.FirstOrDefault().Score;
                 var expiredSortedSetMaxTimestamp = (long)expiredSortedSetEntries.LastOrDefault().Score;
 
-                var dbContext = DataConnectionDbContext.GetDbContextDataConnection(postgresConnectionString);
+                var dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(postgresConnectionString, log);
                 try
                 {
                     var cachePayloadLatestRemovalBatchRepository = new CachePayloadLatestRemovalBatchRepository(dbContext);
@@ -262,7 +262,7 @@ namespace Jube.Cache.Redis
                     {
                         TaskHelper.MeasureTaskTimeAndMemoryAllocatedAsync(TaskType.SortedSetRemoveReferenceDateLatest, async () => await BatchSortedSetRemoveAsync(redisDatabase, redisKey, redisValuesToDelete.ToArray(), commandFlag)),
                         TaskHelper.MeasureTaskTimeAndMemoryAllocatedAsync(TaskType.HashDecrementLatestCount, async () => await redisDatabase.HashDecrementAsync(redisKeyCount, latestCount.Name, countRedisValuesToDelete, commandFlag)),
-                        TaskHelper.MeasureTaskTimeAndMemoryAllocatedAsync(TaskType.HashDeletePayloadLatest, async () => await BatchHashDeleteAsync(redisDatabase,$"PayloadLatest:{tenantRegistryId.ToString()}:{entityAnalysisModelGuid:N}", redisValuesToDelete, commandFlag))
+                        TaskHelper.MeasureTaskTimeAndMemoryAllocatedAsync(TaskType.HashDeletePayloadLatest, async () => await BatchHashDeleteAsync(redisDatabase, $"PayloadLatest:{tenantRegistryId.ToString()}:{entityAnalysisModelGuid:N}", redisValuesToDelete, commandFlag))
                     };
 
                     await Task.WhenAll(tasks).ConfigureAwait(false);
@@ -291,7 +291,7 @@ namespace Jube.Cache.Redis
             const int batchSize = 1000;
             var valuesArray = values.ToArray();
 
-            for (int i = 0; i < valuesArray.Length; i += batchSize)
+            for (var i = 0; i < valuesArray.Length; i += batchSize)
             {
                 var batch = valuesArray.Skip(i).Take(batchSize).ToArray();
                 await db.SortedSetRemoveAsync(key, batch, flags).ConfigureAwait(false);
@@ -305,7 +305,7 @@ namespace Jube.Cache.Redis
             const int batchSize = 1000;
             var fieldsArray = fields.ToArray();
 
-            for (int i = 0; i < fieldsArray.Length; i += batchSize)
+            for (var i = 0; i < fieldsArray.Length; i += batchSize)
             {
                 var batch = fieldsArray.Skip(i).Take(batchSize).ToArray();
                 await db.HashDeleteAsync(key, batch, flags).ConfigureAwait(false);

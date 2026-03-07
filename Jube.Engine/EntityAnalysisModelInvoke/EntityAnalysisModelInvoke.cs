@@ -17,6 +17,7 @@ namespace Jube.Engine.EntityAnalysisModelInvoke
     using System.Collections.Concurrent;
     using System.Diagnostics;
     using System.IO;
+    using System.Threading;
     using System.Threading.Tasks;
     using Context.Extensions;
     using Dictionary;
@@ -111,7 +112,7 @@ namespace Jube.Engine.EntityAnalysisModelInvoke
                 EntityAnalysisModelInstanceEntryGuid = context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid
             };
 
-            context.JsonResult = BuildJsonResponses.BuildFullJson(asyncInvocationCallbackToken, context.EntityAnalysisModel.JsonSerializationHelper.ArchiveJsonSerializer);
+            context.EntityAnalysisModelInstanceEntryPayload.ResponseJson = BuildJsonResponses.BuildFullJson(asyncInvocationCallbackToken, context.EntityAnalysisModel.JsonSerializationHelper.ArchiveJsonSerializer);
         }
 
         public static async Task InvokeAsync(Context.Context context)
@@ -163,8 +164,10 @@ namespace Jube.Engine.EntityAnalysisModelInvoke
                 }
 
                 await context.WaitWriteTasksAsync().ConfigureAwait(false);
-                await context.WriteResponseJsonAndQueueAsynchronousResponseMessageAsync(context.EntityAnalysisModel.Services.RabbitMqChannel).ConfigureAwait(false);
+                await context.WriteResponseJsonAndQueueAsynchronousResponseMessageAsync().ConfigureAwait(false);
                 await context.ActivationRuleBuildArchivePayloadAsync().ConfigureAwait(false);
+                
+                Interlocked.Add(ref context.EntityAnalysisModel.Counters.ModelTotalResponseTime, (int)(context.Stopwatch.ElapsedTicks * 1000000 / Stopwatch.Frequency));
 
                 if (context.Log.IsInfoEnabled)
                 {
@@ -185,7 +188,7 @@ namespace Jube.Engine.EntityAnalysisModelInvoke
 
         private static void IncrementModelInvokeCounter(Context.Context context)
         {
-            context.EntityAnalysisModel.Counters.ModelInvokeCounter += 1;
+            Interlocked.Increment(ref context.EntityAnalysisModel.Counters.ModelInvokeCounter);
         }
     }
 }

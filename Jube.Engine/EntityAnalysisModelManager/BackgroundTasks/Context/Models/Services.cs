@@ -26,5 +26,6 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.Context.Models
         public ITaskCoordinator TaskCoordinator { get; set; }
         public IConnection RabbitMqConnection { get; set; }
         public CacheService CacheService { get; set; }
+        public string ReportConnectionString { get; set; }
     }
 }

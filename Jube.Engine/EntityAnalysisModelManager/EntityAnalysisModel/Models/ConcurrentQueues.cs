@@ -31,7 +31,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Models
         public ConcurrentQueue<Notification> PendingNotifications { get; set; }
         public ConcurrentQueue<ActivationWatcher> PersistToActivationWatcherAsync { get; set; } = new ConcurrentQueue<ActivationWatcher>();
         public ConcurrentQueue<EntityAnalysisModelInstanceEntryPayload> PersistToDatabaseAsync { get; } = new ConcurrentQueue<EntityAnalysisModelInstanceEntryPayload>();
-        public ConcurrentQueue<ResponseElevation> BillingResponseElevationBalanceEntries { get; } = new ConcurrentQueue<ResponseElevation>();
+        public ConcurrentQueue<ResponseElevation> ResponseElevationEntries { get; } = new ConcurrentQueue<ResponseElevation>();
         // ReSharper disable once CollectionNeverUpdated.Global
         public ConcurrentQueue<DateTime> ActivationWatcherCountJournal { get; } = new ConcurrentQueue<DateTime>();
         public ConcurrentQueue<DateTime> BillingResponseElevationJournal { get; } = new ConcurrentQueue<DateTime>();

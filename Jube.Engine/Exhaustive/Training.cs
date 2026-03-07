@@ -15,8 +15,8 @@ namespace Jube.Engine.Exhaustive
 {
     using System;
     using System.Collections.Generic;
-    using System.IO;
     using System.Linq;
+    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
     using Accord.MachineLearning.VectorMachines;
@@ -53,8 +53,7 @@ namespace Jube.Engine.Exhaustive
             {
                 while (!token.IsCancellationRequested)
                 {
-                    var dbContext =
-                        DataConnectionDbContext.GetDbContextDataConnection(environment.AppSettings("ConnectionString"));
+                    var dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(environment.AppSettings("ConnectionString"), log);
 
                     if (log.IsInfoEnabled)
                     {
@@ -214,7 +213,7 @@ namespace Jube.Engine.Exhaustive
                     exhaustiveSearchInstance.EntityAnalysisModelId,
                     exhaustiveSearchInstance.FilterSql,
                     exhaustiveSearchInstance.FilterTokens,
-                    mockData, token).ConfigureAwait(false);
+                    mockData, log, environment.AppSettings("ReportConnectionString"), token).ConfigureAwait(false);
 
                 variables = getSampleDataResponse.Item1;
                 data = getSampleDataResponse.Item2;
@@ -372,7 +371,7 @@ namespace Jube.Engine.Exhaustive
                         exhaustiveSearchInstance.FilterSql,
                         exhaustiveSearchInstance.FilterTokens,
                         variables,
-                        mockData, token).ConfigureAwait(false);
+                        mockData, log, environment.AppSettings("ReportConnectionString"), token).ConfigureAwait(false);
 
                 var repositoryExhaustiveSearchInstanceVariablesClassification =
                     new ExhaustiveSearchInstanceVariableClassificationRepository(dbContext);
@@ -1364,11 +1363,16 @@ namespace Jube.Engine.Exhaustive
                 log.Info("Exhaustive Training: Will delete the MockArchive table for mock data.");
             }
 
-            await repository.DeleteAsync(token).ConfigureAwait(false);
+            var count = await repository.GetLoadedCountAsync(entityAnalysisModelId, token).ConfigureAwait(false);
 
-            if (log.IsInfoEnabled)
+            if (count > 0)
             {
-                log.Info("Exhaustive Training: Deleted MockArchive.");
+                if (log.IsInfoEnabled)
+                {
+                    log.Info($"Exhaustive Training: Data Already Loaded for ModelID: {entityAnalysisModelId}.");
+                }
+
+                return;
             }
 
             var variables = new List<string>();
@@ -1424,11 +1428,9 @@ namespace Jube.Engine.Exhaustive
                             ActivationRuleCount = 0,
                             CreatedDate = DateTime.Now,
                             ReferenceDate = DateTime.Now,
-                            EntityAnalysisModelInstanceEntryGuid = Guid.NewGuid()
+                            EntityAnalysisModelInstanceEntryGuid = Guid.NewGuid(),
+                            Json = Encoding.UTF8.GetString(BuildJsonResponses.BuildFullJson(row, jsonSerializationHelper.ArchiveJsonSerializer))
                         };
-
-                        var sr = new StreamReader(BuildJsonResponses.BuildFullJson(row, jsonSerializationHelper.ArchiveJsonSerializer));
-                        model.Json = await sr.ReadToEndAsync(token).ConfigureAwait(false);
 
                         await repository.InsertAsync(model, token).ConfigureAwait(false);
 

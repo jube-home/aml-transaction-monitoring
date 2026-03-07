@@ -45,12 +45,9 @@ namespace Jube.App.Controllers.Query
             }
 
             this.log = log;
-
-            dbContext =
-                DataConnectionDbContext.GetDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
-            permissionValidation = new PermissionValidation(dbContext, userName);
-
-            query = new GetCaseJournalQuery(dbContext, userName);
+            dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"), log);
+            permissionValidation = new PermissionValidation(dbContext, userName, log);
+            query = new GetCaseJournalQuery(dbContext, userName, log, dynamicEnvironment.AppSettings("ReportConnectionString") ?? dbContext.ConnectionString);
         }
 
         protected override void Dispose(bool disposing)

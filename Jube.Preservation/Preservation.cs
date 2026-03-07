@@ -1282,7 +1282,7 @@ namespace Jube.Preservation
                                         .Id, token).ConfigureAwait(false);
                     }
                 }
-                
+
                 if (options.Visualisations)
                 {
                     var visualisationRegistryRepository =
@@ -1305,7 +1305,7 @@ namespace Jube.Preservation
                     }
                 }
             }
-            
+
             var caseWorkflowRoleRepository = new CaseWorkflowRoleRepository(dbContext, tenantRegistryId);
             payload.EntityPermission.CaseWorkflowRole = await caseWorkflowRoleRepository.GetAllDescAsync(token);
 
@@ -1339,9 +1339,9 @@ namespace Jube.Preservation
                 payload.EntityPermission.VisualisationRegistryParameterRole = await visualisationRegistryParameterRole.GetAllDescAsync(token);
 
                 var visualisationRegistryDatasourceRole = new VisualisationRegistryDatasourceRoleRepository(dbContext, tenantRegistryId);
-                payload.EntityPermission.VisualisationRegistryDatasourceRole = await visualisationRegistryDatasourceRole.GetAllDescAsync(token);    
+                payload.EntityPermission.VisualisationRegistryDatasourceRole = await visualisationRegistryDatasourceRole.GetAllDescAsync(token);
             }
-            
+
             return payload;
         }
     }

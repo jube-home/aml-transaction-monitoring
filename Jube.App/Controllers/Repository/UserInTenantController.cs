@@ -52,10 +52,8 @@ namespace Jube.App.Controllers.Repository
             }
 
             this.log = log;
-
-            dbContext =
-                DataConnectionDbContext.GetDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
-            permissionValidation = new PermissionValidation(dbContext, userName);
+            dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"), log);
+            permissionValidation = new PermissionValidation(dbContext, userName, log);
 
             var config = new MapperConfiguration(cfg =>
             {

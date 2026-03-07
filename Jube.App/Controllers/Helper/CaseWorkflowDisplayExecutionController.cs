@@ -23,6 +23,7 @@ namespace Jube.App.Controllers.Helper
     using Engine.EntityAnalysisModelInvoke.Models.Payload.EntityAnalysisModelInstanceEntryPayload;
     using Engine.EntityAnalysisModelInvoke.Models.Payload.EntityAnalysisModelInstanceEntryPayload.Extensions;
     using Engine.Helpers;
+    using log4net;
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
@@ -43,21 +44,19 @@ namespace Jube.App.Controllers.Helper
 
         public CaseWorkflowDisplayExecutionController(
             DynamicEnvironment dynamicEnvironment, IHttpContextAccessor httpContextAccessor,
-            JsonSerializationHelper jsonSerializationHelper)
+            JsonSerializationHelper jsonSerializationHelper, ILog log)
         {
             if (httpContextAccessor.HttpContext?.User.Identity != null)
             {
                 userName = httpContextAccessor.HttpContext.User.Identity.Name;
             }
 
-            dbContext =
-                DataConnectionDbContext.GetDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
-
+            dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"), log);
             repositoryCase = new CaseRepository(dbContext, userName);
             repositoryCaseWorkflowDisplay = new CaseWorkflowDisplayRepository(dbContext, userName);
             repositoryCaseWorkflowStatus = new CaseWorkflowStatusRepository(dbContext, userName);
 
-            permissionValidation = new PermissionValidation(dbContext, userName);
+            permissionValidation = new PermissionValidation(dbContext, userName, log);
             this.jsonSerializationHelper = jsonSerializationHelper;
         }
 

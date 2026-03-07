@@ -21,7 +21,7 @@ namespace Jube.Data.Repository
     using AutoMapper;
     using Context;
     using LinqToDB;
-    using LinqToDB.Data;
+    using log4net;
     using Poco;
     using Reporting;
     using Validation;
@@ -72,7 +72,7 @@ namespace Jube.Data.Repository
                             (w.Deleted == 0 || w.Deleted == null))
                 .OrderBy(o => o.Id).ToListAsync(token);
         }
-        
+
         public async Task<IEnumerable<VisualisationRegistryDatasource>> GetByVisualisationRegistryIdOrderByPriorityAsync(
             int visualisationRegistryId, CancellationToken token = default)
         {
@@ -89,8 +89,20 @@ namespace Jube.Data.Repository
             return await dbContext.VisualisationRegistryDatasource
                 .Where(w => w.VisualisationRegistry.TenantRegistryId == tenantRegistryId
                             && w.VisualisationRegistryId == visualisationRegistryId
-                            && (w.VisualisationRegistry.VisualisationRegistryRole.RoleRegistry.UserRegistry.Name == userName && w.VisualisationRegistry.VisualisationRegistryRole.Deleted == 0 || w.VisualisationRegistry.VisualisationRegistryRole.Deleted == null)
-                            && (w.VisualisationRegistryDatasourceRole.RoleRegistry.UserRegistry.Name == userName && w.VisualisationRegistryDatasourceRole.Deleted == 0 || w.VisualisationRegistryDatasourceRole.Deleted == null)
+                            && dbContext.VisualisationRegistryRole
+                                .Where(r => r.VisualisationRegistryGuid == w.VisualisationRegistry.Guid
+                                            && (r.Deleted == 0 || r.Deleted == null))
+                                .Any(r => dbContext.RoleRegistry
+                                    .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                                    .Any(rr => dbContext.UserRegistry
+                                        .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                            && dbContext.VisualisationRegistryDatasourceRole
+                                .Where(r => r.VisualisationRegistryDatasourceGuid == w.Guid
+                                            && (r.Deleted == 0 || r.Deleted == null))
+                                .Any(r => dbContext.RoleRegistry
+                                    .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                                    .Any(rr => dbContext.UserRegistry
+                                        .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
                             && w.Active == 1
                             && (w.Deleted == 0 || w.Deleted == null)).ToListAsync(token);
         }
@@ -105,13 +117,25 @@ namespace Jube.Data.Repository
 
         public Task<VisualisationRegistryDatasource> GetByIdActiveOnlyAsync(int id, CancellationToken token = default)
         {
-            return dbContext.VisualisationRegistryDatasource.FirstOrDefaultAsync(w
-                => w.VisualisationRegistry.TenantRegistryId == tenantRegistryId
-                   && w.Id == id
-                   && (w.VisualisationRegistry.VisualisationRegistryRole.RoleRegistry.UserRegistry.Name == userName && w.VisualisationRegistry.VisualisationRegistryRole.Deleted == 0 || w.VisualisationRegistry.VisualisationRegistryRole.Deleted == null)
-                   && (w.VisualisationRegistryDatasourceRole.RoleRegistry.UserRegistry.Name == userName && w.VisualisationRegistryDatasourceRole.Deleted == 0 || w.VisualisationRegistryDatasourceRole.Deleted == null)
-                   && w.Active == 1
-                   && (w.Deleted == 0 || w.Deleted == null), token);
+            return dbContext.VisualisationRegistryDatasource
+                .Where(w => w.VisualisationRegistry.TenantRegistryId == tenantRegistryId
+                            && dbContext.VisualisationRegistryRole
+                                .Where(r => r.VisualisationRegistryGuid == w.VisualisationRegistry.Guid
+                                            && (r.Deleted == 0 || r.Deleted == null))
+                                .Any(r => dbContext.RoleRegistry
+                                    .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                                    .Any(rr => dbContext.UserRegistry
+                                        .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                            && dbContext.VisualisationRegistryDatasourceRole
+                                .Where(r => r.VisualisationRegistryDatasourceGuid == w.Guid
+                                            && (r.Deleted == 0 || r.Deleted == null))
+                                .Any(r => dbContext.RoleRegistry
+                                    .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                                    .Any(rr => dbContext.UserRegistry
+                                        .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                            && w.Active == 1
+                            && w.Id == id
+                            && (w.Deleted == 0 || w.Deleted == null)).FirstOrDefaultAsync(token);
         }
 
         public async Task<VisualisationRegistryDatasource> InsertAsync(VisualisationRegistryDatasource model, CancellationToken token = default)
@@ -124,7 +148,7 @@ namespace Jube.Data.Repository
             return model;
         }
 
-        public async Task<VisualisationRegistryDatasource> InsertWithValidationAsync(VisualisationRegistryDatasource model, CancellationToken token = default)
+        public async Task<VisualisationRegistryDatasource> InsertWithValidationAsync(VisualisationRegistryDatasource model, ILog log, CancellationToken token = default)
         {
             if (model.VisualisationRegistryId == null)
             {
@@ -133,7 +157,7 @@ namespace Jube.Data.Repository
             Dictionary<string, string> columns;
             try
             {
-                columns = await ValidateSeriesAsync(dbContext, model.VisualisationRegistryId.Value, model.Command).ConfigureAwait(false);
+                columns = await ValidateSeriesAsync(model.VisualisationRegistryId.Value, model.Command, log).ConfigureAwait(false);
             }
             catch (Exception e)
             {
@@ -152,7 +176,7 @@ namespace Jube.Data.Repository
             return model;
         }
 
-        public async Task<VisualisationRegistryDatasource> UpdateWithValidationAsync(VisualisationRegistryDatasource model, CancellationToken token = default)
+        public async Task<VisualisationRegistryDatasource> UpdateWithValidationAsync(VisualisationRegistryDatasource model, ILog log, CancellationToken token = default)
         {
             if (model.VisualisationRegistryId == null)
             {
@@ -162,7 +186,7 @@ namespace Jube.Data.Repository
             Dictionary<string, string> columns;
             try
             {
-                columns = await ValidateSeriesAsync(dbContext, model.VisualisationRegistryId.Value, model.Command).ConfigureAwait(false);
+                columns = await ValidateSeriesAsync(model.VisualisationRegistryId.Value, model.Command, log).ConfigureAwait(false);
             }
             catch (Exception e)
             {
@@ -252,8 +276,7 @@ namespace Jube.Data.Repository
             }
         }
 
-        private async Task<Dictionary<string, string>> ValidateSeriesAsync(DataConnection dataConnection,
-            int visualisationRegistryId, string sql)
+        private async Task<Dictionary<string, string>> ValidateSeriesAsync(int visualisationRegistryId, string sql, ILog log)
         {
             var visualisationRegistryParameterRepository = new VisualisationRegistryParameterRepository(dbContext);
             var parameters =
@@ -275,7 +298,7 @@ namespace Jube.Data.Repository
                 parametersDefaultValues.Add(parameter.Name.Replace(" ", "_"), defaultValue);
             }
 
-            var postgres = new Postgres(dataConnection.ConnectionString);
+            var postgres = new Postgres(dbContext.ConnectionString, log);
             return await postgres.IntrospectAsync(sql, parametersDefaultValues).ConfigureAwait(false);
         }
 

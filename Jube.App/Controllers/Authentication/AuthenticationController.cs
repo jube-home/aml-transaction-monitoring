@@ -21,6 +21,7 @@ namespace Jube.App.Controllers.Authentication
     using Code;
     using Data.Context;
     using DynamicEnvironment;
+    using log4net;
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
@@ -41,12 +42,10 @@ namespace Jube.App.Controllers.Authentication
         private readonly Authentication service;
 
         public AuthenticationController(DynamicEnvironment dynamicEnvironment,
-            IHttpContextAccessor contextAccessor)
+            IHttpContextAccessor contextAccessor, ILog log)
         {
             this.dynamicEnvironment = dynamicEnvironment;
-            dbContext =
-                DataConnectionDbContext.GetDbContextDataConnection(
-                    this.dynamicEnvironment.AppSettings("ConnectionString"));
+            dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(this.dynamicEnvironment.AppSettings("ConnectionString"), log);
             this.contextAccessor = contextAccessor;
             service = new Authentication(dbContext);
         }

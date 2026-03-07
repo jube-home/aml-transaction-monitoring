@@ -16,6 +16,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
     using Data.Repository;
     using Utilities;
@@ -574,7 +575,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
 
                             if (record.MaxActivationWatcherValue.HasValue)
                             {
-                                entityAnalysisModel.Counters.MaxActivationWatcherValue = record.MaxActivationWatcherValue.Value;
+                                Interlocked.Add(ref entityAnalysisModel.Counters.MaxActivationWatcherValue, record.MaxActivationWatcherValue.Value);
 
                                 if (context.Services.Log.IsDebugEnabled)
                                 {
@@ -584,7 +585,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                             }
                             else
                             {
-                                entityAnalysisModel.Counters.MaxActivationWatcherValue = 0;
+                                Interlocked.Exchange(ref entityAnalysisModel.Counters.MaxActivationWatcherValue, 0);
 
                                 if (context.Services.Log.IsDebugEnabled)
                                 {

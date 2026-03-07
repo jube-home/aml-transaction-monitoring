@@ -25,16 +25,15 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters
 
     public class ModelSyncTaskStarter
     {
-        private readonly IModel rabbitMqChannel;
         private readonly Context context;
+        private readonly IModel rabbitMqChannel;
         public ModelSyncTaskStarter(Context context)
         {
             this.context = context;
-            
+
             if (context.Services.RabbitMqConnection != null)
             {
                 rabbitMqChannel = context.Services.RabbitMqConnection.CreateModel();
-                
                 rabbitMqChannel.QueueDeclare("jubeNotifications", false, false, false, null);
                 rabbitMqChannel.ExchangeDeclare("jubeActivations", ExchangeType.Fanout);
                 rabbitMqChannel.ExchangeDeclare("jubeOutbound", ExchangeType.Fanout);
@@ -54,8 +53,8 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters
                         context.Services.Log.Debug("Entity Model Sync: Making a connection to the Database database.");
                     }
 
-                    var dbContext = DataConnectionDbContext.GetDbContextDataConnection(
-                        context.Services.DynamicEnvironment.AppSettings("ConnectionString"));
+                    var dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(
+                        context.Services.DynamicEnvironment.AppSettings("ConnectionString"), context.Services.Log);
 
                     try
                     {

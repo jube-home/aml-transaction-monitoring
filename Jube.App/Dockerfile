@@ -28,6 +28,8 @@ COPY ["Jube.Dictionary/Jube.Dictionary.csproj", "Jube.Dictionary/"]
 COPY ["Jube.HealthCheck/Jube.HealthCheck.csproj", "Jube.HealthCheck/"]
 COPY ["Jube.TaskCancellation/Jube.TaskCancellation.csproj", "Jube.TaskCancellation/"]
 COPY ["Jube.Tests/Jube.Tests.csproj", "Jube.Tests/"]
+COPY ["Jube.ResilientNpgsql/Jube.ResilientNpgsql.csproj", "Jube.ResilientNpgsql/"]
+COPY ["Jube.ResilientRedisConnection/Jube.ResilientRedisConnection.csproj", "Jube.ResilientRedisConnection/"]
 COPY ["Jube.CLI/Jube.CLI.csproj", "Jube.CLI/"]
 
 RUN dotnet restore "Jube.App/Jube.App.csproj"

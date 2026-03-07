@@ -17,17 +17,15 @@ namespace Jube.Engine.BackgroundTasks.Context.Models
 
     public class Counters
     {
-        public int HttpCounterAllError { get; set; }
-        public int HttpCounterAllRequests { get; set; }
-        public int HttpCounterCallback { get; set; }
-        public int HttpCounterExhaustive { get; set; }
-        public int HttpCounterModel { get; set; }
-        public int HttpCounterModelAsync { get; set; }
-        public int HttpCounterSanction { get; set; }
-        public int HttpCounterTag { get; set; }
-        public int PendingCallbacksTimeoutCounter { get; set; }
+        public int HttpCounterAllError;
+        public int HttpCounterAllRequests;
+        public int HttpCounterCallback;
+        public int HttpCounterExhaustive;
+        public int HttpCounterModel;
+        public int HttpCounterModelAsync;
+        public int HttpCounterSanction;
+        public int HttpCounterTag;
         public DateTime LastBalanceCountersWritten { get; set; }
-        public DateTime LastCallbackTimeout { get; set; }
         public DateTime LastHttpCountersWritten { get; set; }
     }
 }

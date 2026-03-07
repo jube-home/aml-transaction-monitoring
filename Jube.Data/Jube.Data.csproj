@@ -43,18 +43,17 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Npgsql" Version="5.0.18"/>
         <PackageReference Include="Npgsql.Json.NET" Version="5.0.13"/>
-        <PackageReference Include="StackExchange.Redis" Version="2.9.32"/>
-        <PackageReference Include="Microsoft.CodeAnalysis" Version="4.10.0" />
-        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.10.0" />
-        <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="4.10.0" />
+        <PackageReference Include="Microsoft.CodeAnalysis" Version="4.10.0"/>
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.10.0"/>
+        <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="4.10.0"/>
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\Accord.Statistics\Accord.Statistics.csproj"/>
         <ProjectReference Include="..\Jube.Extensions\Jube.Extensions.csproj"/>
         <ProjectReference Include="..\Jube.Dictionary\Jube.Dictionary.csproj"/>
+        <ProjectReference Include="..\Jube.ResilientNpgsql\Jube.ResilientNpgsql.csproj"/>
         <ProjectReference Include="..\Jube.TaskCancellation\Jube.TaskCancellation.csproj"/>
     </ItemGroup>
 

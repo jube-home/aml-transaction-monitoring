@@ -14,6 +14,7 @@
 namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Extensions
 {
     using System;
+    using System.Threading;
     using System.Threading.Tasks;
     using Data.Repository;
     using Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Models.Models;
@@ -38,12 +39,12 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                     {
                         context.Services.CancellationToken.ThrowIfCancellationRequested();
 
-                        if (gatewayRule.Counter > 0)
+                        if (gatewayRule.ActivationCounter > 0 || gatewayRule.EvaluationCounter > 0)
                         {
                             if (context.Services.Log.IsDebugEnabled)
                             {
                                 context.Services.Log.Debug(
-                                    $"Entity Start: Checking if model {key} is about to update gateway rule id {gatewayRule.EntityAnalysisModelGatewayRuleId} and counter of {gatewayRule.Counter}.");
+                                    $"Entity Start: Checking if model {key} is about to update gateway rule id {gatewayRule.EntityAnalysisModelGatewayRuleId} and counter of {gatewayRule.ActivationCounter}.");
                             }
 
                             await UpdateGatewayRuleCounterAsync(context, gatewayRule).ConfigureAwait(false);
@@ -51,7 +52,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                             if (context.Services.Log.IsDebugEnabled)
                             {
                                 context.Services.Log.Debug(
-                                    $"Entity Start: Checking if model {key} has finished processing updating gateway rule id {gatewayRule.EntityAnalysisModelGatewayRuleId} and counter of {gatewayRule.Counter}.");
+                                    $"Entity Start: Checking if model {key} has finished processing updating gateway rule id {gatewayRule.EntityAnalysisModelGatewayRuleId} and counter of {gatewayRule.ActivationCounter}.");
                             }
                         }
                         else
@@ -68,12 +69,12 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                     {
                         context.Services.CancellationToken.ThrowIfCancellationRequested();
 
-                        if (activationRule.Counter > 0)
+                        if (activationRule.ActivationCounter > 0 || activationRule.EvaluationCounter > 0)
                         {
                             if (context.Services.Log.IsDebugEnabled)
                             {
                                 context.Services.Log.Debug(
-                                    $"Entity Start: Checking if model {key} is about to update activation rule id {activationRule.Id} and counter of {activationRule.Counter}.");
+                                    $"Entity Start: Checking if model {key} is about to update activation rule id {activationRule.Id} and counter of {activationRule.ActivationCounter}.");
                             }
 
                             await UpdateActivationRuleCounterAsync(context, activationRule).ConfigureAwait(false);
@@ -81,7 +82,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                             if (context.Services.Log.IsDebugEnabled)
                             {
                                 context.Services.Log.Debug(
-                                    $"Entity Start: Checking if model {key} has finished processing updating activation rule id {activationRule.Id} and counter of {activationRule.Counter}.");
+                                    $"Entity Start: Checking if model {key} has finished processing updating activation rule id {activationRule.Id} and counter of {activationRule.ActivationCounter}.");
                             }
                         }
                         else
@@ -118,15 +119,15 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                 if (context.Services.Log.IsDebugEnabled)
                 {
                     context.Services.Log.Debug(
-                        $"Entity Start: Executing EntityAnalysisModelActivationRuleRepository.UpdateCounter for Activation Rule ID of {activationRule.Id} and counter of {activationRule.Counter}.");
+                        $"Entity Start: Executing EntityAnalysisModelActivationRuleRepository.UpdateCounter for Activation Rule ID of {activationRule.Id} and counter of {activationRule.ActivationCounter}.");
                 }
 
-                await repository.UpdateCounterAsync(activationRule.Id, activationRule.Counter, context.Services.CancellationToken).ConfigureAwait(false);
+                await repository.UpdateCounterAsync(activationRule.Id, activationRule.EvaluationCounter, activationRule.ActivationCounter, activationRule.ActivationCounterDate, context.Services.CancellationToken).ConfigureAwait(false);
 
                 if (context.Services.Log.IsDebugEnabled)
                 {
                     context.Services.Log.Debug(
-                        $"Entity Start: Finished Executing EntityAnalysisModelActivationRuleRepository.UpdateCounter for Activation Rule ID of {activationRule.Id} and has reset counter of {activationRule.Counter}.");
+                        $"Entity Start: Finished Executing EntityAnalysisModelActivationRuleRepository.UpdateCounter for Activation Rule ID of {activationRule.Id} and has reset counter of {activationRule.ActivationCounter}.");
                 }
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
@@ -136,7 +137,8 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
             }
             finally
             {
-                activationRule.Counter = 0;
+                Interlocked.Exchange(ref activationRule.ActivationCounter, 0);
+                Interlocked.Exchange(ref activationRule.EvaluationCounter, 0);
             }
         }
 
@@ -149,15 +151,15 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                 if (context.Services.Log.IsDebugEnabled)
                 {
                     context.Services.Log.Debug(
-                        $"Entity Start: Executing EntityAnalysisModelGatewayRuleRepository.EntityAnalysisModelGatewayRuleId for Gateway Rule ID of {gatewayRule.EntityAnalysisModelGatewayRuleId} and counter of {gatewayRule.Counter}.");
+                        $"Entity Start: Executing EntityAnalysisModelGatewayRuleRepository.EntityAnalysisModelGatewayRuleId for Gateway Rule ID of {gatewayRule.EntityAnalysisModelGatewayRuleId} and counter of {gatewayRule.ActivationCounter}.");
                 }
 
-                await repository.UpdateCounterAsync(gatewayRule.EntityAnalysisModelGatewayRuleId, gatewayRule.Counter).ConfigureAwait(false);
+                await repository.UpdateCounterAsync(gatewayRule.EntityAnalysisModelGatewayRuleId, gatewayRule.EvaluationCounter, gatewayRule.ActivationCounter, gatewayRule.ActivationCounterDate).ConfigureAwait(false);
 
                 if (context.Services.Log.IsDebugEnabled)
                 {
                     context.Services.Log.Debug(
-                        $"Entity Start: Finished EntityAnalysisModelGatewayRuleRepository.EntityAnalysisModelGatewayRuleId for Gateway Rule ID of {gatewayRule.EntityAnalysisModelGatewayRuleId} and has reset counter of {gatewayRule.Counter}.");
+                        $"Entity Start: Finished EntityAnalysisModelGatewayRuleRepository.EntityAnalysisModelGatewayRuleId for Gateway Rule ID of {gatewayRule.EntityAnalysisModelGatewayRuleId} and has reset counter of {gatewayRule.ActivationCounter}.");
                 }
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
@@ -167,7 +169,8 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
             }
             finally
             {
-                gatewayRule.Counter = 0;
+                Interlocked.Exchange(ref gatewayRule.ActivationCounter, 0);
+                Interlocked.Exchange(ref gatewayRule.EvaluationCounter, 0);
             }
         }
     }

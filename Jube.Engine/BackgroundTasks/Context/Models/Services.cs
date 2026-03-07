@@ -31,5 +31,6 @@ namespace Jube.Engine.BackgroundTasks.Context.Models
         public CacheService CacheService { get; set; }
         public DefaultContractResolver ContractResolver { get; set; }
         public Dictionary<string, Assembly> HashCacheAssembly { get; } = new Dictionary<string, Assembly>();
+        public string ReportConnectionString { get; set; }
     }
 }

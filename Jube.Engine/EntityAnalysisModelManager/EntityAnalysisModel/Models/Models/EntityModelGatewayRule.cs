@@ -13,8 +13,10 @@
 
 namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Models.Models
 {
+    using System;
     using System.Collections.Generic;
     using System.Reflection;
+    using System.Threading;
     using Dictionary;
     using log4net;
 
@@ -23,6 +25,11 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Models.Mode
         public delegate bool Match(DictionaryNoBoxing<string> data, Dictionary<string, List<string>> list,
             PooledDictionary<string, double> kvp, ILog log);
 
+        private readonly Lock lockActivationCounterDate = new Lock();
+        private DateTime activationCounterDate;
+        
+        public long ActivationCounter;
+        public long EvaluationCounter;
         public int EntityAnalysisModelGatewayRuleId { get; init; }
         public int RuleScriptTypeId { get; set; }
         public string GatewayRuleScript { get; set; }
@@ -31,6 +38,23 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Models.Mode
         public Assembly GatewayRuleCompile { get; set; }
         public Match GatewayRuleCompileDelegate { get; set; }
         public double MaxResponseElevation { get; set; }
-        public int Counter { get; set; }
+
+        public DateTime ActivationCounterDate
+        {
+            get
+            {
+                lock (lockActivationCounterDate)
+                {
+                    return activationCounterDate;
+                }
+            }
+            set
+            {
+                lock (lockActivationCounterDate)
+                {
+                    activationCounterDate = value;
+                }
+            }
+        }
     }
 }

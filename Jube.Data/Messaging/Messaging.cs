@@ -15,23 +15,23 @@ namespace Jube.Data.Messaging
 {
     using System;
     using System.Text;
+    using System.Threading.Tasks;
     using log4net;
-    using Npgsql;
+    using ResilientNpgsqlConnection;
 
     public class Messaging(string connectionString, ILog log)
     {
-        public void SendActivation(byte[] json)
+        public async Task SendActivationAsync(byte[] json)
         {
-            var connection = new NpgsqlConnection(connectionString);
+            var connection = new ResilientNpgsqlConnection(connectionString, log);
             try
             {
-                connection.Open();
+                await connection.OpenAsync();
 
                 var sqlNotify = $"NOTIFY activation, '{Encoding.UTF8.GetString(json)}'";
 
-                var commandNotify = new NpgsqlCommand(sqlNotify);
-                commandNotify.Connection = connection;
-                commandNotify.ExecuteNonQuery();
+                await using var commandNotify = new ResilientNpgsqlCommand(connection, sqlNotify);
+                await commandNotify.ExecuteNonQueryAsync();
             }
             catch (Exception ex)
             {
@@ -39,7 +39,7 @@ namespace Jube.Data.Messaging
             }
             finally
             {
-                connection.Close();
+                await connection.CloseAsync();
             }
         }
     }

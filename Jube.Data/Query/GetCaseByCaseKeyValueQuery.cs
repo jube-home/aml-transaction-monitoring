@@ -26,21 +26,31 @@ namespace Jube.Data.Query
         public async Task<IEnumerable<Dto>> ExecuteAsync(string key, string value, CancellationToken token = default)
         {
             var query = from c in dbContext.Case
-                from i in dbContext.CaseWorkflow.InnerJoin(w =>
-                    w.Guid == c.CaseWorkflowGuid
-                    && (w.CaseWorkflowRole.RoleRegistry.UserRegistry.Name == userName
-                        && w.CaseWorkflowRole.Deleted == 0 || w.CaseWorkflowRole.Deleted == null))
+                from i in dbContext.CaseWorkflow.InnerJoin(w => w.Guid == c.CaseWorkflowGuid)
                 from m in dbContext.EntityAnalysisModel.InnerJoin(w =>
                     w.Id == i.EntityAnalysisModelId && (w.Deleted == 0 || w.Deleted == null))
                 from t in dbContext.TenantRegistry.InnerJoin(w => w.Id == m.TenantRegistryId)
-                from u in dbContext.UserInTenant.InnerJoin(w => w.TenantRegistryId == t.Id)
                 from s in dbContext.CaseWorkflowStatus.InnerJoin(w =>
-                    w.Guid == c.CaseWorkflowStatusGuid
-                    && (w.Deleted == 0 || w.Deleted == null)
-                    && (w.CaseWorkflowStatusRole.RoleRegistry.UserRegistry.Name == userName
-                        && w.CaseWorkflowStatusRole.Deleted == 0 || w.CaseWorkflowStatusRole.Deleted == null))
+                    w.Guid == c.CaseWorkflowStatusGuid && (w.Deleted == 0 || w.Deleted == null))
+                where c.CaseKey == key
+                      && c.CaseKeyValue == value
+                      && dbContext.UserInTenant
+                          .Any(u => u.TenantRegistryId == t.Id && u.User == userName)
+                      && dbContext.CaseWorkflowRole
+                          .Where(r => r.CaseWorkflowGuid == i.Guid
+                                      && (r.Deleted == 0 || r.Deleted == null))
+                          .Any(r => dbContext.RoleRegistry
+                              .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                              .Any(rr => dbContext.UserRegistry
+                                  .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                      && dbContext.CaseWorkflowStatusRole
+                          .Where(r => r.CaseWorkflowStatusGuid == s.Guid
+                                      && (r.Deleted == 0 || r.Deleted == null))
+                          .Any(r => dbContext.RoleRegistry
+                              .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                              .Any(rr => dbContext.UserRegistry
+                                  .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
                 orderby c.Id descending
-                where c.CaseKey == key && c.CaseKeyValue == value && u.User == userName
                 select new Dto
                 {
                     Id = c.Id,

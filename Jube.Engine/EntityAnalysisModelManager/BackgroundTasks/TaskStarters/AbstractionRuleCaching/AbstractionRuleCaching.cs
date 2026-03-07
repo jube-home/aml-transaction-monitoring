@@ -38,12 +38,10 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters.Ab
                     "Entity Start: Will try and make a connection to the Database to create the Search Key Cache.");
             }
 
-            var dbContext =
-                DataConnectionDbContext.GetDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
-
+            var dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"), entityAnalysisModel.Services.Log);
             var abstractionRuleCachingCacheService = new AbstractionRuleCachingCacheService(entityAnalysisModel);
             var abstractionRuleCachingRepository = new AbstractionRuleCachingRepository(dbContext, entityAnalysisModel);
-            var abstractionRuleCachingQueries = new AbstractionRuleCachingQueries(dynamicEnvironment.AppSettings("ConnectionString"), entityAnalysisModel);
+            var abstractionRuleCachingQueries = new AbstractionRuleCachingQueries(dbContext, entityAnalysisModel);
 
             try
             {

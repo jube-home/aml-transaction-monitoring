@@ -202,7 +202,7 @@ function Create(endpoint, data, keyName, parentKeyName, callback) {
 
             $("#Version").html(data.version);
             $("#CreatedUser").html(data.createdUser);
-            $("#CreatedDate").html(new Date(data.createdDate).toLocaleString());
+            $("#CreatedDate").html(new Date(data.createdDate));
 
             SetTable();
 
@@ -241,7 +241,7 @@ function Update(endpoint, data, keyName, parentKeyName) {
 
             $("#Version").html(data.version);
             $("#CreatedUser").html(data.createdUser);
-            $("#CreatedDate").html(new Date(data.createdDate).toLocaleString());
+            $("#CreatedDate").html(new Date(data.createdDate));
 
             addButton.hide();
             updateButton.show();
@@ -282,13 +282,10 @@ function Delete(endpoint, key) {
 }
 
 function SetTable() {
-    let rows = $('#TemplateTable tr').length;
+    if (window.OverrideSetTable) return;
 
-    if ($("#Guid").length > 0) {
-        rows = rows - 5;
-    } else {
-        rows = rows - 4;
-    }
+    let rows = $('#TemplateTable tr').length;
+    rows -= ($("#Guid").length > 0) ? 5 : 4;
 
     if (typeof id !== "undefined") {
         $("#TemplateTable tr:gt(" + rows + ")").show();
@@ -362,7 +359,7 @@ function ReadyExisting(data) {
     }
 
     $("#Version").html(data.version);
-    $("#CreatedDate").html(new Date(data.createdDate).toLocaleString());
+    $("#CreatedDate").html(new Date(data.createdDate));
     $("#CreatedUser").html(data.createdUser);
 
     SetTable();

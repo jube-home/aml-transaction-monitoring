@@ -127,6 +127,9 @@ namespace Jube.Data.Repository
             model.Version = existing.Version + 1;
             model.Guid = existing.Guid;
             model.CreatedUser = userName;
+            model.Password = existing.Password;
+            model.PasswordExpiryDate = existing.PasswordExpiryDate;
+            model.PasswordCreatedDate = existing.PasswordCreatedDate;
             model.CreatedDate = DateTime.Now;
 
             await dbContext.UpdateAsync(model, token: token);

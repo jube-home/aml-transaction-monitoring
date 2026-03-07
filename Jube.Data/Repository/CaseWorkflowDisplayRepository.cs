@@ -75,10 +75,20 @@ namespace Jube.Data.Repository
                             && w.Active == 1
                             && w.CaseWorkflowId == casesWorkflowId
                             && (w.Deleted == 0 || w.Deleted == null)
-                            && (w.CaseWorkflowDisplayRole.RoleRegistry.UserRegistry.Name == userName
-                                && w.CaseWorkflowDisplayRole.Deleted == 0 || w.CaseWorkflowDisplayRole.Deleted == null)
-                            && (w.CaseWorkflow.CaseWorkflowRole.RoleRegistry.UserRegistry.Name == userName
-                                && w.CaseWorkflow.CaseWorkflowRole.Deleted == 0 || w.CaseWorkflow.CaseWorkflowRole.Deleted == null)
+                            && dbContext.CaseWorkflowDisplayRole
+                                .Where(r => r.CaseWorkflowDisplayGuid == w.Guid
+                                            && (r.Deleted == 0 || r.Deleted == null))
+                                .Any(r => dbContext.RoleRegistry
+                                    .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                                    .Any(rr => dbContext.UserRegistry
+                                        .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                            && dbContext.CaseWorkflowRole
+                                .Where(r => r.CaseWorkflowGuid == w.CaseWorkflow.Guid
+                                            && (r.Deleted == 0 || r.Deleted == null))
+                                .Any(r => dbContext.RoleRegistry
+                                    .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                                    .Any(rr => dbContext.UserRegistry
+                                        .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
                 ).ToListAsync(token);
         }
 
@@ -88,13 +98,22 @@ namespace Jube.Data.Repository
                 .Where(w => w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
                             && w.Active == 1
                             && w.CaseWorkflow.Guid == casesWorkflowGuid
-                            && (w.CaseWorkflow.EntityAnalysisModel.Deleted == 0 ||
-                                w.CaseWorkflow.EntityAnalysisModel.Deleted == null)
+                            && (w.CaseWorkflow.EntityAnalysisModel.Deleted == 0 || w.CaseWorkflow.EntityAnalysisModel.Deleted == null)
                             && (w.Deleted == 0 || w.Deleted == null)
-                            && (w.CaseWorkflowDisplayRole.RoleRegistry.UserRegistry.Name == userName
-                                && w.CaseWorkflowDisplayRole.Deleted == 0 || w.CaseWorkflowDisplayRole.Deleted == null)
-                            && (w.CaseWorkflow.CaseWorkflowRole.RoleRegistry.UserRegistry.Name == userName
-                                && w.CaseWorkflow.CaseWorkflowRole.Deleted == 0 || w.CaseWorkflow.CaseWorkflowRole.Deleted == null)
+                            && dbContext.CaseWorkflowDisplayRole
+                                .Where(r => r.CaseWorkflowDisplayGuid == w.Guid
+                                            && (r.Deleted == 0 || r.Deleted == null))
+                                .Any(r => dbContext.RoleRegistry
+                                    .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                                    .Any(rr => dbContext.UserRegistry
+                                        .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                            && dbContext.CaseWorkflowRole
+                                .Where(r => r.CaseWorkflowGuid == w.CaseWorkflow.Guid
+                                            && (r.Deleted == 0 || r.Deleted == null))
+                                .Any(r => dbContext.RoleRegistry
+                                    .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                                    .Any(rr => dbContext.UserRegistry
+                                        .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
                 ).ToListAsync(token);
         }
 

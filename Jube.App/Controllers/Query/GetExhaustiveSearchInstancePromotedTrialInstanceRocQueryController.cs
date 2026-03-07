@@ -46,11 +46,8 @@ namespace Jube.App.Controllers.Query
             }
 
             this.log = log;
-
-            dbContext =
-                DataConnectionDbContext.GetDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
-            permissionValidation = new PermissionValidation(dbContext, userName);
-
+            dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"), log);
+            permissionValidation = new PermissionValidation(dbContext, userName, log);
             query = new GetExhaustiveSearchInstancePromotedTrialInstanceRocQuery(dbContext, userName);
         }
 

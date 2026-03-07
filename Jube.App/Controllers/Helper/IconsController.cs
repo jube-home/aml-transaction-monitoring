@@ -50,9 +50,8 @@ namespace Jube.App.Controllers.Helper
             this.log = log;
             env = webHostEnvironment;
 
-            dbContext =
-                DataConnectionDbContext.GetDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
-            permissionValidation = new PermissionValidation(dbContext, userName);
+            dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"), log);
+            permissionValidation = new PermissionValidation(dbContext, userName, log);
         }
 
         protected override void Dispose(bool disposing)
