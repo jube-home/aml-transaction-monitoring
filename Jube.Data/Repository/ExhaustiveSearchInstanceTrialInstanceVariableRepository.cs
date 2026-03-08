@@ -33,8 +33,10 @@ namespace Jube.Data.Repository
         public Task DeleteAllByExhaustiveSearchInstanceTrialInstanceIdAsync(int id, CancellationToken token = default)
         {
             return dbContext.ExhaustiveSearchInstanceTrialInstanceVariable
-                .Where(w => w.ExhaustiveSearchInstanceTrialInstanceId == id)
-                .DeleteAsync(token);
+                .Where(d => d.Id == id && (d.Deleted == 0 || d.Deleted == null))
+                .Set(s => s.Deleted, Convert.ToByte(1))
+                .Set(s => s.DeletedDate, DateTime.Now)
+                .UpdateAsync(token);
         }
 
         public async Task UpdateAsRemovedByExhaustiveSearchInstanceVariableIdAsync(int exhaustiveSearchInstanceVariableId,
@@ -58,7 +60,8 @@ namespace Jube.Data.Repository
                 int exhaustiveSearchInstanceTrialInstanceId, CancellationToken token = default)
         {
             return await dbContext.ExhaustiveSearchInstanceTrialInstanceVariable.Where(w =>
-                    w.ExhaustiveSearchInstanceTrialInstanceId == exhaustiveSearchInstanceTrialInstanceId)
+                    w.ExhaustiveSearchInstanceTrialInstanceId == exhaustiveSearchInstanceTrialInstanceId
+                    && (w.Deleted == 0 || w.Deleted == null))
                 .OrderBy(o => o.Id).ToListAsync(token);
         }
 

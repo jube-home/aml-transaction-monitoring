@@ -53,14 +53,14 @@ namespace Jube.Data.Query
                 if (reporting || parserTypeId != 3)
                 {
                     entityAnalysisModelRequestXpaths = await entityAnalysisModelRequestXPathRepository
-                        .GetByEntityAnalysisModelIdOrderByIdAsync(entityAnalysisModelId, token).ConfigureAwait(false);
+                        .GetByEntityAnalysisModelIdOrderByNameAsync(entityAnalysisModelId, token).ConfigureAwait(false);
                 }
                 else
                 {
-                        entityAnalysisModelRequestXpaths = await entityAnalysisModelRequestXPathRepository
-                        .GetByEntityAnalysisModelIdOrderByIdCacheOnlyAsync(entityAnalysisModelId, token).ConfigureAwait(false);
+                    entityAnalysisModelRequestXpaths = await entityAnalysisModelRequestXPathRepository
+                        .GetByEntityAnalysisModelIdOrderByNameCacheOnlyAsync(entityAnalysisModelId, token).ConfigureAwait(false);
                 }
-                
+
                 foreach (var entityAnalysisModelRequestXpath in entityAnalysisModelRequestXpaths)
                 {
                     var getModelFieldByParserTypeIdDto = new Dto
@@ -134,7 +134,7 @@ namespace Jube.Data.Query
                 }
 
                 var entityAnalysisModelInlineScriptRepository = new EntityAnalysisModelInlineScriptRepository(dbContext, tenantRegistryId);
-                var entityAnalysisModelInlineScripts = await entityAnalysisModelInlineScriptRepository.GetByEntityAnalysisModelIdOrderByIdAsync(entityAnalysisModelId, token).ConfigureAwait(false);
+                var entityAnalysisModelInlineScripts = await entityAnalysisModelInlineScriptRepository.GetByEntityAnalysisModelIdOrderByNameAsync(entityAnalysisModelId, token).ConfigureAwait(false);
                 var entityAnalysisInlineScriptRepository = new EntityAnalysisInlineScriptRepository(dbContext);
 
                 foreach (var entityAnalysisModelInlineScript in entityAnalysisModelInlineScripts)
@@ -143,7 +143,7 @@ namespace Jube.Data.Query
                     {
                         continue;
                     }
-                    
+
                     var entityAnalysisInlineScript = await entityAnalysisInlineScriptRepository.GetByIdAsync(entityAnalysisModelInlineScript.EntityAnalysisInlineScriptId.Value, token);
 
                     var publicPropertyDeclarations = GetPublicPropertyDeclarationSyntax(entityAnalysisInlineScript.Code,
@@ -156,7 +156,7 @@ namespace Jube.Data.Query
                     new EntityAnalysisModelDictionaryRepository(dbContext, tenantRegistryId);
 
                 var entityAnalysisModelDictionaries = await entityAnalysisModelDictionaryRepository
-                    .GetByEntityAnalysisModelIdOrderByIdAsync(entityAnalysisModelId, token).ConfigureAwait(false);
+                    .GetByEntityAnalysisModelIdOrderByNameAsync(entityAnalysisModelId, token).ConfigureAwait(false);
 
                 getModelFieldByParserTypeIdDtoList.AddRange(entityAnalysisModelDictionaries.Select(s => new Dto
                 {
@@ -177,7 +177,7 @@ namespace Jube.Data.Query
                     new EntityAnalysisModelTtlCounterRepository(dbContext, tenantRegistryId);
 
                 var entityAnalysisModelTtlCounters = await entityAnalysisModelTtlCounterRepository
-                    .GetByEntityAnalysisModelIdOrderByIdAsync(entityAnalysisModelId, token).ConfigureAwait(false);
+                    .GetByEntityAnalysisModelIdOrderByNameAsync(entityAnalysisModelId, token).ConfigureAwait(false);
 
                 getModelFieldByParserTypeIdDtoList.AddRange(entityAnalysisModelTtlCounters.Select(s =>
                     new Dto
@@ -196,7 +196,7 @@ namespace Jube.Data.Query
                     new EntityAnalysisModelSanctionRepository(dbContext, tenantRegistryId);
 
                 var entityAnalysisModelSanctions = await entityAnalysisModelSanctionRepository
-                    .GetByEntityAnalysisModelIdOrderByIdAsync(entityAnalysisModelId, token).ConfigureAwait(false);
+                    .GetByEntityAnalysisModelIdOrderByNameAsync(entityAnalysisModelId, token).ConfigureAwait(false);
 
                 getModelFieldByParserTypeIdDtoList.AddRange(entityAnalysisModelSanctions.Select(s =>
                     new Dto
@@ -216,9 +216,9 @@ namespace Jube.Data.Query
             {
                 var entityAnalysisModelAbstractionRuleRepository =
                     new EntityAnalysisModelAbstractionRuleRepository(dbContext, tenantRegistryId);
-                
+
                 var entityAnalysisModelAbstractionRules = await entityAnalysisModelAbstractionRuleRepository
-                    .GetByEntityAnalysisModelIdOrderByIdDescAsync(entityAnalysisModelId, token).ConfigureAwait(false);
+                    .GetByEntityAnalysisModelIdOrderByNameDescAsync(entityAnalysisModelId, token).ConfigureAwait(false);
 
                 getModelFieldByParserTypeIdDtoList.AddRange(entityAnalysisModelAbstractionRules.Select(s =>
                     new Dto
@@ -240,7 +240,7 @@ namespace Jube.Data.Query
                     new EntityAnalysisModelAbstractionCalculationRepository(dbContext, tenantRegistryId);
 
                 var entityAnalysisModelAbstractionCalculations = await entityAnalysisModelAbstractionCalculationRepository
-                    .GetByEntityAnalysisModelIdOrderByIdDescAsync(entityAnalysisModelId, token).ConfigureAwait(false);
+                    .GetByEntityAnalysisModelIdOrderByNameDescAsync(entityAnalysisModelId, token).ConfigureAwait(false);
 
                 getModelFieldByParserTypeIdDtoList.AddRange(entityAnalysisModelAbstractionCalculations.Select(s =>
                     new Dto
@@ -259,7 +259,7 @@ namespace Jube.Data.Query
                     new EntityAnalysisModelHttpAdaptationRepository(dbContext, tenantRegistryId);
 
                 var entityAnalysisModelHttpAdaptations = await entityAnalysisModelHttpAdaptationRepository
-                    .GetByEntityAnalysisModelIdOrderByIdAsync(entityAnalysisModelId, token).ConfigureAwait(false);
+                    .GetByEntityAnalysisModelIdOrderByNameAsync(entityAnalysisModelId, token).ConfigureAwait(false);
 
                 getModelFieldByParserTypeIdDtoList.AddRange(entityAnalysisModelHttpAdaptations.Select(s =>
                     new Dto
@@ -278,7 +278,7 @@ namespace Jube.Data.Query
                     new ExhaustiveSearchInstanceRepository(dbContext, tenantRegistryId);
 
                 var exhaustiveSearchInstances = await exhaustiveSearchInstanceRepository
-                    .GetByEntityAnalysisModelIdOrderByIdAsync(entityAnalysisModelId, token).ConfigureAwait(false);
+                    .GetByEntityAnalysisModelIdOrderByNameAsync(entityAnalysisModelId, token).ConfigureAwait(false);
 
                 getModelFieldByParserTypeIdDtoList.AddRange(
                     exhaustiveSearchInstances.Select(s => new Dto
@@ -299,7 +299,7 @@ namespace Jube.Data.Query
                 new EntityAnalysisModelActivationRuleRepository(dbContext, tenantRegistryId);
 
             getModelFieldByParserTypeIdDtoList.AddRange((await entityAnalysisModelActivationRuleRepository
-                .GetByEntityAnalysisModelIdOrderByIdDescAsync(entityAnalysisModelId, token)).Select(s =>
+                .GetByEntityAnalysisModelIdOrderByNameDescAsync(entityAnalysisModelId, token)).Select(s =>
                 new Dto
                 {
                     Name = $"Activation.{s.Name}",
@@ -315,7 +315,7 @@ namespace Jube.Data.Query
                 new EntityAnalysisModelTagRepository(dbContext, tenantRegistryId);
 
             var entityAnalysisModelTags = await entityAnalysisModelTagRepository
-                .GetByEntityAnalysisModelIdOrderByIdAsync(entityAnalysisModelId, token).ConfigureAwait(false);
+                .GetByEntityAnalysisModelIdOrderByNameAsync(entityAnalysisModelId, token).ConfigureAwait(false);
 
             getModelFieldByParserTypeIdDtoList.AddRange(entityAnalysisModelTags.Select(s =>
                 new Dto
@@ -333,12 +333,12 @@ namespace Jube.Data.Query
             {
                 return getModelFieldByParserTypeIdDtoList;
             }
-            
+
             var entityAnalysisModelListRepository =
                 new EntityAnalysisModelListRepository(dbContext, tenantRegistryId);
 
             var entityAnalysisModelLists = await entityAnalysisModelListRepository
-                .GetByEntityAnalysisModelIdOrderByIdAsync(entityAnalysisModelId, token).ConfigureAwait(false);
+                .GetByEntityAnalysisModelIdOrderByNameAsync(entityAnalysisModelId, token).ConfigureAwait(false);
 
             getModelFieldByParserTypeIdDtoList.AddRange(entityAnalysisModelLists.Select(s =>
                 new Dto

@@ -55,10 +55,8 @@ namespace Jube.App.Controllers.Repository
             }
 
             this.log = log;
-
-            dbContext =
-                DataConnectionDbContext.GetDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
-            permissionValidation = new PermissionValidation(dbContext, userName);
+            dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"), log);
+            permissionValidation = new PermissionValidation(dbContext, userName, log);
 
             var config = new MapperConfiguration(cfg =>
             {
@@ -238,7 +236,7 @@ namespace Jube.App.Controllers.Repository
                 var results = await validator.ValidateAsync(model, token);
                 if (results.IsValid)
                 {
-                    return Ok(await repository.InsertAsync(mapper.Map<EntityAnalysisModelRequestXpath>(model), token));
+                    return Ok(await repository.InsertIncrementCacheIndexIdAsync(mapper.Map<EntityAnalysisModelRequestXpath>(model), token));
                 }
 
                 return BadRequest(results);

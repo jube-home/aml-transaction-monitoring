@@ -13,6 +13,8 @@
 
 namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ActivationRules
 {
+    using System.Threading;
+
     public static class ActivationRuleFinishResponseElevationExtensions
     {
         public static void ActivationRuleFinishResponseElevation(this Context context, double responseElevation)
@@ -22,13 +24,12 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ActivationRul
                 return;
             }
 
-            context.EntityAnalysisModel.Counters.ModelResponseElevationCounter += 1;
-            context.EntityAnalysisModel.Counters.ModelResponseElevationSum += responseElevation;
+            Interlocked.Increment(ref context.EntityAnalysisModel.Counters.ModelResponseElevationCounter);
 
             if (context.Log.IsInfoEnabled)
             {
                 context.Log.Info(
-                    $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} response elevation is greater than zero and has incremented Response Elevation Counter which has a value of {context.EntityAnalysisModel.Counters.ModelResponseElevationCounter} and Model Response Elevation Sum which has a value of {context.EntityAnalysisModel.Counters.ModelResponseElevationSum}.");
+                    $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} response elevation is greater than zero and has incremented Response Elevation Counter which has a value of {context.EntityAnalysisModel.Counters.ModelResponseElevationCounter}.");
             }
         }
     }

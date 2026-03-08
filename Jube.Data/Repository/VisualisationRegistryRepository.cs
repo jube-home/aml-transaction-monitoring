@@ -72,7 +72,13 @@ namespace Jube.Data.Repository
             return dbContext.VisualisationRegistry.FirstOrDefaultAsync(w => w.Guid == guid
                                                                             && w.TenantRegistryId == tenantRegistryId
                                                                             && w.Active == 1
-                                                                            && (w.VisualisationRegistryRole.RoleRegistry.UserRegistry.Name == userName && w.Deleted == 0 || w.VisualisationRegistryRole.Deleted == null)
+                                                                            && dbContext.VisualisationRegistryRole
+                                                                                .Where(r => r.VisualisationRegistryGuid == w.Guid
+                                                                                            && (r.Deleted == 0 || r.Deleted == null))
+                                                                                .Any(r => dbContext.RoleRegistry
+                                                                                    .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                                                                                    .Any(rr => dbContext.UserRegistry
+                                                                                        .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
                                                                             && (w.Deleted == 0 || w.Deleted == null), token);
         }
 
@@ -88,7 +94,13 @@ namespace Jube.Data.Repository
         {
             return await dbContext.VisualisationRegistry.Where(w => w.ShowInDirectory == 1
                                                                     && w.Active == 1
-                                                                    && (w.VisualisationRegistryRole.RoleRegistry.UserRegistry.Name == userName && w.Deleted == 0 || w.VisualisationRegistryRole.Deleted == null)
+                                                                    && dbContext.VisualisationRegistryRole
+                                                                        .Where(r => r.VisualisationRegistryGuid == w.Guid
+                                                                                    && (r.Deleted == 0 || r.Deleted == null))
+                                                                        .Any(r => dbContext.RoleRegistry
+                                                                            .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                                                                            .Any(rr => dbContext.UserRegistry
+                                                                                .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
                                                                     && w.TenantRegistryId == tenantRegistryId
                                                                     && (w.Deleted == 0 || w.Deleted == null)).OrderBy(o => o.Id).ToListAsync(token);
         }

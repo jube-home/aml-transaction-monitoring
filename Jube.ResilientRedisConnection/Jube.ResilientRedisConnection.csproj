@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>Jube.ResilientRedisConnection</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="StackExchange.Redis" Version="2.11.8"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Reference Include="log4net">
+            <HintPath>..\..\..\.nuget\packages\log4net\2.0.14\lib\netstandard2.0\log4net.dll</HintPath>
+        </Reference>
+        <Reference Include="Polly">
+            <HintPath>..\..\..\.nuget\packages\polly\8.6.5\lib\net6.0\Polly.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+
+</Project>

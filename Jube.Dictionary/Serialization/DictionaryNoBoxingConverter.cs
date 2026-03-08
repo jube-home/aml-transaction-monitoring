@@ -49,7 +49,6 @@ namespace Jube.Dictionary.Serialization
                             writer.WriteValue(kv.Value.AsGuid());
                             break;
                         case InternalValue.ValueType.None:
-                            break;
                         default:
                             writer.WriteNull();
                             break;
@@ -79,9 +78,6 @@ namespace Jube.Dictionary.Serialization
                         break;
                     case JTokenType.Boolean:
                         dict.Add(prop.Name, token.Value<bool>());
-                        break;
-                    case JTokenType.Date:
-                        dict.Add(prop.Name, token.Value<DateTime>());
                         break;
                     case JTokenType.Null:
                         dict.Add(prop.Name, null);

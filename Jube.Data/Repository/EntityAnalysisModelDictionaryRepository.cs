@@ -77,6 +77,17 @@ namespace Jube.Data.Repository
                 .OrderBy(o => o.Id).ToListAsync(token).ConfigureAwait(false);
         }
 
+        public async Task<IEnumerable<EntityAnalysisModelDictionary>> GetByEntityAnalysisModelIdOrderByNameAsync(int entityAnalysisModelId, CancellationToken token = default)
+        {
+            return await dbContext.EntityAnalysisModelDictionary
+                .Where(w =>
+                    (w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                    && w.EntityAnalysisModelGuid == w.EntityAnalysisModel.Guid
+                    && w.EntityAnalysisModel.Id == entityAnalysisModelId
+                    && (w.Deleted == 0 || w.Deleted == null))
+                .OrderBy(o => o.Name).ToListAsync(token).ConfigureAwait(false);
+        }
+
         public async Task<IEnumerable<EntityAnalysisModelDictionary>> GetByEntityAnalysisModelGuidAsync(Guid entityAnalysisModelGuid, CancellationToken token = default)
         {
             return await dbContext.EntityAnalysisModelDictionary

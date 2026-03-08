@@ -2181,6 +2181,7 @@ namespace Jube.Data.Poco
         [Column] [Nullable] [Key(49)] public byte? EnableSuppression { get; set; }
         [Column] [Nullable] [Key(50)] public Guid Guid { get; set; }
         [Column] [Nullable] [Key(51)] public double? Priority { get; set; }
+        [Column] [Nullable] [Key(52)] public long? EvaluationCounter { get; set; }
     }
 
     [Table]
@@ -2263,6 +2264,7 @@ namespace Jube.Data.Poco
         [Column] [Nullable] [Key(53)] public string UpdatedUser { get; set; }
         [Column] [Nullable] [Key(54)] public int? ImportId { get; set; }
         [Column] [Nullable] [Key(55)] public double? Priority { get; set; }
+        [Column] [Nullable] [Key(56)] public long? EvaluationCounter { get; set; }
     }
 
     [Table]
@@ -2610,6 +2612,7 @@ namespace Jube.Data.Poco
         [Column] [Nullable] [Key(20)] public byte? RuleScriptTypeId { get; set; }
         [Column] [Nullable] [Key(21)] public double? GatewaySample { get; set; }
         [Column] [Nullable] [Key(22)] public Guid Guid { get; set; }
+        [Column] [Nullable] [Key(23)] public long? EvaluationCounter { get; set; }
     }
 
     [Table]
@@ -2643,7 +2646,7 @@ namespace Jube.Data.Poco
         [Column] [Nullable] [Key(13)] public int? InheritedId { get; set; }
         [Column] [Nullable] [Key(14)] public DateTime? DeletedDate { get; set; }
         [Column] [Nullable] [Key(15)] public byte? Locked { get; set; }
-        [Column] [Nullable] [Key(16)] public int? ActivationCounter { get; set; }
+        [Column] [Nullable] [Key(16)] public long? ActivationCounter { get; set; }
         [Column] [Nullable] [Key(17)] public DateTime? ActivationCounterDate { get; set; }
         [Column] [Nullable] [Key(18)] public string CoderRuleScript { get; set; }
         [Column] [Nullable] [Key(19)] public byte? RuleScriptTypeId { get; set; }
@@ -2658,6 +2661,7 @@ namespace Jube.Data.Poco
         [Column] [Nullable] [Key(23)] public DateTime? UpdatedDate { get; set; }
         [Column] [Nullable] [Key(24)] public string UpdatedUser { get; set; }
         [Column] [Nullable] [Key(25)] public int? ImportId { get; set; }
+        [Column] [Nullable] [Key(26)] public long? EvaluationCounter { get; set; }
     }
 
     [Table]
@@ -2991,11 +2995,13 @@ namespace Jube.Data.Poco
         [Column] [Nullable] [Key(9)] public int? ResponseElevationValueLimit { get; set; }
         [Column] [Nullable] [Key(10)] public int? ResponseElevationLimit { get; set; }
         [Column] [Nullable] [Key(11)] public int? ResponseElevationValueGatewayLimit { get; set; }
-
+        
         [Association(ThisKey = "EntityAnalysisModelGuid", OtherKey = "Guid", CanBeNull = true,
             Relationship = Relationship.ManyToOne)]
         [Key(12)]
         public EntityAnalysisModel EntityAnalysisModel { get; set; }
+        [Key(13)]
+        [Column] [Nullable] public long ModelTotalResponseTime { get; set; }
     }
 
     [Table]

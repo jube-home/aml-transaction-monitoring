@@ -16,6 +16,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Models.Mode
     using System;
     using System.Collections.Generic;
     using System.Reflection;
+    using System.Threading;
     using Dictionary;
     using log4net;
 
@@ -27,11 +28,16 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Models.Mode
             PooledDictionary<string, double> exhaustiveAdaptation,
             Dictionary<string, List<string>> list,
             PooledDictionary<string, double> calculation,
-            PooledDictionary<string, double> sanctions, 
+            PooledDictionary<string, double> sanctions,
             PooledDictionary<string, double> kvp,
-            ICollection<string> activation, 
+            ICollection<string> activation,
             ILog log);
 
+        private readonly Lock lockActivationCounterDate = new Lock();
+        private DateTime activationCounterDate;
+        
+        public long ActivationCounter;
+        public long EvaluationCounter;
         public int Id { get; init; }
         public bool Visible { get; set; }
         public int RuleScriptTypeId { get; set; }
@@ -56,7 +62,6 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Models.Mode
         public char BypassSuspendInterval { get; set; }
         public int BypassSuspendValue { get; set; }
         public double BypassSuspendSample { get; set; }
-        public int Counter { get; set; }
         public double ActivationSample { get; set; }
         public bool ReportTable { get; set; }
         public bool EnableNotification { get; set; }
@@ -68,5 +73,23 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Models.Mode
         public bool EnableResponseElevation { get; set; }
         public string ResponseElevationKey { get; set; }
         public Guid Guid { get; set; }
+
+        public DateTime ActivationCounterDate
+        {
+            get
+            {
+                lock (lockActivationCounterDate)
+                {
+                    return activationCounterDate;
+                }
+            }
+            set
+            {
+                lock (lockActivationCounterDate)
+                {
+                    activationCounterDate = value;
+                }
+            }
+        }
     }
 }

@@ -32,7 +32,8 @@ namespace Jube.Engine
         IConnection rabbitMqConnection,
         CacheService cacheService,
         JsonSerializationHelper jsonSerializationHelper,
-        ITaskCoordinator taskCoordinator)
+        ITaskCoordinator taskCoordinator,
+        string reportConnectionString = null)
     {
         public readonly Context Context = new Context
         {
@@ -43,7 +44,8 @@ namespace Jube.Engine
                 Log = log,
                 RabbitMqConnection = rabbitMqConnection,
                 CacheService = cacheService,
-                TaskCoordinator = taskCoordinator
+                TaskCoordinator = taskCoordinator,
+                ReportConnectionString = reportConnectionString
             }
         };
 

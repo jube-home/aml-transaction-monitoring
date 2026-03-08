@@ -52,19 +52,26 @@ namespace Jube.Service.Authentication
                 throw new PasswordLockedException();
             }
 
-            if (!userRegistry.PasswordExpiryDate.HasValue
-                || String.IsNullOrEmpty(userRegistry.Password)
-                || !userRegistry.PasswordCreatedDate.HasValue)
+            if (String.IsNullOrEmpty(userRegistry.Password))
             {
-                await LogLoginFailedAsync(userLogin, userRegistry.Name, 4, token);
-                throw new PasswordNewMustChangeException();
+                await LogLoginFailedAsync(userLogin, userRegistry.Name, 6, token);
+                throw new PasswordEmptyException();
             }
 
             if (!HashPassword.Verify(userRegistry.Password, authenticationRequestDto.Password, passwordHashingKey))
             {
                 await userRegistryRepository.IncrementFailedPasswordAsync(userRegistry.Id, token);
 
-                if (userRegistry.FailedPasswordCount > 8)
+                if (String.IsNullOrEmpty(authenticationRequestDto.NewPassword))
+                {
+                    if (!userRegistry.PasswordExpiryDate.HasValue || !userRegistry.PasswordCreatedDate.HasValue)
+                    {
+                        await LogLoginFailedAsync(userLogin, userRegistry.Name, 4, token);
+                        throw new PasswordNewMustChangeException();
+                    }
+                }
+
+                if (userRegistry.FailedPasswordCount >= 8)
                 {
                     await userRegistryRepository.SetLockedAsync(userRegistry.Id, token);
                 }
@@ -82,7 +89,7 @@ namespace Jube.Service.Authentication
             }
             else
             {
-                if (!(DateTime.Now <= userRegistry.PasswordExpiryDate.Value))
+                if (!userRegistry.PasswordExpiryDate.HasValue || !(DateTime.Now <= userRegistry.PasswordExpiryDate.Value))
                 {
                     throw new PasswordExpiredException();
                 }
@@ -94,7 +101,6 @@ namespace Jube.Service.Authentication
             {
                 await userRegistryRepository.ResetFailedPasswordCountAsync(userRegistry.Id, token);
             }
-
         }
 
         public async Task ChangePasswordAsync(string? userName, ChangePasswordRequestDto changePasswordRequestDto,

@@ -14,6 +14,7 @@
 namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ActivationRules
 {
     using System;
+    using System.Threading;
 
     public static class ActivationRuleResponseElevationAddToCountersExtensions
     {
@@ -24,13 +25,13 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ActivationRul
                 return;
             }
 
-            context.EntityAnalysisModel.Counters.BillingResponseElevationCount += 1;
+            Interlocked.Increment(ref context.EntityAnalysisModel.Counters.ResponseElevationCount);
             context.EntityAnalysisModel.ConcurrentQueues.BillingResponseElevationJournal.Enqueue(DateTime.Now);
 
             if (context.Log.IsInfoEnabled)
             {
                 context.Log.Info(
-                    $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} the response elevation is greater than 0 and has incremented counters for throttling.  The Billing Response Elevation Count is {context.EntityAnalysisModel.Counters.BillingResponseElevationCount}.");
+                    $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} the response elevation is greater than 0 and has incremented counters for throttling.  The Billing Response Elevation Count is {context.EntityAnalysisModel.Counters.ResponseElevationCount}.");
             }
         }
     }

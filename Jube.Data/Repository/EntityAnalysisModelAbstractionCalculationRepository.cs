@@ -75,6 +75,16 @@ namespace Jube.Data.Repository
                 .OrderBy(o => o.Id).ToListAsync(token).ConfigureAwait(false);
         }
 
+        public async Task<IEnumerable<EntityAnalysisModelAbstractionCalculation>> GetByEntityAnalysisModelIdOrderByNameDescAsync(
+            int entityAnalysisModelId, CancellationToken token = default)
+        {
+            return await dbContext.EntityAnalysisModelAbstractionCalculation
+                .Where(w => (w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                            && w.EntityAnalysisModelId == entityAnalysisModelId &&
+                            (w.Deleted == 0 || w.Deleted == null))
+                .OrderBy(o => o.Name).ToListAsync(token).ConfigureAwait(false);
+        }
+
         public Task<EntityAnalysisModelAbstractionCalculation> GetByIdAsync(int id, CancellationToken token = default)
         {
             return dbContext.EntityAnalysisModelAbstractionCalculation.FirstOrDefaultAsync(w =>

@@ -25,8 +25,6 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ActivationRul
                 return;
             }
 
-            evaluateActivationRule.Counter += 1;
-
             if (evaluateActivationRule.Visible)
             {
                 prevailingActivationRuleId = evaluateActivationRule.Id;

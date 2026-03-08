@@ -10,12 +10,13 @@ namespace Jube.App.Controllers.Session
     using Data.Poco;
     using Data.Reporting;
     using Data.Repository;
+    using log4net;
     using Newtonsoft.Json;
 
     public static class CompileSql
     {
         public static async Task<SessionCaseSearchCompiledSql> CompileAsync(DbContext dbContext,
-            SessionCaseSearchCompiledSql model, string userName, CancellationToken token = default)
+            SessionCaseSearchCompiledSql model, string userName, ILog log, string reportConnectionString = null, CancellationToken token = default)
         {
             var filterJsonRule = JsonConvert.DeserializeObject<Rule>(model.FilterJson);
             var filterRule = await Parser.CreateAsync(filterJsonRule, dbContext, model.CaseWorkflowGuid, userName, token).ConfigureAwait(false);
@@ -54,7 +55,7 @@ namespace Jube.App.Controllers.Session
                 "\"CaseWorkflowStatus\".\"BackColor\" as \"BackColor\"",
                 "\"CaseWorkflowStatus\".\"ForeColor\" as \"ForeColor\""
             };
-            
+
             var caseWorkflowXPathRepository = new CaseWorkflowXPathRepository(dbContext, userName);
             var caseWorkflowXPaths = (await caseWorkflowXPathRepository.GetByCasesWorkflowGuidActiveOnlyAsync(model.CaseWorkflowGuid, token)).ToList();
 
@@ -89,7 +90,7 @@ namespace Jube.App.Controllers.Session
                 {
                     continue;
                 }
-                
+
                 if (rule.Id is not ("Id" or "CaseKey" or "CaseKeyValue" or "CaseWorkflowStatus" or "Locked" or "Diary" or "ClosedStatusId" or "Priority"))
                 {
                     if (caseWorkflowXPaths.FirstOrDefault(w => w.XPath.Equals(rule.Id, StringComparison.CurrentCultureIgnoreCase)) == null)
@@ -146,7 +147,7 @@ namespace Jube.App.Controllers.Session
 
             try
             {
-                var postgres = new Postgres(dbContext.ConnectionString);
+                var postgres = new Postgres(reportConnectionString ?? dbContext.ConnectionString, log);
                 await postgres.PrepareAsync(model.SelectSqlSearch + " " + model.WhereSql + " " + model.OrderSql,
                     filterRule.Tokens, token).ConfigureAwait(false);
                 model.Prepared = 1;

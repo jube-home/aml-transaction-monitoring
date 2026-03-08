@@ -54,7 +54,7 @@ namespace Jube.App.Controllers.Invoke
             this.dynamicEnvironment = dynamicEnvironment;
             if (this.engine != null)
             {
-                this.engine.Context.Counters.HttpCounterAllRequests += 1;
+                Interlocked.Increment(ref this.engine.Context.Counters.HttpCounterAllRequests);
             }
         }
 
@@ -70,7 +70,7 @@ namespace Jube.App.Controllers.Invoke
                     return await Task.FromResult<ActionResult>(Forbid()).ConfigureAwait(false);
                 }
 
-                engine.Context.Counters.HttpCounterCallback += 1;
+                Interlocked.Increment(ref engine.Context.Counters.HttpCounterCallback);
 
                 var tcs = engine.Context.Services.CacheService.CacheCallbackPublishSubscribe.Callbacks.GetOrAdd(guid, _ => new TaskCompletionSource<Callback>(TaskCreationOptions.RunContinuationsAsynchronously));
                 var callback = await tcs.Task.WaitAsync(TimeSpan.FromSeconds(timeout ?? 30000), token);
@@ -90,7 +90,7 @@ namespace Jube.App.Controllers.Invoke
             {
                 log.Error($"Callback Fetch: Has seen an error as {ex}. Returning 500.");
 
-                engine.Context.Counters.HttpCounterCallback += 1;
+                Interlocked.Increment(ref engine.Context.Counters.HttpCounterCallback);
                 return await Task.FromResult<ActionResult>(StatusCode(500)).ConfigureAwait(false);
             }
         }
@@ -112,7 +112,7 @@ namespace Jube.App.Controllers.Invoke
                     return Task.FromResult<ActionResult<List<SanctionEntryDto>>>(StatusCode(503));
                 }
 
-                engine.Context.Counters.HttpCounterSanction += 1;
+                Interlocked.Increment(ref engine.Context.Counters.HttpCounterSanction);
 
                 if (log.IsInfoEnabled)
                 {
@@ -139,7 +139,7 @@ namespace Jube.App.Controllers.Invoke
             {
                 log.Error($"Sanction Fetch: Has seen an error as {ex}. Returning 500.");
 
-                engine.Context.Counters.HttpCounterAllError += 1;
+                Interlocked.Increment(ref engine.Context.Counters.HttpCounterAllError);
                 return Task.FromResult<ActionResult<List<SanctionEntryDto>>>(StatusCode(500));
             }
         }
@@ -168,7 +168,7 @@ namespace Jube.App.Controllers.Invoke
                         $" name {model.Name} and value {model.Value}.");
                 }
 
-                engine.Context.Counters.HttpCounterTag += 1;
+                Interlocked.Increment(ref engine.Context.Counters.HttpCounterTag);
 
                 var entityAnalysisModelGuid = Guid.Parse(model.EntityAnalysisModelGuid);
                 foreach (var (_, value) in
@@ -246,7 +246,7 @@ namespace Jube.App.Controllers.Invoke
                     return StatusCode(503);
                 }
 
-                engine.Context.Counters.HttpCounterModel += 1;
+                Interlocked.Increment(ref engine.Context.Counters.HttpCounterModel);
 
                 var ms = new MemoryStream();
                 await Request.Body.CopyToAsync(ms).ConfigureAwait(false);
@@ -260,7 +260,7 @@ namespace Jube.App.Controllers.Invoke
                     {
                         async = Request.RouteValues["async"].AsString()
                             .Equals("Async", StringComparison.OrdinalIgnoreCase);
-                        engine.Context.Counters.HttpCounterModelAsync += 1;
+                        Interlocked.Increment(ref engine.Context.Counters.HttpCounterModelAsync);
                     }
 
                     EntityAnalysisModel entityAnalysisModel = null;
@@ -297,10 +297,10 @@ namespace Jube.App.Controllers.Invoke
                                     ms, Int32.Parse(dynamicEnvironment.AppSettings("MaxInvokeControllerRequestBytes")),
                                     async).ConfigureAwait(false);
 
+                                var bytes = context.EntityAnalysisModelInstanceEntryPayload.ResponseJson.Length > 0 ? context.EntityAnalysisModelInstanceEntryPayload.ResponseJson : context.EntityAnalysisModelInstanceEntryPayload.ArchiveJson;
                                 Response.ContentType = "application/json";
-                                Response.ContentLength = context.JsonResult.Length;
-
-                                return Ok(context.JsonResult);
+                                Response.ContentLength = bytes.Length;
+                                await Response.Body.WriteAsync(bytes);
                             }
                             catch (ExceededBytesException)
                             {
@@ -376,7 +376,7 @@ namespace Jube.App.Controllers.Invoke
                     return StatusCode(503);
                 }
 
-                engine.Context.Counters.HttpCounterExhaustive += 1;
+                Interlocked.Increment(ref engine.Context.Counters.HttpCounterExhaustive);
 
                 var ms = new MemoryStream();
                 await Request.Body.CopyToAsync(ms).ConfigureAwait(false);

@@ -37,12 +37,26 @@ namespace Jube.Data.Query
 
         public async Task<IEnumerable<Dto>> ExecuteAsync(Guid caseWorkflowGuid, CancellationToken token = default)
         {
-            return await dbContext.CaseWorkflowXPath.Where(w
-                    => w.CaseWorkflow.Guid == caseWorkflowGuid &&
-                       w.Active == 1 && (w.Deleted == 0 || w.Deleted == null) &&
-                       w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
-                       && (w.CaseWorkflowXPathRole.RoleRegistry.UserRegistry.Name == userName && w.CaseWorkflowXPathRole.Deleted == 0 || w.CaseWorkflowXPathRole.Deleted == null)
-                       && (w.CaseWorkflow.CaseWorkflowRole.RoleRegistry.UserRegistry.Name == userName && w.CaseWorkflow.CaseWorkflowRole.Deleted == 0 || w.CaseWorkflow.CaseWorkflowRole.Deleted == null)
+            return await dbContext.CaseWorkflowXPath
+                .Where(w =>
+                    w.CaseWorkflow.Guid == caseWorkflowGuid
+                    && w.Active == 1
+                    && (w.Deleted == 0 || w.Deleted == null)
+                    && w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
+                    && dbContext.CaseWorkflowXPathRole
+                        .Where(r => r.CaseWorkflowXPathGuid == w.Guid
+                                    && (r.Deleted == 0 || r.Deleted == null))
+                        .Any(r => dbContext.RoleRegistry
+                            .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                            .Any(rr => dbContext.UserRegistry
+                                .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                    && dbContext.CaseWorkflowRole
+                        .Where(r => r.CaseWorkflowGuid == w.CaseWorkflow.Guid
+                                    && (r.Deleted == 0 || r.Deleted == null))
+                        .Any(r => dbContext.RoleRegistry
+                            .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                            .Any(rr => dbContext.UserRegistry
+                                .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
                 )
                 .Select(s => new Dto
                 {
@@ -57,7 +71,8 @@ namespace Jube.Data.Query
                     BoldLineFormatForeColor = s.BoldLineFormatForeColor,
                     BoldLineFormatBackColor = s.BoldLineFormatBackColor,
                     BoldLineMatched = s.BoldLineMatched == 1
-                }).ToListAsync(token);
+                })
+                .ToListAsync(token);
         }
 
         private string FormatXPath(string xPath)

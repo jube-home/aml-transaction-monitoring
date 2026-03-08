@@ -21,63 +21,62 @@ namespace Jube.Data.Reporting
     using System.Threading.Tasks;
     using Dictionary;
     using Extension;
+    using log4net;
     using Newtonsoft.Json;
-    using Npgsql;
+    using ResilientNpgsqlConnection;
+    using ResilientNpgsqlConnection.Extensions.Jube.ResilientNpgsqlConnection;
 
-    public class Postgres(string connectionString)
+    public class Postgres : IDisposable
     {
+        private readonly ResilientNpgsqlConnection connection;
+        private bool disposed;
+
+        public Postgres(string connectionString, ILog log)
+        {
+            connection = new ResilientNpgsqlConnection(connectionString, log);
+            connection.Open();
+        }
+
+        public void Dispose()
+        {
+            if (disposed)
+            {
+                return;
+            }
+
+            disposed = true;
+            connection.Dispose();
+        }
+
         public async Task<Dictionary<string, string>> IntrospectAsync(string sql, Dictionary<string, object> parameters, CancellationToken token = default)
         {
-            var connection = new NpgsqlConnection(connectionString);
             var values = new Dictionary<string, string>();
-            try
+            var tableName = "Temp_" + Guid.NewGuid().ToString("N");
+
+            var wrapSql = $"select * into TEMPORARY TABLE {tableName} from (select * from ({sql}) b LIMIT 0) c";
+            await using var commandTempTable = new ResilientNpgsqlCommand(connection, wrapSql);
+
+            foreach (var (key, value) in parameters.Where(parameter => sql.Contains("@" + parameter.Key)))
             {
-                await connection.OpenAsync(token).ConfigureAwait(false);
-
-                var tableName = "Temp_" + Guid.NewGuid().ToString("N");
-
-                var wrapSql = $"select * into TEMPORARY TABLE {tableName} from (select * from ({sql}) b LIMIT 0) c";
-                var commandTempTable = new NpgsqlCommand(wrapSql);
-                commandTempTable.Connection = connection;
-
-                foreach (var (key, value) in parameters.Where(parameter => sql.Contains("@" + parameter.Key)))
-                {
-                    commandTempTable.Parameters.AddWithValue(key, value);
-                }
-
-                await commandTempTable.ExecuteNonQueryAsync(token).ConfigureAwait(false);
-
-                var introspectionSql = "SELECT attname, format_type(atttypid, atttypmod) AS type" +
-                                       " FROM pg_attribute" +
-                                       $" WHERE attrelid = '{tableName}'::regclass" +
-                                       " AND attnum > 0 " +
-                                       " AND NOT attisdropped " +
-                                       " ORDER BY attnum";
-
-
-                var command = new NpgsqlCommand(introspectionSql);
-                command.Connection = connection;
-
-                var reader = await command.ExecuteReaderAsync(token).ConfigureAwait(false);
-                while (await reader.ReadAsync(token).ConfigureAwait(false))
-                {
-                    values.Add(reader.GetValue(0).AsString(), reader.GetValue(1).AsString());
-                }
-
-                await reader.CloseAsync().ConfigureAwait(false);
-                await reader.DisposeAsync().ConfigureAwait(false);
-                await command.DisposeAsync().ConfigureAwait(false);
+                commandTempTable.Parameters.AddWithValue(key, value);
             }
-            catch
+
+            await commandTempTable.ExecuteNonQueryAsync(token).ConfigureAwait(false);
+
+            var introspectionSql = "SELECT attname, format_type(atttypid, atttypmod) AS type" +
+                                   " FROM pg_attribute" +
+                                   $" WHERE attrelid = '{tableName}'::regclass" +
+                                   " AND attnum > 0 " +
+                                   " AND NOT attisdropped " +
+                                   " ORDER BY attnum";
+
+
+            await using var command = new ResilientNpgsqlCommand(connection, introspectionSql);
+
+            await using var reader = await command.ExecuteReaderAsync(token).ConfigureAwait(false);
+            while (await reader.ReadAsync(token).ConfigureAwait(false))
             {
-                await connection.CloseAsync().ConfigureAwait(false);
-                await connection.DisposeAsync().ConfigureAwait(false);
-                throw;
-            }
-            finally
-            {
-                await connection.CloseAsync().ConfigureAwait(false);
-                await connection.DisposeAsync().ConfigureAwait(false);
+                values.Add(reader.GetValue(0).AsString(), reader.GetValue(1).AsString());
             }
 
             return values;
@@ -85,32 +84,14 @@ namespace Jube.Data.Reporting
 
         public async Task PrepareAsync(string sql, List<object> parameters, CancellationToken token = default)
         {
-            var connection = new NpgsqlConnection(connectionString);
-            try
-            {
-                await connection.OpenAsync(token).ConfigureAwait(false);
+            await using var command = new ResilientNpgsqlCommand(connection, sql);
 
-                var command = new NpgsqlCommand(sql);
-                command.Connection = connection;
-
-                for (var i = 0; i < parameters.Count; i++)
-                {
-                    command.Parameters.AddWithValue("@" + (i + 1), parameters[i]);
-                }
-
-                await command.PrepareAsync(token).ConfigureAwait(false);
-            }
-            catch
+            for (var i = 0; i < parameters.Count; i++)
             {
-                await connection.CloseAsync().ConfigureAwait(false);
-                await connection.DisposeAsync().ConfigureAwait(false);
-                throw;
+                command.Parameters.AddWithValue("@" + (i + 1), parameters[i]);
             }
-            finally
-            {
-                await connection.CloseAsync().ConfigureAwait(false);
-                await connection.DisposeAsync().ConfigureAwait(false);
-            }
+
+            await command.PrepareAsync(token);
         }
 
         public async Task<List<string>> ExecuteReturnOnlyJsonFromArchiveSampleAsync(int entityAnalysisModelId,
@@ -119,53 +100,32 @@ namespace Jube.Data.Reporting
             int limit, bool mockData, CancellationToken token = default)
         {
             var value = new List<string>();
-            var connection = new NpgsqlConnection(connectionString);
-            try
+
+            var tokens = JsonConvert.DeserializeObject<List<object>>(filterTokens);
+            tokens.Add(entityAnalysisModelId);
+            tokens.Add(limit);
+
+            var tableName = mockData ? "MockArchive" : "Archive";
+
+            var sql =
+                $"select \"Json\" from \"{tableName}\" where \"EntityAnalysisModelId\" = (@{tokens.Count - 1})"
+                + " and " + filterSql
+                + $" order by \"EntityAnalysisModelInstanceEntryGuid\" limit (@{limit})";
+
+            await using var command = new ResilientNpgsqlCommand(connection, sql);
+
+            for (var i = 0; i < tokens.Count; i++)
             {
-                await connection.OpenAsync(token).ConfigureAwait(false);
-
-                var tokens = JsonConvert.DeserializeObject<List<object>>(filterTokens);
-                tokens.Add(entityAnalysisModelId);
-                tokens.Add(limit);
-
-                var tableName = mockData ? "MockArchive" : "Archive";
-
-                var sql =
-                    $"select \"Json\" from \"{tableName}\" where \"EntityAnalysisModelId\" = (@{tokens.Count - 1})"
-                    + " and " + filterSql
-                    + $" order by \"EntityAnalysisModelInstanceEntryGuid\" limit (@{limit})";
-
-                var command = new NpgsqlCommand(sql);
-                command.Connection = connection;
-
-                for (var i = 0; i < tokens.Count; i++)
-                {
-                    command.Parameters.AddWithValue("@" + (i + 1), tokens[i]);
-                }
-
-                await command.PrepareAsync(token).ConfigureAwait(false);
-
-                var reader = await command.ExecuteReaderAsync(token).ConfigureAwait(false);
-
-                while (await reader.ReadAsync(token).ConfigureAwait(false))
-                {
-                    value.Add(reader.GetValue(0).AsString());
-                }
-
-                await reader.CloseAsync().ConfigureAwait(false);
-                await reader.DisposeAsync().ConfigureAwait(false);
-                await command.DisposeAsync().ConfigureAwait(false);
+                command.Parameters.AddWithValue("@" + (i + 1), tokens[i]);
             }
-            catch
+
+            await command.PrepareAsync(token).ConfigureAwait(false);
+
+            await using var reader = await command.ExecuteReaderAsync(token).ConfigureAwait(false);
+
+            while (await reader.ReadAsync(token).ConfigureAwait(false))
             {
-                await connection.CloseAsync().ConfigureAwait(false);
-                await connection.DisposeAsync().ConfigureAwait(false);
-                throw;
-            }
-            finally
-            {
-                await connection.CloseAsync().ConfigureAwait(false);
-                await connection.DisposeAsync().ConfigureAwait(false);
+                value.Add(reader.GetValue(0).AsString());
             }
 
             return value;
@@ -179,78 +139,57 @@ namespace Jube.Data.Reporting
             CancellationToken token = default)
         {
             var value = new List<DictionaryNoBoxing<string>>();
-            var connection = new NpgsqlConnection(connectionString);
-            try
+
+            await using var command = new ResilientNpgsqlCommand(connection, sql);
+            command.Parameters.AddWithValue("adjustedStartDate", adjustedStartDate);
+            command.Parameters.AddWithValue("limit", limit);
+            command.Parameters.AddWithValue("skip", skip);
+
+            await command.PrepareAsync(token).ConfigureAwait(false);
+
+            await using var reader = await command.ExecuteReaderAsync(token).ConfigureAwait(false);
+            while (await reader.ReadAsync(token).ConfigureAwait(false))
             {
-                await connection.OpenAsync(token).ConfigureAwait(false);
-
-                var command = new NpgsqlCommand(sql);
-                command.Connection = connection;
-                command.Parameters.AddWithValue("adjustedStartDate", adjustedStartDate);
-                command.Parameters.AddWithValue("limit", limit);
-                command.Parameters.AddWithValue("skip", skip);
-
-                await command.PrepareAsync(token).ConfigureAwait(false);
-
-                var reader = await command.ExecuteReaderAsync(token).ConfigureAwait(false);
-                while (await reader.ReadAsync(token).ConfigureAwait(false))
+                var dictionaryNoBoxing = new DictionaryNoBoxing<string>();
+                for (var index = 0; index < reader.FieldCount; index++)
                 {
-                    var dictionaryNoBoxing = new DictionaryNoBoxing<string>();
-                    for (var index = 0; index < reader.FieldCount; index++)
+                    if (!dictionaryNoBoxing.ContainsKey(reader.GetName(index)))
                     {
-                        if (!dictionaryNoBoxing.ContainsKey(reader.GetName(index)))
+                        var clrType = reader.GetFieldType(index);
+
+                        if (await reader.IsDBNullAsync(index, token))
                         {
-                            var clrType = reader.GetFieldType(index);
+                            continue;
+                        }
 
-                            if (await reader.IsDBNullAsync(index, token))
-                            {
-                                continue;
-                            }
-
-                            if (clrType == typeof(int))
-                            {
-                                dictionaryNoBoxing.TryAdd(reader.GetName(index), reader.GetValue(index).AsInt());
-                            }
-                            else if (clrType == typeof(decimal) || clrType == typeof(float) || clrType == typeof(double))
-                            {
-                                dictionaryNoBoxing.TryAdd(reader.GetName(index), reader.GetValue(index).AsDouble());
-                            }
-                            else if (clrType == typeof(bool))
-                            {
-                                dictionaryNoBoxing.TryAdd(reader.GetName(index), reader.GetBoolean(index));
-                            }
-                            else if (clrType == typeof(string))
-                            {
-                                dictionaryNoBoxing.TryAdd(reader.GetName(index), reader.GetValue(index).AsString());
-                            }
-                            else if (clrType == typeof(DateTime))
-                            {
-                                dictionaryNoBoxing.TryAdd(reader.GetName(index), reader.GetValue(index).AsDateTime());
-                            }
-                            else if (clrType == typeof(Guid))
-                            {
-                                dictionaryNoBoxing.TryAdd(reader.GetName(index), reader.GetValue(index).AsGuid());
-                            }
+                        if (clrType == typeof(int))
+                        {
+                            dictionaryNoBoxing.TryAdd(reader.GetName(index), reader.GetValue(index).AsInt());
+                        }
+                        else if (clrType == typeof(decimal) || clrType == typeof(float) || clrType == typeof(double))
+                        {
+                            dictionaryNoBoxing.TryAdd(reader.GetName(index), reader.GetValue(index).AsDouble());
+                        }
+                        else if (clrType == typeof(bool))
+                        {
+                            dictionaryNoBoxing.TryAdd(reader.GetName(index), reader.GetBoolean(index));
+                        }
+                        else if (clrType == typeof(string))
+                        {
+                            dictionaryNoBoxing.TryAdd(reader.GetName(index), reader.GetValue(index).AsString());
+                        }
+                        else if (clrType == typeof(DateTime))
+                        {
+                            dictionaryNoBoxing.TryAdd(reader.GetName(index), reader.GetValue(index).AsDateTime());
+                        }
+                        else if (clrType == typeof(Guid))
+                        {
+                            dictionaryNoBoxing.TryAdd(reader.GetName(index), reader.GetValue(index).AsGuid());
                         }
                     }
-
-                    value.Add(dictionaryNoBoxing);
                 }
 
-                await reader.CloseAsync().ConfigureAwait(false);
-                await reader.DisposeAsync().ConfigureAwait(false);
-                await command.DisposeAsync().ConfigureAwait(false);
-            }
-            catch
-            {
-                await connection.CloseAsync().ConfigureAwait(false);
-                await connection.DisposeAsync().ConfigureAwait(false);
-                throw;
-            }
-            finally
-            {
-                await connection.CloseAsync().ConfigureAwait(false);
-                await connection.DisposeAsync().ConfigureAwait(false);
+                value.Add(dictionaryNoBoxing);
             }
 
             return value;
@@ -260,50 +199,29 @@ namespace Jube.Data.Reporting
             Dictionary<string, object> parameters, CancellationToken token = default)
         {
             var value = new List<IDictionary<string, object>>();
-            var connection = new NpgsqlConnection(connectionString);
-            try
+
+            await using var command = new ResilientNpgsqlCommand(connection, sql);
+
+            foreach (var (key, o) in parameters)
             {
-                await connection.OpenAsync(token).ConfigureAwait(false);
+                command.Parameters.AddWithValue("@" + key, o);
+            }
 
-                var command = new NpgsqlCommand(sql);
-                command.Connection = connection;
+            await command.PrepareAsync(token).ConfigureAwait(false);
 
-                foreach (var (key, o) in parameters)
+            await using var reader = await command.ExecuteReaderAsync(token).ConfigureAwait(false);
+            while (await reader.ReadAsync(token).ConfigureAwait(false))
+            {
+                IDictionary<string, object> eo = new ExpandoObject();
+                for (var index = 0; index < reader.FieldCount; index++)
                 {
-                    command.Parameters.AddWithValue("@" + key, o);
-                }
-
-                await command.PrepareAsync(token).ConfigureAwait(false);
-
-                var reader = await command.ExecuteReaderAsync(token).ConfigureAwait(false);
-                while (await reader.ReadAsync(token).ConfigureAwait(false))
-                {
-                    IDictionary<string, object> eo = new ExpandoObject();
-                    for (var index = 0; index < reader.FieldCount; index++)
+                    if (!eo.ContainsKey(reader.GetName(index)))
                     {
-                        if (!eo.ContainsKey(reader.GetName(index)))
-                        {
-                            eo.Add(reader.GetName(index), await reader.IsDBNullAsync(index, token) ? null : reader.GetValue(index));
-                        }
+                        eo.Add(reader.GetName(index), await reader.IsDBNullAsync(index, token) ? null : reader.GetValue(index));
                     }
-
-                    value.Add(eo);
                 }
 
-                await reader.CloseAsync().ConfigureAwait(false);
-                await reader.DisposeAsync().ConfigureAwait(false);
-                await command.DisposeAsync().ConfigureAwait(false);
-            }
-            catch
-            {
-                await connection.CloseAsync().ConfigureAwait(false);
-                await connection.DisposeAsync().ConfigureAwait(false);
-                throw;
-            }
-            finally
-            {
-                await connection.CloseAsync().ConfigureAwait(false);
-                await connection.DisposeAsync().ConfigureAwait(false);
+                value.Add(eo);
             }
 
             return value;
@@ -313,50 +231,29 @@ namespace Jube.Data.Reporting
             List<object> parameters, CancellationToken token = default)
         {
             var value = new List<IDictionary<string, object>>();
-            var connection = new NpgsqlConnection(connectionString);
-            try
+
+            await using var command = new ResilientNpgsqlCommand(connection, sql);
+
+            for (var i = 0; i < parameters.Count; i++)
             {
-                await connection.OpenAsync(token).ConfigureAwait(false);
+                command.Parameters.AddWithValue("@" + (i + 1), parameters[i]);
+            }
 
-                var command = new NpgsqlCommand(sql);
-                command.Connection = connection;
+            await command.PrepareAsync(token).ConfigureAwait(false);
 
-                for (var i = 0; i < parameters.Count; i++)
+            await using var reader = await command.ExecuteReaderAsync(token).ConfigureAwait(false);
+            while (await reader.ReadAsync(token).ConfigureAwait(false))
+            {
+                IDictionary<string, object> eo = new ExpandoObject();
+                for (var index = 0; index < reader.FieldCount; index++)
                 {
-                    command.Parameters.AddWithValue("@" + (i + 1), parameters[i]);
-                }
-
-                await command.PrepareAsync(token).ConfigureAwait(false);
-
-                var reader = await command.ExecuteReaderAsync(token).ConfigureAwait(false);
-                while (await reader.ReadAsync(token).ConfigureAwait(false))
-                {
-                    IDictionary<string, object> eo = new ExpandoObject();
-                    for (var index = 0; index < reader.FieldCount; index++)
+                    if (!eo.ContainsKey(reader.GetName(index)))
                     {
-                        if (!eo.ContainsKey(reader.GetName(index)))
-                        {
-                            eo.Add(reader.GetName(index), await reader.IsDBNullAsync(index, token) ? null : reader.GetValue(index));
-                        }
+                        eo.Add(reader.GetName(index), await reader.IsDBNullAsync(index, token) ? null : reader.GetValue(index));
                     }
-
-                    value.Add(eo);
                 }
 
-                await reader.CloseAsync().ConfigureAwait(false);
-                await reader.DisposeAsync().ConfigureAwait(false);
-                await command.DisposeAsync().ConfigureAwait(false);
-            }
-            catch
-            {
-                await connection.CloseAsync().ConfigureAwait(false);
-                await connection.DisposeAsync().ConfigureAwait(false);
-                throw;
-            }
-            finally
-            {
-                await connection.CloseAsync().ConfigureAwait(false);
-                await connection.DisposeAsync().ConfigureAwait(false);
+                value.Add(eo);
             }
 
             return value;

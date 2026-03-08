@@ -1,6 +1,7 @@
 ﻿@using System.Diagnostics
 @using Jube.App.Code
 @using Jube.DynamicEnvironment
+@using log4net
 @* Copyright (C) 2022-present Jube Holdings Limited
  *
  * This file is part of Jube™ software.
@@ -15,6 +16,7 @@
  *@
 
 @inject DynamicEnvironment DynamicEnvironment
+@inject ILog Log
 @{
     var landlord = DynamicEnvironment.AppSettings("Landlord").Equals("True", StringComparison.OrdinalIgnoreCase);
 }
@@ -49,7 +51,7 @@
     }
     else
     {
-        var permissionValidation = new PermissionValidation(DynamicEnvironment.AppSettings("ConnectionString"), User.Identity?.Name);
+        var permissionValidation = new PermissionValidation(DynamicEnvironment.AppSettings("ConnectionString"), User.Identity?.Name, Log);
         landlord = permissionValidation.Landlord;
 
         <ul id="menu">

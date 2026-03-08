@@ -51,6 +51,9 @@ namespace Jube.DynamicEnvironment
                     "ReportConnectionString", null
                 },
                 {
+                    "MigrationConnectionString", null
+                },
+                {
                     "EnableSearchKeyCache", "True"
                 },
                 {
@@ -267,7 +270,7 @@ namespace Jube.DynamicEnvironment
                     "Log4NetLogMaxSizeRollBackups", "100"
                 },
                 {
-                    "Log4NetLogLevel", "ERROR"
+                    "Log4NetLogLevel", "WARN"
                 },
                 {
                     "LocalCache", "True"
@@ -304,6 +307,9 @@ namespace Jube.DynamicEnvironment
                 },
                 {
                     "PartialResponseMessageSerialisation", "True"
+                },
+                {
+                    "RedisBackplane", "False"
                 }
             };
 

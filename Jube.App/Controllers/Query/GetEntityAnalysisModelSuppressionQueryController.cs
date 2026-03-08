@@ -43,14 +43,11 @@ namespace Jube.App.Controllers.Query
             if (httpContextAccessor.HttpContext?.User.Identity != null)
             {
                 userName = httpContextAccessor.HttpContext.User.Identity.Name;
+                this.log = log;
             }
 
-            this.log = log;
-
-            dbContext =
-                DataConnectionDbContext.GetDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
-            permissionValidation = new PermissionValidation(dbContext, userName);
-
+            dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"), log);
+            permissionValidation = new PermissionValidation(dbContext, userName, log);
             query = new GetEntityAnalysisModelSuppressionQuery(dbContext, userName);
         }
 

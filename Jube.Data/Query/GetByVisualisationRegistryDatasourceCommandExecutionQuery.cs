@@ -18,13 +18,15 @@ namespace Jube.Data.Query
     using System.Threading;
     using System.Threading.Tasks;
     using Context;
+    using log4net;
     using Reporting;
     using Repository;
 
     public class GetByVisualisationRegistryDatasourceCommandExecutionQuery(
         DbContext dbContext,
-        string connectionString,
-        string user)
+        string user,
+        ILog log,
+        string reportConnectionString = null)
     {
         public async Task<List<IDictionary<string, object>>> ExecuteAsync(int id, Dictionary<string, object> parametersByName, CancellationToken token = default)
         {
@@ -93,7 +95,7 @@ namespace Jube.Data.Query
                 }
             }
 
-            var postgres = new Postgres(connectionString);
+            var postgres = new Postgres(reportConnectionString ?? dbContext.ConnectionString, log);
             return await postgres.ExecuteByNamedParametersAsync(visualisationRegistryDatasource.Command,
                 mergedParametersByName, token).ConfigureAwait(false);
         }

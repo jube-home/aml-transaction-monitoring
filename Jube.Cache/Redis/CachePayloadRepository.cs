@@ -32,14 +32,16 @@ namespace Jube.Cache.Redis
 
     public class CachePayloadRepository : ICachePayloadRepository
     {
+        private const int HotKeysBatchSize = 100;
+        private const int JournalBatchSize = 100;
         private readonly CommandFlags commandFlag;
         private readonly ConnectionMultiplexer connectionMultiplexer;
-        private readonly string postgresConnectionString;
         private readonly bool fill;
         private readonly bool localCache;
         private readonly long localCacheBytes;
         private readonly ILog log;
         private readonly MessagePackSerializerOptions messagePackSerializerOptions;
+        private readonly string postgresConnectionString;
         private readonly bool publishSubscribe;
         private readonly IDatabaseAsync redisDatabase;
         private readonly bool storePayloadCountsAndBytes;
@@ -49,9 +51,6 @@ namespace Jube.Cache.Redis
         private ConcurrentDictionary<string, LocalCacheInstanceKey> localCacheInstanceKeys;
         private LruCacheConcurrentSizedDictionary<string, byte[]> lruCacheConcurrentSizedDictionary;
         private Timer timer;
-
-        private const int HotKeysBatchSize = 100;
-        private const int JournalBatchSize = 100;
 
         private CachePayloadRepository(ConnectionMultiplexer connectionMultiplexer, IDatabaseAsync redisDatabase,
             string postgresConnectionString, ILog log,
@@ -199,7 +198,7 @@ namespace Jube.Cache.Redis
                 var expiredSortedSetMinTimestamp = (long)expiredSortedSetEntries.FirstOrDefault().Score;
                 var expiredSortedSetMaxTimestamp = (long)expiredSortedSetEntries.LastOrDefault().Score;
 
-                var dbContext = DataConnectionDbContext.GetDbContextDataConnection(postgresConnectionString);
+                var dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(postgresConnectionString, log);
                 try
                 {
                     var cachePayloadRemovalBatchRepository = new CachePayloadRemovalBatchRepository(dbContext);
@@ -380,7 +379,7 @@ namespace Jube.Cache.Redis
                     return;
                 }
 
-                var dbContext = DataConnectionDbContext.GetDbContextDataConnection(postgresConnectionString);
+                var dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(postgresConnectionString, log);
 
                 try
                 {
@@ -566,7 +565,7 @@ namespace Jube.Cache.Redis
 
                     var hashSetKeyEntry = GetLocalCacheEntry(String.Join(":", splits[3..]));
 
-                    Interlocked.Add(ref hashSetKeyEntry.HashRemoveSubscription, 1);
+                    Interlocked.Increment(ref hashSetKeyEntry.HashRemoveSubscription);
 
                     DeleteFromLocalCache(hashSetKeyEntry, value.ToString(), true);
                 });
@@ -577,14 +576,14 @@ namespace Jube.Cache.Redis
         {
             var localCacheForPayloadKey = GetLocalCacheEntry(key);
 
-            Interlocked.Add(ref localCacheForPayloadKey.HashSetSubscriptions, 1);
+            Interlocked.Increment(ref localCacheForPayloadKey.HashSetSubscriptions);
 
             var sw = new Stopwatch();
             sw.Start();
 
             AddToLruCacheConcurrentSizedDictionaryForLocalCacheInstanceKey(localCacheForPayloadKey, splits[^1], value);
 
-            Interlocked.Add(ref localCacheForPayloadKey.UnpackResponseTime, sw.ElapsedTicks);
+            Interlocked.Add(ref localCacheForPayloadKey.UnpackResponseTime, (int)(sw.ElapsedTicks * 1000000 / Stopwatch.Frequency));
 
             sw.Stop();
         }
@@ -596,7 +595,7 @@ namespace Jube.Cache.Redis
 
         private async Task CreateLocalCacheInstanceAsync(CancellationToken token = default)
         {
-            var localCacheInstanceRepository = new LocalCacheInstanceRepository(DataConnectionDbContext.GetDbContextDataConnection(postgresConnectionString));
+            var localCacheInstanceRepository = new LocalCacheInstanceRepository(DataConnectionDbContext.GetResilientDbContextDataConnection(postgresConnectionString, log));
 
             localCacheInstance = await localCacheInstanceRepository.InsertAsync(new LocalCacheInstance
             {
@@ -620,7 +619,7 @@ namespace Jube.Cache.Redis
         {
             try
             {
-                var dbContext = DataConnectionDbContext.GetDbContextDataConnection(postgresConnectionString);
+                var dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(postgresConnectionString, log);
                 try
                 {
                     var localCacheInstanceRepository = new LocalCacheInstanceRepository(dbContext);
@@ -910,18 +909,18 @@ namespace Jube.Cache.Redis
 
             if (subscription)
             {
-                Interlocked.Add(ref localCacheInstanceKey.HashRemoveSubscription, 1);
+                Interlocked.Increment(ref localCacheInstanceKey.HashRemoveSubscription);
                 if (removed)
                 {
-                    Interlocked.Add(ref localCacheInstanceKey.HashRemoveSubscription, 1);
+                    Interlocked.Increment(ref localCacheInstanceKey.HashRemoveSubscription);
                 }
             }
             else
             {
-                Interlocked.Add(ref localCacheInstanceKey.HashRemove, 1);
+                Interlocked.Increment(ref localCacheInstanceKey.HashRemove);
                 if (removed)
                 {
-                    Interlocked.Add(ref localCacheInstanceKey.HashRemoveMiss, 1);
+                    Interlocked.Increment(ref localCacheInstanceKey.HashRemoveMiss);
                 }
             }
         }
@@ -960,7 +959,7 @@ namespace Jube.Cache.Redis
 
                 foreach (var sortedSetKey in sortedSetKeys)
                 {
-                    Interlocked.Add(ref localCacheForPayloadKey.Requests, 1);
+                    Interlocked.Increment(ref localCacheForPayloadKey.Requests);
 
                     if (localCache)
                     {
@@ -972,7 +971,7 @@ namespace Jube.Cache.Redis
 
                             keyToDocumentMap[sortedSetKey.ToString()] = Unpack(dictionaryNoBoxing);
 
-                            Interlocked.Add(ref localCacheForPayloadKey.UnpackResponseTime, sw.ElapsedTicks);
+                            Interlocked.Add(ref localCacheForPayloadKey.UnpackResponseTime, (int)(sw.ElapsedTicks * 1000000 / Stopwatch.Frequency));
 
                             sw.Stop();
 
@@ -980,7 +979,7 @@ namespace Jube.Cache.Redis
                         }
                     }
 
-                    Interlocked.Add(ref localCacheForPayloadKey.Misses, 1);
+                    Interlocked.Increment(ref localCacheForPayloadKey.Misses);
                     missedSortedSetKeys.Add(sortedSetKey);
                 }
 
@@ -998,17 +997,17 @@ namespace Jube.Cache.Redis
                         {
                             if (!redisKeyPayloadHashKeyValues[i].HasValue)
                             {
-                                Interlocked.Add(ref localCacheForPayloadKey.DualMiss, 1);
+                                Interlocked.Increment(ref localCacheForPayloadKey.DualMiss);
                                 continue;
                             }
 
-                            Interlocked.Add(ref localCacheForPayloadKey.MissRemoteResponseTime, sw.ElapsedTicks);
+                            Interlocked.Add(ref localCacheForPayloadKey.MissRemoteResponseTime, (int)(sw.ElapsedTicks * 1000000 / Stopwatch.Frequency));
 
                             sw.Reset();
 
                             var unpacked = Unpack(redisKeyPayloadHashKeyValues[i]);
 
-                            Interlocked.Add(ref localCacheForPayloadKey.UnpackResponseTime, sw.ElapsedTicks);
+                            Interlocked.Add(ref localCacheForPayloadKey.UnpackResponseTime, (int)(sw.ElapsedTicks * 1000000 / Stopwatch.Frequency));
 
                             keyToDocumentMap[missedSortedSetKeys[i].ToString()] = unpacked;
 
@@ -1074,17 +1073,17 @@ namespace Jube.Cache.Redis
         }
 
 
-        async Task BatchSortedSetRemoveAsync(IDatabaseAsync db, RedisKey key, IEnumerable<RedisValue> values)
+        private async Task BatchSortedSetRemoveAsync(IDatabaseAsync db, RedisKey key, IEnumerable<RedisValue> values)
         {
             const int batchSize = 1000;
             var valuesArray = values.ToArray();
 
-            for (int i = 0; i < valuesArray.Length; i += batchSize)
+            for (var i = 0; i < valuesArray.Length; i += batchSize)
             {
                 var batch = valuesArray.Skip(i).Take(batchSize).ToArray();
                 await db.SortedSetRemoveAsync(key, batch).ConfigureAwait(false);
-                await Task.Yield(); // optional, yields to allow other async work
-                await Task.Delay(1);// optional, tiny delay to reduce bursts
+                await Task.Yield();
+                await Task.Delay(1);
             }
         }
     }

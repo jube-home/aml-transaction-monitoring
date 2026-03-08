@@ -6,12 +6,13 @@ namespace Jube.Service.Authentication
     using Data.Security;
     using Dto.Authentication;
     using Exceptions.Authentication;
+    using log4net;
 
     public class SandboxRegistration(DbContext dbContext)
     {
         public async Task<SandboxRegistrationResponseDto> RegisterAsync(
             SandboxRegistrationRequestDto sandboxRegistrationRequestDto,
-            string passwordHashingKey, CancellationToken token = default)
+            string passwordHashingKey, ILog log, CancellationToken token = default)
         {
             if (sandboxRegistrationRequestDto.UserName == null)
             {
@@ -71,10 +72,10 @@ namespace Jube.Service.Authentication
                 insertVisualisationRegistryExampleVisualisationId, userRegistry.Name, token);
 
             await InsertVisualisationRegistryDatasourceExampleEmbeddedVisualisationAsync(
-                insertVisualisationRegistryExampleEmbeddedVisualisation.Id, userRegistry.Name).ConfigureAwait(false);
+                insertVisualisationRegistryExampleEmbeddedVisualisation.Id, userRegistry.Name, log).ConfigureAwait(false);
 
             await InsertVisualisationRegistryDatasourceExampleVisualisationAsync(
-                insertVisualisationRegistryExampleVisualisationId, userRegistry.Name).ConfigureAwait(false);
+                insertVisualisationRegistryExampleVisualisationId, userRegistry.Name, log).ConfigureAwait(false);
 
             var caseWorkflow = await InsertCaseWorkflowAsync(entityAnalysisModel.Id,
                 insertVisualisationRegistryExampleEmbeddedVisualisation.Guid, userRegistry.Name, token);
@@ -1154,7 +1155,7 @@ namespace Jube.Service.Authentication
         }
 
         private async Task InsertVisualisationRegistryDatasourceExampleVisualisationAsync(int visualisationRegistryId,
-            string userName)
+            string userName, ILog log)
         {
             var visualisationRegistryDatasourceRepository =
                 new VisualisationRegistryDatasourceRepository(dbContext, userName);
@@ -1196,7 +1197,7 @@ namespace Jube.Service.Authentication
                                     "    }" + Environment.NewLine +
                                     "})" + Environment.NewLine,
                 Guid = Guid.NewGuid()
-            }).ConfigureAwait(false);
+            }, log).ConfigureAwait(false);
 
             await visualisationRegistryDatasourceRepository.InsertWithValidationAsync(new VisualisationRegistryDatasource
             {
@@ -1249,11 +1250,11 @@ namespace Jube.Service.Authentication
                                     "    }" + Environment.NewLine +
                                     "})" + Environment.NewLine,
                 Guid = Guid.NewGuid()
-            }).ConfigureAwait(false);
+            }, log).ConfigureAwait(false);
         }
 
         private async Task InsertVisualisationRegistryDatasourceExampleEmbeddedVisualisationAsync(int visualisationRegistryId,
-            string userName)
+            string userName, ILog log)
         {
             var visualisationRegistryDatasourceRepository =
                 new VisualisationRegistryDatasourceRepository(dbContext, userName);
@@ -1293,7 +1294,7 @@ namespace Jube.Service.Authentication
                                     "    }" + Environment.NewLine +
                                     "})" + Environment.NewLine,
                 Guid = Guid.NewGuid()
-            }).ConfigureAwait(false);
+            }, log).ConfigureAwait(false);
 
             await visualisationRegistryDatasourceRepository.InsertWithValidationAsync(new VisualisationRegistryDatasource
             {
@@ -1344,7 +1345,7 @@ namespace Jube.Service.Authentication
                                     "    }" + Environment.NewLine +
                                     "})" + Environment.NewLine,
                 Guid = Guid.NewGuid()
-            }).ConfigureAwait(false);
+            }, log).ConfigureAwait(false);
         }
 
         private async Task<int> InsertVisualisationRegistryExampleVisualisationAsync(string userName, CancellationToken token = default)
@@ -1851,7 +1852,7 @@ namespace Jube.Service.Authentication
             var entityAnalysisModelRequestXPathRepository =
                 new EntityAnalysisModelRequestXPathRepository(dbContext, userName);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "AccountId",
@@ -1870,7 +1871,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "TxnDateTime",
@@ -1884,7 +1885,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "Currency",
@@ -1898,7 +1899,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "ResponseCode",
@@ -1912,7 +1913,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "CurrencyAmount",
@@ -1926,7 +1927,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "SettlementAmount",
@@ -1940,7 +1941,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "AccountCurrency",
@@ -1954,7 +1955,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "ChannelId",
@@ -1968,7 +1969,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "AppVersionCode",
@@ -1982,7 +1983,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "ServiceCode",
@@ -1996,7 +1997,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "System",
@@ -2010,7 +2011,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "Brand",
@@ -2024,7 +2025,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "Model",
@@ -2038,7 +2039,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "AccountLongitude",
@@ -2052,7 +2053,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "AccountLatitude",
@@ -2066,7 +2067,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "OS",
@@ -2080,7 +2081,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "Resolution",
@@ -2094,7 +2095,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "DebuggerAttached",
@@ -2108,7 +2109,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "SimulatorAttached",
@@ -2122,7 +2123,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "Jailbreak",
@@ -2136,7 +2137,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "MAC",
@@ -2150,7 +2151,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "ToAccountId",
@@ -2164,7 +2165,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "ToAccountExternalRef",
@@ -2178,7 +2179,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "TwoFATypeId",
@@ -2192,7 +2193,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "TwoFAResponseId",
@@ -2206,7 +2207,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "Storage",
@@ -2220,7 +2221,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "TransactionExternalResponseId",
@@ -2234,7 +2235,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "FingerprintHash",
@@ -2248,7 +2249,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "BusinessModel",
@@ -2262,7 +2263,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "AmountEUR",
@@ -2276,7 +2277,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "AmountUSD",
@@ -2289,7 +2290,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "AmountUSDRate",
@@ -2303,7 +2304,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "AmountGBP",
@@ -2317,7 +2318,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "AmountGBPRate",
@@ -2331,7 +2332,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "Is3D",
@@ -2345,7 +2346,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "OriginalAmount",
@@ -2359,7 +2360,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "OriginalCurrency",
@@ -2373,7 +2374,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "Email",
@@ -2387,7 +2388,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "CreditCardHash",
@@ -2401,7 +2402,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "AcquirerBankName",
@@ -2415,7 +2416,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "ActionDate",
@@ -2429,7 +2430,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "APMAccountId",
@@ -2443,7 +2444,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "BankId",
@@ -2457,7 +2458,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "BillingAddress",
@@ -2471,7 +2472,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "BillingCity",
@@ -2485,7 +2486,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "BillingCountry",
@@ -2499,7 +2500,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "BillingFirstName",
@@ -2513,7 +2514,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "BillingLastName",
@@ -2527,7 +2528,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "BillingPhone",
@@ -2541,7 +2542,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "BillingState",
@@ -2555,7 +2556,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "BillingZip",
@@ -2569,7 +2570,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "IsAPM",
@@ -2583,7 +2584,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "IsCascaded",
@@ -2597,7 +2598,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "IsCredited",
@@ -2611,7 +2612,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "IsCurrencyConverted",
@@ -2625,7 +2626,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "IsModification",
@@ -2639,7 +2640,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "IsRebill",
@@ -2653,7 +2654,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "TransactionTypeId",
@@ -2667,7 +2668,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "TransactionResultId",
@@ -2681,7 +2682,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "IP",
@@ -2695,7 +2696,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "AmountEURRate",
@@ -2709,7 +2710,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "DeviceId",
@@ -2726,7 +2727,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "IsModified",
@@ -2740,7 +2741,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "OrderId",
@@ -2754,7 +2755,7 @@ namespace Jube.Service.Authentication
                 Guid = Guid.NewGuid()
             }, token);
 
-            await entityAnalysisModelRequestXPathRepository.InsertAsync(new EntityAnalysisModelRequestXpath
+            await entityAnalysisModelRequestXPathRepository.InsertIncrementCacheIndexIdAsync(new EntityAnalysisModelRequestXpath
             {
                 EntityAnalysisModelId = entityAnalysisModelId,
                 Name = "TxnId",

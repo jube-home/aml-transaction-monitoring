@@ -26,8 +26,7 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters.Case
             EntityAnalysisModelInstanceEntryPayload payload = null,
             CancellationToken token = default)
         {
-            var dbContext =
-                DataConnectionDbContext.GetDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
+            var dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"), log);
 
             try
             {

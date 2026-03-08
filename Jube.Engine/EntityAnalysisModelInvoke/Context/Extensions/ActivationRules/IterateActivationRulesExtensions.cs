@@ -16,6 +16,7 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ActivationRul
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
     using Cache;
     using Data.Poco;
@@ -25,6 +26,7 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ActivationRul
     using RabbitMQ.Client;
     using ReflectionHelpers;
     using EntityAnalysisModel=EntityAnalysisModelManager.EntityAnalysisModel.EntityAnalysisModel;
+    using EntityAnalysisModelActivationRule=EntityAnalysisModelManager.EntityAnalysisModel.Models.Models.EntityAnalysisModelActivationRule;
 
     public static class IterateActivationRulesExtensions
     {
@@ -51,8 +53,7 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ActivationRul
 
                         if (context.Log.IsInfoEnabled)
                         {
-                            context.Log.Info(
-                                $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} activation rule {evaluateActivationRule.Id} is suppressed at the model level or has exceeded response elevation counter at {context.EntityAnalysisModel.ConcurrentQueues.BillingResponseElevationBalanceEntries.Count} or {context.EntityAnalysisModel.Counters.BillingResponseElevationBalance}.");
+                            context.Log.Info($"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} activation rule {evaluateActivationRule.Id} is suppressed at the model level or has exceeded response elevation counter at {context.EntityAnalysisModel.ConcurrentQueues.ResponseElevationEntries.Count}.");
                         }
                     }
                     else
@@ -98,6 +99,8 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ActivationRul
 
                         continue;
                     }
+
+                    UpdateEvaluationCount(evaluateActivationRule);
 
                     if (context.Log.IsInfoEnabled)
                     {
@@ -161,6 +164,8 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ActivationRul
                         continue;
                     }
 
+                    UpdateActivationCounter(evaluateActivationRule);
+
                     if (context.EntityAnalysisModelInstanceEntryPayload.Activation.ContainsKey(evaluateActivationRule.Name))
                     {
                         if (context.Log.IsInfoEnabled)
@@ -209,7 +214,7 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ActivationRul
                     context.ActivationRuleCountsAndArchiveHighWatermark(evaluateActivationRule, suppressed, ref activationRuleCount,
                         ref prevailingActivationRuleId, ref prevailingActivationRuleName);
 
-                    context.ActivationRuleActivationWatcher(evaluateActivationRule, suppressed, rabbitMqChannel);
+                    await context.ActivationRuleActivationWatcherAsync(evaluateActivationRule, suppressed, rabbitMqChannel);
 
                     createCase ??= context.ActivationRuleCreateCaseObject(evaluateActivationRule, suppressed);
 
@@ -223,6 +228,19 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ActivationRul
             }
 
             return (activationRuleCount, createCase, prevailingActivationRuleId);
+        }
+        
+        private static void UpdateActivationCounter(EntityAnalysisModelActivationRule evaluateActivationRule)
+        {
+
+            Interlocked.Increment(ref evaluateActivationRule.ActivationCounter);
+            evaluateActivationRule.ActivationCounterDate = DateTime.Now;
+        }
+
+        private static void UpdateEvaluationCount(EntityAnalysisModelActivationRule evaluateActivationRule)
+        {
+
+            Interlocked.Increment(ref evaluateActivationRule.EvaluationCounter);
         }
     }
 }

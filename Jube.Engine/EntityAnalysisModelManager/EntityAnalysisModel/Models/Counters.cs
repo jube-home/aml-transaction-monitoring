@@ -17,30 +17,25 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Models
 
     public class Counters
     {
-        public double BillingResponseElevationBalance { get; set; }
-        public double BillingResponseElevationCount { get; set; }
-        public char MaxResponseElevationInterval { get; set; }
-        public int MaxResponseElevationValue { get; set; }
-        public int MaxResponseElevationThreshold { get; set; }
-        public double MaxResponseElevation { get; set; }
-        public int ModelInvokeCounter { get; set; }
-        public int ModelInvokeGatewayCounter { get; set; }
-        public int ModelResponseElevationCounter { get; set; }
-        public double ModelResponseElevationSum { get; set; }
-        public int BalanceLimitCounter { get; set; }
-        public int ResponseElevationValueLimitCounter { get; set; }
-        public int ResponseElevationFrequencyLimitCounter { get; set; }
-        public int ResponseElevationValueGatewayLimitCounter { get; set; }
-        public int ResponseElevationBillingSumLimitCounter { get; set; }
-        public int ParentResponseElevationValueLimitCounter { get; set; }
-        public int ParentBalanceLimitCounter { get; set; }
+        public int ActivationWatcherCount;
+        public double ActivationWatcherSample;
+        public char MaxActivationWatcherInterval;
+        public double MaxActivationWatcherThreshold;
+        public int MaxActivationWatcherValue;
+        public double MaxResponseElevation;
+        public char MaxResponseElevationInterval;
+        public int MaxResponseElevationThreshold;
+        public int MaxResponseElevationValue;
+        public int ModelInvokeCounter;
+        public int ModelInvokeGatewayCounter;
+        public int ModelResponseElevationCounter;
+        public long ModelTotalResponseTime;
+
+        public int ResponseElevationCount;
+        public int ResponseElevationFrequencyLimitCounter;
+        public int ResponseElevationValueLimitCounter;
         public DateTime LastCountersChecked { get; set; }
         public DateTime LastCountersWritten { get; set; }
         public DateTime LastModelInvokeCountersWritten { get; set; }
-        public int ActivationWatcherCount { get; set; }
-        public int MaxActivationWatcherValue { get; set; }
-        public double MaxActivationWatcherThreshold { get; set; }
-        public char MaxActivationWatcherInterval { get; set; }
-        public double ActivationWatcherSample { get; set; }
     }
 }

@@ -20,13 +20,12 @@ namespace Jube.Data.Query
     using System.Threading;
     using System.Threading.Tasks;
     using Context;
+    using log4net;
     using Newtonsoft.Json.Linq;
     using Reporting;
 
-    public class GetCaseJournalQuery(DbContext dbContext, string user)
+    public class GetCaseJournalQuery(DbContext dbContext, string user, ILog log, string reportConnectionString = null)
     {
-        private readonly string connectionString = dbContext.ConnectionString;
-
         public async Task<List<Dictionary<string, object>>> ExecuteAsync(string key, string keyValue, Guid caseWorkflowGuid,
             int limit,
             int activationRuleCount, double responseElevation, CancellationToken token = default)
@@ -43,11 +42,14 @@ namespace Jube.Data.Query
                                "from \"Archive\" a " +
                                "inner join \"EntityAnalysisModel\" m on m.\"Id\" = a.\"EntityAnalysisModelId\" " +
                                "inner join \"TenantRegistry\" t on t.\"Id\" = m.\"TenantRegistryId\" " +
-                               "inner join \"UserInTenant\" u on u.\"TenantRegistryId\" = t.\"Id\" " +
                                "left join (select \"Id\", \"Name\" from \"EntityAnalysisModelActivationRule\") r on r.\"Id\" = a.\"EntityAnalysisModelActivationRuleId\" " +
-                               "where u.\"User\" = (@1) " +
+                               "where exists ( " +
+                               "    select 1 from \"UserInTenant\" u " +
+                               "    where u.\"TenantRegistryId\" = t.\"Id\" " +
+                               "    and u.\"User\" = (@1) " +
+                               ") " +
                                "and a.\"Json\" -> 'payload' ->> (@2) = (@3) " +
-                               "and a.\"ResponseElevation\" >= (@4)" +
+                               "and a.\"ResponseElevation\" >= (@4) " +
                                "and a.\"ActivationRuleCount\" >= (@5) " +
                                "order by a.\"Id\" desc " +
                                "limit (@6)";
@@ -62,7 +64,7 @@ namespace Jube.Data.Query
                 limit
             };
 
-            var postgres = new Postgres(connectionString);
+            var postgres = new Postgres(reportConnectionString ?? dbContext.ConnectionString, log);
 
             await postgres.PrepareAsync(sql, tokens, token).ConfigureAwait(false);
 

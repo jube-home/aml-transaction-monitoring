@@ -41,6 +41,7 @@ var maxResponseElevation = $("#MaxResponseElevation").kendoNumericTextBox({
 if (typeof id === "undefined") {
     initBuilderCoder(2, GetSelectedParentID());
     ReadyNew();
+    OverrideSetTable();
 } else {
     $.get(endpoint + "/" + id,
         function (data) {
@@ -57,9 +58,29 @@ if (typeof id === "undefined") {
             maxResponseElevation.data("kendoNumericTextBox").value(data.maxResponseElevation);
             gatewaySample.data("kendoSlider").value(data.gatewaySample);
 
+            const percent = data.evaluationCounter === 0
+                ? 0
+                : Math.round((data.activationCounter / data.evaluationCounter) * 100);
+
+            $("#Counters").html(`${data.activationCounter} / ${data.evaluationCounter} (${percent}%)`);
+            $("#LastCounters").html(new Date(data.activationCounterDate));
+            
             ReadyExisting(data);
+            OverrideSetTable();
         });
 }
+
+function OverrideSetTable() {
+    let rows = $('#TemplateTable tr').length;
+    rows = rows - 6;
+
+    if (typeof id !== "undefined") {
+        $("#TemplateTable tr:gt(" + rows + ")").show();
+    } else {
+        $("#TemplateTable tr:gt(" + rows + ")").hide();
+    }
+}
+
 
 function GetData() {
     const builderCoder = getBuilderCoder();

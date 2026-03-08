@@ -14,7 +14,6 @@
 namespace Jube.Cache
 {
     using System.Collections.Concurrent;
-    using Data.Context;
     using log4net;
     using Redis;
     using Redis.Callback;
@@ -29,9 +28,9 @@ namespace Jube.Cache
         private readonly long localCacheBytes;
         private readonly bool localCacheFill;
         private readonly bool messagePackCompression;
+        private readonly string postgresConnectionString;
         private readonly bool publishSubscribe;
         private readonly bool storePayloadCountsAndBytes;
-        private readonly string postgresConnectionString;
 
         public CacheService(string redisConnectionString,
             string postgresConnectionString,
@@ -67,6 +66,7 @@ namespace Jube.Cache
         public CacheTtlCounterEntryRepository CacheTtlCounterEntryRepository { get; set; }
         public CacheTtlCounterRepository CacheTtlCounterRepository { get; set; }
         public CacheCallbackPublishSubscribe CacheCallbackPublishSubscribe { get; set; }
+        public CacheWalRepository CacheWalRepository { get; set; }
         public bool Ready { get; private set; }
 
         private ILog Log
@@ -87,6 +87,7 @@ namespace Jube.Cache
             CacheSanctionRepository = new CacheSanctionRepository(RedisDatabase, Log);
             CacheTtlCounterEntryRepository = new CacheTtlCounterEntryRepository(RedisDatabase, Log);
             CacheTtlCounterRepository = new CacheTtlCounterRepository(RedisDatabase, Log);
+            CacheWalRepository = new CacheWalRepository(RedisDatabase, Log);
             CacheCallbackPublishSubscribe = new CacheCallbackPublishSubscribe(ConnectionMultiplexer, RedisDatabase, callbacks, callbackTimeout, Log, taskCoordinator);
 
             Ready = true;

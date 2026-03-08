@@ -11,11 +11,11 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using Jube.App.Dto.Interfaces;
-
 namespace Jube.App.Dto
 {
+    using System;
+    using Interfaces;
+
     public class EntityAnalysisModelActivationRuleDto : IUpdated
     {
         public int EntityAnalysisModelId { get; set; }
@@ -38,6 +38,7 @@ namespace Jube.App.Dto
         public double ActivationSample { get; set; }
         public long ActivationCounter { get; set; }
         public DateTime ActivationCounterDate { get; set; }
+        public long EvaluationCounter { get; set; }
         public string ResponseElevationRedirect { get; set; }
         public byte ReviewStatusId { get; set; }
         public bool ReportTable { get; set; }
@@ -67,6 +68,5 @@ namespace Jube.App.Dto
         public int Version { get; set; }
         public string DeletedUser { get; set; }
         public DateTime DeletedDate { get; set; }
-        public double Priority { get; set; }
     }
 }

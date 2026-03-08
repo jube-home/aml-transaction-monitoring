@@ -20,7 +20,6 @@ namespace Jube.App.Code.WatcherDispatch
     using Data.Context;
     using Data.Repository;
     using DynamicEnvironment;
-    using LinqToDB.Configuration;
     using log4net;
     using Microsoft.AspNetCore.SignalR;
     using Newtonsoft.Json;
@@ -265,11 +264,7 @@ namespace Jube.App.Code.WatcherDispatch
                     $"Data Connection DbContext: Is about to attempt construction of database context with {dynamicEnvironment.AppSettings("ConnectionString")}.");
             }
 
-            var builder = new LinqToDbConnectionOptionsBuilder();
-            builder.UsePostgreSQL(dynamicEnvironment.AppSettings("ConnectionString"));
-            var connection = builder.Build<DbContext>();
-
-            var dbContext = new DbContext(connection);
+            var dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"), log);
 
             if (log.IsInfoEnabled)
             {

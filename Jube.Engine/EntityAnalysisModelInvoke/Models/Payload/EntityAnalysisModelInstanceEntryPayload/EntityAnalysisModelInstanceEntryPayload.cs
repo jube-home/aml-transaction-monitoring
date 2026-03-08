@@ -52,7 +52,9 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Models.Payload.EntityAnalysisMod
         [JsonProperty(Order = 27)] public CreateCase CreateCase { get; set; }
         [JsonProperty(Order = 28)] public PooledDictionary<string, double> Tag { get; set; }
         [JsonProperty(Order = 30)] public InvokeTaskPerformance InvokeTaskPerformance { get; set; }
-        [JsonIgnore] public List<ArchiveKey> ArchiveKeys { get; init; }
+        [JsonIgnore] public byte[] ArchiveJson { get; set; }
+        [JsonIgnore] public byte[] ResponseJson { get; set; }
+        [JsonIgnore] public List<ArchiveKey> ArchiveKeys { get; set; }
         [JsonIgnore] public bool EnableRdbmsArchive { get; init; }
         [JsonIgnore] public int EntityAnalysisModelId { get; init; }
         [JsonIgnore] public int TenantRegistryId { get; init; }

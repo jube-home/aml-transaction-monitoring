@@ -16,7 +16,6 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="StackExchange.Redis" Version="2.9.32"/>
         <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="9.0.10"/>
     </ItemGroup>
 
@@ -33,6 +32,7 @@
         <ProjectReference Include="..\Jube.Data\Jube.Data.csproj"/>
         <ProjectReference Include="..\Jube.Dictionary\Jube.Dictionary.csproj"/>
         <ProjectReference Include="..\Jube.Extensions\Jube.Extensions.csproj"/>
+        <ProjectReference Include="..\Jube.ResilientRedisConnection\Jube.ResilientRedisConnection.csproj"/>
     </ItemGroup>
 
 </Project>

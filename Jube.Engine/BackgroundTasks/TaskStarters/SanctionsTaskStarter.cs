@@ -38,9 +38,8 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
             {
                 while (!context.Services.TaskCoordinator.CancellationToken.IsCancellationRequested)
                 {
-                    var dbContext =
-                        DataConnectionDbContext.GetDbContextDataConnection(
-                            context.Services.DynamicEnvironment.AppSettings("ConnectionString"));
+                    var dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(
+                            context.Services.DynamicEnvironment.AppSettings("ConnectionString"), context.Services.Log);
 
                     try
                     {
@@ -413,7 +412,7 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
             {
                 tfp.TextFieldType = FieldType.Delimited;
                 var i = 1;
-                while (tfp.EndOfData == false)
+                while (!tfp.EndOfData)
                 {
                     try
                     {

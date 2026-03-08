@@ -15,6 +15,8 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions
 {
     using System;
     using System.Diagnostics;
+    using System.Threading;
+    using EntityAnalysisModelManager.EntityAnalysisModel.Models.Models;
 
     public static class GatewayRulesExtensions
     {
@@ -70,6 +72,8 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions
                         continue;
                     }
 
+                    IncrementEvaluationCounter(gatewayRule);
+
                     if (!gatewayRule.GatewayRuleCompileDelegate(context.EntityAnalysisModelInstanceEntryPayload.Payload,
                             context.EntityAnalysisModel.Dependencies.EntityAnalysisModelLists,
                             context.EntityAnalysisModelInstanceEntryPayload.Dictionary,
@@ -80,14 +84,13 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions
 
                     context.EntityAnalysisModelInstanceEntryPayload.MatchedGatewayRule = true;
                     context.EntityAnalysisModelInstanceEntryPayload.ResponseElevationLimit = gatewayRule.MaxResponseElevation;
-                    context.EntityAnalysisModel.Counters.ModelInvokeGatewayCounter++;
 
-                    gatewayRule.Counter++;
+                    IncrementGatewayRuleCounters(context, gatewayRule);
 
                     if (context.Log.IsInfoEnabled)
                     {
                         context.Log.Info(
-                            $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} is going to invoke Gateway Rule {gatewayRule.EntityAnalysisModelGatewayRuleId} as it has matched. The max response elevation has been set to {context.EntityAnalysisModelInstanceEntryPayload.ResponseElevationLimit} and Model Invoke Gateway Counter has been set to {context.EntityAnalysisModel.Counters.ModelInvokeGatewayCounter}. The Entity Model Gateway Rule Counter has been set to {gatewayRule.Counter}.");
+                            $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} is going to invoke Gateway Rule {gatewayRule.EntityAnalysisModelGatewayRuleId} as it has matched. The max response elevation has been set to {context.EntityAnalysisModelInstanceEntryPayload.ResponseElevationLimit} and Model Invoke Gateway Counter has been set to {context.EntityAnalysisModel.Counters.ModelInvokeGatewayCounter}. The Entity Model Gateway Rule Counter has been set to {gatewayRule.ActivationCounter}.");
                     }
 
                     break;
@@ -98,6 +101,18 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions
                         $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} has tried to invoke Gateway Rule {gatewayRule.EntityAnalysisModelGatewayRuleId} but it has caused an error as {ex}.");
                 }
             }
+        }
+
+        private static void IncrementEvaluationCounter(EntityModelGatewayRule gatewayRule)
+        {
+            Interlocked.Increment(ref gatewayRule.EvaluationCounter);
+        }
+
+        private static void IncrementGatewayRuleCounters(Context context, EntityModelGatewayRule gatewayRule)
+        {
+            Interlocked.Increment(ref context.EntityAnalysisModel.Counters.ModelInvokeGatewayCounter);
+            Interlocked.Increment(ref gatewayRule.ActivationCounter);
+            gatewayRule.ActivationCounterDate = DateTime.Now;
         }
     }
 }

@@ -46,9 +46,8 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters
 
                 while (!context.Services.TaskCoordinator.CancellationToken.IsCancellationRequested)
                 {
-                    var dbContext =
-                        DataConnectionDbContext.GetDbContextDataConnection(
-                            context.Services.DynamicEnvironment.AppSettings("ConnectionString"));
+                    var dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(
+                        context.Services.DynamicEnvironment.AppSettings("ConnectionString"), context.Services.Log);
                     try
                     {
                         if (context.Services.Log.IsDebugEnabled)
@@ -125,9 +124,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters
                                     // ReSharper disable once RedundantAssignment
                                     var deleted = false;
 
-                                    var archiveDatabase =
-                                        new Postgres(
-                                            context.Services.DynamicEnvironment.AppSettings("ConnectionString"));
+                                    var archiveDatabase = new Postgres(context.Services.ReportConnectionString ?? dbContext.ConnectionString, context.Services.Log);
                                     do
                                     {
                                         if (context.Services.Log.IsInfoEnabled)
@@ -137,7 +134,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters
                                         }
 
                                         var archivePayloadSelectAndBody = modelKvp.Value.References.ArchivePayloadSqlSelect + " " + modelKvp.Value.References.ArchivePayloadSqlBody;
-                                        
+
                                         var documents =
                                             await archiveDatabase.ExecuteReturnPayloadFromArchiveWithSkipLimitAsync(
                                                 archivePayloadSelectAndBody, dateRangeAndCount.adjustedStartDate,
@@ -946,7 +943,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters
                                         $"Entity Reprocessing: Model {key} and Reprocessing Rule Model {returnTuple.EntityAnalysisModelRuleReprocessingInstance.EntityAnalysisModelsReprocessingRuleInstanceId} compile error {compileError.GetMessage()}.");
                                 }
                             }
-                            
+
                             if (context.Services.Log.IsDebugEnabled)
                             {
                                 context.Services.Log.Debug(

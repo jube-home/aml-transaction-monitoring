@@ -74,7 +74,17 @@ namespace Jube.Data.Repository
                     && w.EntityAnalysisModelId == entityAnalysisModelId && (w.Deleted == 0 || w.Deleted == null))
                 .OrderBy(o => o.Id).ToListAsync(token);
         }
-        
+
+        public async Task<IEnumerable<EntityAnalysisModelActivationRule>> GetByEntityAnalysisModelIdOrderByNameDescAsync(
+            int entityAnalysisModelId, CancellationToken token = default)
+        {
+            return await dbContext.EntityAnalysisModelActivationRule
+                .Where(w =>
+                    (w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                    && w.EntityAnalysisModelId == entityAnalysisModelId && (w.Deleted == 0 || w.Deleted == null))
+                .OrderBy(o => o.Name).ToListAsync(token);
+        }
+
         public async Task<IEnumerable<EntityAnalysisModelActivationRule>> GetByEntityAnalysisModelIdOrderByPriorityDescAsync(
             int entityAnalysisModelId, CancellationToken token = default)
         {
@@ -121,7 +131,7 @@ namespace Jube.Data.Repository
             return model;
         }
 
-        public async Task UpdateCounterAsync(int id, int activationCounter, CancellationToken token = default)
+        public async Task UpdateCounterAsync(int id, long evaluationCounter, long activationCounter, DateTime activationCounterDate, CancellationToken token = default)
         {
             var records = await dbContext.EntityAnalysisModelActivationRule
                 .Where(d =>
@@ -129,7 +139,8 @@ namespace Jube.Data.Repository
                     && d.Id == id
                     && (d.Deleted == 0 || d.Deleted == null))
                 .Set(s => s.ActivationCounter, activationCounter)
-                .Set(s => s.ActivationCounterDate, DateTime.Now)
+                .Set(s => s.ActivationCounterDate, activationCounterDate)
+                .Set(s => s.EvaluationCounter, evaluationCounter)
                 .UpdateAsync(token).ConfigureAwait(false);
 
             if (records == 0)

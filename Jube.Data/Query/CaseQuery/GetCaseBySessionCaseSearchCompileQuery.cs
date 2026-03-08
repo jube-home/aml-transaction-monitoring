@@ -21,6 +21,7 @@ namespace Jube.Data.Query.CaseQuery
     using Dto;
     using Extension;
     using FluentMigrator.Runner;
+    using log4net;
     using Newtonsoft.Json;
     using Poco;
     using Reporting;
@@ -29,13 +30,17 @@ namespace Jube.Data.Query.CaseQuery
     public class GetCaseBySessionCaseSearchCompileQuery
     {
         private readonly DbContext dbContext;
+        private readonly ILog log;
         private readonly ProcessCaseQuery processCaseQuery;
+        private readonly string reportConnectionString;
         private readonly string userName;
 
-        public GetCaseBySessionCaseSearchCompileQuery(DbContext dbContext, string user)
+        public GetCaseBySessionCaseSearchCompileQuery(DbContext dbContext, string user, ILog log, string reportConnectionString = null)
         {
             this.dbContext = dbContext;
             userName = user;
+            this.reportConnectionString = reportConnectionString ?? dbContext.ConnectionString;
+            this.log = log;
             processCaseQuery = new ProcessCaseQuery(this.dbContext, userName);
         }
 
@@ -56,13 +61,13 @@ namespace Jube.Data.Query.CaseQuery
             var sw = new StopWatch();
             sw.Start();
 
-            var postgres = new Postgres(dbContext.ConnectionString);
+            var postgres = new Postgres(reportConnectionString, log);
 
             var value = await
-                postgres.ExecuteByOrderedParametersAsync(modelCompiled.SelectSqlDisplay 
-                    + " "
-                    + modelCompiled.WhereSql
-                    + " " + modelCompiled.OrderSql + " limit 1", tokens, token).ConfigureAwait(false);
+                postgres.ExecuteByOrderedParametersAsync(modelCompiled.SelectSqlDisplay
+                                                         + " "
+                                                         + modelCompiled.WhereSql
+                                                         + " " + modelCompiled.OrderSql + " limit 1", tokens, token).ConfigureAwait(false);
 
             sw.Stop();
 

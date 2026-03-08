@@ -400,6 +400,7 @@ function Ready() {
         ExpandCollapseResponseElevation();
         ExpandCollapseCasesBypass();
         ExpandCollapseCases();
+        OverrideSetTable();
     } else {
         $.get(endpoint + "/" + id,
             function (data) {
@@ -413,9 +414,9 @@ function Ready() {
                 };
 
                 initBuilderCoder(5, parentKey, builderCoderData);
-                
+
                 priority.data("kendoNumericTextBox").value(data.priority);
-                
+
                 responseElevation.data("kendoNumericTextBox").value(data.responseElevation);
 
                 if (data.enableCaseWorkflow) {
@@ -504,6 +505,13 @@ function Ready() {
                 caseKey.data("kendoDropDownList").value(data.caseKey);
                 responseElevationKey.data("kendoDropDownList").value(data.responseElevationKey);
 
+                const percent = data.evaluationCounter === 0
+                    ? 0
+                    : Math.round((data.activationCounter / data.evaluationCounter) * 100);
+
+                $("#Counters").html(`${data.activationCounter} / ${data.evaluationCounter} (${percent}%)`);
+                $("#LastCounters").html(new Date(data.activationCounterDate));
+
                 ReadyExisting(data);
 
                 ExpandCollapseTTLCounter();
@@ -512,7 +520,19 @@ function Ready() {
                 ExpandCollapseResponseElevation();
                 ExpandCollapseCasesBypass();
                 ExpandCollapseCases();
+                OverrideSetTable();
             });
+    }
+}
+
+function OverrideSetTable() {
+    let rows = $('#TemplateTable tr').length;
+    rows = rows - 6;
+
+    if (typeof id !== "undefined") {
+        $("#TemplateTable tr:gt(" + rows + ")").show();
+    } else {
+        $("#TemplateTable tr:gt(" + rows + ")").hide();
     }
 }
 

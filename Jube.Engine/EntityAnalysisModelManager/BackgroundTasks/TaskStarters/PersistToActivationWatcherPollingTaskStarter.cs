@@ -41,9 +41,8 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters
                                         "Database Activation Watcher Persist: a message has been received to be persisted to the Database database Activation Watcher.");
                                 }
 
-                                var dbContext =
-                                    DataConnectionDbContext.GetDbContextDataConnection(
-                                        context.Services.DynamicEnvironment.AppSettings("ConnectionString"));
+                                var dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(
+                                        context.Services.DynamicEnvironment.AppSettings("ConnectionString"), context.Services.Log);
 
                                 var repository = new ActivationWatcherRepository(dbContext);
                                 try

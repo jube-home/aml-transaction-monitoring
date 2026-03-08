@@ -18,6 +18,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters.Ar
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
+    using Cache;
     using Data.Poco;
     using DynamicEnvironment;
     using EntityAnalysisModelInvoke.Models.CaseManagement;
@@ -33,13 +34,18 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters.Ar
             ArchiveBuffer bulkInsertMessageBuffer,
             ConcurrentQueue<CreateCase> pendingCases,
             DynamicEnvironment dynamicEnvironment,
+            CacheService cacheService,
             ILog log,
             CancellationToken token = default)
         {
             try
             {
-                var json = BuildJsonResponses.BuildFullJson(payload, jsonSerializationHelper.ArchiveJsonSerializer);
-                var jsonString = Encoding.UTF8.GetString(json.ToArray());
+                if (payload.ArchiveJson.Length == 0)
+                {
+                    payload.ArchiveJson = BuildJsonResponses.BuildFullJson(payload, jsonSerializationHelper.ArchiveJsonSerializer);
+                }
+
+                var jsonString = Encoding.UTF8.GetString(payload.ArchiveJson);
 
                 if (payload.CreateCase != null)
                 {

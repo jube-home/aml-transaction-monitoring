@@ -42,10 +42,10 @@ namespace Jube.App.Controllers.Session
     public class SessionCaseSearchCompiledSqlController : Controller
     {
         private readonly DbContext dbContext;
-        private readonly DynamicEnvironment dynamicEnvironment;
         private readonly ILog log;
         private readonly IMapper mapper;
         private readonly PermissionValidation permissionValidation;
+        private readonly string reportConnectionString;
         private readonly string userName;
         private readonly IValidator<SessionCaseSearchCompiledSqlDto> validator;
 
@@ -59,10 +59,9 @@ namespace Jube.App.Controllers.Session
             }
 
             this.log = log;
-
-            dbContext =
-                DataConnectionDbContext.GetDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
-            permissionValidation = new PermissionValidation(dbContext, userName);
+            dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"), log);
+            permissionValidation = new PermissionValidation(dbContext, userName, log);
+            reportConnectionString = dynamicEnvironment.AppSettings("ReportConnectionString") ?? dbContext.ConnectionString;
 
             var config = new MapperConfiguration(cfg =>
             {
@@ -73,7 +72,6 @@ namespace Jube.App.Controllers.Session
             mapper = new Mapper(config);
 
             validator = new SessionCaseSearchCompiledSqlDtoValidator();
-            this.dynamicEnvironment = dynamicEnvironment;
         }
 
         protected override void Dispose(bool disposing)
@@ -110,7 +108,7 @@ namespace Jube.App.Controllers.Session
 
                 await CheckRebuildAsync(modelCompiled, token).ConfigureAwait(false);
 
-                var postgres = new Postgres(dynamicEnvironment.AppSettings("ConnectionString"));
+                var postgres = new Postgres(reportConnectionString, log);
                 var tokens = JsonConvert.DeserializeObject<List<object>>(modelCompiled.FilterTokens);
 
                 var sw = new StopWatch();
@@ -148,7 +146,7 @@ namespace Jube.App.Controllers.Session
         {
             if (modelCompiled.Rebuild == 1 && (modelCompiled.RebuildDate != null || modelCompiled.RebuildDate == default(DateTime)))
             {
-                return await CompileSql.CompileAsync(dbContext, modelCompiled, userName, token).ConfigureAwait(false);
+                return await CompileSql.CompileAsync(dbContext, modelCompiled, userName, log, reportConnectionString, token).ConfigureAwait(false);
             }
 
             return modelCompiled;
@@ -213,7 +211,7 @@ namespace Jube.App.Controllers.Session
 
                 return Ok(mapper.Map<SessionCaseSearchCompiledSqlDto>(await CompileSql.CompileAsync(dbContext,
                     mapper.Map<SessionCaseSearchCompiledSql>(model),
-                    userName, token).ConfigureAwait(false)));
+                    userName, log, reportConnectionString, token).ConfigureAwait(false)));
             }
             catch (Exception e)
             {

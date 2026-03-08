@@ -30,7 +30,8 @@ namespace Jube.Engine.EntityAnalysisModelManager
                 DynamicEnvironment = context.Services.DynamicEnvironment,
                 RabbitMqConnection = context.Services.RabbitMqConnection,
                 CacheService = context.Services.CacheService,
-                TaskCoordinator = context.Services.TaskCoordinator
+                TaskCoordinator = context.Services.TaskCoordinator,
+                ReportConnectionString = context.Services.ReportConnectionString
             },
             Caching =
             {

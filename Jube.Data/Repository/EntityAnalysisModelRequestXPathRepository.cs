@@ -76,8 +76,18 @@ namespace Jube.Data.Repository
                     && (w.Deleted == 0 || w.Deleted == null))
                 .OrderBy(o => o.Id).ToListAsync(token).ConfigureAwait(false);
         }
-        
-        public async Task<IEnumerable<EntityAnalysisModelRequestXpath>> GetByEntityAnalysisModelIdOrderByIdCacheOnlyAsync(int entityAnalysisModelId, CancellationToken token = default)
+
+        public async Task<IEnumerable<EntityAnalysisModelRequestXpath>> GetByEntityAnalysisModelIdOrderByNameAsync(int entityAnalysisModelId, CancellationToken token = default)
+        {
+            return await dbContext.EntityAnalysisModelRequestXpath
+                .Where(w =>
+                    (w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                    && w.EntityAnalysisModelId == entityAnalysisModelId
+                    && (w.Deleted == 0 || w.Deleted == null))
+                .OrderBy(o => o.Name).ToListAsync(token).ConfigureAwait(false);
+        }
+
+        public async Task<IEnumerable<EntityAnalysisModelRequestXpath>> GetByEntityAnalysisModelIdOrderByNameCacheOnlyAsync(int entityAnalysisModelId, CancellationToken token = default)
         {
             return await dbContext.EntityAnalysisModelRequestXpath
                 .Where(w =>
@@ -85,9 +95,9 @@ namespace Jube.Data.Repository
                     && w.EntityAnalysisModelId == entityAnalysisModelId
                     && w.Cache == 1
                     && (w.Deleted == 0 || w.Deleted == null))
-                .OrderBy(o => o.Id).ToListAsync(token).ConfigureAwait(false);
+                .OrderBy(o => o.Name).ToListAsync(token).ConfigureAwait(false);
         }
-        
+
         public async Task<IEnumerable<EntityAnalysisModelRequestXpath>> GetBySuppressionKeysAsync(CancellationToken token = default)
         {
             return await dbContext.EntityAnalysisModelRequestXpath
@@ -128,22 +138,22 @@ namespace Jube.Data.Repository
                 && w.Id == id && (w.Deleted == 0 || w.Deleted == null), token);
         }
 
-        public async Task<EntityAnalysisModelRequestXpath> InsertAsync(EntityAnalysisModelRequestXpath model, CancellationToken token = default)
+        public async Task<EntityAnalysisModelRequestXpath> InsertIncrementCacheIndexIdAsync(EntityAnalysisModelRequestXpath model, CancellationToken token = default)
         {
             await using var transaction = await dbContext.BeginTransactionAsync(IsolationLevel.Serializable, token);
             try
             {
                 var cacheIndexId = await dbContext.EntityAnalysisModelRequestXpath
-                    .Where(w => (w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue) 
+                    .Where(w => (w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
                                 && w.EntityAnalysisModel.Id == model.EntityAnalysisModelId
                     ).MaxAsync(m => m.CacheIndexId, token) ?? 0;
-            
+
                 model.CreatedUser = userName ?? model.CreatedUser;
                 model.Guid = model.Guid == Guid.Empty ? Guid.NewGuid() : model.Guid;
                 model.CreatedDate = DateTime.Now;
                 model.Version = 1;
                 model.CacheIndexId = cacheIndexId + 1;
-                
+
                 model.Id = await dbContext.InsertWithInt32IdentityAsync(model, token: token);
                 await transaction.CommitAsync(token);
                 return model;
@@ -153,6 +163,17 @@ namespace Jube.Data.Repository
                 await transaction.RollbackAsync(token);
                 throw;
             }
+        }
+
+        public async Task<EntityAnalysisModelRequestXpath> InsertAsync(EntityAnalysisModelRequestXpath model, CancellationToken token = default)
+        {
+            model.CreatedUser = userName ?? model.CreatedUser;
+            model.Guid = model.Guid == Guid.Empty ? Guid.NewGuid() : model.Guid;
+            model.CreatedDate = DateTime.Now;
+            model.Version = 1;
+
+            model.Id = await dbContext.InsertWithInt32IdentityAsync(model, token: token);
+            return model;
         }
 
         public async Task<EntityAnalysisModelRequestXpath> UpdateAsync(EntityAnalysisModelRequestXpath model, CancellationToken token = default)

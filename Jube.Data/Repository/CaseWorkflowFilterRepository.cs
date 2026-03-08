@@ -75,10 +75,20 @@ namespace Jube.Data.Repository
                             && w.Active == 1
                             && w.CaseWorkflowId == casesWorkflowId
                             && (w.Deleted == 0 || w.Deleted == null)
-                            && (w.CaseWorkflowFilterRole.RoleRegistry.UserRegistry.Name == userName
-                                && w.CaseWorkflowFilterRole.Deleted == 0 || w.CaseWorkflowFilterRole.Deleted == null)
-                            && (w.CaseWorkflow.CaseWorkflowRole.RoleRegistry.UserRegistry.Name == userName
-                                && w.CaseWorkflow.CaseWorkflowRole.Deleted == 0 || w.CaseWorkflow.CaseWorkflowRole.Deleted == null)
+                            && dbContext.CaseWorkflowFilterRole
+                                .Where(r => r.CaseWorkflowFilterGuid == w.Guid
+                                            && (r.Deleted == 0 || r.Deleted == null))
+                                .Any(r => dbContext.RoleRegistry
+                                    .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                                    .Any(rr => dbContext.UserRegistry
+                                        .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                            && dbContext.CaseWorkflowRole
+                                .Where(r => r.CaseWorkflowGuid == w.CaseWorkflow.Guid
+                                            && (r.Deleted == 0 || r.Deleted == null))
+                                .Any(r => dbContext.RoleRegistry
+                                    .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                                    .Any(rr => dbContext.UserRegistry
+                                        .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
                 ).ToListAsync(token);
         }
 
@@ -91,10 +101,20 @@ namespace Jube.Data.Repository
                             && (w.CaseWorkflow.EntityAnalysisModel.Deleted == 0 ||
                                 w.CaseWorkflow.EntityAnalysisModel.Deleted == null)
                             && (w.Deleted == 0 || w.Deleted == null)
-                            && (w.CaseWorkflowFilterRole.RoleRegistry.UserRegistry.Name == userName
-                                && w.CaseWorkflowFilterRole.Deleted == 0 || w.CaseWorkflowFilterRole.Deleted == null)
-                            && (w.CaseWorkflow.CaseWorkflowRole.RoleRegistry.UserRegistry.Name == userName
-                                && w.CaseWorkflow.CaseWorkflowRole.Deleted == 0 || w.CaseWorkflow.CaseWorkflowRole.Deleted == null)
+                            && dbContext.CaseWorkflowFilterRole
+                                .Where(r => r.CaseWorkflowFilterGuid == w.Guid
+                                            && (r.Deleted == 0 || r.Deleted == null))
+                                .Any(r => dbContext.RoleRegistry
+                                    .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                                    .Any(rr => dbContext.UserRegistry
+                                        .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                            && dbContext.CaseWorkflowRole
+                                .Where(r => r.CaseWorkflowGuid == w.CaseWorkflow.Guid
+                                            && (r.Deleted == 0 || r.Deleted == null))
+                                .Any(r => dbContext.RoleRegistry
+                                    .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                                    .Any(rr => dbContext.UserRegistry
+                                        .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
                 ).ToListAsync(token);
         }
 

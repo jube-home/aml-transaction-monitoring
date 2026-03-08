@@ -13,17 +13,18 @@
 
 namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ActivationRules
 {
+
     public static class CheckSuppressedResponseElevationExtensions
     {
         public static bool CheckSuppressedResponseElevation(this Context context)
         {
-            if (context.EntityAnalysisModel.ConcurrentQueues.BillingResponseElevationBalanceEntries.Count >
+            if (context.EntityAnalysisModel.ConcurrentQueues.ResponseElevationEntries.Count >
                 context.EntityAnalysisModel.Counters.ResponseElevationFrequencyLimitCounter)
             {
                 if (context.Log.IsInfoEnabled)
                 {
                     context.Log.Info(
-                        $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} has an activation balance of {context.EntityAnalysisModel.ConcurrentQueues.BillingResponseElevationBalanceEntries.Count} and has exceeded threshold.");
+                        $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} has an activation balance of {context.EntityAnalysisModel.ConcurrentQueues.ResponseElevationEntries.Count} and has exceeded threshold.");
                 }
 
                 return true;
@@ -32,7 +33,7 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ActivationRul
             if (context.Log.IsInfoEnabled)
             {
                 context.Log.Info(
-                    $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} has an activation balance of {context.EntityAnalysisModel.ConcurrentQueues.BillingResponseElevationBalanceEntries.Count} and has not exceeded threshold.");
+                    $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} has an activation balance of {context.EntityAnalysisModel.ConcurrentQueues.ResponseElevationEntries.Count} and has not exceeded threshold.");
             }
 
             return false;

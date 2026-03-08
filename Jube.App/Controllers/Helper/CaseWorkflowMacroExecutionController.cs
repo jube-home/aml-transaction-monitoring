@@ -55,17 +55,13 @@ namespace Jube.App.Controllers.Helper
                 userName = httpContextAccessor.HttpContext.User.Identity.Name;
             }
 
-            dbContext =
-                DataConnectionDbContext.GetDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
-
+            dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"), log);
             this.log = log;
             this.dynamicEnvironment = dynamicEnvironment;
-
             repositoryCase = new CaseRepository(dbContext, userName);
             repositoryCaseWorkflowMacro = new CaseWorkflowMacroRepository(dbContext, userName);
             repositoryCaseWorkflowStatus = new CaseWorkflowStatusRepository(dbContext, userName);
-
-            permissionValidation = new PermissionValidation(dbContext, userName);
+            permissionValidation = new PermissionValidation(dbContext, userName, log);
             this.jsonSerializationHelper = jsonSerializationHelper;
         }
 

@@ -16,8 +16,11 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters.Ar
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Linq;
+    using System.Net;
     using System.Threading;
     using System.Threading.Tasks;
+    using Cache;
     using Data.Context;
     using Data.Poco;
     using Data.Repository;
@@ -27,8 +30,8 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters.Ar
 
     public static class ArchiverArchiveRepository
     {
-        public static async Task BulkCopyArchiveBufferAsync(ArchiveBuffer bulkInsertMessageBuffer,
-            DynamicEnvironment dynamicEnvironment, ILog log, CancellationToken token = default)
+        public static async Task BulkCopyArchiveBufferAsync(int tenantRegistryId, Guid entityAnalysisModelGuid, ArchiveBuffer bulkInsertMessageBuffer,
+            DynamicEnvironment dynamicEnvironment, CacheService cacheService, ILog log, CancellationToken token = default)
         {
             try
             {
@@ -42,7 +45,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters.Ar
                 }
 
                 var dbContext =
-                    DataConnectionDbContext.GetDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
+                    DataConnectionDbContext.GetResilientDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"), log);
                 dbContext.CommandTimeout = 0;
 
                 if (log.IsInfoEnabled)
@@ -54,6 +57,10 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters.Ar
                 try
                 {
                     await repositoryArchive.BulkCopyAsync(bulkInsertMessageBuffer.Archive, token).ConfigureAwait(false);
+
+                    await cacheService.CacheWalRepository.FlushWalAsync(tenantRegistryId, entityAnalysisModelGuid,
+                        Dns.GetHostName(), bulkInsertMessageBuffer.Archive.Select(s => s.EntityAnalysisModelInstanceEntryGuid).ToArray());
+
                     bulkInsertMessageBuffer.Archive.Clear();
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
@@ -101,8 +108,8 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters.Ar
                     $"Database Persist: Database Persist message is valid for storage with Entry GUID of {payload.EntityAnalysisModelInstanceEntryGuid}.  This is being sent for update as it is reprocess.");
             }
 
-            var dbContext =
-                DataConnectionDbContext.GetDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
+            var dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"), log);
+            
             try
             {
                 var archiveRepository = new ArchiveRepository(dbContext);

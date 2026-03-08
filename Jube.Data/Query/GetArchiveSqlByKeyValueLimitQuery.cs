@@ -17,31 +17,29 @@ namespace Jube.Data.Query
     using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
+    using Context;
     using Dictionary;
     using Extension;
     using log4net;
-    using Npgsql;
+    using ResilientNpgsqlConnection;
+    using ResilientNpgsqlConnection.Extensions.Jube.ResilientNpgsqlConnection;
 
-    public class GetArchiveSqlByKeyValueLimitQuery(string connectionString, ILog log)
+    public class GetArchiveSqlByKeyValueLimitQuery(DbContext dbContext, ILog log)
     {
         public async Task<List<DictionaryNoBoxing<string>>> ExecuteAsync(string sql,
             string key, string value, string order, int limit, CancellationToken token = default)
         {
-            var connection = new NpgsqlConnection(connectionString);
             var values = new List<DictionaryNoBoxing<string>>();
             try
             {
-                await connection.OpenAsync(token).ConfigureAwait(false);
-
-                var command = new NpgsqlCommand(sql);
-                command.Connection = connection;
+                await using var command = new ResilientNpgsqlCommand((ResilientNpgsqlConnection)dbContext.Connection, sql);
                 command.Parameters.AddWithValue("key", key);
                 command.Parameters.AddWithValue("value", value);
                 command.Parameters.AddWithValue("order", order);
                 command.Parameters.AddWithValue("limit", limit);
                 await command.PrepareAsync(token).ConfigureAwait(false);
 
-                var reader = await command.ExecuteReaderAsync(token).ConfigureAwait(false);
+                await using var reader = await command.ExecuteReaderAsync(token).ConfigureAwait(false);
                 while (await reader.ReadAsync(token).ConfigureAwait(false))
                 {
                     var document = new DictionaryNoBoxing<string>();
@@ -89,17 +87,10 @@ namespace Jube.Data.Query
                 }
 
                 await reader.CloseAsync().ConfigureAwait(false);
-                await reader.DisposeAsync().ConfigureAwait(false);
-                await command.DisposeAsync().ConfigureAwait(false);
             }
             catch (Exception ex)
             {
                 log.Error($"Archive SQL: Has created an exception as {ex}.");
-            }
-            finally
-            {
-                await connection.CloseAsync().ConfigureAwait(false);
-                await connection.DisposeAsync().ConfigureAwait(false);
             }
 
             return values;

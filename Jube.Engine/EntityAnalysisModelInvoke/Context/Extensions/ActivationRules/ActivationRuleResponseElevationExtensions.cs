@@ -14,6 +14,7 @@
 namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ActivationRules
 {
     using System;
+    using System.Threading;
     using EntityAnalysisModelManager.EntityAnalysisModel.Models.Models;
     using Models.Payload.EntityAnalysisModelInstanceEntryPayload;
 
@@ -67,7 +68,7 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ActivationRul
                 context.EntityAnalysisModelInstanceEntryPayload.ResponseElevation.Value =
                     context.EntityAnalysisModel.Counters.MaxResponseElevation;
 
-                context.EntityAnalysisModel.Counters.ResponseElevationValueLimitCounter += 1;
+                Interlocked.Increment(ref context.EntityAnalysisModel.Counters.ResponseElevationValueLimitCounter);
 
                 if (context.Log.IsInfoEnabled)
                 {
@@ -82,7 +83,7 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ActivationRul
                     context.EntityAnalysisModelInstanceEntryPayload.ResponseElevation.Value =
                         context.EntityAnalysisModelInstanceEntryPayload.ResponseElevationLimit;
 
-                    context.EntityAnalysisModel.Counters.ResponseElevationValueGatewayLimitCounter += 1;
+                    Interlocked.Increment(ref context.EntityAnalysisModel.Counters.ResponseElevationFrequencyLimitCounter);
 
                     if (context.Log.IsInfoEnabled)
                     {
@@ -141,7 +142,7 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ActivationRul
 
             if (context.EntityAnalysisModel.Flags.EnableResponseElevationLimit)
             {
-                context.EntityAnalysisModel.ConcurrentQueues.BillingResponseElevationBalanceEntries.Enqueue(new ResponseElevation
+                context.EntityAnalysisModel.ConcurrentQueues.ResponseElevationEntries.Enqueue(new ResponseElevation
                 {
                     CreatedDate = DateTime.Now,
                     Value = context.EntityAnalysisModelInstanceEntryPayload.ResponseElevation.Value

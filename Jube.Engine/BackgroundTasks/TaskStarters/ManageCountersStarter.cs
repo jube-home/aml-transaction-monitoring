@@ -86,12 +86,11 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
 
                 var cancelled = token.IsCancellationRequested;
 
-                while (value.ConcurrentQueues.BillingResponseElevationBalanceEntries.TryPeek(out var entry))
+                while (value.ConcurrentQueues.ResponseElevationEntries.TryPeek(out var entry))
                 {
                     if (cancelled)
                     {
-                        value.ConcurrentQueues.BillingResponseElevationBalanceEntries.Clear();
-                        value.Counters.BillingResponseElevationBalance = 0;
+                        value.ConcurrentQueues.ResponseElevationEntries.Clear();
 
                         if (context.Services.Log.IsDebugEnabled)
                         {
@@ -114,17 +113,14 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
                         break;
                     }
 
-                    if (!value.ConcurrentQueues.BillingResponseElevationBalanceEntries.TryDequeue(out entry))
+                    if (!value.ConcurrentQueues.ResponseElevationEntries.TryDequeue(out entry))
                     {
                         continue;
                     }
 
-                    value.Counters.BillingResponseElevationBalance -= entry.Value;
-
                     if (context.Services.Log.IsDebugEnabled)
                     {
-                        context.Services.Log.Debug(
-                            $"Counter Management: Removed entry with value {entry.Value}. Decremented response elevation balance to {value.Counters.BillingResponseElevationBalance}.");
+                        context.Services.Log.Debug($"Counter Management: Removed entry with value {entry.Value}.");
                     }
                 }
             }
@@ -150,7 +146,7 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
                     if (cancelled)
                     {
                         value.ConcurrentQueues.BillingResponseElevationJournal.Clear();
-                        value.Counters.BillingResponseElevationCount = 0;
+                        Interlocked.Exchange(ref value.Counters.ResponseElevationCount, 0);
 
                         if (context.Services.Log.IsDebugEnabled)
                         {
@@ -177,12 +173,13 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
                     {
                         continue;
                     }
-                    value.Counters.BillingResponseElevationCount--;
+                    
+                    Interlocked.Decrement(ref value.Counters.ResponseElevationCount);
 
                     if (context.Services.Log.IsDebugEnabled)
                     {
                         context.Services.Log.Debug(
-                            $"Counter Management: Removed entry with date {responseElevationDate}. Decremented Response Elevation Count to {value.Counters.BillingResponseElevationCount}.");
+                            $"Counter Management: Removed entry with date {responseElevationDate}. Decremented Response Elevation Count to {value.Counters.ResponseElevationCount}.");
                     }
                 }
             }
@@ -208,7 +205,6 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
                     if (cancelled)
                     {
                         value.ConcurrentQueues.ActivationWatcherCountJournal.Clear();
-                        value.Counters.ActivationWatcherCount = 0;
 
                         if (context.Services.Log.IsDebugEnabled)
                         {
@@ -234,7 +230,8 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
                     {
                         continue;
                     }
-                    value.Counters.ActivationWatcherCount--;
+
+                    Interlocked.Decrement(ref value.Counters.ActivationWatcherCount);
 
                     if (context.Services.Log.IsDebugEnabled)
                     {
@@ -261,8 +258,8 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
                     }
 
                     var dbContext =
-                        DataConnectionDbContext.GetDbContextDataConnection(
-                            context.Services.DynamicEnvironment.AppSettings("ConnectionString"));
+                        DataConnectionDbContext.GetResilientDbContextDataConnection(
+                            context.Services.DynamicEnvironment.AppSettings("ConnectionString"), context.Services.Log);
                     try
                     {
                         var repository = new EntityAnalysisModelAsynchronousQueueBalanceRepository(dbContext);
@@ -285,7 +282,7 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
                         if (context.Services.Log.IsDebugEnabled)
                         {
                             context.Services.Log.Debug(
-                                $"Counter Management: Has built the command object to invoke Insert_Entity_Analysis_Models_Asynchronous_Queue_Balances with Entity Analysis Model ID {value.Instance.Id}, Activation Cases 0, Activation Watcher {value.ConcurrentQueues.BillingResponseElevationBalanceEntries.Count}, Billing Response Elevation {value.ConcurrentQueues.ActivationWatcherCountJournal.Count},Billing_Response_Elevation_Balance {value.ConcurrentQueues.BillingResponseElevationJournal.Count}, Billing_Response_Elevation_Balance {value.ConcurrentQueues.BillingResponseElevationJournal.Count}, Node {context.Services.DynamicEnvironment.AppSettings("Node")}.");
+                                $"Counter Management: Has built the command object to invoke Insert_Entity_Analysis_Models_Asynchronous_Queue_Balances with Entity Analysis Model ID {value.Instance.Id}, Activation Cases 0, Activation Watcher {value.ConcurrentQueues.ResponseElevationEntries.Count}, Billing Response Elevation {value.ConcurrentQueues.ActivationWatcherCountJournal.Count},Billing_Response_Elevation_Balance {value.ConcurrentQueues.BillingResponseElevationJournal.Count}, Billing_Response_Elevation_Balance {value.ConcurrentQueues.BillingResponseElevationJournal.Count}, Node {context.Services.DynamicEnvironment.AppSettings("Node")}.");
                         }
 
                         await repository.InsertAsync(insert, token).ConfigureAwait(false);
@@ -346,10 +343,9 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
                     {
                         context.Services.Log.Debug("Counter Management: Starting to store model counters in the database.");
                     }
-                    
-                    var dbContext =
-                        DataConnectionDbContext.GetDbContextDataConnection(
-                            context.Services.DynamicEnvironment.AppSettings("ConnectionString"));
+
+                    var dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(
+                            context.Services.DynamicEnvironment.AppSettings("ConnectionString"), context.Services.Log);
                     try
                     {
                         var repository = new EntityAnalysisModelProcessingCounterRepository(dbContext);
@@ -365,10 +361,9 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
                             ModelInvoke = value.Counters.ModelInvokeCounter,
                             GatewayMatch = value.Counters.ModelInvokeGatewayCounter,
                             ResponseElevation = value.Counters.ModelResponseElevationCounter,
-                            ResponseElevationSum = value.Counters.ModelResponseElevationSum,
                             ResponseElevationValueLimit = value.Counters.ResponseElevationValueLimitCounter,
                             ResponseElevationLimit = value.Counters.ResponseElevationFrequencyLimitCounter,
-                            ResponseElevationValueGatewayLimit = value.Counters.ResponseElevationValueGatewayLimitCounter,
+                            ModelTotalResponseTime = value.Counters.ModelTotalResponseTime,
                             ActivationWatcher = value.Counters.ActivationWatcherCount,
                             EntityAnalysisModelGuid = value.Instance.Guid,
                             CreatedDate = DateTime.Now,
@@ -377,8 +372,7 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
 
                         if (context.Services.Log.IsDebugEnabled)
                         {
-                            context.Services.Log.Debug(
-                                $"Counter Management: Model {key} Has built command for Insert_Entity_Analysis_Models_Processing_Counters with Model_Invoke_Counter {value.Counters.ModelInvokeCounter},Gateway_Match_Counter {value.Counters.ModelInvokeGatewayCounter},Response_Elevation_Counter {value.Counters.ModelResponseElevationCounter},Response_Elevation_Sum {value.Counters.ModelResponseElevationSum},Balance_Limit_Counter {value.Counters.BalanceLimitCounter},Response_Elevation_Value_Limit_Counter {value.Counters.ResponseElevationValueLimitCounter},Response_Elevation_Frequency_Limit_Counter {value.Counters.ResponseElevationFrequencyLimitCounter},Response_Elevation_Value_Gateway_Limit_Counter{value.Counters.ResponseElevationValueGatewayLimitCounter},Response_Elevation_Billing_Sum_Limit_Counter {value.Counters.ResponseElevationBillingSumLimitCounter},Parent_Response_Elevation_Value_Limit_Counter{value.Counters.ParentResponseElevationValueLimitCounter},Parent_Balance_Limit_Counter {value.Counters.ParentBalanceLimitCounter},{value.Instance.Id}.");
+                            context.Services.Log.Debug($"Counter Management: Model {key} Has built command for Insert_Entity_Analysis_Models_Processing_Counters with Model_Invoke_Counter {value.Counters.ModelInvokeCounter},Gateway_Match_Counter {value.Counters.ModelInvokeGatewayCounter},Response_Elevation_Counter {value.Counters.ModelResponseElevationCounter},Response_Elevation_Value_Limit_Counter {value.Counters.ResponseElevationValueLimitCounter},Response_Elevation_Frequency_Limit_Counter {value.Counters.ResponseElevationFrequencyLimitCounter},{value.Instance.Id}.");
                         }
 
                         await repository.InsertAsync(model, token).ConfigureAwait(false);
@@ -406,18 +400,14 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
                         }
                     }
 
-                    value.Counters.ModelInvokeCounter = 0;
-                    value.Counters.ModelInvokeGatewayCounter = 0;
-                    value.Counters.ModelResponseElevationCounter = 0;
-                    value.Counters.ModelResponseElevationSum = 0;
-                    value.Counters.BalanceLimitCounter = 0;
-                    value.Counters.ResponseElevationValueLimitCounter = 0;
-                    value.Counters.ResponseElevationFrequencyLimitCounter = 0;
-                    value.Counters.ResponseElevationValueGatewayLimitCounter = 0;
-                    value.Counters.ResponseElevationBillingSumLimitCounter = 0;
-                    value.Counters.ParentResponseElevationValueLimitCounter = 0;
-                    value.Counters.ActivationWatcherCount = 0;
-                    value.Counters.ParentBalanceLimitCounter = 0;
+                    Interlocked.Exchange(ref value.Counters.ResponseElevationCount, 0);
+                    Interlocked.Exchange(ref value.Counters.ModelInvokeCounter, 0);
+                    Interlocked.Exchange(ref value.Counters.ModelInvokeGatewayCounter, 0);
+                    Interlocked.Exchange(ref value.Counters.ModelResponseElevationCounter, 0);
+                    Interlocked.Exchange(ref value.Counters.ModelTotalResponseTime, 0);
+                    Interlocked.Exchange(ref value.Counters.ResponseElevationValueLimitCounter, 0);
+                    Interlocked.Exchange(ref value.Counters.ResponseElevationFrequencyLimitCounter, 0);
+                    Interlocked.Exchange(ref value.Counters.ActivationWatcherCount, 0);
 
                     if (context.Services.Log.IsDebugEnabled)
                     {
@@ -468,8 +458,8 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
                     }
 
                     var dbContext =
-                        DataConnectionDbContext.GetDbContextDataConnection(
-                            context.Services.DynamicEnvironment.AppSettings("ConnectionString"));
+                        DataConnectionDbContext.GetResilientDbContextDataConnection(
+                            context.Services.DynamicEnvironment.AppSettings("ConnectionString"), context.Services.Log);
                     try
                     {
                         var repository = new HttpProcessingCounterRepository(dbContext);
@@ -530,14 +520,14 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
                         }
                     }
 
-                    context.Counters.HttpCounterAllRequests = 0;
-                    context.Counters.HttpCounterModel = 0;
-                    context.Counters.HttpCounterModelAsync = 0;
-                    context.Counters.HttpCounterAllError = 0;
-                    context.Counters.HttpCounterTag = 0;
-                    context.Counters.HttpCounterSanction = 0;
-                    context.Counters.HttpCounterCallback = 0;
-                    context.Counters.HttpCounterExhaustive = 0;
+                    Interlocked.Exchange(ref context.Counters.HttpCounterAllRequests, 0);
+                    Interlocked.Exchange(ref context.Counters.HttpCounterModel, 0);
+                    Interlocked.Exchange(ref context.Counters.HttpCounterModelAsync, 0);
+                    Interlocked.Exchange(ref context.Counters.HttpCounterAllError, 0);
+                    Interlocked.Exchange(ref context.Counters.HttpCounterTag, 0);
+                    Interlocked.Exchange(ref context.Counters.HttpCounterSanction, 0);
+                    Interlocked.Exchange(ref context.Counters.HttpCounterCallback, 0);
+                    Interlocked.Exchange(ref context.Counters.HttpCounterExhaustive, 0);
 
                     if (context.Services.Log.IsDebugEnabled)
                     {
@@ -579,9 +569,8 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
                     context.Services.Log.Debug("Counter Management: Starting to store in memory asynchronous queues in database.");
                 }
 
-                var dbContext =
-                    DataConnectionDbContext.GetDbContextDataConnection(
-                        context.Services.DynamicEnvironment.AppSettings("ConnectionString"));
+                var dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(
+                        context.Services.DynamicEnvironment.AppSettings("ConnectionString"), context.Services.Log);
                 try
                 {
                     var repository = new EntityAnalysisAsynchronousQueueBalanceRepository(dbContext);
@@ -596,15 +585,12 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
                     {
                         AsynchronousInvoke = context.ConcurrentQueues.PendingEntityInvoke.Count,
                         AsynchronousCallback = context.Services.CacheService.CacheCallbackPublishSubscribe.Callbacks.Count,
-                        AsynchronousCallbackTimeout = context.Counters.PendingCallbacksTimeoutCounter,
                         CaseCreation = context.ConcurrentQueues.PendingCases.Count,
                         Tagging = context.ConcurrentQueues.PendingTagging.Count,
                         Notification = context.ConcurrentQueues.PendingNotifications.Count,
                         CreatedDate = DateTime.Now,
                         Instance = Dns.GetHostName()
                     };
-
-                    context.Counters.PendingCallbacksTimeoutCounter = 0;
 
                     if (context.Services.Log.IsDebugEnabled)
                     {

@@ -62,10 +62,20 @@ namespace Jube.Data.Repository
                    && (w.Case.CaseWorkflow.EntityAnalysisModel.Deleted == 0 ||
                        w.Case.CaseWorkflow.EntityAnalysisModel.Deleted == null)
                    && w.CaseKey == key && w.CaseKeyValue == value
-                   && (w.Case.CaseWorkflow.CaseWorkflowRole.RoleRegistry.UserRegistry.Name == userName
-                       && w.Case.CaseWorkflow.CaseWorkflowRole.Deleted == 0 || w.Case.CaseWorkflow.CaseWorkflowRole.Deleted == null)
-                   && (w.Case.CaseWorkflowStatus.CaseWorkflowStatusRole.RoleRegistry.UserRegistry.Name == userName
-                       && w.Case.CaseWorkflowStatus.CaseWorkflowStatusRole.Deleted == 0 || w.Case.CaseWorkflowStatus.CaseWorkflowStatusRole.Deleted == null)
+                   && dbContext.CaseWorkflowRole
+                       .Where(r => r.CaseWorkflowGuid == w.Case.CaseWorkflow.Guid
+                                   && (r.Deleted == 0 || r.Deleted == null))
+                       .Any(r => dbContext.RoleRegistry
+                           .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                           .Any(rr => dbContext.UserRegistry
+                               .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                   && dbContext.CaseWorkflowStatusRole
+                       .Where(r => r.CaseWorkflowStatusGuid == w.Case.CaseWorkflowStatus.Guid
+                                   && (r.Deleted == 0 || r.Deleted == null))
+                       .Any(r => dbContext.RoleRegistry
+                           .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                           .Any(rr => dbContext.UserRegistry
+                               .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
             ).OrderByDescending(o => o.Id).ToListAsync(token);
         }
 

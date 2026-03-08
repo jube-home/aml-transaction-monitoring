@@ -17,12 +17,13 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters.Ab
     using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
+    using Data.Context;
     using Data.Query;
     using Dictionary;
     using EntityAnalysisModel;
     using EntityAnalysisModel.Models.Models;
 
-    public class AbstractionRuleCachingQueries(string connectionString, EntityAnalysisModel entityAnalysisModel)
+    public class AbstractionRuleCachingQueries(DbContext dbContext, EntityAnalysisModel entityAnalysisModel)
     {
         public async Task<List<string>> GetDistinctListOfGroupingValuesAsync(DistinctSearchKey distinctSearchKey,
             DateTime toDate, CancellationToken token = default)
@@ -31,7 +32,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters.Ab
 
             try
             {
-                var getArchiveDistinctEntryKeyValue = new GetArchiveDistinctEntryKeyValue(entityAnalysisModel.Services.Log, connectionString);
+                var getArchiveDistinctEntryKeyValue = new GetArchiveDistinctEntryKeyValue(dbContext, entityAnalysisModel.Services.Log);
 
                 if (entityAnalysisModel.Dependencies.LastAbstractionRuleCache.ContainsKey(distinctSearchKey.SearchKey))
                 {
@@ -95,8 +96,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters.Ab
                         $"Abstraction Rule Caching: For grouping key {distinctSearchKey.SearchKey} is processing grouping value {groupingValue} returning the top {distinctSearchKey.SearchKeyCacheFetchLimit}.");
                 }
 
-                var getArchiveSqlByKeyValueLimitQuery =
-                    new GetArchiveSqlByKeyValueLimitQuery(connectionString, entityAnalysisModel.Services.Log);
+                var getArchiveSqlByKeyValueLimitQuery = new GetArchiveSqlByKeyValueLimitQuery(dbContext, entityAnalysisModel.Services.Log);
 
                 var cachePayloadSql = "select * from (" + distinctSearchKey.SqlSelect + distinctSearchKey.SqlSelectFrom +
                                       distinctSearchKey.SqlSelectOrderBy + ") c order by 2;";

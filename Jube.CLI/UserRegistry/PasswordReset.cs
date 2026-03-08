@@ -21,7 +21,7 @@ namespace Jube.CLI.UserRegistry
     {
         public static async Task ExecuteAsync(string? connectionString, string? hash, string? userName, string? password, CancellationToken token = default)
         {
-            var dbContext = DataConnectionDbContext.GetDbContextDataConnection(connectionString);
+            var dbContext = DataConnectionDbContext.GetNgpsqlDbContextDataConnection(connectionString);
             var repository = new UserRegistryRepository(dbContext);
 
             var userRegistry = await repository.GetByUserNameAsync(userName, token);

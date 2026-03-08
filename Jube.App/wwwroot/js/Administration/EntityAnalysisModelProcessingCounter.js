@@ -27,6 +27,11 @@ const dataSourceEntity = new kendo.data.DataSource({
     schema: {
         model: {
             id: "id",
+            averageResponseTime: function () {
+                let totalTime = this.get("modelTotalResponseTime");
+                let invokes = this.get("modelInvoke");
+                return invokes > 0 ? (totalTime / invokes) : 0;
+            },
             fields: {
                 name: {type: "string", editable: false},
                 instance: {type: "string", editable: false},
@@ -36,8 +41,7 @@ const dataSourceEntity = new kendo.data.DataSource({
                 responseElevation: {type: "number", editable: false},
                 activationWatcher: {type: "number", editable: false},
                 responseElevationLimit: {type: "number", editable: false},
-                responseElevationValueLimit: {type: "number", editable: false},
-                responseElevationValueGatewayLimit: {type: "number", editable: false}
+                modelTotalResponseTime: {type: "number", editable: false}
             }
         }
     }
@@ -67,8 +71,12 @@ $(document).ready(function () {
             {field: "responseElevation", title: "Response Elevation"},
             {field: "activationWatcher", title: "Activation Watcher"},
             {field: "responseElevationLimit", title: "Response Elevation Limit"},
-            {field: "responseElevationValueLimit", title: "Response Elevation Value Limit"},
-            {field: "responseElevationValueGatewayLimit", title: "Response Elevation Value Gateway Limit"}
+            {field: "modelTotalResponseTime", title: "Total Response Time"},
+            {
+                field: "averageResponseTime()",
+                title: "Average Response Time",
+                format: "{0:0}"
+            }
         ]
     });
 });

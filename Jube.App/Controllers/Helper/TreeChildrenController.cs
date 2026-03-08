@@ -48,10 +48,8 @@ namespace Jube.App.Controllers.Helper
             }
 
             this.log = log;
-
-            dbContext =
-                DataConnectionDbContext.GetDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
-            permissionValidation = new PermissionValidation(dbContext, userName);
+            dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"), log);
+            permissionValidation = new PermissionValidation(dbContext, userName, log);
         }
 
         protected override void Dispose(bool disposing)
@@ -540,7 +538,7 @@ namespace Jube.App.Controllers.Helper
                 return StatusCode(500);
             }
         }
-        
+
         [HttpGet]
         [Route("TTLCounter")]
         public async Task<ActionResult<List<EntityAnalysisModelTreeChildDto>>> GetEntityAnalysisModelTtlCountersAsync(int id, CancellationToken token = default)

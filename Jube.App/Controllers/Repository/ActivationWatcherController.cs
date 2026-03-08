@@ -52,14 +52,11 @@ namespace Jube.App.Controllers.Repository
             }
 
             this.log = log;
-
-            dbContext =
-                DataConnectionDbContext.GetDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
-            permissionValidation = new PermissionValidation(dbContext, userName);
-
-            repository = new ActivationWatcherRepository(dbContext, userName);
             this.watcherHub = watcherHub;
             this.contractResolver = contractResolver;
+            dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"), log);
+            permissionValidation = new PermissionValidation(dbContext, userName, log);
+            repository = new ActivationWatcherRepository(dbContext, userName);
         }
 
         protected override void Dispose(bool disposing)

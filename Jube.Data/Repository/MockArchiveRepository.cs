@@ -35,9 +35,9 @@ namespace Jube.Data.Repository
                 .OrderBy(o => o.EntityAnalysisModelInstanceEntryGuid).Select(s => s.Json).Take(limit).ToListAsync(token).ConfigureAwait(false);
         }
 
-        public Task DeleteAsync(CancellationToken token = default)
+        public Task<int> GetLoadedCountAsync(int entityAnalysisModelId, CancellationToken token = default)
         {
-            return dbContext.MockArchive.DeleteAsync(token);
+            return dbContext.MockArchive.CountAsync(c => c.EntityAnalysisModelId == entityAnalysisModelId, token);
         }
     }
 }

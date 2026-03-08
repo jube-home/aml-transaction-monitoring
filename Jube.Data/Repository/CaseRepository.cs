@@ -76,12 +76,26 @@ namespace Jube.Data.Repository
 
         public Task<Case> GetByIdActiveOnlyAsync(int id, CancellationToken token = default)
         {
-            return dbContext.Case.FirstOrDefaultAsync(w
-                => (w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == tenantRegistryId ||
-                    !tenantRegistryId.HasValue)
-                   && (w.CaseWorkflowStatus.CaseWorkflowStatusRole.RoleRegistry.UserRegistry.Name == userName && w.CaseWorkflowStatus.CaseWorkflowStatusRole.Deleted == 0 || w.CaseWorkflowStatus.CaseWorkflowStatusRole.Deleted == null)
-                   && (w.CaseWorkflow.CaseWorkflowRole.RoleRegistry.UserRegistry.Name == userName && w.CaseWorkflow.CaseWorkflowRole.Deleted == 0 || w.CaseWorkflow.CaseWorkflowRole.Deleted == null)
-                   && w.Id == id, token);
+            return dbContext.Case
+                .Where(w =>
+                    (w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                    && w.Id == id
+                    && dbContext.CaseWorkflowStatusRole
+                        .Where(r => r.CaseWorkflowStatusGuid == w.CaseWorkflowStatus.Guid
+                                    && (r.Deleted == 0 || r.Deleted == null))
+                        .Any(r => dbContext.RoleRegistry
+                            .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                            .Any(rr => dbContext.UserRegistry
+                                .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                    && dbContext.CaseWorkflowRole
+                        .Where(r => r.CaseWorkflowGuid == w.CaseWorkflow.Guid
+                                    && (r.Deleted == 0 || r.Deleted == null))
+                        .Any(r => dbContext.RoleRegistry
+                            .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                            .Any(rr => dbContext.UserRegistry
+                                .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                )
+                .FirstOrDefaultAsync(token);
         }
 
         public async Task<IEnumerable<Case>> GetByExpiredAsync(CancellationToken token = default)

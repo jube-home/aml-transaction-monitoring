@@ -52,15 +52,11 @@ namespace Jube.App.Controllers.Query
 
             this.log = log;
 
-            dbContext =
-                DataConnectionDbContext.GetDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
-            permissionValidation = new PermissionValidation(dbContext, userName);
-
-            if (dynamicEnvironment.AppSettings("ReportConnectionString") != null)
-            {
-                query = new GetByVisualisationRegistryDatasourceCommandExecutionQuery(dbContext,
-                    dynamicEnvironment.AppSettings("ReportConnectionString"), userName);
-            }
+            dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"), log);
+            permissionValidation = new PermissionValidation(dbContext, userName, log);
+            query = dynamicEnvironment.AppSettings("ReportConnectionString") != null ?
+                new GetByVisualisationRegistryDatasourceCommandExecutionQuery(dbContext, userName, log, dynamicEnvironment.AppSettings("ReportConnectionString"))
+                : new GetByVisualisationRegistryDatasourceCommandExecutionQuery(dbContext, userName, log, dynamicEnvironment.AppSettings("ConnectionString"));
         }
 
         protected override void Dispose(bool disposing)

@@ -41,5 +41,6 @@ namespace Jube.App.Dto
         public int Version { get; set; }
         public string DeletedUser { get; set; }
         public DateTime DeletedDate { get; set; }
+        public long EvaluationCounter { get; set; }
     }
 }

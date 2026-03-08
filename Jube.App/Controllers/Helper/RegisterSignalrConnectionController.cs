@@ -20,6 +20,7 @@ namespace Jube.App.Controllers.Helper
     using Code.signalr;
     using Data.Context;
     using DynamicEnvironment;
+    using log4net;
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
@@ -37,16 +38,15 @@ namespace Jube.App.Controllers.Helper
         private readonly IHubContext<WatcherHub> watcherHub;
 
         public RegisterSignalrConnectionController(IHubContext<WatcherHub> watcherHub,
-            IHttpContextAccessor httpContextAccessor, DynamicEnvironment dynamicEnvironment)
+            IHttpContextAccessor httpContextAccessor, DynamicEnvironment dynamicEnvironment, ILog log)
         {
             if (httpContextAccessor.HttpContext?.User.Identity != null)
             {
                 userName = httpContextAccessor.HttpContext.User.Identity.Name;
             }
 
-            dbContext =
-                DataConnectionDbContext.GetDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
-            permissionValidation = new PermissionValidation(dbContext, userName);
+            dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"), log);
+            permissionValidation = new PermissionValidation(dbContext, userName, log);
 
             tenantRegistryId = dbContext.UserInTenant.Where(w => w.User == userName)
                 .Select(s => s.TenantRegistryId).FirstOrDefault();

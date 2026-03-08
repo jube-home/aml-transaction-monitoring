@@ -35,9 +35,8 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
                         context.Services.Log.Info("Start: Is building the database connection.");
                     }
 
-                    var dbContext =
-                        DataConnectionDbContext.GetDbContextDataConnection(
-                            context.Services.DynamicEnvironment.AppSettings("ConnectionString"));
+                    var dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(
+                            context.Services.DynamicEnvironment.AppSettings("ConnectionString"), context.Services.Log);
                     try
                     {
                         if (context.Services.Log.IsDebugEnabled)

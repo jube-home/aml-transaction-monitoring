@@ -113,7 +113,8 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters
                             context.JsonSerializationHelper,
                             buffer,
                             context.ConcurrentQueues.PendingCases,
-                            context.Services.DynamicEnvironment, context.Services.Log, token).ConfigureAwait(false);
+                            context.Services.DynamicEnvironment, context.Services.CacheService,
+                            context.Services.Log, token).ConfigureAwait(false);
                     }
                     catch (Exception ex) when (ex is not OperationCanceledException)
                     {
@@ -127,7 +128,9 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters
 
                 if ((flushDueToTimeout || flushDueToThreshold) && flushDueToBufferHavingValues)
                 {
-                    await ArchiverArchiveRepository.BulkCopyArchiveBufferAsync(buffer, context.Services.DynamicEnvironment, context.Services.Log, token).ConfigureAwait(false);
+                    await ArchiverArchiveRepository.BulkCopyArchiveBufferAsync(entityAnalysisModel.Instance.TenantRegistryId,
+                        entityAnalysisModel.Instance.Guid
+                        , buffer, context.Services.DynamicEnvironment, context.Services.CacheService, context.Services.Log, token).ConfigureAwait(false);
                 }
 
             }

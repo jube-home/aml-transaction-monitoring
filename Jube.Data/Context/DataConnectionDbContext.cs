@@ -14,10 +14,24 @@
 namespace Jube.Data.Context
 {
     using LinqToDB.Configuration;
+    using LinqToDB.DataProvider.PostgreSQL;
+    using log4net;
+    using ResilientNpgsqlConnection;
 
     public static class DataConnectionDbContext
     {
-        public static DbContext GetDbContextDataConnection(string connectionString)
+        public static DbContext GetResilientDbContextDataConnection(string connectionString, ILog log)
+        {
+            var builder = new LinqToDbConnectionOptionsBuilder();
+            builder.UseConnectionFactory(
+                PostgreSQLTools.GetDataProvider(PostgreSQLVersion.v95),
+                () => new ResilientNpgsqlConnection(connectionString, log)
+            );
+            var connection = builder.Build<DbContext>();
+            return new DbContext(connection);
+        }
+
+        public static DbContext GetNgpsqlDbContextDataConnection(string connectionString)
         {
             var builder = new LinqToDbConnectionOptionsBuilder();
             builder.UsePostgreSQL(connectionString);

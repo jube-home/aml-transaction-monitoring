@@ -16,7 +16,6 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
-    using System.IO;
     using System.Threading.Tasks;
     using DynamicEnvironment;
     using log4net;
@@ -37,6 +36,5 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context
         public Random Random { get; init; }
         public DynamicEnvironment Environment { get; init; }
         public bool Async { get; set; }
-        public MemoryStream JsonResult { get; set; }
     }
 }

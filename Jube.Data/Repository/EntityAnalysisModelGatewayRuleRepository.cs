@@ -75,7 +75,7 @@ namespace Jube.Data.Repository
                     && (w.Deleted == 0 || w.Deleted == null))
                 .OrderBy(o => o.Id).ToListAsync(token).ConfigureAwait(false);
         }
-        
+
         public async Task<IEnumerable<EntityAnalysisModelGatewayRule>> GetByEntityAnalysisModelIdOrderByPriorityAsync(int entityAnalysisModelId, CancellationToken token = default)
         {
             return await dbContext.EntityAnalysisModelGatewayRule
@@ -138,7 +138,7 @@ namespace Jube.Data.Repository
             return model;
         }
 
-        public Task UpdateCounterAsync(int id, int activationCounter, CancellationToken token = default)
+        public Task UpdateCounterAsync(int id, long evaluationCounter, long activationCounter, DateTime activationCounterDate, CancellationToken token = default)
         {
             return dbContext.EntityAnalysisModelGatewayRule
                 .Where(d =>
@@ -146,7 +146,8 @@ namespace Jube.Data.Repository
                     && d.Id == id
                     && (d.Deleted == 0 || d.Deleted == null))
                 .Set(s => s.ActivationCounter, activationCounter)
-                .Set(s => s.ActivationCounterDate, DateTime.Now)
+                .Set(s => s.ActivationCounterDate, activationCounterDate)
+                .Set(s => s.EvaluationCounter, evaluationCounter)
                 .UpdateAsync(token);
         }
 

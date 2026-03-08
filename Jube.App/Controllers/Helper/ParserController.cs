@@ -56,8 +56,8 @@ namespace Jube.App.Controllers.Helper
             this.log = log;
 
             dbContext =
-                DataConnectionDbContext.GetDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
-            permissionValidation = new PermissionValidation(dbContext, userName);
+                DataConnectionDbContext.GetResilientDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"), log);
+            permissionValidation = new PermissionValidation(dbContext, userName, log);
         }
 
         protected override void Dispose(bool disposing)
@@ -119,7 +119,7 @@ namespace Jube.App.Controllers.Helper
                 List<string> entityAnalysisModelsHttpAdaptations = null;
                 List<string> entityAnalysisModelsExhaustiveAdaptations = null;
                 List<string> entityAnalysisModelsActivationRules = null;
-                
+
                 if (parseRuleRequestDto.RuleParseType > 4)
                 {
                     entityAnalysisModelAbstractionCalculations
@@ -266,7 +266,7 @@ namespace Jube.App.Controllers.Helper
                 {
                     continue;
                 }
-                
+
                 var entityAnalysisInlineScript = await entityAnalysisInlineScriptRepository.GetByIdAsync(entityAnalysisModelInlineScript.EntityAnalysisInlineScriptId.Value, token);
                 foreach (var publicProperty in SyntaxTreeHelpers.GetPublicProperties(entityAnalysisInlineScript.Code, entityAnalysisInlineScript.LanguageId == 2))
                 {
@@ -319,7 +319,7 @@ namespace Jube.App.Controllers.Helper
 
             return entityAnalysisModelLists.Select(s => s.Name).ToList();
         }
-        
+
         private async Task<List<string>> EntityAnalysisModelActivationRulesAsync(int entityAnalysisModelId, CancellationToken token = default)
         {
             var entityAnalysisModelActivationRuleRepository =
