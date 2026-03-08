@@ -30,7 +30,7 @@ namespace Jube.App.Controllers.Health
         private readonly IHostApplicationLifetime lifetime;
 
         public ReadyController(IHostApplicationLifetime lifetime,
-            DynamicEnvironment dynamicEnvironment, Engine engine, Relay relay = null)
+            DynamicEnvironment dynamicEnvironment, Engine engine = null, Relay relay = null)
         {
             this.engine = engine;
             this.relay = relay;
@@ -45,7 +45,7 @@ namespace Jube.App.Controllers.Health
             {
                 return Task.FromResult<ActionResult>(StatusCode(503));
             }
-            
+
             if (dynamicEnvironment.AppSettings("EnableEngine").Equals("True"))
             {
                 if (engine.Context is not { Ready: true })
