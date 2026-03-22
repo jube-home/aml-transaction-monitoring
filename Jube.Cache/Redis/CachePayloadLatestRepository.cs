@@ -25,13 +25,14 @@ namespace Jube.Cache.Redis
     using log4net;
     using MessagePack;
     using Models;
+    using ResilientRedisConnection;
     using Serialization;
     using StackExchange.Redis;
     using TaskCancellation.TaskHelper;
 
     public class CachePayloadLatestRepository(
         string postgresConnectionString,
-        IDatabaseAsync redisDatabase,
+        ResilientRedisDatabase redisDatabase,
         ILog log,
         CommandFlags commandFlag = CommandFlags.FireAndForget) : ICachePayloadLatestRepository
     {
@@ -191,7 +192,7 @@ namespace Jube.Cache.Redis
 
                 var updateLatestTask = redisDatabase.SortedSetUpdateAsync(redisKeyReferenceDateLatest, redisHSetKey, referenceDateTimestamp);
 
-                await redisDatabase.HashIncrementAsync(redisKeyPayloadLatestCount, entryKey);
+                await redisDatabase.HashIncrementAsync(redisKeyPayloadLatestCount, entryKey, 1);
                 await redisDatabase.HashSetAsync(redisKeyPayloadLatest, redisHSetKey, bytes);
 
                 await updateLatestTask;
@@ -286,7 +287,7 @@ namespace Jube.Cache.Redis
             }
         }
 
-        private static async Task BatchSortedSetRemoveAsync(IDatabaseAsync db, RedisKey key, IEnumerable<RedisValue> values, CommandFlags flags)
+        private static async Task BatchSortedSetRemoveAsync(ResilientRedisDatabase db, RedisKey key, IEnumerable<RedisValue> values, CommandFlags flags)
         {
             const int batchSize = 1000;
             var valuesArray = values.ToArray();
@@ -300,7 +301,7 @@ namespace Jube.Cache.Redis
             }
         }
 
-        private static async Task BatchHashDeleteAsync(IDatabaseAsync db, RedisKey key, IEnumerable<RedisValue> fields, CommandFlags flags)
+        private static async Task BatchHashDeleteAsync(ResilientRedisDatabase db, RedisKey key, IEnumerable<RedisValue> fields, CommandFlags flags)
         {
             const int batchSize = 1000;
             var fieldsArray = fields.ToArray();

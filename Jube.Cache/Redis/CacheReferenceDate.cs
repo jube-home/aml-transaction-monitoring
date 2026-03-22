@@ -16,10 +16,11 @@ namespace Jube.Cache.Redis
     using Extensions;
     using Interfaces;
     using log4net;
+    using ResilientRedisConnection;
     using StackExchange.Redis;
 
     public class CacheReferenceDate(
-        IDatabaseAsync redisDatabase,
+        ResilientRedisDatabase redisDatabase,
         ILog log,
         CommandFlags commandFlag = CommandFlags.FireAndForget) : ICacheReferenceDate
     {

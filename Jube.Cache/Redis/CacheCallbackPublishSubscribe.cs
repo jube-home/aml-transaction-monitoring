@@ -16,6 +16,7 @@ namespace Jube.Cache.Redis
     using System.Collections.Concurrent;
     using System.Net;
     using log4net;
+    using ResilientRedisConnection;
     using StackExchange.Redis;
     using TaskCancellation;
 
@@ -30,10 +31,10 @@ namespace Jube.Cache.Redis
         private readonly ConnectionMultiplexer connectionMultiplexer;
         private readonly string localCacheInstanceGuidString;
         private readonly ILog log;
-        private readonly IDatabaseAsync redisDatabase;
+        private readonly ResilientRedisDatabase redisDatabase;
 
         public CacheCallbackPublishSubscribe(ConnectionMultiplexer connectionMultiplexer,
-            IDatabaseAsync redisDatabase,
+            ResilientRedisDatabase redisDatabase,
             ConcurrentDictionary<Guid, TaskCompletionSource<Callback.Callback>> callbacks,
             int callbackTimeout,
             ILog log,

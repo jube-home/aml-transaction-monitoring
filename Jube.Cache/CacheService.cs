@@ -17,6 +17,7 @@ namespace Jube.Cache
     using log4net;
     using Redis;
     using Redis.Callback;
+    using ResilientRedisConnection;
     using StackExchange.Redis;
     using TaskCancellation;
 
@@ -52,12 +53,12 @@ namespace Jube.Cache
             ConnectionMultiplexer =
                 ConnectionMultiplexer.Connect(redisConnectionString);
 
-            RedisDatabase = ConnectionMultiplexer.GetDatabase();
+            RedisDatabase = new ResilientRedisConnection(ConnectionMultiplexer, log).GetDatabase();
         }
 
         public Task InstantiateRepositoriesTask { get; set; }
         public ConnectionMultiplexer ConnectionMultiplexer { get; set; }
-        public IDatabase RedisDatabase { get; set; }
+        public ResilientRedisDatabase RedisDatabase { get; set; }
         public CacheAbstractionRepository CacheAbstractionRepository { get; set; }
         public CachePayloadLatestRepository CachePayloadLatestRepository { get; set; }
         public CachePayloadRepository CachePayloadRepository { get; set; }
