@@ -16,7 +16,7 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Models.Payload.EntityAnalysisMod
     using System;
     using System.Collections.Generic;
     using System.Globalization;
-    using Case;
+    using Tokenisation;
 
     public static class EntityAnalysisModelInstanceEntryPayloadExtensions
     {
