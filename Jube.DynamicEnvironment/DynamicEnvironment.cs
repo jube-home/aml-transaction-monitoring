@@ -26,6 +26,7 @@ namespace Jube.DynamicEnvironment
     using log4net.Core;
     using log4net.Layout;
     using log4net.Repository.Hierarchy;
+    using Tokenisation;
 
     public class DynamicEnvironment
     {
@@ -310,8 +311,21 @@ namespace Jube.DynamicEnvironment
                 },
                 {
                     "RedisBackplane", "False"
+                },
+                {
+                    "SecretsPath", ""
                 }
             };
+
+            var secretsPath = Environment.GetEnvironmentVariable("SecretsPath") ?? String.Empty;
+            if (String.IsNullOrEmpty(secretsPath))
+            {
+                secretsPath = appSettings["SecretsPath"] ?? String.Empty;
+
+                Console.WriteLine(String.IsNullOrEmpty(secretsPath) ?
+                    "Environment Variable SecretsPath not available.  Will resolve to working directory." :
+                    $"Environment Variable SecretsPath not available.  Set to default prefix of {secretsPath}.");
+            }
 
             foreach (var environmentVariable in from DictionaryEntry environmentVariable in
                          Environment.GetEnvironmentVariables()
@@ -320,8 +334,45 @@ namespace Jube.DynamicEnvironment
                            appSettings[environmentVariable.Key.ToString() ?? String.Empty]
                      select environmentVariable)
             {
-                appSettings[environmentVariable.Key.ToString() ?? String.Empty] =
-                    Convert.ToString(environmentVariable.Value);
+                if (environmentVariable.Value == null)
+                {
+                    continue;
+                }
+
+                var replaced = Convert.ToString(environmentVariable.Value);
+                if (replaced != null)
+                {
+                    foreach (var token in Tokenisation.ReturnTokens(replaced))
+                    {
+                        var path = Path.Combine(secretsPath, token);
+                        if (!File.Exists(path))
+                        {
+                            Console.WriteLine($@"For environment variable {environmentVariable.Key} could not find {path} in container.");
+                            continue;
+                        }
+
+                        string secret;
+                        try
+                        {
+                            secret = File.ReadAllText(path).Trim();
+                        }
+                        catch (IOException ex)
+                        {
+                            Console.WriteLine($@"For environment variable {environmentVariable.Key} could not read {path}: {ex.Message}");
+                            continue;
+                        }
+
+                        if (String.IsNullOrEmpty(secret))
+                        {
+                            Console.WriteLine($@"For environment variable {environmentVariable.Key} path {path} in container but it is empty.");
+                            continue;
+                        }
+
+                        replaced = replaced.Replace($"[@{token}@]", secret);
+                    }
+
+                    appSettings[environmentVariable.Key.ToString() ?? String.Empty] = replaced;
+                }
             }
 
             InstantiateLog4Net();

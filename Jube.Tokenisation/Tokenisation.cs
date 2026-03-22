@@ -11,7 +11,7 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-namespace Jube.Case
+namespace Jube.Tokenisation
 {
     using System.Text.RegularExpressions;
 
