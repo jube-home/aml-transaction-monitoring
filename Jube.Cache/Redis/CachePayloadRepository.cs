@@ -24,6 +24,7 @@ namespace Jube.Cache.Redis
     using Interfaces;
     using log4net;
     using MessagePack;
+    using ResilientRedisConnection;
     using Serialization;
     using Serialization.DictionaryNoBoxing.MessagePack;
     using StackExchange.Redis;
@@ -43,7 +44,7 @@ namespace Jube.Cache.Redis
         private readonly MessagePackSerializerOptions messagePackSerializerOptions;
         private readonly string postgresConnectionString;
         private readonly bool publishSubscribe;
-        private readonly IDatabaseAsync redisDatabase;
+        private readonly ResilientRedisDatabase redisDatabase;
         private readonly bool storePayloadCountsAndBytes;
         private readonly SemaphoreSlim timerSemaphore = new SemaphoreSlim(1, 1);
         private LocalCacheInstance localCacheInstance;
@@ -52,7 +53,7 @@ namespace Jube.Cache.Redis
         private LruCacheConcurrentSizedDictionary<string, byte[]> lruCacheConcurrentSizedDictionary;
         private Timer timer;
 
-        private CachePayloadRepository(ConnectionMultiplexer connectionMultiplexer, IDatabaseAsync redisDatabase,
+        private CachePayloadRepository(ConnectionMultiplexer connectionMultiplexer, ResilientRedisDatabase redisDatabase,
             string postgresConnectionString, ILog log,
             CommandFlags commandFlag, bool fill, bool localCache, long localCacheBytes, bool messagePackCompression, bool storePayloadCountsAndBytes,
             bool publishSubscribe, CancellationToken token = default)
@@ -120,7 +121,7 @@ namespace Jube.Cache.Redis
                 {
                     var redisKeyPayloadCount = $"PayloadCount:{tenantRegistryId}";
                     var redisKeyPayloadBytes = $"PayloadBytes:{tenantRegistryId}";
-                    tasks.Add(redisDatabase.HashIncrementAsync(redisKeyPayloadCount, entityAnalysisModelGuid.ToString("N")));
+                    tasks.Add(redisDatabase.HashIncrementAsync(redisKeyPayloadCount, entityAnalysisModelGuid.ToString("N"), 1));
                     tasks.Add(redisDatabase.HashIncrementAsync(redisKeyPayloadBytes, entityAnalysisModelGuid.ToString("N"), bytes.Length));
                 }
 
@@ -299,7 +300,7 @@ namespace Jube.Cache.Redis
 
         public static async Task<CachePayloadRepository> CreateAsync(
             ConnectionMultiplexer connectionMultiplexer,
-            IDatabaseAsync redisDatabase,
+            ResilientRedisDatabase redisDatabase,
             string postgresConnectionString,
             ILog log,
             CommandFlags commandFlag,
@@ -826,7 +827,7 @@ namespace Jube.Cache.Redis
                     )));
 
                     tasks.Add(TaskHelper.MeasureTaskTimeAndMemoryAllocatedAsync(TaskType.HashDecrementCount, async () => await redisDatabase.HashDecrementAsync(
-                        redisKeyCount, redisHashKeyForRedisKey
+                        redisKeyCount, redisHashKeyForRedisKey, 1
                     )));
 
                     tasks.Add(TaskHelper.MeasureTaskTimeAndMemoryAllocatedAsync(TaskType.HashDeletePayload, async () => await redisDatabase.HashDeleteAsync(
@@ -1073,7 +1074,7 @@ namespace Jube.Cache.Redis
         }
 
 
-        private async Task BatchSortedSetRemoveAsync(IDatabaseAsync db, RedisKey key, IEnumerable<RedisValue> values)
+        private async Task BatchSortedSetRemoveAsync(ResilientRedisDatabase db, RedisKey key, IEnumerable<RedisValue> values)
         {
             const int batchSize = 1000;
             var valuesArray = values.ToArray();

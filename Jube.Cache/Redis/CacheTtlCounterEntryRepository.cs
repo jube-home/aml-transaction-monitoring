@@ -17,10 +17,11 @@ namespace Jube.Cache.Redis
     using Interfaces;
     using log4net;
     using Models;
+    using ResilientRedisConnection;
     using StackExchange.Redis;
 
     public class CacheTtlCounterEntryRepository(
-        IDatabaseAsync redisDatabase,
+        ResilientRedisDatabase redisDatabase,
         ILog log,
         CommandFlags commandFlag = CommandFlags.FireAndForget) : ICacheTtlCounterEntryRepository
     {
@@ -47,7 +48,7 @@ namespace Jube.Cache.Redis
                         {
                             continue;
                         }
-                        
+
                         if (keyTtlCounterEntry.Value.HasValue)
                         {
                             expired.Add(new ExpiredTtlCounterEntry

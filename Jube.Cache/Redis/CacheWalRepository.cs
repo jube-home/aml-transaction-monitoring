@@ -15,10 +15,11 @@ namespace Jube.Cache.Redis
 {
     using Interfaces;
     using log4net;
+    using ResilientRedisConnection;
     using StackExchange.Redis;
 
     public class CacheWalRepository(
-        IDatabaseAsync redisDatabase,
+        ResilientRedisDatabase redisDatabase,
         ILog log,
         CommandFlags commandFlag = CommandFlags.FireAndForget) : ICacheWalRepository
     {

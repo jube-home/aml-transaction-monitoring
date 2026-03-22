@@ -21,36 +21,66 @@ namespace Jube.ResilientRedisConnection
     {
         private readonly IConnectionMultiplexer multiplexer;
 
-        public ResilientRedisConnection(IConnectionMultiplexer multiplexer, ILog log, int maxRetries = 10)
+        public ResilientRedisConnection(IConnectionMultiplexer multiplexer, ILog log, int maxRetries = 5)
         {
             this.multiplexer = multiplexer ?? throw new ArgumentNullException(nameof(multiplexer));
 
-            FailoverPolicy = Policy
+            var circuitBreaker = Policy
                 .Handle<RedisConnectionException>()
                 .Or<RedisTimeoutException>()
                 .Or<RedisServerException>(ex =>
-                    ex.Message.StartsWith("LOADING", StringComparison.OrdinalIgnoreCase) ||
-                    ex.Message.StartsWith("MASTERDOWN", StringComparison.OrdinalIgnoreCase) ||
-                    ex.Message.StartsWith("CLUSTERDOWN", StringComparison.OrdinalIgnoreCase) ||
-                    ex.Message.StartsWith("TRYAGAIN", StringComparison.OrdinalIgnoreCase) ||
-                    ex.Message.StartsWith("MOVED", StringComparison.OrdinalIgnoreCase) ||
-                    ex.Message.StartsWith("ASK", StringComparison.OrdinalIgnoreCase))
+                    ex.Message.Contains("LOADING", StringComparison.OrdinalIgnoreCase) ||
+                    ex.Message.Contains("MASTERDOWN", StringComparison.OrdinalIgnoreCase))
+                .CircuitBreakerAsync(5, TimeSpan.FromSeconds(30));
+
+            var fullRetry = Policy
+                .Handle<RedisConnectionException>()
+                .Or<RedisTimeoutException>()
+                .Or<RedisServerException>(ex =>
+                    ex.Message.Contains("LOADING", StringComparison.OrdinalIgnoreCase) ||
+                    ex.Message.Contains("MASTERDOWN", StringComparison.OrdinalIgnoreCase) ||
+                    ex.Message.Contains("CLUSTERDOWN", StringComparison.OrdinalIgnoreCase) ||
+                    ex.Message.Contains("TRYAGAIN", StringComparison.OrdinalIgnoreCase))
                 .Or<RedisException>(ex =>
                     ex.Message.Contains("No connection is available", StringComparison.OrdinalIgnoreCase) ||
-                    ex.Message.Contains("multiplexer is not connected", StringComparison.OrdinalIgnoreCase) ||
-                    ex.Message.Contains("The message was already in a completed state", StringComparison.OrdinalIgnoreCase))
+                    ex.Message.Contains("multiplexer is not connected", StringComparison.OrdinalIgnoreCase))
                 .WaitAndRetryAsync(
                     maxRetries,
-                    attempt =>
-                        TimeSpan.FromSeconds(Math.Min(Math.Pow(2, attempt), 10)) +
-                        TimeSpan.FromMilliseconds(Random.Shared.Next(0, 500)),
-                    (ex, delay, retryCount, _) =>
+                    attempt => TimeSpan.FromSeconds(Math.Min(Math.Pow(2, attempt), 10)) +
+                               TimeSpan.FromMilliseconds(Random.Shared.Next(0, 500)),
+                    (ex, _, count, _) =>
                     {
-                        log.Warn($"Redis failover: attempt {retryCount} of {maxRetries}, " +
-                                 $"waiting {delay.TotalSeconds:F1}s. {ex.Message}");
+                        if (count == maxRetries)
+                        {
+                            log.Warn($"Redis Retry threshold hit: {count}/{maxRetries}. {ex.Message}");
+                        }
                     });
+
+            var connectionRetry = Policy
+                .Handle<RedisConnectionException>()
+                .Or<RedisServerException>(ex =>
+                    ex.Message.Contains("READONLY", StringComparison.OrdinalIgnoreCase) ||
+                    ex.Message.Contains("TRYAGAIN", StringComparison.OrdinalIgnoreCase))
+                .Or<RedisException>(ex =>
+                    ex.Message.Contains("No connection is available", StringComparison.OrdinalIgnoreCase))
+                .WaitAndRetryAsync(
+                    maxRetries,
+                    attempt => TimeSpan.FromSeconds(Math.Min(Math.Pow(2, attempt), 10)) +
+                               TimeSpan.FromMilliseconds(Random.Shared.Next(0, 500)),
+                    (ex, _, count, _) =>
+                    {
+                        if (count == maxRetries)
+                        {
+                            log.Warn($"Redis Retry threshold hit: {count}/{maxRetries}. {ex.Message}");
+                        }
+                    }
+                );
+
+            IdempotentPolicy = Policy.WrapAsync(circuitBreaker, fullRetry);
+            NonIdempotentPolicy = Policy.WrapAsync(circuitBreaker, connectionRetry);
         }
-        private IAsyncPolicy FailoverPolicy { get; }
+        private IAsyncPolicy IdempotentPolicy { get; }
+        private IAsyncPolicy NonIdempotentPolicy { get; }
 
         public void Dispose()
         {
@@ -59,7 +89,7 @@ namespace Jube.ResilientRedisConnection
 
         public ResilientRedisDatabase GetDatabase(int db = -1)
         {
-            return new ResilientRedisDatabase(multiplexer.GetDatabase(db), FailoverPolicy);
+            return new ResilientRedisDatabase(multiplexer.GetDatabase(db), IdempotentPolicy, NonIdempotentPolicy);
         }
     }
 }

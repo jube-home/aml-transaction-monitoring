@@ -17,11 +17,12 @@ namespace Jube.Cache.Redis
     using log4net;
     using MessagePack;
     using Models;
+    using ResilientRedisConnection;
     using Serialization;
     using StackExchange.Redis;
 
     public class CacheSanctionRepository(
-        IDatabaseAsync redisDatabase,
+        ResilientRedisDatabase redisDatabase,
         ILog log,
         CommandFlags commandFlag = CommandFlags.FireAndForget) : ICacheSanctionRepository
     {
