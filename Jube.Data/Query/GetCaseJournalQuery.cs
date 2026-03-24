@@ -64,7 +64,7 @@ namespace Jube.Data.Query
                 limit
             };
 
-            var postgres = new Postgres(reportConnectionString ?? dbContext.ConnectionString, log);
+            using var postgres = new Postgres(reportConnectionString ?? dbContext.ConnectionString, log);
 
             await postgres.PrepareAsync(sql, tokens, token).ConfigureAwait(false);
 

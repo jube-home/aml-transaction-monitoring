@@ -61,7 +61,7 @@ namespace Jube.Data.Query.CaseQuery
             var sw = new StopWatch();
             sw.Start();
 
-            var postgres = new Postgres(reportConnectionString, log);
+            using var postgres = new Postgres(reportConnectionString, log);
 
             var value = await
                 postgres.ExecuteByOrderedParametersAsync(modelCompiled.SelectSqlDisplay

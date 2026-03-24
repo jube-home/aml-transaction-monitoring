@@ -34,7 +34,15 @@ namespace Jube.Data.Reporting
         public Postgres(string connectionString, ILog log)
         {
             connection = new ResilientNpgsqlConnection(connectionString, log);
-            connection.Open();
+            try
+            {
+                connection.Open();
+            }
+            catch
+            {
+                connection.Dispose();
+                throw;
+            }
         }
 
         public void Dispose()

@@ -40,7 +40,7 @@ namespace Jube.Engine.Exhaustive.Utilities
         {
             var dataList = new List<double[]>();
             var outputsList = new List<double>();
-            var postgres = new Postgres(reportConnectionString ?? dbContext.ConnectionString, log);
+            using var postgres = new Postgres(reportConnectionString ?? dbContext.ConnectionString, log);
 
             foreach (var json in
                      await postgres.ExecuteReturnOnlyJsonFromArchiveSampleAsync(entityAnalysisModelId, filterSql,
@@ -108,7 +108,7 @@ namespace Jube.Engine.Exhaustive.Utilities
             string reportConnectionString = null,
             CancellationToken token = default)
         {
-            var postgres = new Postgres(reportConnectionString ?? dbContext.ConnectionString, log);
+            using var postgres = new Postgres(reportConnectionString ?? dbContext.ConnectionString, log);
             var jsonList = await postgres.ExecuteReturnOnlyJsonFromArchiveSampleAsync(entityAnalysisModelId,
                 "NOT (" + filterSql + ")",
                 filterTokens, 10000, mockData, token).ConfigureAwait(false);

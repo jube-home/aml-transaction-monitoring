@@ -298,7 +298,7 @@ namespace Jube.Data.Repository
                 parametersDefaultValues.Add(parameter.Name.Replace(" ", "_"), defaultValue);
             }
 
-            var postgres = new Postgres(dbContext.ConnectionString, log);
+            using var postgres = new Postgres(dbContext.ConnectionString, log);
             return await postgres.IntrospectAsync(sql, parametersDefaultValues).ConfigureAwait(false);
         }
 
