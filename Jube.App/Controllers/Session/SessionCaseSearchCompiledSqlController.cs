@@ -108,7 +108,7 @@ namespace Jube.App.Controllers.Session
 
                 await CheckRebuildAsync(modelCompiled, token).ConfigureAwait(false);
 
-                var postgres = new Postgres(reportConnectionString, log);
+                using var postgres = new Postgres(reportConnectionString, log);
                 var tokens = JsonConvert.DeserializeObject<List<object>>(modelCompiled.FilterTokens);
 
                 var sw = new StopWatch();

@@ -147,7 +147,7 @@ namespace Jube.App.Controllers.Session
 
             try
             {
-                var postgres = new Postgres(reportConnectionString ?? dbContext.ConnectionString, log);
+                using var postgres = new Postgres(reportConnectionString ?? dbContext.ConnectionString, log);
                 await postgres.PrepareAsync(model.SelectSqlSearch + " " + model.WhereSql + " " + model.OrderSql,
                     filterRule.Tokens, token).ConfigureAwait(false);
                 model.Prepared = 1;
