@@ -21,6 +21,7 @@ namespace Jube.Data.Repository
     using AutoMapper;
     using Context;
     using LinqToDB;
+    using Microsoft.Extensions.Logging.Abstractions;
     using Poco;
 
     public class EntityAnalysisModelAbstractionCalculationRepository
@@ -126,7 +127,7 @@ namespace Jube.Data.Repository
             {
                 cfg.CreateMap<EntityAnalysisModelAbstractionCalculation,
                     EntityAnalysisModelAbstractionCalculationVersion>();
-            }));
+            }, NullLoggerFactory.Instance));
 
             var audit = mapper.Map<EntityAnalysisModelAbstractionCalculationVersion>(existing);
             audit.EntityAnalysisModelAbstractionCalculationId = existing.Id;

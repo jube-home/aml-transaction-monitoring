@@ -15,7 +15,6 @@ namespace Jube.App
 {
     using System;
     using System.Collections.Concurrent;
-    using System.IdentityModel.Tokens.Jwt;
     using System.Net;
     using System.Security.Claims;
     using System.Text;
@@ -213,6 +212,7 @@ namespace Jube.App
                     options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
                 }).AddJwtBearer(options =>
                 {
+                    options.UseSecurityTokenValidators = false;
                     options.SaveToken = true;
                     options.AutomaticRefreshInterval = TimeSpan.FromMinutes(5);
                     options.RequireHttpsMetadata = false;
@@ -247,12 +247,10 @@ namespace Jube.App
                                 HttpOnly = true
                             };
 
-                            var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
-
                             context.Response.Headers.Append("authentication",
-                                tokenString);
+                                token);
 
-                            context.Response.Cookies.Append("authentication", tokenString
+                            context.Response.Cookies.Append("authentication", token
                                 , cookieOptions);
 
                             return Task.CompletedTask;

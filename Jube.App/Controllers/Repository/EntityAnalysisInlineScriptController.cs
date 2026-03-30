@@ -28,6 +28,7 @@ namespace Jube.App.Controllers.Repository
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
+    using Microsoft.Extensions.Logging.Abstractions;
 
     [Route("api/[controller]")]
     [Produces("application/json")]
@@ -57,7 +58,7 @@ namespace Jube.App.Controllers.Repository
             {
                 cfg.CreateMap<EntityAnalysisInlineScriptDto, EntityAnalysisInlineScript>();
                 cfg.CreateMap<EntityAnalysisInlineScript, EntityAnalysisInlineScriptDto>();
-            });
+            }, NullLoggerFactory.Instance);
 
             mapper = new Mapper(config);
             repository = new EntityAnalysisInlineScriptRepository(dbContext);

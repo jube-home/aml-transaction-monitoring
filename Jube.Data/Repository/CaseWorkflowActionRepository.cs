@@ -21,6 +21,7 @@ namespace Jube.Data.Repository
     using AutoMapper;
     using Context;
     using LinqToDB;
+    using Microsoft.Extensions.Logging.Abstractions;
     using Poco;
 
     public class CaseWorkflowActionRepository
@@ -185,7 +186,7 @@ namespace Jube.Data.Repository
             var mapper = new Mapper(new MapperConfiguration(cfg =>
             {
                 cfg.CreateMap<CaseWorkflowAction, CaseWorkflowActionVersion>();
-            }));
+            }, NullLoggerFactory.Instance));
 
             var audit = mapper.Map<CaseWorkflowActionVersion>(existing);
             audit.CaseWorkflowActionId = existing.Id;

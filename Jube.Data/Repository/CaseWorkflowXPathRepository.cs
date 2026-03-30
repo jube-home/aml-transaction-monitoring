@@ -21,6 +21,7 @@ namespace Jube.Data.Repository
     using AutoMapper;
     using Context;
     using LinqToDB;
+    using Microsoft.Extensions.Logging.Abstractions;
     using Poco;
 
     public class CaseWorkflowXPathRepository
@@ -205,7 +206,7 @@ namespace Jube.Data.Repository
 
             await dbContext.UpdateAsync(model, token: token);
 
-            var mapper = new Mapper(new MapperConfiguration(cfg => { cfg.CreateMap<CaseWorkflowXPath, CaseWorkflowXPathVersion>(); }));
+            var mapper = new Mapper(new MapperConfiguration(cfg => { cfg.CreateMap<CaseWorkflowXPath, CaseWorkflowXPathVersion>(); }, NullLoggerFactory.Instance));
 
             var audit = mapper.Map<CaseWorkflowXPathVersion>(existing);
             audit.CaseWorkflowXPathId = existing.Id;

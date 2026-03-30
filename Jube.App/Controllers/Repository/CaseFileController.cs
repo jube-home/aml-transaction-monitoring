@@ -29,6 +29,7 @@ namespace Jube.App.Controllers.Repository
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
+    using Microsoft.Extensions.Logging.Abstractions;
 
     [Route("api/[controller]")]
     [Produces("application/json")]
@@ -58,7 +59,7 @@ namespace Jube.App.Controllers.Repository
             {
                 cfg.CreateMap<CaseFile, CaseFileDto>();
                 cfg.CreateMap<CaseFileDto, CaseFile>();
-            });
+            }, NullLoggerFactory.Instance);
 
             mapper = new Mapper(config);
             repository = new CaseFileRepository(dbContext, userName);

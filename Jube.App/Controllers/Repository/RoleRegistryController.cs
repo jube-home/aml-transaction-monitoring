@@ -31,6 +31,7 @@ namespace Jube.App.Controllers.Repository
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
+    using Microsoft.Extensions.Logging.Abstractions;
     using Validators;
 
     [Route("api/[controller]")]
@@ -62,7 +63,7 @@ namespace Jube.App.Controllers.Repository
             {
                 cfg.CreateMap<RoleRegistry, RoleRegistryDto>();
                 cfg.CreateMap<RoleRegistryDto, RoleRegistry>();
-            });
+            }, NullLoggerFactory.Instance);
 
             mapper = new Mapper(config);
             repository = new RoleRegistryRepository(dbContext, userName);

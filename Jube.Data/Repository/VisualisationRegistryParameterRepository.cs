@@ -21,6 +21,7 @@ namespace Jube.Data.Repository
     using AutoMapper;
     using Context;
     using LinqToDB;
+    using Microsoft.Extensions.Logging.Abstractions;
     using Poco;
 
     public class VisualisationRegistryParameterRepository
@@ -154,7 +155,7 @@ namespace Jube.Data.Repository
             var mapper = new Mapper(new MapperConfiguration(cfg =>
             {
                 cfg.CreateMap<VisualisationRegistryParameter, VisualisationRegistryParameterVersion>();
-            }));
+            }, NullLoggerFactory.Instance));
 
             var audit = mapper.Map<VisualisationRegistryParameterVersion>(existing);
             audit.VisualisationRegistryParameterId = existing.Id;

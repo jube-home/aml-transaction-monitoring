@@ -31,6 +31,7 @@ namespace Jube.App.Controllers.Repository
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
+    using Microsoft.Extensions.Logging.Abstractions;
     using Validators;
     using PermissionValidation=Code.PermissionValidation;
 
@@ -65,7 +66,7 @@ namespace Jube.App.Controllers.Repository
             {
                 cfg.CreateMap<UserRegistryDto, UserRegistry>();
                 cfg.CreateMap<UserRegistry, UserRegistryDto>();
-            });
+            }, NullLoggerFactory.Instance);
 
             mapper = new Mapper(config);
             repository = new UserRegistryRepository(dbContext, userName);

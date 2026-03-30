@@ -27,6 +27,7 @@ namespace Jube.App.Controllers.Repository
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
+    using Microsoft.Extensions.Logging.Abstractions;
 
     [Route("api/[controller]")]
     [Produces("application/json")]
@@ -57,7 +58,7 @@ namespace Jube.App.Controllers.Repository
                     GetEntityAnalysisModelProcessingCountersQuery.Dto>();
                 cfg.CreateMap<GetEntityAnalysisModelProcessingCountersQuery.Dto,
                     EntityAnalysisModelProcessingCounterDto>();
-            });
+            }, NullLoggerFactory.Instance);
 
             mapper = new Mapper(config);
         }

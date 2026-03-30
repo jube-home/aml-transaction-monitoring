@@ -35,6 +35,7 @@ namespace Jube.App.Controllers.Repository
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
+    using Microsoft.Extensions.Logging.Abstractions;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
     using Validators;
@@ -72,7 +73,7 @@ namespace Jube.App.Controllers.Repository
             {
                 cfg.CreateMap<CaseWorkflowFormEntry, CaseWorkflowFormEntryDto>();
                 cfg.CreateMap<CaseWorkflowFormEntryDto, CaseWorkflowFormEntry>();
-            });
+            }, NullLoggerFactory.Instance);
 
             mapper = new Mapper(config);
             repositoryCaseWorkflowFormEntry = new CaseWorkflowFormEntryRepository(dbContext, userName);

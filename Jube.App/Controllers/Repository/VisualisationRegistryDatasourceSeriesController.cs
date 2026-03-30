@@ -28,6 +28,7 @@ namespace Jube.App.Controllers.Repository
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
+    using Microsoft.Extensions.Logging.Abstractions;
 
     [Route("api/[controller]")]
     [Produces("application/json")]
@@ -58,7 +59,7 @@ namespace Jube.App.Controllers.Repository
             {
                 cfg.CreateMap<VisualisationRegistryDatasourceSeriesDto, VisualisationRegistryDatasourceSeries>();
                 cfg.CreateMap<VisualisationRegistryDatasourceSeries, VisualisationRegistryDatasourceSeriesDto>();
-            });
+            }, NullLoggerFactory.Instance);
 
             mapper = new Mapper(config);
         }

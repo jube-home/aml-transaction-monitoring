@@ -14,7 +14,6 @@
 namespace Jube.App.Controllers.Authentication
 {
     using System;
-    using System.IdentityModel.Tokens.Jwt;
     using System.Net;
     using System.Threading;
     using System.Threading.Tasks;
@@ -110,8 +109,8 @@ namespace Jube.App.Controllers.Authentication
 
             var authenticationDto = new AuthenticationResponseDto
             {
-                Token = new JwtSecurityTokenHandler().WriteToken(token),
-                Expiration = expiration
+                Token = token,
+                Expiration = DateTime.UtcNow.AddMinutes(15)
             };
 
             var cookieOptions = new CookieOptions
@@ -122,6 +121,7 @@ namespace Jube.App.Controllers.Authentication
 
             Response.Cookies.Append("authentication",
                 authenticationDto.Token, cookieOptions);
+
             return authenticationDto;
         }
 

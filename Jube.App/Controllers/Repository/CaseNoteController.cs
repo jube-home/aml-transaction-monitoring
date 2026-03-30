@@ -33,6 +33,7 @@ namespace Jube.App.Controllers.Repository
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
+    using Microsoft.Extensions.Logging.Abstractions;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
     using Validators;
@@ -72,7 +73,7 @@ namespace Jube.App.Controllers.Repository
             {
                 cfg.CreateMap<CaseNote, CaseNoteDto>();
                 cfg.CreateMap<CaseNoteDto, CaseNote>();
-            });
+            }, NullLoggerFactory.Instance);
 
             mapper = new Mapper(config);
             repositoryCaseNote = new CaseNoteRepository(dbContext, userName);

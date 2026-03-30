@@ -31,6 +31,7 @@ namespace Jube.App.Controllers.Repository
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
+    using Microsoft.Extensions.Logging.Abstractions;
     using Validators;
 
     [Route("api/[controller]")]
@@ -64,7 +65,7 @@ namespace Jube.App.Controllers.Repository
                     EntityAnalysisModelReprocessingRuleInstance>();
                 cfg.CreateMap<EntityAnalysisModelReprocessingRuleInstance,
                     EntityAnalysisModelReprocessingRuleInstanceDto>();
-            });
+            }, NullLoggerFactory.Instance);
 
             mapper = new Mapper(config);
             repository = new EntityAnalysisModelReprocessingRuleInstanceRepository(dbContext, userName);

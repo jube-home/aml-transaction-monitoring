@@ -30,6 +30,7 @@ namespace Jube.App.Controllers.Session
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
+    using Microsoft.Extensions.Logging.Abstractions;
     using Validators;
 
     [Route("api/[controller]")]
@@ -61,7 +62,7 @@ namespace Jube.App.Controllers.Session
             {
                 cfg.CreateMap<SessionCaseJournal, SessionCaseJournalDto>();
                 cfg.CreateMap<SessionCaseJournalDto, SessionCaseJournal>();
-            });
+            }, NullLoggerFactory.Instance);
 
             mapper = new Mapper(config);
             repository = new SessionCaseJournalRepository(dbContext, userName);

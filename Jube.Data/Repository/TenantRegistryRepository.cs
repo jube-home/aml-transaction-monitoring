@@ -21,6 +21,7 @@ namespace Jube.Data.Repository
     using AutoMapper;
     using Context;
     using LinqToDB;
+    using Microsoft.Extensions.Logging.Abstractions;
     using Poco;
 
     public class TenantRegistryRepository(DbContext dbContext, string userName)
@@ -79,7 +80,7 @@ namespace Jube.Data.Repository
 
             await dbContext.UpdateAsync(model, token: token);
 
-            var mapper = new Mapper(new MapperConfiguration(cfg => { cfg.CreateMap<TenantRegistry, TenantRegistryVersion>(); }));
+            var mapper = new Mapper(new MapperConfiguration(cfg => { cfg.CreateMap<TenantRegistry, TenantRegistryVersion>(); }, NullLoggerFactory.Instance));
 
             var audit = mapper.Map<TenantRegistryVersion>(existing);
             audit.TenantRegistryId = existing.Id;
