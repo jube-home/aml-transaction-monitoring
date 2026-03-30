@@ -318,17 +318,19 @@ namespace Jube.Preservation
 
                         if (options.Suppressions)
                         {
-                            foreach (var entityAnalysisModelSuppression in oldEntityAnalysisModel
-                                         .EntityAnalysisModelSuppression)
+                            if (oldEntityAnalysisModel.EntityAnalysisModelSuppression != null)
                             {
-                                await entityAnalysisModelSuppressionRepository.InsertAsync(entityAnalysisModelSuppression, token);
-                            }
+                                foreach (var entityAnalysisModelSuppression in oldEntityAnalysisModel.EntityAnalysisModelSuppression)
+                                {
+                                    await entityAnalysisModelSuppressionRepository.InsertAsync(entityAnalysisModelSuppression, token);
+                                }
 
-                            foreach (var entityAnalysisModelActivationRuleSuppression in oldEntityAnalysisModel
-                                         .EntityAnalysisModelActivationRuleSuppression)
-                            {
-                                await entityAnalysisModelActivationRuleSuppressionRepository.InsertAsync(
-                                    entityAnalysisModelActivationRuleSuppression, token);
+                                foreach (var entityAnalysisModelActivationRuleSuppression in oldEntityAnalysisModel
+                                             .EntityAnalysisModelActivationRuleSuppression)
+                                {
+                                    await entityAnalysisModelActivationRuleSuppressionRepository.InsertAsync(
+                                        entityAnalysisModelActivationRuleSuppression, token);
+                                }
                             }
                         }
 
@@ -399,226 +401,228 @@ namespace Jube.Preservation
 
                         if (options.Exhaustive)
                         {
-                            foreach (var entityAnalysisModelExhaustiveSearchInstance in oldEntityAnalysisModel
-                                         .ExhaustiveSearchInstance)
+                            if (oldEntityAnalysisModel.ExhaustiveSearchInstance != null)
                             {
-                                entityAnalysisModelExhaustiveSearchInstance.EntityAnalysisModelId =
-                                    newEntityAnalysisModel.Id;
-
-                                var entityAnalysisModelExhaustiveSearchInstanceId = (await exhaustiveSearchInstanceRepository
-                                    .InsertAsync(entityAnalysisModelExhaustiveSearchInstance, token).ConfigureAwait(false)).Id;
-
-                                foreach (var exhaustiveSearchInstanceData in entityAnalysisModelExhaustiveSearchInstance
-                                             .ExhaustiveSearchInstanceData)
+                                foreach (var entityAnalysisModelExhaustiveSearchInstance in oldEntityAnalysisModel.ExhaustiveSearchInstance)
                                 {
-                                    exhaustiveSearchInstanceData.ExhaustiveSearchInstanceId =
-                                        entityAnalysisModelExhaustiveSearchInstanceId;
+                                    entityAnalysisModelExhaustiveSearchInstance.EntityAnalysisModelId =
+                                        newEntityAnalysisModel.Id;
 
-                                    await exhaustiveSearchInstanceDataRepository.InsertAsync(
-                                        exhaustiveSearchInstanceData, token).ConfigureAwait(false);
-                                }
+                                    var entityAnalysisModelExhaustiveSearchInstanceId = (await exhaustiveSearchInstanceRepository
+                                        .InsertAsync(entityAnalysisModelExhaustiveSearchInstance, token).ConfigureAwait(false)).Id;
 
-                                foreach (var exhaustiveSearchInstanceTrialInstance in
-                                         entityAnalysisModelExhaustiveSearchInstance
-                                             .ExhaustiveSearchInstanceTrialInstance)
-                                {
-                                    exhaustiveSearchInstanceTrialInstance.ExhaustiveSearchInstanceId =
-                                        entityAnalysisModelExhaustiveSearchInstanceId;
-
-                                    var exhaustiveSearchInstanceTrialInstanceId =
-                                        (await exhaustiveSearchInstanceTrialInstanceRepository.InsertAsync(
-                                            exhaustiveSearchInstanceTrialInstance, token).ConfigureAwait(false)).Id;
-
-                                    foreach (var exhaustiveSearchInstanceTrialInstanceVariable in
-                                             exhaustiveSearchInstanceTrialInstance
-                                                 .ExhaustiveSearchInstanceTrialInstanceVariable)
+                                    foreach (var exhaustiveSearchInstanceData in entityAnalysisModelExhaustiveSearchInstance
+                                                 .ExhaustiveSearchInstanceData)
                                     {
-                                        exhaustiveSearchInstanceTrialInstanceVariable
-                                                .ExhaustiveSearchInstanceTrialInstanceId =
-                                            exhaustiveSearchInstanceTrialInstanceId;
+                                        exhaustiveSearchInstanceData.ExhaustiveSearchInstanceId =
+                                            entityAnalysisModelExhaustiveSearchInstanceId;
 
-                                        var exhaustiveSearchInstanceTrialInstanceVariableId =
-                                            (await exhaustiveSearchInstanceTrialInstanceVariableRepository.InsertAsync(
-                                                exhaustiveSearchInstanceTrialInstanceVariable, token).ConfigureAwait(false)).Id;
+                                        await exhaustiveSearchInstanceDataRepository.InsertAsync(
+                                            exhaustiveSearchInstanceData, token).ConfigureAwait(false);
+                                    }
 
-                                        foreach (var exhaustiveSearchInstancePromotedTrialInstanceSensitivity in
-                                                 exhaustiveSearchInstanceTrialInstanceVariable
-                                                     .ExhaustiveSearchInstancePromotedTrialInstanceSensitivity)
+                                    foreach (var exhaustiveSearchInstanceTrialInstance in
+                                             entityAnalysisModelExhaustiveSearchInstance
+                                                 .ExhaustiveSearchInstanceTrialInstance)
+                                    {
+                                        exhaustiveSearchInstanceTrialInstance.ExhaustiveSearchInstanceId =
+                                            entityAnalysisModelExhaustiveSearchInstanceId;
+
+                                        var exhaustiveSearchInstanceTrialInstanceId =
+                                            (await exhaustiveSearchInstanceTrialInstanceRepository.InsertAsync(
+                                                exhaustiveSearchInstanceTrialInstance, token).ConfigureAwait(false)).Id;
+
+                                        foreach (var exhaustiveSearchInstanceTrialInstanceVariable in
+                                                 exhaustiveSearchInstanceTrialInstance
+                                                     .ExhaustiveSearchInstanceTrialInstanceVariable)
                                         {
-                                            exhaustiveSearchInstancePromotedTrialInstanceSensitivity
-                                                    .ExhaustiveSearchInstanceTrialInstanceVariableId =
-                                                exhaustiveSearchInstanceTrialInstanceVariableId;
+                                            exhaustiveSearchInstanceTrialInstanceVariable
+                                                    .ExhaustiveSearchInstanceTrialInstanceId =
+                                                exhaustiveSearchInstanceTrialInstanceId;
 
-                                            await exhaustiveSearchInstancePromotedTrialInstanceSensitivityRepository.InsertAsync(
-                                                exhaustiveSearchInstancePromotedTrialInstanceSensitivity, token).ConfigureAwait(false);
+                                            var exhaustiveSearchInstanceTrialInstanceVariableId =
+                                                (await exhaustiveSearchInstanceTrialInstanceVariableRepository.InsertAsync(
+                                                    exhaustiveSearchInstanceTrialInstanceVariable, token).ConfigureAwait(false)).Id;
+
+                                            foreach (var exhaustiveSearchInstancePromotedTrialInstanceSensitivity in
+                                                     exhaustiveSearchInstanceTrialInstanceVariable
+                                                         .ExhaustiveSearchInstancePromotedTrialInstanceSensitivity)
+                                            {
+                                                exhaustiveSearchInstancePromotedTrialInstanceSensitivity
+                                                        .ExhaustiveSearchInstanceTrialInstanceVariableId =
+                                                    exhaustiveSearchInstanceTrialInstanceVariableId;
+
+                                                await exhaustiveSearchInstancePromotedTrialInstanceSensitivityRepository.InsertAsync(
+                                                    exhaustiveSearchInstancePromotedTrialInstanceSensitivity, token).ConfigureAwait(false);
+                                            }
+
+                                            foreach (var exhaustiveSearchInstancePromotedTrialInstanceVariable in
+                                                     exhaustiveSearchInstanceTrialInstanceVariable
+                                                         .ExhaustiveSearchInstancePromotedTrialInstanceVariable)
+                                            {
+                                                exhaustiveSearchInstancePromotedTrialInstanceVariable
+                                                        .ExhaustiveSearchInstanceTrialInstanceVariableId =
+                                                    exhaustiveSearchInstanceTrialInstanceVariableId;
+
+                                                await exhaustiveSearchInstancePromotedTrialInstanceVariableRepository.InsertAsync(
+                                                    exhaustiveSearchInstancePromotedTrialInstanceVariable, token).ConfigureAwait(false);
+                                            }
                                         }
 
-                                        foreach (var exhaustiveSearchInstancePromotedTrialInstanceVariable in
-                                                 exhaustiveSearchInstanceTrialInstanceVariable
-                                                     .ExhaustiveSearchInstancePromotedTrialInstanceVariable)
+                                        foreach (var exhaustiveSearchInstancePromotedTrialInstance in
+                                                 exhaustiveSearchInstanceTrialInstance
+                                                     .ExhaustiveSearchInstancePromotedTrialInstance)
                                         {
-                                            exhaustiveSearchInstancePromotedTrialInstanceVariable
-                                                    .ExhaustiveSearchInstanceTrialInstanceVariableId =
-                                                exhaustiveSearchInstanceTrialInstanceVariableId;
+                                            exhaustiveSearchInstancePromotedTrialInstance
+                                                    .ExhaustiveSearchInstanceTrialInstanceId =
+                                                exhaustiveSearchInstanceTrialInstanceId;
 
-                                            await exhaustiveSearchInstancePromotedTrialInstanceVariableRepository.InsertAsync(
-                                                exhaustiveSearchInstancePromotedTrialInstanceVariable, token).ConfigureAwait(false);
+                                            await exhaustiveSearchInstancePromotedTrialInstanceRepository.InsertAsync(
+                                                exhaustiveSearchInstancePromotedTrialInstance, token).ConfigureAwait(false);
+                                        }
+
+                                        foreach (var exhaustiveSearchInstancePromotedTrialInstancePredictedActual in
+                                                 exhaustiveSearchInstanceTrialInstance
+                                                     .ExhaustiveSearchInstancePromotedTrialInstancePredictedActual)
+                                        {
+                                            exhaustiveSearchInstancePromotedTrialInstancePredictedActual
+                                                    .ExhaustiveSearchInstanceTrialInstanceId =
+                                                exhaustiveSearchInstanceTrialInstanceId;
+
+                                            await exhaustiveSearchInstancePromotedTrialInstancePredictedActualRepository.InsertAsync(
+                                                exhaustiveSearchInstancePromotedTrialInstancePredictedActual, token).ConfigureAwait(false);
+                                        }
+
+                                        foreach (var exhaustiveSearchInstancePromotedTrialInstanceRoc in
+                                                 exhaustiveSearchInstanceTrialInstance
+                                                     .ExhaustiveSearchInstancePromotedTrialInstanceRoc)
+                                        {
+                                            exhaustiveSearchInstancePromotedTrialInstanceRoc
+                                                    .ExhaustiveSearchInstanceTrialInstanceId =
+                                                exhaustiveSearchInstanceTrialInstanceId;
+
+                                            await exhaustiveSearchInstancePromotedTrialInstanceRocRepository.InsertAsync(
+                                                exhaustiveSearchInstancePromotedTrialInstanceRoc, token).ConfigureAwait(false);
+                                        }
+
+                                        foreach (var exhaustiveSearchInstanceTrialInstanceTopologyTrial in
+                                                 exhaustiveSearchInstanceTrialInstance
+                                                     .ExhaustiveSearchInstanceTrialInstanceTopologyTrial)
+                                        {
+                                            exhaustiveSearchInstanceTrialInstanceTopologyTrial
+                                                    .ExhaustiveSearchInstanceTrialInstanceId =
+                                                exhaustiveSearchInstanceTrialInstanceId;
+
+                                            await exhaustiveSearchInstanceTrialInstanceTopologyTrialRepository.InsertAsync(
+                                                exhaustiveSearchInstanceTrialInstanceTopologyTrial, token).ConfigureAwait(false);
+                                        }
+
+                                        foreach (var exhaustiveSearchInstanceTrialInstanceSensitivity in
+                                                 exhaustiveSearchInstanceTrialInstance
+                                                     .ExhaustiveSearchInstanceTrialInstanceSensitivity)
+                                        {
+                                            exhaustiveSearchInstanceTrialInstanceSensitivity
+                                                    .ExhaustiveSearchInstanceTrialInstanceId =
+                                                exhaustiveSearchInstanceTrialInstanceId;
+
+                                            await exhaustiveSearchInstanceTrialInstanceSensitivityRepository.InsertAsync(
+                                                exhaustiveSearchInstanceTrialInstanceSensitivity, token).ConfigureAwait(false);
+                                        }
+
+                                        foreach (var exhaustiveSearchInstanceTrialInstanceActivationFunctionTrial in
+                                                 exhaustiveSearchInstanceTrialInstance
+                                                     .ExhaustiveSearchInstanceTrialInstanceActivationFunctionTrial)
+                                        {
+                                            exhaustiveSearchInstanceTrialInstanceActivationFunctionTrial
+                                                    .ExhaustiveSearchInstanceTrialInstanceId =
+                                                exhaustiveSearchInstanceTrialInstanceId;
+
+                                            await exhaustiveSearchInstanceTrialInstanceActivationFunctionTrialRepository.InsertAsync(
+                                                exhaustiveSearchInstanceTrialInstanceActivationFunctionTrial, token).ConfigureAwait(false);
                                         }
                                     }
 
-                                    foreach (var exhaustiveSearchInstancePromotedTrialInstance in
-                                             exhaustiveSearchInstanceTrialInstance
-                                                 .ExhaustiveSearchInstancePromotedTrialInstance)
+                                    foreach (var exhaustiveSearchInstanceVariable in
+                                             entityAnalysisModelExhaustiveSearchInstance
+                                                 .ExhaustiveSearchInstanceVariable)
                                     {
-                                        exhaustiveSearchInstancePromotedTrialInstance
-                                                .ExhaustiveSearchInstanceTrialInstanceId =
-                                            exhaustiveSearchInstanceTrialInstanceId;
+                                        exhaustiveSearchInstanceVariable.ExhaustiveSearchInstanceId =
+                                            entityAnalysisModelExhaustiveSearchInstanceId;
 
-                                        await exhaustiveSearchInstancePromotedTrialInstanceRepository.InsertAsync(
-                                            exhaustiveSearchInstancePromotedTrialInstance, token).ConfigureAwait(false);
-                                    }
+                                        var exhaustiveSearchInstanceVariableId =
+                                            await exhaustiveSearchInstanceVariableRepository.InsertAsync(
+                                                exhaustiveSearchInstanceVariable, token).ConfigureAwait(false);
 
-                                    foreach (var exhaustiveSearchInstancePromotedTrialInstancePredictedActual in
-                                             exhaustiveSearchInstanceTrialInstance
-                                                 .ExhaustiveSearchInstancePromotedTrialInstancePredictedActual)
-                                    {
-                                        exhaustiveSearchInstancePromotedTrialInstancePredictedActual
-                                                .ExhaustiveSearchInstanceTrialInstanceId =
-                                            exhaustiveSearchInstanceTrialInstanceId;
+                                        foreach (var exhaustiveSearchInstanceVariableHistogram in
+                                                 exhaustiveSearchInstanceVariable.ExhaustiveSearchInstanceVariableHistogram)
+                                        {
+                                            exhaustiveSearchInstanceVariableHistogram.ExhaustiveSearchInstanceVariableId =
+                                                exhaustiveSearchInstanceVariableId;
 
-                                        await exhaustiveSearchInstancePromotedTrialInstancePredictedActualRepository.InsertAsync(
-                                            exhaustiveSearchInstancePromotedTrialInstancePredictedActual, token).ConfigureAwait(false);
-                                    }
+                                            await exhaustiveSearchInstanceVariableHistogramRepository.InsertAsync(
+                                                exhaustiveSearchInstanceVariableHistogram, token).ConfigureAwait(false);
+                                        }
 
-                                    foreach (var exhaustiveSearchInstancePromotedTrialInstanceRoc in
-                                             exhaustiveSearchInstanceTrialInstance
-                                                 .ExhaustiveSearchInstancePromotedTrialInstanceRoc)
-                                    {
-                                        exhaustiveSearchInstancePromotedTrialInstanceRoc
-                                                .ExhaustiveSearchInstanceTrialInstanceId =
-                                            exhaustiveSearchInstanceTrialInstanceId;
-
-                                        await exhaustiveSearchInstancePromotedTrialInstanceRocRepository.InsertAsync(
-                                            exhaustiveSearchInstancePromotedTrialInstanceRoc, token).ConfigureAwait(false);
-                                    }
-
-                                    foreach (var exhaustiveSearchInstanceTrialInstanceTopologyTrial in
-                                             exhaustiveSearchInstanceTrialInstance
-                                                 .ExhaustiveSearchInstanceTrialInstanceTopologyTrial)
-                                    {
-                                        exhaustiveSearchInstanceTrialInstanceTopologyTrial
-                                                .ExhaustiveSearchInstanceTrialInstanceId =
-                                            exhaustiveSearchInstanceTrialInstanceId;
-
-                                        await exhaustiveSearchInstanceTrialInstanceTopologyTrialRepository.InsertAsync(
-                                            exhaustiveSearchInstanceTrialInstanceTopologyTrial, token).ConfigureAwait(false);
-                                    }
-
-                                    foreach (var exhaustiveSearchInstanceTrialInstanceSensitivity in
-                                             exhaustiveSearchInstanceTrialInstance
-                                                 .ExhaustiveSearchInstanceTrialInstanceSensitivity)
-                                    {
-                                        exhaustiveSearchInstanceTrialInstanceSensitivity
-                                                .ExhaustiveSearchInstanceTrialInstanceId =
-                                            exhaustiveSearchInstanceTrialInstanceId;
-
-                                        await exhaustiveSearchInstanceTrialInstanceSensitivityRepository.InsertAsync(
-                                            exhaustiveSearchInstanceTrialInstanceSensitivity, token).ConfigureAwait(false);
-                                    }
-
-                                    foreach (var exhaustiveSearchInstanceTrialInstanceActivationFunctionTrial in
-                                             exhaustiveSearchInstanceTrialInstance
-                                                 .ExhaustiveSearchInstanceTrialInstanceActivationFunctionTrial)
-                                    {
-                                        exhaustiveSearchInstanceTrialInstanceActivationFunctionTrial
-                                                .ExhaustiveSearchInstanceTrialInstanceId =
-                                            exhaustiveSearchInstanceTrialInstanceId;
-
-                                        await exhaustiveSearchInstanceTrialInstanceActivationFunctionTrialRepository.InsertAsync(
-                                            exhaustiveSearchInstanceTrialInstanceActivationFunctionTrial, token).ConfigureAwait(false);
-                                    }
-                                }
-
-                                foreach (var exhaustiveSearchInstanceVariable in
-                                         entityAnalysisModelExhaustiveSearchInstance
-                                             .ExhaustiveSearchInstanceVariable)
-                                {
-                                    exhaustiveSearchInstanceVariable.ExhaustiveSearchInstanceId =
-                                        entityAnalysisModelExhaustiveSearchInstanceId;
-
-                                    var exhaustiveSearchInstanceVariableId =
-                                        await exhaustiveSearchInstanceVariableRepository.InsertAsync(
-                                            exhaustiveSearchInstanceVariable, token).ConfigureAwait(false);
-
-                                    foreach (var exhaustiveSearchInstanceVariableHistogram in
-                                             exhaustiveSearchInstanceVariable.ExhaustiveSearchInstanceVariableHistogram)
-                                    {
-                                        exhaustiveSearchInstanceVariableHistogram.ExhaustiveSearchInstanceVariableId =
-                                            exhaustiveSearchInstanceVariableId;
-
-                                        await exhaustiveSearchInstanceVariableHistogramRepository.InsertAsync(
-                                            exhaustiveSearchInstanceVariableHistogram, token).ConfigureAwait(false);
-                                    }
-
-                                    foreach (var exhaustiveSearchInstanceVariableAnomaly in
-                                             exhaustiveSearchInstanceVariable
-                                                 .ExhaustiveSearchInstanceVariableAnomaly)
-                                    {
-                                        exhaustiveSearchInstanceVariableAnomaly.ExhaustiveSearchInstanceVariableId =
-                                            exhaustiveSearchInstanceVariableId;
-
-                                        var exhaustiveSearchInstanceVariableAnomalyId =
-                                            await exhaustiveSearchInstanceVariableAnomalyRepository.InsertAsync(
-                                                exhaustiveSearchInstanceVariableAnomaly, token).ConfigureAwait(false);
-
-                                        foreach (var exhaustiveSearchInstanceVariableHistogramAnomaly in
+                                        foreach (var exhaustiveSearchInstanceVariableAnomaly in
                                                  exhaustiveSearchInstanceVariable
-                                                     .ExhaustiveSearchInstanceVariableHistogramAnomaly)
+                                                     .ExhaustiveSearchInstanceVariableAnomaly)
                                         {
-                                            exhaustiveSearchInstanceVariableHistogramAnomaly
-                                                    .ExhaustiveSearchInstanceVariableAnomalyId =
-                                                exhaustiveSearchInstanceVariableAnomalyId;
+                                            exhaustiveSearchInstanceVariableAnomaly.ExhaustiveSearchInstanceVariableId =
+                                                exhaustiveSearchInstanceVariableId;
 
-                                            await exhaustiveSearchInstanceVariableHistogramAnomalyRepository.InsertAsync(
-                                                exhaustiveSearchInstanceVariableHistogramAnomaly, token).ConfigureAwait(false);
+                                            var exhaustiveSearchInstanceVariableAnomalyId =
+                                                await exhaustiveSearchInstanceVariableAnomalyRepository.InsertAsync(
+                                                    exhaustiveSearchInstanceVariableAnomaly, token).ConfigureAwait(false);
+
+                                            foreach (var exhaustiveSearchInstanceVariableHistogramAnomaly in
+                                                     exhaustiveSearchInstanceVariable
+                                                         .ExhaustiveSearchInstanceVariableHistogramAnomaly)
+                                            {
+                                                exhaustiveSearchInstanceVariableHistogramAnomaly
+                                                        .ExhaustiveSearchInstanceVariableAnomalyId =
+                                                    exhaustiveSearchInstanceVariableAnomalyId;
+
+                                                await exhaustiveSearchInstanceVariableHistogramAnomalyRepository.InsertAsync(
+                                                    exhaustiveSearchInstanceVariableHistogramAnomaly, token).ConfigureAwait(false);
+                                            }
                                         }
-                                    }
 
-                                    foreach (var exhaustiveSearchInstanceVariableClassification in
-                                             exhaustiveSearchInstanceVariable
-                                                 .ExhaustiveSearchInstanceVariableClassification)
-                                    {
-                                        exhaustiveSearchInstanceVariableClassification
-                                                .ExhaustiveSearchInstanceVariableId =
-                                            exhaustiveSearchInstanceVariableId;
-
-                                        var exhaustiveSearchInstanceVariableClassificationId =
-                                            await exhaustiveSearchInstanceVariableClassificationRepository.InsertAsync(
-                                                exhaustiveSearchInstanceVariableClassification, token).ConfigureAwait(false);
-
-                                        foreach (var exhaustiveSearchInstanceVariableHistogramClassification in
+                                        foreach (var exhaustiveSearchInstanceVariableClassification in
                                                  exhaustiveSearchInstanceVariable
-                                                     .ExhaustiveSearchInstanceVariableHistogramClassification)
+                                                     .ExhaustiveSearchInstanceVariableClassification)
                                         {
-                                            exhaustiveSearchInstanceVariableHistogramClassification
-                                                    .ExhaustiveSearchInstanceVariableClassificationId =
-                                                exhaustiveSearchInstanceVariableClassificationId;
+                                            exhaustiveSearchInstanceVariableClassification
+                                                    .ExhaustiveSearchInstanceVariableId =
+                                                exhaustiveSearchInstanceVariableId;
 
-                                            await exhaustiveSearchInstanceVariableHistogramClassificationRepository.InsertAsync(
-                                                exhaustiveSearchInstanceVariableHistogramClassification, token).ConfigureAwait(false);
+                                            var exhaustiveSearchInstanceVariableClassificationId =
+                                                await exhaustiveSearchInstanceVariableClassificationRepository.InsertAsync(
+                                                    exhaustiveSearchInstanceVariableClassification, token).ConfigureAwait(false);
+
+                                            foreach (var exhaustiveSearchInstanceVariableHistogramClassification in
+                                                     exhaustiveSearchInstanceVariable
+                                                         .ExhaustiveSearchInstanceVariableHistogramClassification)
+                                            {
+                                                exhaustiveSearchInstanceVariableHistogramClassification
+                                                        .ExhaustiveSearchInstanceVariableClassificationId =
+                                                    exhaustiveSearchInstanceVariableClassificationId;
+
+                                                await exhaustiveSearchInstanceVariableHistogramClassificationRepository.InsertAsync(
+                                                    exhaustiveSearchInstanceVariableHistogramClassification, token).ConfigureAwait(false);
+                                            }
                                         }
-                                    }
 
-                                    foreach (var exhaustiveSearchInstanceVariableMultiCollinearity in
-                                             exhaustiveSearchInstanceVariable
-                                                 .ExhaustiveSearchInstanceVariableMultiCollinearity)
-                                    {
-                                        exhaustiveSearchInstanceVariableMultiCollinearity
-                                                .ExhaustiveSearchInstanceVariableId =
-                                            exhaustiveSearchInstanceVariableId;
+                                        foreach (var exhaustiveSearchInstanceVariableMultiCollinearity in
+                                                 exhaustiveSearchInstanceVariable
+                                                     .ExhaustiveSearchInstanceVariableMultiCollinearity)
+                                        {
+                                            exhaustiveSearchInstanceVariableMultiCollinearity
+                                                    .ExhaustiveSearchInstanceVariableId =
+                                                exhaustiveSearchInstanceVariableId;
 
-                                        await exhaustiveSearchInstanceVariableMulticollinearityRepository.InsertAsync(
-                                            exhaustiveSearchInstanceVariableMultiCollinearity, token).ConfigureAwait(false);
+                                            await exhaustiveSearchInstanceVariableMulticollinearityRepository.InsertAsync(
+                                                exhaustiveSearchInstanceVariableMultiCollinearity, token).ConfigureAwait(false);
+                                        }
                                     }
                                 }
                             }
@@ -690,39 +694,43 @@ namespace Jube.Preservation
 
                         if (options.Lists)
                         {
-                            foreach (var oldEntityAnalysisModelList in oldEntityAnalysisModel
-                                         .EntityAnalysisModelList)
+                            if (oldEntityAnalysisModel.EntityAnalysisModelList != null)
                             {
-                                oldEntityAnalysisModelList.EntityAnalysisModelGuid = newEntityAnalysisModel.Guid;
-                                var newEntityAnalysisModelListId =
-                                    (await entityAnalysisModelListRepository.InsertAsync(oldEntityAnalysisModelList, token)).Id;
-
-                                foreach (var entityAnalysisModelListValue in oldEntityAnalysisModelList
-                                             .EntityAnalysisModelListValue)
+                                foreach (var oldEntityAnalysisModelList in oldEntityAnalysisModel.EntityAnalysisModelList)
                                 {
-                                    entityAnalysisModelListValue.EntityAnalysisModelListId =
-                                        newEntityAnalysisModelListId;
-                                    await entityAnalysisModelListValueRepository.InsertAsync(entityAnalysisModelListValue, token);
+                                    oldEntityAnalysisModelList.EntityAnalysisModelGuid = newEntityAnalysisModel.Guid;
+                                    var newEntityAnalysisModelListId =
+                                        (await entityAnalysisModelListRepository.InsertAsync(oldEntityAnalysisModelList, token)).Id;
+
+                                    foreach (var entityAnalysisModelListValue in oldEntityAnalysisModelList
+                                                 .EntityAnalysisModelListValue)
+                                    {
+                                        entityAnalysisModelListValue.EntityAnalysisModelListId =
+                                            newEntityAnalysisModelListId;
+                                        await entityAnalysisModelListValueRepository.InsertAsync(entityAnalysisModelListValue, token);
+                                    }
                                 }
                             }
                         }
 
                         if (options.Dictionaries)
                         {
-                            foreach (var oldEntityAnalysisModelDictionary in oldEntityAnalysisModel
-                                         .EntityAnalysisModelDictionary)
+                            if (oldEntityAnalysisModel.EntityAnalysisModelDictionary != null)
                             {
-                                oldEntityAnalysisModelDictionary.Guid = newEntityAnalysisModel.Guid;
-                                var newEntityAnalysisModelDictionaryId = (await entityAnalysisModelDictionaryRepository
-                                    .InsertAsync(oldEntityAnalysisModelDictionary, token)).Id;
-
-                                foreach (var oldEntityAnalysisModelDictionaryKvp in oldEntityAnalysisModelDictionary
-                                             .EntityAnalysisModelDictionaryKvp)
+                                foreach (var oldEntityAnalysisModelDictionary in oldEntityAnalysisModel.EntityAnalysisModelDictionary)
                                 {
-                                    oldEntityAnalysisModelDictionaryKvp.EntityAnalysisModelDictionaryId =
-                                        newEntityAnalysisModelDictionaryId;
-                                    await entityAnalysisModelDictionaryKvpRepository.InsertAsync(
-                                        oldEntityAnalysisModelDictionaryKvp, token);
+                                    oldEntityAnalysisModelDictionary.Guid = newEntityAnalysisModel.Guid;
+                                    var newEntityAnalysisModelDictionaryId = (await entityAnalysisModelDictionaryRepository
+                                        .InsertAsync(oldEntityAnalysisModelDictionary, token)).Id;
+
+                                    foreach (var oldEntityAnalysisModelDictionaryKvp in oldEntityAnalysisModelDictionary
+                                                 .EntityAnalysisModelDictionaryKvp)
+                                    {
+                                        oldEntityAnalysisModelDictionaryKvp.EntityAnalysisModelDictionaryId =
+                                            newEntityAnalysisModelDictionaryId;
+                                        await entityAnalysisModelDictionaryKvpRepository.InsertAsync(
+                                            oldEntityAnalysisModelDictionaryKvp, token);
+                                    }
                                 }
                             }
                         }
