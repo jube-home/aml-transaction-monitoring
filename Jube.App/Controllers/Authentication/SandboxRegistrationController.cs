@@ -44,7 +44,7 @@ namespace Jube.App.Controllers.Authentication
             this.dynamicEnvironment = dynamicEnvironment;
             this.log = log;
             dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(this.dynamicEnvironment.AppSettings("ConnectionString"), log);
-            service = new SandboxRegistration(dbContext);
+            service = new SandboxRegistration(dbContext, dynamicEnvironment);
         }
 
         protected override void Dispose(bool disposing)

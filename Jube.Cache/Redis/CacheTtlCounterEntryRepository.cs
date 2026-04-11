@@ -23,7 +23,7 @@ namespace Jube.Cache.Redis
     public class CacheTtlCounterEntryRepository(
         ResilientRedisDatabase redisDatabase,
         ILog log,
-        CommandFlags commandFlag = CommandFlags.FireAndForget) : ICacheTtlCounterEntryRepository
+        CommandFlags commandFlag = CommandFlags.None) : ICacheTtlCounterEntryRepository
     {
         public async Task<List<ExpiredTtlCounterEntry>>
             GetAllExpiredByTtlCounterAsync(int tenantRegistryId, Guid entityAnalysisModelGuid,

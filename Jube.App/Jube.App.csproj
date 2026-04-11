@@ -75,6 +75,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\Jube.ApiTokensCache\Jube.ApiTokensCache.csproj" />
         <ProjectReference Include="..\Jube.Cache\Jube.Cache.csproj"/>
         <ProjectReference Include="..\Jube.Data\Jube.Data.csproj"/>
         <ProjectReference Include="..\Jube.DynamicEnvironment\Jube.DynamicEnvironment.csproj"/>

@@ -16,6 +16,7 @@ namespace Jube.Cache
     using System.Collections.Concurrent;
     using log4net;
     using Redis;
+    using Redis.CacheUserRegistryApiKey;
     using Redis.Callback;
     using ResilientRedisConnection;
     using StackExchange.Redis;
@@ -54,6 +55,15 @@ namespace Jube.Cache
                 ConnectionMultiplexer.Connect(redisConnectionString);
 
             RedisDatabase = new ResilientRedisConnection(ConnectionMultiplexer, log).GetDatabase();
+
+            CacheAbstractionRepository = new CacheAbstractionRepository(RedisDatabase, Log);
+            CachePayloadLatestRepository = new CachePayloadLatestRepository(postgresConnectionString, RedisDatabase, Log);
+            CacheReferenceDate = new CacheReferenceDate(RedisDatabase, Log);
+            CacheSanctionRepository = new CacheSanctionRepository(RedisDatabase, Log);
+            CacheTtlCounterEntryRepository = new CacheTtlCounterEntryRepository(RedisDatabase, Log);
+            CacheTtlCounterRepository = new CacheTtlCounterRepository(RedisDatabase, Log);
+            CacheWalRepository = new CacheWalRepository(RedisDatabase, Log);
+            CacheUserRegistryApiKeyRepository = new CacheUserRegistryApiKeyRepository(ConnectionMultiplexer, RedisDatabase, Log);
         }
 
         public Task InstantiateRepositoriesTask { get; set; }
@@ -68,6 +78,7 @@ namespace Jube.Cache
         public CacheTtlCounterRepository CacheTtlCounterRepository { get; set; }
         public CacheCallbackPublishSubscribe CacheCallbackPublishSubscribe { get; set; }
         public CacheWalRepository CacheWalRepository { get; set; }
+        public CacheUserRegistryApiKeyRepository CacheUserRegistryApiKeyRepository { get; set; }
         public bool Ready { get; private set; }
 
         private ILog Log
@@ -75,20 +86,12 @@ namespace Jube.Cache
             get;
         }
 
-        public async Task InstantiateRepositoriesAsync(TaskCoordinator taskCoordinator)
+        public async Task StartAsync(TaskCoordinator taskCoordinator)
         {
-            CacheAbstractionRepository = new CacheAbstractionRepository(RedisDatabase, Log);
-            CachePayloadLatestRepository = new CachePayloadLatestRepository(postgresConnectionString, RedisDatabase, Log);
-
             CachePayloadRepository = await CachePayloadRepository.CreateAsync(ConnectionMultiplexer, RedisDatabase,
-                postgresConnectionString, Log, CommandFlags.FireAndForget,
+                postgresConnectionString, Log, CommandFlags.None,
                 localCache, localCacheFill, localCacheBytes, messagePackCompression, storePayloadCountsAndBytes, publishSubscribe, taskCoordinator.CancellationToken).ConfigureAwait(false);
 
-            CacheReferenceDate = new CacheReferenceDate(RedisDatabase, Log);
-            CacheSanctionRepository = new CacheSanctionRepository(RedisDatabase, Log);
-            CacheTtlCounterEntryRepository = new CacheTtlCounterEntryRepository(RedisDatabase, Log);
-            CacheTtlCounterRepository = new CacheTtlCounterRepository(RedisDatabase, Log);
-            CacheWalRepository = new CacheWalRepository(RedisDatabase, Log);
             CacheCallbackPublishSubscribe = new CacheCallbackPublishSubscribe(ConnectionMultiplexer, RedisDatabase, callbacks, callbackTimeout, Log, taskCoordinator);
 
             Ready = true;

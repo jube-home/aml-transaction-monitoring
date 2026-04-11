@@ -31,6 +31,7 @@ COPY ["Jube.Tests/Jube.Tests.csproj", "Jube.Tests/"]
 COPY ["Jube.ResilientNpgsql/Jube.ResilientNpgsql.csproj", "Jube.ResilientNpgsql/"]
 COPY ["Jube.ResilientRedisConnection/Jube.ResilientRedisConnection.csproj", "Jube.ResilientRedisConnection/"]
 COPY ["Jube.Tokenisation/Jube.Tokenisation.csproj", "Jube.Tokenisation/"]
+COPY ["Jube.ApiTokensCache/Jube.ApiTokensCache.csproj", "Jube.ApiTokensCache/"]
 COPY ["Jube.CLI/Jube.CLI.csproj", "Jube.CLI/"]
 
 RUN dotnet restore "Jube.App/Jube.App.csproj"

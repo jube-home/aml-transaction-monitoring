@@ -78,10 +78,18 @@ namespace Jube.Data.SyntaxTree
 
                 foreach (var @class in tree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>())
                 {
-                    var results = @class.Members.OfType<PropertyDeclarationSyntax>()
-                        .Select(prop => (prop, modifiers: String.Join(" ", prop.Modifiers.Select(m => m.Text))))
-                        .Where(t => t.modifiers.Contains("public"))
-                        .Select(t => (t, dataTypeId: t.prop.Type.ToString().ToLower() switch
+                    foreach (var prop in @class.Members.OfType<PropertyDeclarationSyntax>())
+                    {
+                        if (prop.Modifiers.All(m => m.Text != "public"))
+                        {
+                            continue;
+                        }
+
+                        var typeSyntax = prop.Type is Microsoft.CodeAnalysis.CSharp.Syntax.NullableTypeSyntax nullable
+                            ? nullable.ElementType
+                            : prop.Type;
+
+                        var typeId = typeSyntax.ToString().ToLower() switch
                         {
                             "string" => 1,
                             "int" or "int32" => 2,
@@ -89,12 +97,9 @@ namespace Jube.Data.SyntaxTree
                             "datetime" => 4,
                             "bool" or "boolean" => 5,
                             _ => 1
-                        }))
-                        .Select(t => (Name: t.t.prop.Identifier.Text, TypeId: t.dataTypeId));
+                        };
 
-                    foreach (var item in results)
-                    {
-                        value[item.Name] = item.TypeId;
+                        value[prop.Identifier.Text] = typeId;
                     }
                 }
             }
@@ -105,31 +110,33 @@ namespace Jube.Data.SyntaxTree
 
                 foreach (var @class in tree.GetRoot().DescendantNodes().OfType<ClassBlockSyntax>())
                 {
-                    var results = @class.Members.OfType<PropertyStatementSyntax>()
-                        .Select(prop => new
-                        {
-                            prop,
-                            modifiers = String.Join(" ", prop.Modifiers.Select(m => m.Text))
-                        })
-                        .Where(t => t.modifiers.Contains("Public"))
-                        .Select(t => new
-                        {
-                            t,
-                            dataTypeId = t.prop.AsClause?.Type()?.ToString().ToLower() switch
-                            {
-                                "string" => 1,
-                                "integer" => 2,
-                                "double" => 3,
-                                "datetime" => 4,
-                                "boolean" => 5,
-                                _ => 1
-                            }
-                        })
-                        .Select(t => (Name: t.t.prop.Identifier.Text, TypeId: t.dataTypeId));
-
-                    foreach (var item in results)
+                    foreach (var prop in @class.Members.OfType<PropertyStatementSyntax>())
                     {
-                        value[item.Name] = item.TypeId;
+                        if (prop.Modifiers.All(m => m.Text != "Public"))
+                        {
+                            continue;
+                        }
+
+                        var rawType = prop.AsClause?.Type();
+                        var typeSyntax = rawType switch
+                        {
+                            Microsoft.CodeAnalysis.VisualBasic.Syntax.NullableTypeSyntax nullable => nullable.ElementType,
+                            Microsoft.CodeAnalysis.VisualBasic.Syntax.GenericNameSyntax { Identifier.Text: "Nullable" } generic
+                                => generic.TypeArgumentList.Arguments.FirstOrDefault() ?? rawType,
+                            _ => rawType
+                        };
+
+                        var typeId = typeSyntax?.ToString().ToLower() switch
+                        {
+                            "string" => 1,
+                            "integer" => 2,
+                            "double" => 3,
+                            "datetime" => 4,
+                            "boolean" => 5,
+                            _ => 1
+                        };
+
+                        value[prop.Identifier.Text] = typeId;
                     }
                 }
             }

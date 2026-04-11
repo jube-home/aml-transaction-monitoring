@@ -1,3 +1,16 @@
+/* Copyright (C) 2022-present Jube Holdings Limited.
+ *
+ * This file is part of Jube™ software.
+ *
+ * Jube™ is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License
+ * as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ * Jube™ is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+
+ * You should have received a copy of the GNU Affero General Public License along with Jube™. If not,
+ * see <https://www.gnu.org/licenses/>.
+ */
+
 namespace Jube.App.Controllers.Session
 {
     using System;
@@ -16,38 +29,32 @@ namespace Jube.App.Controllers.Session
     public static class CompileSql
     {
         public static async Task<SessionCaseSearchCompiledSql> CompileAsync(DbContext dbContext,
-            SessionCaseSearchCompiledSql model, string userName, ILog log, string reportConnectionString = null, CancellationToken token = default)
+            Guid caseWorkflowGuid,
+            Guid? caseWorkflowFilterGuid,
+            string selectJson,
+            string filterJson,
+            string userName,
+            ILog log,
+            string reportConnectionString = null,
+            CancellationToken token = default)
         {
-            var filterJsonRule = JsonConvert.DeserializeObject<Rule>(model.FilterJson);
-            var filterRule = await Parser.CreateAsync(filterJsonRule, dbContext, model.CaseWorkflowGuid, userName, token).ConfigureAwait(false);
+            var model = new SessionCaseSearchCompiledSql
+            {
+                Guid = Guid.NewGuid(),
+                FilterJson = filterJson,
+                SelectJson = selectJson,
+                CaseWorkflowGuid = caseWorkflowGuid,
+                CaseWorkflowFilterGuid = caseWorkflowFilterGuid,
+                CreatedUser = userName,
+                CreatedDate = DateTime.Now
+            };
 
-            var selectTokensRule = JsonConvert.DeserializeObject<Rule>(model.SelectJson);
+            var filterJsonRule = JsonConvert.DeserializeObject<Rule>(filterJson);
+            var filterRule = await ParserJsonToSqlCase.CreateAsync(filterJsonRule, dbContext, caseWorkflowGuid, userName, token).ConfigureAwait(false);
+
+            var selectTokensRule = JsonConvert.DeserializeObject<Rule>(selectJson);
             var selectRule =
-                await Parser.CreateAsync(selectTokensRule, dbContext, model.CaseWorkflowGuid, userName, token).ConfigureAwait(false);
-
-            model.SelectSqlDisplay = "select \"Case\".\"Id\" as \"Id\"," +
-                                     "\"Case\".\"EntityAnalysisModelInstanceEntryGuid\" as \"EntityAnalysisModelInstanceEntryGuid\"," +
-                                     "\"Case\".\"DiaryDate\" as \"DiaryDate\"," +
-                                     "\"Case\".\"CaseWorkflowGuid\" as \"CaseWorkflowGuid\"," +
-                                     "\"Case\".\"CaseWorkflowStatusGuid\" as \"CaseWorkflowStatusGuid\"," +
-                                     "\"Case\".\"CreatedDate\" as \"CreatedDate\"," +
-                                     "\"Case\".\"Locked\" as \"Locked\"," +
-                                     "\"Case\".\"LockedUser\" as \"LockedUser\"," +
-                                     "\"Case\".\"LockedDate\" as \"LockedDate\"," +
-                                     "\"Case\".\"ClosedStatusId\" as \"ClosedStatusId\"," +
-                                     "\"Case\".\"ClosedDate\" as \"ClosedDate\"," +
-                                     "\"Case\".\"ClosedUser\" as \"ClosedUser\"," +
-                                     "\"Case\".\"CaseKey\" as \"CaseKey\"," +
-                                     "\"Case\".\"Diary\" as \"Diary\"," +
-                                     "\"Case\".\"DiaryUser\" as \"DiaryUser\"," +
-                                     "\"Case\".\"Rating\" as \"Rating\"," +
-                                     "\"Case\".\"CaseKeyValue\" as \"CaseKeyValue\"," +
-                                     "\"Case\".\"ClosedStatusMigrationDate\" as \"ClosedStatusMigrationDate\"," +
-                                     "\"Case\".\"Json\" as \"Json\"," +
-                                     "\"CaseWorkflow\".\"EnableVisualisation\" as \"EnableVisualisation\"," +
-                                     "\"CaseWorkflow\".\"VisualisationRegistryGuid\" as \"VisualisationRegistryGuid\"," +
-                                     "\"CaseWorkflowStatus\".\"ForeColor\" as \"ForeColor\"," +
-                                     "\"CaseWorkflowStatus\".\"BackColor\" as \"BackColor\" ";
+                await ParserJsonToSqlCase.CreateAsync(selectTokensRule, dbContext, caseWorkflowGuid, userName, token).ConfigureAwait(false);
 
             var columnsSelect = new List<string>
             {
@@ -57,7 +64,7 @@ namespace Jube.App.Controllers.Session
             };
 
             var caseWorkflowXPathRepository = new CaseWorkflowXPathRepository(dbContext, userName);
-            var caseWorkflowXPaths = (await caseWorkflowXPathRepository.GetByCasesWorkflowGuidActiveOnlyAsync(model.CaseWorkflowGuid, token)).ToList();
+            var caseWorkflowXPaths = (await caseWorkflowXPathRepository.GetByCasesWorkflowGuidActiveOnlyAsync(caseWorkflowGuid, token)).ToList();
 
             var columnsOrder = new List<string>();
             foreach (var rule in selectRule.Rules)
@@ -84,20 +91,45 @@ namespace Jube.App.Controllers.Session
                     _ => rule.Field
                 };
 
-                columnsOrder.Add(rule.Field + " " + rule.Value);
-
                 if (rule.Id == "Id")
                 {
                     continue;
                 }
 
-                if (rule.Id is not ("Id" or "CaseKey" or "CaseKeyValue" or "CaseWorkflowStatus" or "Locked" or "Diary" or "ClosedStatusId" or "Priority"))
+                if (rule.Id is not ("Id" or "CaseKey"
+                    or "CaseKeyValue"
+                    or "CaseWorkflowStatus"
+                    or "Locked"
+                    or "Diary"
+                    or "ClosedStatusId"
+                    or "Priority"
+                    or "CreatedDate"
+                    or "CreatedUser"
+                    or "ClosedDate"
+                    or "Rating"
+                    or "LockedDate"
+                    or "LockedUser"))
                 {
                     if (caseWorkflowXPaths.FirstOrDefault(w => w.XPath.Equals(rule.Id, StringComparison.CurrentCultureIgnoreCase)) == null)
                     {
                         continue;
                     }
                 }
+
+                var direction = "ASC";
+                if (rule.Value != direction)
+                {
+                    if (rule.Value == "DESC")
+                    {
+                        direction = rule.Value;
+                    }
+                    else
+                    {
+                        continue;
+                    }
+                }
+
+                columnsOrder.Add(rule.Field + " " + direction);
 
                 if (rule.Id.Contains('.'))
                 {
@@ -147,7 +179,7 @@ namespace Jube.App.Controllers.Session
 
             try
             {
-                using var postgres = new Postgres(reportConnectionString ?? dbContext.ConnectionString, log);
+                using var postgres = new Postgres(reportConnectionString ?? dbContext.Connection.ConnectionString, log);
                 await postgres.PrepareAsync(model.SelectSqlSearch + " " + model.WhereSql + " " + model.OrderSql,
                     filterRule.Tokens, token).ConfigureAwait(false);
                 model.Prepared = 1;
@@ -161,6 +193,10 @@ namespace Jube.App.Controllers.Session
             if (model.Rebuild == 1)
             {
                 model.RebuildDate = DateTime.Now;
+            }
+            else
+            {
+                model.Rebuild = 0;
             }
 
             return await repository.InsertAsync(model, token);

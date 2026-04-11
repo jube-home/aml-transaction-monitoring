@@ -22,7 +22,7 @@ namespace Jube.Cache.Redis
     public class CacheAbstractionRepository(
         ResilientRedisDatabase redisDatabase,
         ILog log,
-        CommandFlags commandFlag = CommandFlags.FireAndForget) : ICacheAbstractionRepository
+        CommandFlags commandFlag = CommandFlags.None) : ICacheAbstractionRepository
     {
         public async Task DeleteAsync(int tenantRegistryId, Guid entityAnalysisModelGuid, string searchKey,
             string searchValue,

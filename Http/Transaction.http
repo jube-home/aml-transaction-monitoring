@@ -1,8 +1,9 @@
 POST http://127.0.0.1:5001/api/invoke/EntityAnalysisModel/90c425fd-101a-420b-91d1-cb7a24a969cc
 Content-Type: application/json
+X-API-KEY: 1tzXcOv0e17qnQjb4w6LrPynDh3brdTtCq8hSoch9f4UrLxDM5aNjgs75qatucABYSX3hCpFOi3k2Yt5MQza9ECMas2X
 
 {
-  "AccountId": "Test26",
+  "AccountId": "Test29",
   "TxnId": "0987654321",
   "TxnDateTime": "2025-09-01T21:41:37.248",
   "Currency": "826",
@@ -68,5 +69,5 @@ Content-Type: application/json
   "OrderId": "10607324128",
   "TransactionTypeId": "1000",
   "TransactionResultId": "1006",
-  "Test":"Test1"
+  "Test1":"Value"
 }

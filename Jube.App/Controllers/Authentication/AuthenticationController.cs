@@ -105,12 +105,12 @@ namespace Jube.App.Controllers.Authentication
                 dynamicEnvironment.AppSettings("JWTValidAudience")
             );
 
-            var expiration = DateTime.Now.AddMinutes(15);
+            var expiration = DateTime.UtcNow.AddMinutes(15);
 
             var authenticationDto = new AuthenticationResponseDto
             {
                 Token = token,
-                Expiration = DateTime.UtcNow.AddMinutes(15)
+                Expiration = expiration
             };
 
             var cookieOptions = new CookieOptions

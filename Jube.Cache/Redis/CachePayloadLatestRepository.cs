@@ -34,7 +34,7 @@ namespace Jube.Cache.Redis
         string postgresConnectionString,
         ResilientRedisDatabase redisDatabase,
         ILog log,
-        CommandFlags commandFlag = CommandFlags.FireAndForget) : ICachePayloadLatestRepository
+        CommandFlags commandFlag = CommandFlags.None) : ICachePayloadLatestRepository
     {
         public async Task UpsertAsync(int tenantRegistryId, Guid entityAnalysisModelGuid,
             DateTime referenceDate, Guid entityAnalysisModelInstanceEntryGuid, string entryKey, string entryKeyValue)

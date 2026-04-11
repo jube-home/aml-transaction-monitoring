@@ -21,7 +21,7 @@ namespace Jube.Cache.Redis
     public class CacheWalRepository(
         ResilientRedisDatabase redisDatabase,
         ILog log,
-        CommandFlags commandFlag = CommandFlags.FireAndForget) : ICacheWalRepository
+        CommandFlags commandFlag = CommandFlags.None) : ICacheWalRepository
     {
         public async Task InsertAsync(int tenantRegistryId, Guid entityAnalysisModelGuid, Guid entityAnalysisModelInstanceEntryGuid, string node, byte[] bytes)
         {

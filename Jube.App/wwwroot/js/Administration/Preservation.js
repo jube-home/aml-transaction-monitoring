@@ -17,9 +17,10 @@ $(document).ready(function () {
     const listsSwitch = $("#Lists").kendoSwitch();
     const dictionariesSwitch = $("#Dictionaries").kendoSwitch();
     const visualisationsSwitch = $("#Visualisations").kendoSwitch();
+
     $("#Download").kendoButton({
-        click: function (e) {
-            let data = {
+        click: async function (e) {
+            const data = {
                 Password: $("#Password").val(),
                 Exhaustive: exhaustiveSwitch.prop("checked"),
                 Suppressions: suppressionsSwitch.prop("checked"),
@@ -28,13 +29,24 @@ $(document).ready(function () {
                 Visualisations: visualisationsSwitch.prop("checked"),
             };
 
-            window.location.href = "/api/Preservation/Export?password=" + data.Password
-                + "&Exhaustive=" + data.Exhaustive
-                + "&Suppressions=" + data.Suppressions
-                + "&Lists=" + data.Lists
-                + "&Dictionaries="
-                + data.Dictionaries
-                + "&Visualisations=" + data.Visualisations;
+            const resp = await fetch("/api/Preservation/Export", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(data)
+            });
+
+            const blob = await resp.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+
+            const disposition = resp.headers.get("Content-Disposition");
+            const filename = disposition?.match(/filename[^;=\n]*=["']?([^"';\n]*)["']?/)?.[1]
+                ?? "export.jemp";
+
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
         }
     });
 
@@ -49,8 +61,7 @@ $(document).ready(function () {
             Visualisations: visualisationsSwitch.prop("checked"),
         };
 
-        window.open("/api/Preservation/ExportPeek?password=" + data.Password
-            + "&Exhaustive=" + data.Exhaustive
+        window.open("/api/Preservation/ExportPeek?Exhaustive=" + data.Exhaustive
             + "&Suppressions=" + data.Suppressions
             + "&Lists=" + data.Lists
             + "&Dictionaries="

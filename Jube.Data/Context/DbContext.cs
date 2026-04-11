@@ -1095,6 +1095,14 @@ namespace Jube.Data.Context
             }
         }
 
+        public ITable<EntityAnalysisModelRole> EntityAnalysisModelRole
+        {
+            get
+            {
+                return GetTable<EntityAnalysisModelRole>();
+            }
+        }
+
         public ITable<VisualisationRegistryRole> VisualisationRegistryRole
         {
             get
@@ -1124,6 +1132,14 @@ namespace Jube.Data.Context
             get
             {
                 return GetTable<CaseWorkflowFilterRole>();
+            }
+        }
+
+        public ITable<UserRegistryApiKey> UserRegistryApiKey
+        {
+            get
+            {
+                return GetTable<UserRegistryApiKey>();
             }
         }
     }

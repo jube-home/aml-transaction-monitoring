@@ -5,10 +5,11 @@ namespace Jube.Service.Authentication
     using Data.Repository;
     using Data.Security;
     using Dto.Authentication;
+    using DynamicEnvironment;
     using Exceptions.Authentication;
     using log4net;
 
-    public class SandboxRegistration(DbContext dbContext)
+    public class SandboxRegistration(DbContext dbContext, DynamicEnvironment dynamicEnvironment)
     {
         public async Task<SandboxRegistrationResponseDto> RegisterAsync(
             SandboxRegistrationRequestDto sandboxRegistrationRequestDto,
@@ -1197,7 +1198,7 @@ namespace Jube.Service.Authentication
                                     "    }" + Environment.NewLine +
                                     "})" + Environment.NewLine,
                 Guid = Guid.NewGuid()
-            }, log).ConfigureAwait(false);
+            }, log, dynamicEnvironment.AppSettings("ReportConnectionString") ?? dbContext.Connection.ConnectionString).ConfigureAwait(false);
 
             await visualisationRegistryDatasourceRepository.InsertWithValidationAsync(new VisualisationRegistryDatasource
             {
@@ -1250,7 +1251,7 @@ namespace Jube.Service.Authentication
                                     "    }" + Environment.NewLine +
                                     "})" + Environment.NewLine,
                 Guid = Guid.NewGuid()
-            }, log).ConfigureAwait(false);
+            }, log, dynamicEnvironment.AppSettings("ReportConnectionString") ?? dbContext.Connection.ConnectionString).ConfigureAwait(false);
         }
 
         private async Task InsertVisualisationRegistryDatasourceExampleEmbeddedVisualisationAsync(int visualisationRegistryId,
@@ -1294,7 +1295,7 @@ namespace Jube.Service.Authentication
                                     "    }" + Environment.NewLine +
                                     "})" + Environment.NewLine,
                 Guid = Guid.NewGuid()
-            }, log).ConfigureAwait(false);
+            }, log, dynamicEnvironment.AppSettings("ReportConnectionString") ?? dbContext.Connection.ConnectionString).ConfigureAwait(false);
 
             await visualisationRegistryDatasourceRepository.InsertWithValidationAsync(new VisualisationRegistryDatasource
             {
@@ -1345,7 +1346,7 @@ namespace Jube.Service.Authentication
                                     "    }" + Environment.NewLine +
                                     "})" + Environment.NewLine,
                 Guid = Guid.NewGuid()
-            }, log).ConfigureAwait(false);
+            }, log, dynamicEnvironment.AppSettings("ReportConnectionString") ?? dbContext.Connection.ConnectionString).ConfigureAwait(false);
         }
 
         private async Task<int> InsertVisualisationRegistryExampleVisualisationAsync(string userName, CancellationToken token = default)

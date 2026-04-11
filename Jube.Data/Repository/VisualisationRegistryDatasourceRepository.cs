@@ -149,7 +149,7 @@ namespace Jube.Data.Repository
             return model;
         }
 
-        public async Task<VisualisationRegistryDatasource> InsertWithValidationAsync(VisualisationRegistryDatasource model, ILog log, CancellationToken token = default)
+        public async Task<VisualisationRegistryDatasource> InsertWithValidationAsync(VisualisationRegistryDatasource model, ILog log, string interpolationConnectionString, CancellationToken token = default)
         {
             if (model.VisualisationRegistryId == null)
             {
@@ -158,7 +158,7 @@ namespace Jube.Data.Repository
             Dictionary<string, string> columns;
             try
             {
-                columns = await ValidateSeriesAsync(model.VisualisationRegistryId.Value, model.Command, log).ConfigureAwait(false);
+                columns = await ValidateSeriesAsync(model.VisualisationRegistryId.Value, model.Command, interpolationConnectionString, log).ConfigureAwait(false);
             }
             catch (Exception e)
             {
@@ -177,7 +177,7 @@ namespace Jube.Data.Repository
             return model;
         }
 
-        public async Task<VisualisationRegistryDatasource> UpdateWithValidationAsync(VisualisationRegistryDatasource model, ILog log, CancellationToken token = default)
+        public async Task<VisualisationRegistryDatasource> UpdateWithValidationAsync(VisualisationRegistryDatasource model, ILog log, string interpolationConnectionString, CancellationToken token = default)
         {
             if (model.VisualisationRegistryId == null)
             {
@@ -187,7 +187,7 @@ namespace Jube.Data.Repository
             Dictionary<string, string> columns;
             try
             {
-                columns = await ValidateSeriesAsync(model.VisualisationRegistryId.Value, model.Command, log).ConfigureAwait(false);
+                columns = await ValidateSeriesAsync(model.VisualisationRegistryId.Value, model.Command,interpolationConnectionString, log).ConfigureAwait(false);
             }
             catch (Exception e)
             {
@@ -195,11 +195,11 @@ namespace Jube.Data.Repository
                 throw sqlValidationFailed;
             }
 
-            var existing = dbContext.VisualisationRegistryDatasource
-                .FirstOrDefault(w => w.Id
-                                     == model.Id
-                                     && (w.Deleted == 0 || w.Deleted == null)
-                                     && (w.Locked == 0 || w.Locked == null));
+            var existing = await dbContext.VisualisationRegistryDatasource
+                .FirstOrDefaultAsync(w => w.Id
+                                          == model.Id
+                                          && (w.Deleted == 0 || w.Deleted == null)
+                                          && (w.Locked == 0 || w.Locked == null), token);
 
             if (existing == null)
             {
@@ -277,7 +277,7 @@ namespace Jube.Data.Repository
             }
         }
 
-        private async Task<Dictionary<string, string>> ValidateSeriesAsync(int visualisationRegistryId, string sql, ILog log)
+        private async Task<Dictionary<string, string>> ValidateSeriesAsync(int visualisationRegistryId, string sql, string interpolationConnectionString, ILog log)
         {
             var visualisationRegistryParameterRepository = new VisualisationRegistryParameterRepository(dbContext);
             var parameters =
@@ -299,7 +299,7 @@ namespace Jube.Data.Repository
                 parametersDefaultValues.Add(parameter.Name.Replace(" ", "_"), defaultValue);
             }
 
-            using var postgres = new Postgres(dbContext.ConnectionString, log);
+            using var postgres = new Postgres(interpolationConnectionString, log);
             return await postgres.IntrospectAsync(sql, parametersDefaultValues).ConfigureAwait(false);
         }
 

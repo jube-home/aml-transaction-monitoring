@@ -124,7 +124,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters
                                     // ReSharper disable once RedundantAssignment
                                     var deleted = false;
 
-                                    using var archiveDatabase = new Postgres(context.Services.ReportConnectionString ?? dbContext.ConnectionString, context.Services.Log);
+                                    using var archiveDatabase = new Postgres(context.Services.ReportConnectionString ?? dbContext.Connection.ConnectionString, context.Services.Log);
                                     do
                                     {
                                         if (context.Services.Log.IsInfoEnabled)

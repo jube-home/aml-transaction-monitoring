@@ -95,7 +95,7 @@ namespace Jube.Data.Query
                 }
             }
 
-            using var postgres = new Postgres(reportConnectionString ?? dbContext.ConnectionString, log);
+            using var postgres = new Postgres(reportConnectionString ?? dbContext.Connection.ConnectionString, log);
             return await postgres.ExecuteByNamedParametersAsync(visualisationRegistryDatasource.Command,
                 mergedParametersByName, token).ConfigureAwait(false);
         }

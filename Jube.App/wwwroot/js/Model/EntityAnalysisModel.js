@@ -12,6 +12,7 @@
  */
 
 var endpoint = "/api/EntityAnalysisModel";
+var childKeyName = "entityAnalysisModelGuid";
 var validationFail = "There is invalid data in the form. Please check fields and correct.";
 
 function getRecords() {

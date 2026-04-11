@@ -1,13 +1,28 @@
+/* Copyright (C) 2022-present Jube Holdings Limited.
+ *
+ * This file is part of Jube™ software.
+ *
+ * Jube™ is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License
+ * as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ * Jube™ is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+
+ * You should have received a copy of the GNU Affero General Public License along with Jube™. If not,
+ * see <https://www.gnu.org/licenses/>.
+ */
+
 namespace Jube.App.Controllers.Preservation
 {
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
     using Code;
     using Cryptography.Exceptions;
     using Data.Context;
+    using Dto;
     using DynamicEnvironment;
     using Jube.Preservation;
     using log4net;
@@ -76,11 +91,11 @@ namespace Jube.App.Controllers.Preservation
                 };
 
                 var preservation = new Preservation(dbContext, userName,
-                    dynamicEnvironment.AppSettings("PreservationSalt"));
+                    dynamicEnvironment.AppSettings("PreservationSalt"),
+                    dynamicEnvironment.AppSettings("JempFileLegacyEncryptionFallback").Equals("True", StringComparison.CurrentCultureIgnoreCase));
 
-                foreach (var file in files)
+                foreach (var stream in files.Select(file => file.OpenReadStream()))
                 {
-                    var stream = file.OpenReadStream();
                     await using var stream1 = stream.ConfigureAwait(false);
 
                     using var reader = new BinaryReader(stream);
@@ -135,9 +150,8 @@ namespace Jube.App.Controllers.Preservation
             return payload.Yaml;
         }
 
-        [HttpGet("Export")]
-        public async Task<ActionResult> ExportAsync(string password, bool exhaustive, bool suppressions, bool lists, bool dictionaries,
-            bool visualisations, CancellationToken token = default)
+        [HttpPost("Export")]
+        public async Task<ActionResult> ExportAsync([FromBody] ImportExportOptionsDto model, CancellationToken token = default)
         {
             if (!permissionValidation.Validate(new[]
                 {
@@ -150,16 +164,17 @@ namespace Jube.App.Controllers.Preservation
             try
             {
                 var preservation = new Preservation(dbContext, userName,
-                    dynamicEnvironment.AppSettings("PreservationSalt"));
+                    dynamicEnvironment.AppSettings("PreservationSalt"),
+                    dynamicEnvironment.AppSettings("JempFileLegacyEncryptionFallback").Equals("True", StringComparison.CurrentCultureIgnoreCase));
 
                 var importExportOptions = new ImportExportOptions
                 {
-                    Password = password,
-                    Exhaustive = exhaustive,
-                    Suppressions = suppressions,
-                    Lists = lists,
-                    Dictionaries = dictionaries,
-                    Visualisations = visualisations
+                    Password = model.Password,
+                    Exhaustive = model.Exhaustive,
+                    Suppressions = model.Suppressions,
+                    Lists = model.Lists,
+                    Dictionaries = model.Dictionaries,
+                    Visualisations = model.Visualisations
                 };
 
                 var export = await preservation.ExportAsync(importExportOptions, token).ConfigureAwait(false);

@@ -29,15 +29,16 @@ namespace Jube.App.Controllers.Invoke
     using Engine.BackgroundTasks.TaskStarters.Models;
     using Engine.EntityAnalysisModelInvoke;
     using Engine.EntityAnalysisModelInvoke.Exceptions;
-    using Engine.EntityAnalysisModelManager.EntityAnalysisModel;
     using Engine.Exhaustive.Extensions;
     using Engine.Sanctions;
     using FluentValidation.Results;
     using log4net;
+    using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Mvc;
     using Newtonsoft.Json.Linq;
     using SanctionEntryDto=Dto.SanctionEntryDto;
 
+    [Authorize]
     [Route("api/[controller]")]
     [Produces("application/json")]
     public class InvokeController : Controller
@@ -67,7 +68,7 @@ namespace Jube.App.Controllers.Invoke
                 if (!dynamicEnvironment.AppSettings("EnablePublicInvokeController")
                         .Equals("True", StringComparison.OrdinalIgnoreCase))
                 {
-                    return await Task.FromResult<ActionResult>(Forbid()).ConfigureAwait(false);
+                    return await Task.FromResult<ActionResult>(NotFound()).ConfigureAwait(false);
                 }
 
                 Interlocked.Increment(ref engine.Context.Counters.HttpCounterCallback);
@@ -104,7 +105,7 @@ namespace Jube.App.Controllers.Invoke
                 if (!dynamicEnvironment.AppSettings("EnablePublicInvokeController")
                         .Equals("True", StringComparison.OrdinalIgnoreCase))
                 {
-                    return Task.FromResult<ActionResult<List<SanctionEntryDto>>>(Forbid());
+                    return Task.FromResult<ActionResult<List<SanctionEntryDto>>>(NotFound());
                 }
 
                 if (!engine.Context.Ready)
@@ -153,7 +154,7 @@ namespace Jube.App.Controllers.Invoke
                 if (!dynamicEnvironment.AppSettings("EnablePublicInvokeController")
                         .Equals("True", StringComparison.OrdinalIgnoreCase))
                 {
-                    return Task.FromResult<ActionResult>(Forbid());
+                    return Task.FromResult<ActionResult>(NotFound());
                 }
 
                 if (!engine.Context.Ready)
@@ -170,12 +171,21 @@ namespace Jube.App.Controllers.Invoke
 
                 Interlocked.Increment(ref engine.Context.Counters.HttpCounterTag);
 
-                var entityAnalysisModelGuid = Guid.Parse(model.EntityAnalysisModelGuid);
-                foreach (var (_, value) in
-                         from modelKvp in engine.Context.Tasks.EntityAnalysisModelManager.Context.EntityAnalysisModels.ActiveEntityAnalysisModels
-                         where entityAnalysisModelGuid == modelKvp.Value.Instance.Guid
-                         select modelKvp)
+                var foundModels = engine.Context.Tasks.EntityAnalysisModelManager.Context.EntityAnalysisModels.ActiveEntityAnalysisModels
+                    .Where(modelKvp => Guid.Parse(model.EntityAnalysisModelGuid) == modelKvp.Value.Instance.Guid).ToList();
+
+                if (foundModels.Count == 0)
                 {
+                    return Task.FromResult<ActionResult>(NotFound());
+                }
+
+                foreach (var (_, value) in foundModels)
+                {
+                    if (!value.Collections.Users.Contains(User.Identity?.Name))
+                    {
+                        continue;
+                    }
+
                     if (value.Collections.EntityAnalysisModelTags.Find(w => w.Name == model.Name) == null)
                     {
                         return Task.FromResult<ActionResult>(BadRequest());
@@ -209,7 +219,7 @@ namespace Jube.App.Controllers.Invoke
                     return Task.FromResult<ActionResult>(Ok());
                 }
 
-                return Task.FromResult<ActionResult>(NotFound());
+                return Task.FromResult<ActionResult>(Forbid());
             }
             catch (Exception ex)
             {
@@ -238,7 +248,7 @@ namespace Jube.App.Controllers.Invoke
                 if (!dynamicEnvironment.AppSettings("EnablePublicInvokeController")
                         .Equals("True", StringComparison.OrdinalIgnoreCase))
                 {
-                    return Forbid();
+                    return NotFound();
                 }
 
                 if (engine.Context is not { Ready: true })
@@ -263,29 +273,31 @@ namespace Jube.App.Controllers.Invoke
                         Interlocked.Increment(ref engine.Context.Counters.HttpCounterModelAsync);
                     }
 
-                    EntityAnalysisModel entityAnalysisModel = null;
-                    foreach (var (_, value) in
-                             from modelKvp in engine.Context.Tasks.EntityAnalysisModelManager.Context.EntityAnalysisModels.ActiveEntityAnalysisModels
-                             where guid == modelKvp.Value.Instance.Guid
-                             select modelKvp)
+                    var foundModels = engine.Context.Tasks.EntityAnalysisModelManager.Context.EntityAnalysisModels.ActiveEntityAnalysisModels
+                        .Where(modelKvp => guid == modelKvp.Value.Instance.Guid).ToList();
+
+                    if (!foundModels.Any())
                     {
-                        entityAnalysisModel = value;
-
-                        if (log.IsInfoEnabled)
-                        {
-                            log.Info(
-                                $"HTTP Handler Entity: GUID matched for Requested Model GUID {guid}.  Model id is {entityAnalysisModel.Instance.Id}.");
-                        }
-
-                        break;
+                        return NotFound();
                     }
 
-                    if (entityAnalysisModel != null)
+                    foreach (var (_, value) in foundModels)
                     {
+                        if (!value.Collections.Users.Contains(User.Identity?.Name))
+                        {
+                            continue;
+                        }
+
                         if (log.IsInfoEnabled)
                         {
                             log.Info(
-                                $"HTTP Handler Entity: GUID payload {guid} model id is {entityAnalysisModel.Instance.Id} will now begin payload parsing.");
+                                $"HTTP Handler Entity: GUID matched for Requested Model GUID {guid}.  Model id is {value.Instance.Id}.");
+                        }
+
+                        if (log.IsInfoEnabled)
+                        {
+                            log.Info(
+                                $"HTTP Handler Entity: GUID payload {guid} model id is {value.Instance.Id} will now begin payload parsing.");
                         }
 
                         if (Request.ContentLength != null)
@@ -293,7 +305,7 @@ namespace Jube.App.Controllers.Invoke
                             try
                             {
                                 var context = await EntityAnalysisModelInvoke.InvokeAsync(
-                                    entityAnalysisModel,
+                                    value,
                                     ms, Int32.Parse(dynamicEnvironment.AppSettings("MaxInvokeControllerRequestBytes")),
                                     async).ConfigureAwait(false);
 
@@ -327,6 +339,7 @@ namespace Jube.App.Controllers.Invoke
                         }
 
                         return BadRequest("Content body is zero length.");
+
                     }
 
                     if (log.IsInfoEnabled)
@@ -335,11 +348,11 @@ namespace Jube.App.Controllers.Invoke
                             $"HTTP Handler Entity: Could not locate the model for Guid {guid}.");
                     }
 
-                    return NotFound();
+                    return Forbid();
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    return NotFound();
+                    return StatusCode(500,ex.Message);
                 }
             }
             catch (Exception ex)
@@ -368,7 +381,7 @@ namespace Jube.App.Controllers.Invoke
                 if (!dynamicEnvironment.AppSettings("EnablePublicInvokeController")
                         .Equals("True", StringComparison.OrdinalIgnoreCase))
                 {
-                    return Forbid();
+                    return NotFound();
                 }
 
                 if (!engine.Context.Ready)
@@ -381,23 +394,41 @@ namespace Jube.App.Controllers.Invoke
                 var ms = new MemoryStream();
                 await Request.Body.CopyToAsync(ms).ConfigureAwait(false);
 
-                var guid = Request.RouteValues["guid"].AsString();
+                var guid = Guid.Parse(Request.RouteValues["guid"].AsString());
 
                 if (log.IsInfoEnabled)
                 {
                     log.Info($"Exhaustive Recall:  Recall received for {guid}.  Invoking handler.");
                 }
 
-                var value = Math.Round(engine.Context.RecallExhaustive(
-                    Guid.Parse(guid),
-                    JObject.Parse(Encoding.UTF8.GetString(ms.ToArray()))), 2);
+                var foundExhaustive = engine.Context.Tasks.EntityAnalysisModelManager.Context.EntityAnalysisModels.ActiveEntityAnalysisModels
+                    .Where(w => w.Value.Collections.ExhaustiveModels.Any(a => a.Guid == guid)).ToList();
 
-                if (log.IsInfoEnabled)
+                if (foundExhaustive.Count == 0)
                 {
-                    log.Info($"Exhaustive Recall:  Has invoked the handler and returned a value of {value}.  Returning.");
+                    return NotFound();
+                }
+                
+                foreach (var (_, value) in foundExhaustive)
+                {
+                    if (!value.Collections.Users.Contains(User.Identity?.Name))
+                    {
+                        continue;
+                    }
+                    
+                    var response = Math.Round(engine.Context.RecallExhaustive(
+                        guid,
+                        JObject.Parse(Encoding.UTF8.GetString(ms.ToArray()))), 2);
+
+                    if (log.IsInfoEnabled)
+                    {
+                        log.Info($"Exhaustive Recall:  Has invoked the handler and returned a value of {value}.  Returning.");
+                    }
+
+                    return response;
                 }
 
-                return value;
+                return Forbid();
             }
             catch (Exception ex)
             {
@@ -417,7 +448,7 @@ namespace Jube.App.Controllers.Invoke
                 if (!dynamicEnvironment.AppSettings("EnablePublicInvokeController")
                         .Equals("True", StringComparison.OrdinalIgnoreCase))
                 {
-                    return Forbid();
+                    return NotFound();
                 }
 
                 var ms = new MemoryStream();

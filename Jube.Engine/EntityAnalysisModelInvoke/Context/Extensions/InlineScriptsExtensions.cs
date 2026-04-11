@@ -61,7 +61,8 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions
                     }
 
                     await ReflectInlineScriptHelper.ExecuteAsync(inlineScript, context);
-
+                    context.EntityAnalysisModelInstanceEntryPayload.JObject = null;
+                    
                     if (context.Log.IsInfoEnabled)
                     {
                         context.Log.Info(

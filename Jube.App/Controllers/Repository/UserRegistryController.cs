@@ -1,5 +1,5 @@
 ﻿/* Copyright (C) 2022-present Jube Holdings Limited.
- *
+    *
  * This file is part of Jube™ software.
  *
  * Jube™ is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License
@@ -23,6 +23,7 @@ namespace Jube.App.Controllers.Repository
     using Data.Poco;
     using Data.Repository;
     using Data.Security;
+    using Dto;
     using Dto.UserRegistry;
     using DynamicEnvironment;
     using FluentValidation;
@@ -180,10 +181,10 @@ namespace Jube.App.Controllers.Repository
             }
         }
 
-        [HttpGet("SetPassword/{id:int}")]
+        [HttpPost("SetPassword")]
         [ProducesResponseType(typeof(UserRegistryDto), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ValidationResult), (int)HttpStatusCode.BadRequest)]
-        public async Task<ActionResult<UserRegistryPasswordResponseDto>> UpdatePasswordAsync(int id,
+        public async Task<ActionResult<UserRegistryPasswordResponseDto>> UpdatePasswordAsync([FromBody] UserRegistryPasswordResetDto model,
             CancellationToken token = default)
         {
             try
@@ -198,14 +199,14 @@ namespace Jube.App.Controllers.Repository
 
                 var userRegistryPasswordResponseDto = new UserRegistryPasswordResponseDto
                 {
-                    Password = HashPassword.CreatePasswordInClear(8),
+                    Password = HashPassword.CreateSecurePassword(16),
                     PasswordExpiryDate = DateTime.Now
                 };
 
                 var hashedPassword = HashPassword.GenerateHash(userRegistryPasswordResponseDto.Password,
                     dynamicEnvironment.AppSettings("PasswordHashingKey"));
 
-                await repository.SetPasswordAsync(id, hashedPassword, userRegistryPasswordResponseDto.PasswordExpiryDate, token);
+                await repository.SetPasswordAsync(model.Id, hashedPassword, userRegistryPasswordResponseDto.PasswordExpiryDate, token);
 
                 return userRegistryPasswordResponseDto;
             }

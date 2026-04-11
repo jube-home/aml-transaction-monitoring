@@ -48,14 +48,14 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Extraction
             var reportDatabaseValues = new List<ArchiveKey>();
             entityAnalysisModelInstanceEntryPayload.ArchiveKeys = reportDatabaseValues;
 
-            var json = ParseJson(inputStream, entityAnalysisModel, entityAnalysisModelInstanceEntryPayload);
+            entityAnalysisModelInstanceEntryPayload.JObject = ParseJson(inputStream, entityAnalysisModel, entityAnalysisModelInstanceEntryPayload);
 
-            var (entryId, referenceDate) = ExtractEntryAndReferenceDate(json, entityAnalysisModel, entityAnalysisModelInstanceEntryPayload.Payload);
+            var (entryId, referenceDate) = ExtractEntryAndReferenceDate(entityAnalysisModelInstanceEntryPayload.JObject, entityAnalysisModel, entityAnalysisModelInstanceEntryPayload.Payload);
 
             entityAnalysisModelInstanceEntryPayload.EntityInstanceEntryId = entryId;
             entityAnalysisModelInstanceEntryPayload.ReferenceDate = referenceDate;
 
-            ProcessRequestXPaths(json, entityAnalysisModel, entityAnalysisModelInstanceEntryPayload, entityAnalysisModelInstanceEntryPayload.Payload, reportDatabaseValues, false, log);
+            ProcessRequestXPaths(entityAnalysisModelInstanceEntryPayload.JObject, entityAnalysisModel, entityAnalysisModelInstanceEntryPayload, entityAnalysisModelInstanceEntryPayload.Payload, reportDatabaseValues, false, log);
 
             return new Context
             {
@@ -181,7 +181,7 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Extraction
                         log.Info($"Json to Context Extractor: GUID payload {entityInstanceEntryPayloadStore.EntityAnalysisModelInstanceEntryGuid} evaluating {xPath.Name} with path {xPath.XPath}.");
                     }
 
-                    string value;
+                    string value = null;
                     var defaultFallback = false;
 
                     try
@@ -189,18 +189,31 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Extraction
                         value = json.SelectToken(xPath.XPath)?.ToString();
                         if (value == null)
                         {
-                            value = xPath.DefaultValue;
-                            defaultFallback = true;
+                            if (!String.IsNullOrEmpty(xPath.DefaultValue))
+                            {
+                                value = xPath.DefaultValue;
+                                defaultFallback = true;   
+                            }
                         }
                     }
                     catch (Exception ex) when (ex is not OperationCanceledException)
                     {
-                        value = xPath.DefaultValue;
-                        defaultFallback = true;
-
-                        if (log.IsInfoEnabled)
+                        if (!string.IsNullOrEmpty(xPath.DefaultValue))
                         {
-                            log.Info($"Json to Context Extractor: GUID payload {entityInstanceEntryPayloadStore.EntityAnalysisModelInstanceEntryGuid} XPath {xPath.XPath} failed: {ex.Message}. Using default {xPath.DefaultValue}.");
+                            value = xPath.DefaultValue;
+                            defaultFallback = true;
+
+                            if (log.IsInfoEnabled)
+                            {
+                                log.Info($"Json to Context Extractor: GUID payload {entityInstanceEntryPayloadStore.EntityAnalysisModelInstanceEntryGuid} XPath {xPath.XPath} failed: {ex.Message}. Using default {xPath.DefaultValue}.");
+                            }
+                        }
+                        else
+                        {
+                            if (log.IsInfoEnabled)
+                            {
+                                log.Info($"Json to Context Extractor: GUID payload {entityInstanceEntryPayloadStore.EntityAnalysisModelInstanceEntryGuid} XPath {xPath.XPath} failed: {ex.Message}. Default value is null and will be skipped.");
+                            }
                         }
                     }
 

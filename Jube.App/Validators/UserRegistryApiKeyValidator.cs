@@ -11,30 +11,16 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-namespace Jube.App.Middlewares
+namespace Jube.App.Validators
 {
-    using System.Threading.Tasks;
-    using Microsoft.AspNetCore.Http;
+    using Dto;
+    using FluentValidation;
 
-    public class TransposeJwtFromCookieToHeaderMiddleware
+    public class UserRegistryApiKeyRequestDtoValidator : AbstractValidator<UserRegistryApiKeyDto>
     {
-        private readonly RequestDelegate next;
-
-        public TransposeJwtFromCookieToHeaderMiddleware(RequestDelegate next)
+        public UserRegistryApiKeyRequestDtoValidator()
         {
-            this.next = next;
-        }
-
-        public Task InvokeAsync(HttpContext context)
-        {
-            const string authenticationCookieName = "authentication";
-            var cookie = context.Request.Cookies[authenticationCookieName];
-            if (cookie != null)
-            {
-                context.Request.Headers.Append("Authorization", "Bearer " + cookie);
-            }
-
-            return next.Invoke(context);
+            RuleFor(p => p.UserRegistryId).NotEmpty();
         }
     }
 }

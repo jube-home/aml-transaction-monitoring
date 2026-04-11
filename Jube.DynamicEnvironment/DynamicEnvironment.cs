@@ -314,6 +314,12 @@ namespace Jube.DynamicEnvironment
                 },
                 {
                     "SecretsPath", ""
+                },
+                {
+                    "JempFileLegacyEncryptionFallback", "true"
+                },
+                {
+                    "ApiHmacKey", null
                 }
             };
 

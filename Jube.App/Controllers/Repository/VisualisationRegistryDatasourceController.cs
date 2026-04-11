@@ -47,6 +47,7 @@ namespace Jube.App.Controllers.Repository
         private readonly VisualisationRegistryDatasourceRepository repository;
         private readonly string userName;
         private readonly IValidator<VisualisationRegistryDatasourceDto> validator;
+        private readonly DynamicEnvironment dynamicEnvironment;
 
         public VisualisationRegistryDatasourceController(ILog log,
             IHttpContextAccessor httpContextAccessor, DynamicEnvironment dynamicEnvironment)
@@ -69,6 +70,7 @@ namespace Jube.App.Controllers.Repository
             mapper = new Mapper(config);
             repository = new VisualisationRegistryDatasourceRepository(dbContext, userName);
             validator = new VisualisationRegistryDatasourceValidator(repository);
+            this.dynamicEnvironment = dynamicEnvironment;
         }
 
         protected override void Dispose(bool disposing)
@@ -197,8 +199,7 @@ namespace Jube.App.Controllers.Repository
                 }
 
                 var visualisationRegistryDatasource =
-                    await repository.InsertWithValidationAsync(mapper.Map<VisualisationRegistryDatasource>(model), log, token);
-
+                    await repository.InsertWithValidationAsync(mapper.Map<VisualisationRegistryDatasource>(model), log, dynamicEnvironment.AppSettings("ReportConnectionString") ?? dbContext.Connection.ConnectionString, token);
 
                 return Ok(visualisationRegistryDatasource);
             }
@@ -240,7 +241,7 @@ namespace Jube.App.Controllers.Repository
                 var results = await validator.ValidateAsync(model, token);
                 if (results.IsValid)
                 {
-                    return Ok(await repository.UpdateWithValidationAsync(mapper.Map<VisualisationRegistryDatasource>(model), log, token));
+                    return Ok(await repository.UpdateWithValidationAsync(mapper.Map<VisualisationRegistryDatasource>(model), log, dynamicEnvironment.AppSettings("ReportConnectionString") ?? dbContext.Connection.ConnectionString, token));
                 }
 
                 return BadRequest(results);

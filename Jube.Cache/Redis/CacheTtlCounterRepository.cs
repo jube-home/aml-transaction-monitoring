@@ -21,7 +21,7 @@ namespace Jube.Cache.Redis
     public class CacheTtlCounterRepository(
         ResilientRedisDatabase redisDatabase,
         ILog log,
-        CommandFlags commandFlag = CommandFlags.FireAndForget) : ICacheTtlCounterRepository
+        CommandFlags commandFlag = CommandFlags.None) : ICacheTtlCounterRepository
     {
         public async Task<double> DecrementTtlCounterCacheAsync(int tenantRegistryId, Guid entityAnalysisModelGuid,
             Guid entityAnalysisModelTtlCounterGuid,

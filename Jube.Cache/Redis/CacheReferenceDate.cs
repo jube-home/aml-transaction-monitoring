@@ -22,7 +22,7 @@ namespace Jube.Cache.Redis
     public class CacheReferenceDate(
         ResilientRedisDatabase redisDatabase,
         ILog log,
-        CommandFlags commandFlag = CommandFlags.FireAndForget) : ICacheReferenceDate
+        CommandFlags commandFlag = CommandFlags.None) : ICacheReferenceDate
     {
         public async Task UpsertReferenceDateAsync(int tenantRegistryId, Guid entityAnalysisModelGuid, DateTime referenceDate)
         {

@@ -19,6 +19,7 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Models.Payload.EntityAnalysisMod
     using Data.Poco;
     using Dictionary;
     using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
     using TasksPerformance;
 
     public class EntityAnalysisModelInstanceEntryPayload
@@ -58,5 +59,6 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Models.Payload.EntityAnalysisMod
         [JsonIgnore] public bool EnableRdbmsArchive { get; init; }
         [JsonIgnore] public int EntityAnalysisModelId { get; init; }
         [JsonIgnore] public int TenantRegistryId { get; init; }
+        [JsonIgnore] public JObject JObject { get; set; }
     }
 }

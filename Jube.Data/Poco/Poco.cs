@@ -457,7 +457,7 @@ namespace Jube.Data.Poco
         [Column] [Nullable] [Key(10)] public byte? Prepared { get; set; }
         [Column] [Nullable] [Key(11)] public string Error { get; set; }
         [Column] [Nullable] [Key(12)] public Guid CaseWorkflowGuid { get; set; }
-        [Column] [Nullable] [Key(13)] public Guid CaseWorkflowFilterGuid { get; set; }
+        [Column] [Nullable] [Key(13)] public Guid? CaseWorkflowFilterGuid { get; set; }
         [Column] [Nullable] [Key(14)] public string CreatedUser { get; set; }
         [Column] [Nullable] [Key(15)] public DateTime? CreatedDate { get; set; }
         [Column] [Nullable] [Key(16)] public byte? Rebuild { get; set; }
@@ -1277,6 +1277,38 @@ namespace Jube.Data.Poco
         public RoleRegistry RoleRegistry { get; set; }
     }
 
+    [Table]
+    [MessagePackObject]
+    public class EntityAnalysisModelRole
+    {
+        [Column]
+        [PrimaryKey]
+        [Identity]
+        [Key(0)]
+        public int Id { get; set; }
+
+        [Column] [Nullable] [Key(1)] public Guid EntityAnalysisModelGuid { get; set; }
+        [Column] [Nullable] [Key(2)] public Guid Guid { get; set; }
+        [Column] [Nullable] [Key(3)] public DateTime? CreatedDate { get; set; }
+        [Column] [Nullable] [Key(4)] public Guid RoleRegistryGuid { get; set; }
+        [Column] [Nullable] [Key(5)] public string CreatedUser { get; set; }
+        [Column] [Nullable] [Key(6)] public byte? Deleted { get; set; }
+        [Column] [Nullable] [Key(7)] public string DeletedUser { get; set; }
+        [Column] [Nullable] [Key(8)] public DateTime? DeletedDate { get; set; }
+        [Column] [Nullable] [Key(9)] public int? Version { get; set; }
+        [Column] [Nullable] [Key(10)] public int? ImportId { get; set; }
+
+        [Association(ThisKey = "EntityAnalysisModelGuid", OtherKey = "Guid", CanBeNull = true,
+            Relationship = Relationship.ManyToOne)]
+        [Key(11)]
+        public EntityAnalysisModel EntityAnalysisModel { get; set; }
+
+        [Association(ThisKey = "RoleRegistryGuid", OtherKey = "Guid", CanBeNull = false,
+            Relationship = Relationship.ManyToOne)]
+        [Key(12)]
+        public RoleRegistry RoleRegistry { get; set; }
+    }
+    
     [Table]
     [MessagePackObject]
     public class VisualisationRegistryRole
@@ -2333,6 +2365,34 @@ namespace Jube.Data.Poco
 
     [Table]
     [MessagePackObject]
+    public class UserRegistryApiKey
+    {
+        [Column]
+        [PrimaryKey]
+        [Identity]
+        [Key(0)]
+        public int Id { get; set; }
+
+        [Column] [Nullable] [Key(1)] public Guid Guid { get; set; }
+        [Column] [Nullable] [Key(2)] public string Name { get; set; }
+        [Column] [Nullable] [Key(3)] public string Description { get; set; }
+        [Column] [Nullable] [Key(4)] public int? ApiKeyVersionId { get; set; }
+        [Column] [Nullable] [Key(5)] public int? UserRegistryId { get; set; }
+        [Column] [Nullable] [Key(6)] public string ApiKey { get; set; }
+        [Column] [Nullable] [Key(7)] public string ApiKeyDisplay { get; set; }
+        [Column] [Nullable] [Key(8)] public DateTime? CreatedDate { get; set; }
+        [Column] [Nullable] [Key(9)] public string CreatedUser { get; set; }
+        [Column] [Nullable] [Key(10)] public byte? Deleted { get; set; }
+        [Column] [Nullable] [Key(11)] public DateTime? DeletedDate { get; set; }
+        [Column] [Nullable] [Key(12)] public string DeletedUser { get; set; }
+
+        [Association(ThisKey = "UserRegistryId", OtherKey = "Id", CanBeNull = true,
+            Relationship = Relationship.ManyToOne)]
+        [Column] [Nullable] [Key(13)] public UserRegistry UserRegistry { get; set; }
+    }
+
+    [Table]
+    [MessagePackObject]
     public class UserRegistry
     {
         [Column]
@@ -2995,7 +3055,7 @@ namespace Jube.Data.Poco
         [Column] [Nullable] [Key(9)] public int? ResponseElevationValueLimit { get; set; }
         [Column] [Nullable] [Key(10)] public int? ResponseElevationLimit { get; set; }
         [Column] [Nullable] [Key(11)] public int? ResponseElevationValueGatewayLimit { get; set; }
-        
+
         [Association(ThisKey = "EntityAnalysisModelGuid", OtherKey = "Guid", CanBeNull = true,
             Relationship = Relationship.ManyToOne)]
         [Key(12)]

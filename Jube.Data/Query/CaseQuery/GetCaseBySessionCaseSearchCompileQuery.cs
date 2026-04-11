@@ -39,7 +39,7 @@ namespace Jube.Data.Query.CaseQuery
         {
             this.dbContext = dbContext;
             userName = user;
-            this.reportConnectionString = reportConnectionString ?? dbContext.ConnectionString;
+            this.reportConnectionString = reportConnectionString ?? dbContext.Connection.ConnectionString;
             this.log = log;
             processCaseQuery = new ProcessCaseQuery(this.dbContext, userName);
         }

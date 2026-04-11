@@ -24,7 +24,7 @@ namespace Jube.Cache.Redis
     public class CacheSanctionRepository(
         ResilientRedisDatabase redisDatabase,
         ILog log,
-        CommandFlags commandFlag = CommandFlags.FireAndForget) : ICacheSanctionRepository
+        CommandFlags commandFlag = CommandFlags.None) : ICacheSanctionRepository
     {
         public async Task<CacheSanction> GetByMultiPartStringDistanceThresholdAsync(int tenantRegistryId,
             Guid entityAnalysisModelGuid, string multiPartString,

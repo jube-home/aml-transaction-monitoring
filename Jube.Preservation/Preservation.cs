@@ -22,7 +22,7 @@ namespace Jube.Preservation
     using YamlDotNet.Serialization;
     using YamlDotNet.Serialization.NamingConventions;
 
-    public class Preservation(DbContext dbContext, string userName, string? salt = null)
+    public class Preservation(DbContext dbContext, string userName, string? salt = null, bool legacyFallbackEnabled = false)
     {
         private readonly string salt = salt ?? "";
 
@@ -40,7 +40,7 @@ namespace Jube.Preservation
 
             try
             {
-                var aesEncryption = new AesEncryption(options.Password ?? "", salt);
+                var aesEncryption = new AesEncryption(options.Password ?? "", salt, legacyFallbackEnabled);
                 var decryptedBytes = aesEncryption.Decrypt(bytes);
 
                 var lz4Options =
@@ -296,7 +296,10 @@ namespace Jube.Preservation
 
                 var visualisationRegistryRoleRepository = new VisualisationRegistryRoleRepository(dbContext, import.TenantRegistryId);
                 await visualisationRegistryRoleRepository.DeleteByTenantRegistryIdOutsideOfInstanceAsync(import.TenantRegistryId, import.Id, token);
-
+                
+                var entityAnalysisModelRoleRepository = new EntityAnalysisModelRoleRepository(dbContext, import.TenantRegistryId);
+                await entityAnalysisModelRoleRepository.DeleteByTenantRegistryIdOutsideOfInstanceAsync(import.TenantRegistryId, import.Id, token);
+                
                 var visualisationRegistryDatasourceRoleRepository = new VisualisationRegistryDatasourceRoleRepository(dbContext, import.TenantRegistryId);
                 await visualisationRegistryDatasourceRoleRepository.DeleteByTenantRegistryIdOutsideOfInstanceAsync(import.TenantRegistryId, import.Id, token);
 
@@ -739,6 +742,14 @@ namespace Jube.Preservation
 
                 if (wrapper.Payload is { EntityPermission: not null })
                 {
+                    if (wrapper.Payload.EntityPermission.EntityAnalysisModelRole != null)
+                    {
+                        foreach (var entityAnalysisModelRole in wrapper.Payload.EntityPermission.EntityAnalysisModelRole)
+                        {
+                            await entityAnalysisModelRoleRepository.InsertAsync(entityAnalysisModelRole, token);
+                        }
+                    }
+                    
                     if (wrapper.Payload.EntityPermission.CaseWorkflowRole != null)
                     {
                         foreach (var caseWorkflowRole in wrapper.Payload.EntityPermission.CaseWorkflowRole)
@@ -900,7 +911,7 @@ namespace Jube.Preservation
 
                 var bytes = MessagePackSerializer.Serialize(wrapper, lz4Options);
 
-                var aesEncryption = new AesEncryption(options.Password ?? "", salt);
+                var aesEncryption = new AesEncryption(options.Password ?? "", salt, legacyFallbackEnabled);
                 var encryptedBytes = aesEncryption.Encrypt(bytes);
 
                 export.Bytes = bytes;
@@ -1313,6 +1324,9 @@ namespace Jube.Preservation
                     }
                 }
             }
+            
+            var entityAnalysisModelRole = new EntityAnalysisModelRoleRepository(dbContext, tenantRegistryId);
+            payload.EntityPermission.EntityAnalysisModelRole = await entityAnalysisModelRole.GetAllDescAsync(token);
 
             var caseWorkflowRoleRepository = new CaseWorkflowRoleRepository(dbContext, tenantRegistryId);
             payload.EntityPermission.CaseWorkflowRole = await caseWorkflowRoleRepository.GetAllDescAsync(token);

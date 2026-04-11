@@ -14,6 +14,7 @@
 namespace Jube.Data.Security
 {
     using System;
+    using System.Security.Cryptography;
     using System.Text;
     using Dictionary.Extensions;
     using Isopoh.Cryptography.Argon2;
@@ -30,14 +31,21 @@ namespace Jube.Data.Security
             return key != null && (key.IsNullOrEmpty() ? Argon2.Verify(passwordHash, password) : Argon2.Verify(passwordHash, password, key));
         }
 
-        public static string CreatePasswordInClear(int length)
+        public static string CreateSecurePassword(int length)
         {
             const string valid = "!@#$%^&*()abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
             var res = new StringBuilder();
-            var rnd = new Random();
-            while (0 < length--)
+
+            using (var rng = RandomNumberGenerator.Create())
             {
-                res.Append(valid[rnd.Next(valid.Length)]);
+                var uintBuffer = new byte[4];
+                while (length-- > 0)
+                {
+                    rng.GetBytes(uintBuffer);
+                    var num = BitConverter.ToUInt32(uintBuffer, 0);
+
+                    res.Append(valid[(int)(num % (uint)valid.Length)]);
+                }
             }
 
             return res.ToString();

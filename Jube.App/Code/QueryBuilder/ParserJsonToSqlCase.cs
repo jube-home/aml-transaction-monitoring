@@ -22,16 +22,16 @@ namespace Jube.App.Code.QueryBuilder
     using Data.Query;
     using Data.Repository;
 
-    public class Parser
+    public class ParserJsonToSqlCase
     {
         public readonly List<Rule> Rules = new List<Rule>();
         public readonly List<object> Tokens = new List<object>();
         private IEnumerable<GetEntityAnalysisModelFieldByEntityAnalysisModelIdParseTypeIdQuery.Dto> completionDto;
         public string Sql;
 
-        public static async Task<Parser> CreateAsync(Rule rule, DbContext dbContext, Guid caseWorkflowGuid, string userName, CancellationToken token = default)
+        public static async Task<ParserJsonToSqlCase> CreateAsync(Rule rule, DbContext dbContext, Guid caseWorkflowGuid, string userName, CancellationToken token = default)
         {
-            var parser = new Parser();
+            var parser = new ParserJsonToSqlCase();
             parser.completionDto = await parser.GetCompletionsAsync(dbContext, caseWorkflowGuid, userName, token).ConfigureAwait(false);
             parser.ExtractRule(rule);
             return parser;
@@ -55,7 +55,7 @@ namespace Jube.App.Code.QueryBuilder
             }
 
             throw new Exception(
-                "Could not lookup model for Case Workflow Id {caseWorkflowId} and therefore could not lookup completions.");
+                $"Could not lookup model for Case Workflow Id {caseWorkflowGuid} and therefore could not lookup completions.");
         }
 
         private void ExtractRule(Rule ruleChild)

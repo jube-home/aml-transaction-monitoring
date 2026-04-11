@@ -19,17 +19,20 @@ namespace Jube.Cryptography
 
     public class AesEncryption
     {
-        private readonly byte[] iv;
         private readonly byte[] key;
+        private readonly bool legacyFallbackEnabled;
+        private readonly byte[] passwordDerivedLegacyIv;
         private readonly byte[] salt;
 
-        public AesEncryption(string password, string salt)
+        public AesEncryption(string password, string salt, bool legacyFallbackEnabled = false)
         {
             using var keyDerivationFunction =
                 new Rfc2898DeriveBytes(password, Encoding.UTF8.GetBytes(salt), 100_000, HashAlgorithmName.SHA256);
+
             key = keyDerivationFunction.GetBytes(32);// 256-bit key
-            iv = keyDerivationFunction.GetBytes(16); // 128-bit IV
+            passwordDerivedLegacyIv = keyDerivationFunction.GetBytes(16);
             this.salt = Encoding.UTF8.GetBytes(salt);
+            this.legacyFallbackEnabled = legacyFallbackEnabled;
         }
 
         public byte[] Encrypt(byte[] data)
@@ -37,6 +40,7 @@ namespace Jube.Cryptography
             try
             {
                 var hmac = ComputeHmac(data);
+                var iv = RandomNumberGenerator.GetBytes(16);
 
                 using var aes = Aes.Create();
                 aes.Key = key;
@@ -46,6 +50,7 @@ namespace Jube.Cryptography
 
                 using var ms = new MemoryStream();
                 ms.Write(hmac);
+                ms.Write(iv);
 
                 using var cs = new CryptoStream(ms, aes.CreateEncryptor(), CryptoStreamMode.Write);
                 cs.Write(data, 0, data.Length);
@@ -63,8 +68,57 @@ namespace Jube.Cryptography
         {
             try
             {
-                var hmac = ComputeHmac(encryptedData[..32]);
+                return DecryptWithRandomIv(encryptedData);
+            }
+            catch (InvalidHmacException) when (legacyFallbackEnabled)
+            {
+                return DecryptLegacyWithoutRandomIv(encryptedData);
+            }
+            catch (Exception) when (legacyFallbackEnabled)
+            {
+                return DecryptLegacyWithoutRandomIv(encryptedData);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidDecryptionException(ex.Message);
+            }
+        }
+
+        private byte[] DecryptLegacyWithoutRandomIv(byte[] encryptedData)
+        {
+            try
+            {
+                var hmac = encryptedData[..32];
                 var clippedEncryptedData = encryptedData[32..];
+
+                using var aes = Aes.Create();
+                aes.Key = key;
+                aes.IV = passwordDerivedLegacyIv;
+                aes.Mode = CipherMode.CBC;
+                aes.Padding = PaddingMode.PKCS7;
+
+                using var ms = new MemoryStream();
+                using var cs = new CryptoStream(ms, aes.CreateDecryptor(), CryptoStreamMode.Write);
+                cs.Write(clippedEncryptedData, 0, clippedEncryptedData.Length);
+                cs.FlushFinalBlock();
+
+                var decryptedData = ms.ToArray();
+                return !CryptographicOperations.FixedTimeEquals(ComputeHmacLegacy(decryptedData), hmac) ? throw new InvalidHmacException() : decryptedData;
+
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidDecryptionException(ex.Message);
+            }
+        }
+
+        private byte[] DecryptWithRandomIv(byte[] encryptedData)
+        {
+            try
+            {
+                var hmac = encryptedData[..32];
+                var iv = encryptedData[32..48];
+                var clippedEncryptedData = encryptedData[48..];
 
                 using var aes = Aes.Create();
                 aes.Key = key;
@@ -78,13 +132,7 @@ namespace Jube.Cryptography
                 cs.FlushFinalBlock();
 
                 var decryptedData = ms.ToArray();
-
-                if (!VerifyHmac(ComputeHmac(decryptedData), hmac))
-                {
-                    throw new InvalidHmacException();
-                }
-
-                return ms.ToArray();
+                return !CryptographicOperations.FixedTimeEquals(ComputeHmac(decryptedData), hmac) ? throw new InvalidHmacException() : decryptedData;
             }
             catch (Exception ex)
             {
@@ -94,14 +142,14 @@ namespace Jube.Cryptography
 
         private byte[] ComputeHmac(byte[] data)
         {
-            using var hmac = new HMACSHA256(salt);
+            using var hmac = new HMACSHA256(key);
             return hmac.ComputeHash(data);
         }
 
-        private bool VerifyHmac(byte[] data, byte[] expectedHmac)
+        private byte[] ComputeHmacLegacy(byte[] data)
         {
-            var actualHmac = ComputeHmac(data);
-            return CryptographicOperations.FixedTimeEquals(actualHmac, expectedHmac);
+            using var hmac = new HMACSHA256(salt);
+            return hmac.ComputeHash(data);
         }
     }
 }

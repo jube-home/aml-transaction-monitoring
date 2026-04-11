@@ -20,6 +20,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Models
 
     public class Collections
     {
+        public List<string> Users = [];
         public List<EntityAnalysisModelAbstractionRule> ModelAbstractionRules { get; set; } = [];
         public List<EntityAnalysisModelTtlCounter> ModelTtlCounters { get; set; } = [];
         public List<EntityAnalysisModelSanction> EntityAnalysisModelSanctions { get; set; } = [];

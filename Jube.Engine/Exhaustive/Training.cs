@@ -211,7 +211,7 @@ namespace Jube.Engine.Exhaustive
                 var getSampleDataResponse = await Extraction.GetSampleDataAsync(dbContext,
                     exhaustiveSearchInstance.TenantRegistryId,
                     exhaustiveSearchInstance.EntityAnalysisModelId,
-                    exhaustiveSearchInstance.FilterSql,
+                    exhaustiveSearchInstance.FilterJson,
                     exhaustiveSearchInstance.FilterTokens,
                     mockData, log, environment.AppSettings("ReportConnectionString"), token).ConfigureAwait(false);
 

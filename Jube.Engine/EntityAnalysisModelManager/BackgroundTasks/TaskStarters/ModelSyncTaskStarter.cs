@@ -137,21 +137,25 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters
                                 await entityAnalysisModelContext.SyncEntityAnalysisModelActivationRulesAsync().ConfigureAwait(false);
                                 await entityAnalysisModelContext.SyncEntityAnalysisModelTagsAsync().ConfigureAwait(false);
                                 await entityAnalysisModelContext.ConfirmSyncAsync(scheduledModel.TenantRegistryId).ConfigureAwait(false);
+                                await entityAnalysisModelContext.SyncEntityAnalysisModelListsAsync().ConfigureAwait(false);
+                                await entityAnalysisModelContext.SyncEntityAnalysisModelDictionariesAsync().ConfigureAwait(false);
+                                await entityAnalysisModelContext.SyncSuppressionAsync().ConfigureAwait(false);
+                                await entityAnalysisModelContext.SyncActivationRuleSuppressionAsync().ConfigureAwait(false);
+                                await entityAnalysisModelContext.SyncEntityAnalysisModelApiUsersAsync().ConfigureAwait(false);
+                                await entityAnalysisModelContext.StartupModelAsync().ConfigureAwait(false);
+                                context.EntityAnalysisModels.EntityModelsHasLoadedForStartup = true;
                             }
                             else
                             {
-                                await entityAnalysisModelContext.HeartbeatThisModelAsync(scheduledModel.TenantRegistryId).ConfigureAwait(false);
                                 await entityAnalysisModelContext.SyncExhaustiveSearchInstancesAsync().ConfigureAwait(false);
                                 await entityAnalysisModelContext.SyncEntityAnalysisModelListsAsync().ConfigureAwait(false);
                                 await entityAnalysisModelContext.SyncEntityAnalysisModelDictionariesAsync().ConfigureAwait(false);
+                                await entityAnalysisModelContext.SyncSuppressionAsync().ConfigureAwait(false);
+                                await entityAnalysisModelContext.SyncActivationRuleSuppressionAsync().ConfigureAwait(false);
+                                await entityAnalysisModelContext.SyncEntityAnalysisModelApiUsersAsync().ConfigureAwait(false);
+                                await entityAnalysisModelContext.StoreRuleCounterValuesAsync().ConfigureAwait(false);
+                                await entityAnalysisModelContext.HeartbeatThisModelAsync(scheduledModel.TenantRegistryId).ConfigureAwait(false);
                             }
-
-                            await entityAnalysisModelContext.StoreRuleCounterValuesAsync().ConfigureAwait(false);
-                            await entityAnalysisModelContext.SyncSuppressionAsync().ConfigureAwait(false);
-                            await entityAnalysisModelContext.SyncActivationRuleSuppressionAsync().ConfigureAwait(false);
-                            await entityAnalysisModelContext.StartupModelAsync().ConfigureAwait(false);
-
-                            context.EntityAnalysisModels.EntityModelsHasLoadedForStartup = true;
                         }
 
                         if (context.Services.Log.IsDebugEnabled)

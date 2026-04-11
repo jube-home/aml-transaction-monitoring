@@ -33,10 +33,10 @@ public class Example : IInlineScript//Class entry point is available in table co
         SearchKeyCacheSample = true,
         SearchKeyCacheFetchLimit = 100,
         SearchKeyCacheTtlInterval = "h",
-        SearchKeyCacheTtlValue = 1)]                     //SearchKey ensures that this is exposed in for aggregation in both the background engine.
-    public string UserAgent { get; set; } = string.Empty;//Public properties are available for processing, being analogous,  when taken together with attributes, to a Request XPath entry
-    
-    [ActivationRuleOverrideEvent(Guid="bc81ff60-3254-4f1a-9003-ecae5e114142", Priority = 1)]
+        SearchKeyCacheTtlValue = 1)]        //SearchKey ensures that this is exposed in for aggregation in both the background engine.
+    public string? UserAgent = string.Empty;//Public properties are available for processing, being analogous,  when taken together with attributes, to a Request XPath entry
+
+    [ActivationRuleOverrideEvent(Guid = "bc81ff60-3254-4f1a-9003-ecae5e114142", Priority = 1)]
     [PayloadEvent]
     public async Task<bool> ExecuteAsync(Context context)//Method entry point.  The Context object gives access to all resources that would otherwise be available during invocation.
     {
@@ -56,6 +56,6 @@ public class Example : IInlineScript//Class entry point is available in table co
 
         UserAgent = userAgent;
 
-        return true; //Behavior depends upon the event,  but in all cases properties will only be extracted to payload on return true;
+        return true;//Behavior depends upon the event,  but in all cases properties will only be extracted to payload on return true;
     }
 }

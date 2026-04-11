@@ -16,10 +16,9 @@ namespace Jube.App
     using System;
     using System.Collections.Concurrent;
     using System.Net;
-    using System.Security.Claims;
-    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
+    using ApiTokensCache;
     using Cache;
     using Cache.Redis.Callback;
     using Code;
@@ -31,7 +30,6 @@ namespace Jube.App
     using Engine.Helpers;
     using FluentMigrator.Runner;
     using log4net;
-    using Microsoft.AspNetCore.Authentication.JwtBearer;
     using Microsoft.AspNetCore.Authentication.Negotiate;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
@@ -40,9 +38,10 @@ namespace Jube.App
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
-    using Microsoft.IdentityModel.Tokens;
     using Microsoft.OpenApi.Models;
+    using Middlewares;
     using Middlewares.Extensions;
+    using Middlewares.Models;
     using Migrations.Baseline;
     using Newtonsoft.Json.Serialization;
     using Npgsql;
@@ -74,6 +73,8 @@ namespace Jube.App
             var cacheService = AddSingletonForCacheService(services, callbacks, Int32.Parse(dynamicEnvironment.AppSettings("CallbackTimeout") ?? "10000"),
                 taskCoordinator, dynamicEnvironment, log);
 
+            AddSingletonForTokensCache(services, log, dynamicEnvironment, cacheService, taskCoordinator);
+
             var rabbitMqConnection = AddSingletonForRabbitMqConnection(services, dynamicEnvironment, log);
 
             AddSingletonForEngine(services, dynamicEnvironment, log, rabbitMqConnection, cacheService, contractResolver, taskCoordinator);
@@ -83,6 +84,14 @@ namespace Jube.App
             AddSwagger(services);
             AddSingletonRelayToBeInstantiatedInConfigureServices(services, dynamicEnvironment);
             WriteWelcomeMessageToConsole();
+        }
+        
+        private static void AddSingletonForTokensCache(IServiceCollection services, ILog log, DynamicEnvironment dynamicEnvironment, CacheService cacheService, TaskCoordinator taskCoordinator)
+        {
+
+            var apiTokensCache = new ApiTokensCache(log, dynamicEnvironment, cacheService);
+            _ = taskCoordinator.RunAsync("InstantiateApiTokensCache", _ => apiTokensCache.StartAsync(taskCoordinator));
+            services.AddSingleton(apiTokensCache);
         }
 
         private static TaskCoordinator AddSingletonForTaskCoordinator(IServiceCollection services, ICancellationTokenProvider cancellationTokenProvider)
@@ -168,7 +177,6 @@ namespace Jube.App
 
         private static void AddSingletonForIdentity(IServiceCollection services)
         {
-
             services.AddTransient<IUserStore<ApplicationUser>, UserStore>();
             services.AddTransient<IRoleStore<ApplicationRole>, RoleStore>();
             services.AddIdentity<ApplicationUser, ApplicationRole>().AddDefaultTokenProviders();
@@ -191,10 +199,6 @@ namespace Jube.App
 
         private static void ConfigureAuthentication(IServiceCollection services, DynamicEnvironment dynamicEnvironment)
         {
-            var jwtValidAudience = dynamicEnvironment.AppSettings("JWTValidAudience");
-            var jwtValidIssuer = dynamicEnvironment.AppSettings("JWTValidIssuer");
-            var jwtKey = dynamicEnvironment.AppSettings("JWTKey");
-
             if (dynamicEnvironment.AppSettings("NegotiateAuthentication")
                 .Equals("True", StringComparison.OrdinalIgnoreCase))
             {
@@ -205,58 +209,22 @@ namespace Jube.App
             }
             else
             {
+                var jwtValidAudience = dynamicEnvironment.AppSettings("JWTValidAudience");
+                var jwtValidIssuer = dynamicEnvironment.AppSettings("JWTValidIssuer");
+                var jwtKey = dynamicEnvironment.AppSettings("JWTKey");
+
                 services.AddAuthentication(options =>
-                {
-                    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-                    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-                }).AddJwtBearer(options =>
-                {
-                    options.UseSecurityTokenValidators = false;
-                    options.SaveToken = true;
-                    options.AutomaticRefreshInterval = TimeSpan.FromMinutes(5);
-                    options.RequireHttpsMetadata = false;
-                    options.TokenValidationParameters = new TokenValidationParameters
                     {
-                        ClockSkew = TimeSpan.Zero,
-                        NameClaimType = ClaimTypes.Name,
-                        ValidateIssuer = true,
-                        ValidateAudience = true,
-                        ValidAudience = jwtValidAudience,
-                        ValidIssuer = jwtValidIssuer,
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
-                    };
-                    options.Events = new JwtBearerEvents
+                        options.DefaultAuthenticateScheme = "Hybrid";
+                        options.DefaultChallengeScheme = "Hybrid";
+                        options.DefaultScheme = "Hybrid";
+                    })
+                    .AddScheme<HybridAuthOptions, HybridAuthHandler>("Hybrid", options =>
                     {
-                        OnTokenValidated = context =>
-                        {
-                            if (DateTime.UtcNow.AddMinutes(10) < context.SecurityToken.ValidTo)
-                            {
-                                return Task.CompletedTask;
-                            }
-
-                            var token = Jwt.CreateToken(context.Principal?.Identity?.Name,
-                                jwtKey,
-                                jwtValidIssuer,
-                                jwtValidAudience
-                            );
-
-                            var cookieOptions = new CookieOptions
-                            {
-                                Expires = DateTime.Now.AddMinutes(15),
-                                HttpOnly = true
-                            };
-
-                            context.Response.Headers.Append("authentication",
-                                token);
-
-                            context.Response.Cookies.Append("authentication", token
-                                , cookieOptions);
-
-                            return Task.CompletedTask;
-                        }
-                    };
-                });
+                        options.JwtKey = jwtKey;
+                        options.JwtValidIssuer = jwtValidIssuer;
+                        options.JwtValidAudience = jwtValidAudience;
+                    });
             }
         }
 
@@ -324,7 +292,7 @@ namespace Jube.App
                 RunFluentMigrator(dynamicEnvironment, cacheService, log);
             }
 
-            cacheService.InstantiateRepositoriesTask = taskCoordinator.RunAsync("InstantiateRepositoriesAsync", _ => cacheService.InstantiateRepositoriesAsync(taskCoordinator));
+            cacheService.InstantiateRepositoriesTask = taskCoordinator.RunAsync("InstantiateRepositoriesAsync", _ => cacheService.StartAsync(taskCoordinator));
 
             services.AddSingleton(cacheService);
 
@@ -459,7 +427,7 @@ namespace Jube.App
                     if (log.IsInfoEnabled)
                     {
                         log.Info("Start: Is going to make a connection to Redis Endpoints string showing " +
-                                 "endpoints and port seperated by :,  then combined seperated by comma " +
+                                 "endpoints and port separated by :,  then combined separated by comma " +
                                  "for example localhost:1234,localhost4321.  Value for parsing is " +
                                  redisConnectionString + "");
                     }
@@ -508,6 +476,9 @@ namespace Jube.App
                 }
 
                 app.UseRouting();
+                app.UseAuthentication();
+                app.UseAuthorization();
+                app.UseMiddleware<TokenRefreshMiddleware>();
 
                 var lifetime = app.ApplicationServices.GetRequiredService<IHostApplicationLifetime>();
                 app.UseWhen(context => context.Request.Path.StartsWithSegments("/api") &&
@@ -569,12 +540,6 @@ namespace Jube.App
                 app.UseWhen(
                     httpContext =>
                         !httpContext.Request.Path.StartsWithSegments("/api/invoke", StringComparison.OrdinalIgnoreCase),
-                    appBuilder => appBuilder.UseTransposeJwtFromCookieToHeaderMiddleware()
-                );
-
-                app.UseWhen(
-                    httpContext =>
-                        !httpContext.Request.Path.StartsWithSegments("/api/invoke", StringComparison.OrdinalIgnoreCase),
                     appBuilder => appBuilder.RequestTrackingMiddleware()
                 );
 
@@ -594,18 +559,6 @@ namespace Jube.App
                     httpContext =>
                         !httpContext.Request.Path.StartsWithSegments("/api/invoke", StringComparison.OrdinalIgnoreCase),
                     appBuilder => appBuilder.UseSwaggerUI()
-                );
-
-                app.UseWhen(
-                    httpContext =>
-                        !httpContext.Request.Path.StartsWithSegments("/api/invoke", StringComparison.OrdinalIgnoreCase),
-                    appBuilder => appBuilder.UseAuthentication()
-                );
-
-                app.UseWhen(
-                    httpContext =>
-                        !httpContext.Request.Path.StartsWithSegments("/api/invoke", StringComparison.OrdinalIgnoreCase),
-                    appBuilder => appBuilder.UseAuthorization()
                 );
 
                 app.UseEndpoints(endpoints =>
