@@ -48,6 +48,11 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ReflectionHel
 
                     var value = prop.Value.GetValueDelegate(instance);
 
+                    if (value == null)
+                    {
+                        continue;
+                    }
+
                     var underlyingType = Nullable.GetUnderlyingType(prop.Value.PropertyType);
                     var isNullable = underlyingType != null;
                     var effectiveType = underlyingType ?? prop.Value.PropertyType;

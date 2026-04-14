@@ -174,6 +174,15 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.AbstractionRu
         
         private List<DictionaryNoBoxing<string>> ParseDocuments(List<DictionaryNoBoxing<int>> documentsRemovedInterned)
         {
+            var entityAnalysisModelRequestXPathsByIndex = EntityAnalysisModel.Collections.EntityAnalysisModelRequestXPaths
+                .Where(f => f.Cache)
+                .ToDictionary(f => f.CacheIndexId);
+
+            var inlineScriptPropertyAttributeByIndex = EntityAnalysisModel.Collections.EntityAnalysisModelInlineScripts
+                .SelectMany(s => s.EntityAnalysisModelInlineScriptPropertyAttributes)
+                .Where(a => a.Value.CacheIndexId != null)
+                .ToDictionary(a => a.Value.CacheIndexId!.Value, a => a.Key);
+
             var documents = new List<DictionaryNoBoxing<string>>();
             foreach (var documentRemovedInterned in documentsRemovedInterned)
             {
@@ -182,18 +191,21 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.AbstractionRu
                 {
                     if (key < 0)
                     {
-                        switch (key)
+                        if (key == -1)
                         {
-                            case -1:
-                                document.Add(EntityAnalysisModel.References.ReferenceDateName, value);
-                                break;
+                            document.Add(EntityAnalysisModel.References.ReferenceDateName, value);
                         }
+                        continue;
                     }
-                        
-                    var entityAnalysisModelRequestXPath = EntityAnalysisModel.Collections.EntityAnalysisModelRequestXPaths.FirstOrDefault(f => f.CacheIndexId == key && f.Cache);
-                    if (entityAnalysisModelRequestXPath != null)
+
+                    if (inlineScriptPropertyAttributeByIndex.TryGetValue(key, out var attributeName))
                     {
-                        document.Add(entityAnalysisModelRequestXPath.Name, value);
+                        document.Add(attributeName, value);
+                    }
+
+                    if (entityAnalysisModelRequestXPathsByIndex.TryGetValue(key, out var xpath))
+                    {
+                        document.Add(xpath.Name, value);
                     }
                 }
                 documents.Add(document);

@@ -22,6 +22,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Models.Mode
         public bool ReportTable { get; set; }
         public bool Latitude { get; set; }
         public bool Longitude { get; set; }
+        public int? CacheIndexId { get; set; }
         public DistinctSearchKey SearchKey { get; set; }
         public Type PropertyType { get; set; }
         public Func<object, object> GetValueDelegate { get; set; }

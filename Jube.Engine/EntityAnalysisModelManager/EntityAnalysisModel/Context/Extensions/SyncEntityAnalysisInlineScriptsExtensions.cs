@@ -28,6 +28,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
     using Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Models.Models.EntityAnalysisModelInlineScript;
     using Jube.Engine.EntityAnalysisModelManager.Helpers;
     using Parser.Compiler;
+    using Cache=Attributes.Properties.Cache;
 
     public static class SyncEntityAnalysisInlineScriptsExtensions
     {
@@ -251,10 +252,11 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                                 Latitude = p.GetCustomAttribute<Latitude>() != null,
                                 Longitude = p.GetCustomAttribute<Longitude>() != null,
                                 ResponsePayload = p.GetCustomAttribute<ResponsePayload>() != null,
+                                CacheIndexId = p.GetCustomAttribute<Cache>()?.CacheIndexId,
                                 GetValueDelegate = CompileGetValueDelegate(p),
                                 PropertyType = Nullable.GetUnderlyingType(p.PropertyType) ?? p.PropertyType
                             };
-
+                            
                             if (context.Services.Log.IsDebugEnabled)
                             {
                                 context.Services.Log.Debug(
