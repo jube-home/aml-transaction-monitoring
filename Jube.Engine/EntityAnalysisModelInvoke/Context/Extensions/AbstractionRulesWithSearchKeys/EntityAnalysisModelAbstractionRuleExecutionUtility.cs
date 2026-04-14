@@ -171,22 +171,27 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.AbstractionRu
                 }
             }
         }
-        
+
         private List<DictionaryNoBoxing<string>> ParseDocuments(List<DictionaryNoBoxing<int>> documentsRemovedInterned)
         {
             var entityAnalysisModelRequestXPathsByIndex = EntityAnalysisModel.Collections.EntityAnalysisModelRequestXPaths
                 .Where(f => f.Cache)
                 .ToDictionary(f => f.CacheIndexId);
-
-            var inlineScriptPropertyAttributeByIndex = EntityAnalysisModel.Collections.EntityAnalysisModelInlineScripts
-                .SelectMany(s => s.EntityAnalysisModelInlineScriptPropertyAttributes)
-                .Where(a => a.Value.CacheIndexId != null)
-                .ToDictionary(a => a.Value.CacheIndexId!.Value, a => a.Key);
-
-            var documents = new List<DictionaryNoBoxing<string>>();
-            for (int i = 0; i < documentsRemovedInterned.Count; i++)
+            
+            var inlineScriptPropertyAttributeByIndex = new Dictionary<int, string>();
+            foreach (var script in EntityAnalysisModel.Collections.EntityAnalysisModelInlineScripts)
+            foreach (var (attributeName, attribute) in script.EntityAnalysisModelInlineScriptPropertyAttributes)
             {
-                var documentRemovedInterned = documentsRemovedInterned[i];
+                if (attribute.CacheIndexId is not null)
+                {
+                    inlineScriptPropertyAttributeByIndex.TryAdd(attribute.CacheIndexId.Value, attributeName);
+                }
+            }
+
+            var documents = new List<DictionaryNoBoxing<string>>(documentsRemovedInterned.Count);
+            for (int documentIndex = 0; documentIndex < documentsRemovedInterned.Count; documentIndex++)
+            {
+                var documentRemovedInterned = documentsRemovedInterned[documentIndex];
                 var document = new DictionaryNoBoxing<string>();
                 foreach (var (key, value) in documentRemovedInterned)
                 {
@@ -196,45 +201,43 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.AbstractionRu
                         {
                             document.Add(EntityAnalysisModel.References.ReferenceDateName, value);
                         }
-                        
+
                         continue;
                     }
 
                     if (inlineScriptPropertyAttributeByIndex.TryGetValue(key, out var attributeName))
                     {
                         document.Add(attributeName, value);
-                        
+
                         if (Log.IsInfoEnabled)
                         {
                             Log.Info(
-                                $"Abstraction Rule Execute: GUID {EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} InlineScriptPropertyAttributeByIndex added Index:{i}, CacheIndexId: {key}, Key: {attributeName} and Value:{value}.");
+                                $"Abstraction Rule Execute: GUID {EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} InlineScriptPropertyAttributeByIndex added Index:{documentIndex}, CacheIndexId: {key}, Key: {attributeName} and Value:{value}.");
                         }
-                    }
-                    else
-                    {
-                        if (Log.IsInfoEnabled)
-                        {
-                            Log.Info(
-                                $"Abstraction Rule Execute: GUID {EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} InlineScriptPropertyAttributeByIndex nulled / not added Index:{i}, CacheIndexId: {key} and Value:{value}.");
-                        }
+
+                        continue;
                     }
 
                     if (entityAnalysisModelRequestXPathsByIndex.TryGetValue(key, out var xpath))
                     {
                         document.Add(xpath.Name, value);
-                        
+
                         if (Log.IsInfoEnabled)
                         {
                             Log.Info(
-                                $"Abstraction Rule Execute: GUID {EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} EntityAnalysisModelRequestXPathsByIndex added Index:{i}, CacheIndexId: {key}, Key: {xpath.Name} and Value:{value}.");
+                                $"Abstraction Rule Execute: GUID {EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} EntityAnalysisModelRequestXPathsByIndex added Index:{documentIndex}, CacheIndexId: {key}, Key: {xpath.Name} and Value:{value}.");
                         }
+
+                        continue;
                     }
-                    else
+                    
+                    if (Log.IsInfoEnabled)
                     {
                         Log.Info(
-                            $"Abstraction Rule Execute: GUID {EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} EntityAnalysisModelRequestXPathsByIndex nulled / not added Index:{i}, CacheIndexId: {key} and Value:{value}.");
+                            $"Abstraction Rule Execute: GUID {EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} EntityAnalysisModelRequestXPathsByIndex not found Index:{documentIndex}, CacheIndexId: {key} and Value:{value}.");       
                     }
                 }
+
                 documents.Add(document);
             }
             return documents;
