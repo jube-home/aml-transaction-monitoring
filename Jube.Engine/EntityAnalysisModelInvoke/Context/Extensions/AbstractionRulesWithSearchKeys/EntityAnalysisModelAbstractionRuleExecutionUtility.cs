@@ -184,8 +184,9 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.AbstractionRu
                 .ToDictionary(a => a.Value.CacheIndexId!.Value, a => a.Key);
 
             var documents = new List<DictionaryNoBoxing<string>>();
-            foreach (var documentRemovedInterned in documentsRemovedInterned)
+            for (int i = 0; i < documentsRemovedInterned.Count; i++)
             {
+                var documentRemovedInterned = documentsRemovedInterned[i];
                 var document = new DictionaryNoBoxing<string>();
                 foreach (var (key, value) in documentRemovedInterned)
                 {
@@ -195,17 +196,43 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.AbstractionRu
                         {
                             document.Add(EntityAnalysisModel.References.ReferenceDateName, value);
                         }
+                        
                         continue;
                     }
 
                     if (inlineScriptPropertyAttributeByIndex.TryGetValue(key, out var attributeName))
                     {
                         document.Add(attributeName, value);
+                        
+                        if (Log.IsInfoEnabled)
+                        {
+                            Log.Info(
+                                $"Abstraction Rule Execute: GUID {EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} InlineScriptPropertyAttributeByIndex added Index:{i}, CacheIndexId: {key}, Key: {attributeName} and Value:{value}.");
+                        }
+                    }
+                    else
+                    {
+                        if (Log.IsInfoEnabled)
+                        {
+                            Log.Info(
+                                $"Abstraction Rule Execute: GUID {EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} InlineScriptPropertyAttributeByIndex nulled / not added Index:{i}, CacheIndexId: {key} and Value:{value}.");
+                        }
                     }
 
                     if (entityAnalysisModelRequestXPathsByIndex.TryGetValue(key, out var xpath))
                     {
                         document.Add(xpath.Name, value);
+                        
+                        if (Log.IsInfoEnabled)
+                        {
+                            Log.Info(
+                                $"Abstraction Rule Execute: GUID {EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} EntityAnalysisModelRequestXPathsByIndex added Index:{i}, CacheIndexId: {key}, Key: {xpath.Name} and Value:{value}.");
+                        }
+                    }
+                    else
+                    {
+                        Log.Info(
+                            $"Abstraction Rule Execute: GUID {EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} EntityAnalysisModelRequestXPathsByIndex nulled / not added Index:{i}, CacheIndexId: {key} and Value:{value}.");
                     }
                 }
                 documents.Add(document);
