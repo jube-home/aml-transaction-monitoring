@@ -29,9 +29,7 @@ namespace Jube.App.Pages.Account
         public ActionResult OnGet(string returnUrl = null)
         {
             Response.Cookies.Delete("authentication");
-
             Response.Redirect(returnUrl ?? "/Account/Login");
-
             return new PageResult();
         }
     }

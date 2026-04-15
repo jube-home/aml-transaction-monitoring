@@ -36,7 +36,7 @@ namespace Jube.Data.Query
         public async Task<IEnumerable<Dto>> ExecuteAsync(CancellationToken token = default)
         {
             var schedule = await dbContext.EntityAnalysisModelSynchronisationSchedule
-                .Where(w => w.TenantRegistryId == tenantRegistryId)
+                .Where(w => w.TenantRegistryId == tenantRegistryId || 1==1) //TODO[RC]: Unless Landlord. 
                 .OrderByDescending(o => o.Id)
                 .FirstOrDefaultAsync(token);
 
@@ -46,7 +46,7 @@ namespace Jube.Data.Query
             }
             {
                 var entries = await dbContext.EntityAnalysisModelSynchronisationNodeStatusEntry
-                    .Where(w => w.TenantRegistryId == tenantRegistryId 
+                    .Where(w => (w.TenantRegistryId == tenantRegistryId || 1 ==1 ) //TODO[RC]: Unless Landlord. 
                                 && w.HeartbeatDate >= DateTime.Now.AddHours(-1))
                     .Select(s => new Dto
                     {

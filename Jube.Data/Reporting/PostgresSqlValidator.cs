@@ -15,13 +15,15 @@ namespace Jube.Data.Reporting
 {
     using System;
     using System.Linq;
+    using System.Text.RegularExpressions;
     using PgSqlParser;
 
     public static class PostgresSqlValidator
     {
         public static void AssertSelectOnly(string sql)
         {
-            var result = Parser.Parse(sql);
+            var normalizedSql = Regex.Replace(sql, @"@\w+", "1"); //Does not support names, but not an issue for just a parse.
+            var result = Parser.Parse(normalizedSql);
 
             if (result.Error is not null)
             {

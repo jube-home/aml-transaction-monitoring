@@ -67,7 +67,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters
                         }
 
                         var scheduledModels = await TenantRegistryScheduleHelpers.GetScheduledAsync(context.Services.Log, dbContext, context.Services.TaskCoordinator.CancellationToken).ConfigureAwait(false);
-
+                        
                         foreach (var scheduledModel in scheduledModels)
                         {
                             context.Services.TaskCoordinator.CancellationToken.ThrowIfCancellationRequested();
@@ -114,11 +114,6 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters
 
                             if (scheduledModel.SynchronisationPending || startupTenantRegistrySchedule)
                             {
-                                if (startupTenantRegistrySchedule)
-                                {
-                                    startupTenantRegistrySchedule = false;
-                                }
-
                                 context.Services.TaskCoordinator.CancellationToken.ThrowIfCancellationRequested();
 
                                 await entityAnalysisModelContext.SyncEntityAnalysisModelsAsync(scheduledModel.TenantRegistryId).ConfigureAwait(false);
@@ -157,10 +152,15 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters
                                 await entityAnalysisModelContext.HeartbeatThisModelAsync(scheduledModel.TenantRegistryId).ConfigureAwait(false);
                             }
                         }
-
+                        
                         if (context.Services.Log.IsDebugEnabled)
                         {
                             context.Services.Log.Debug("Entity Start: Closing the database connection. Waiting.");
+                        }
+                        
+                        if (startupTenantRegistrySchedule)
+                        {
+                            startupTenantRegistrySchedule = false;
                         }
 
                         await Task.Delay(Int32.Parse(context.Services.DynamicEnvironment.AppSettings("ModelSynchronisationWait")), context.Services.TaskCoordinator.CancellationToken).ConfigureAwait(false);

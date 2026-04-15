@@ -101,7 +101,6 @@ var roleRegistryId = $("#RoleRegistryId").kendoDropDownList({
 var resetButton = $("#Reset").kendoButton({
     click: function () {
         $("#Processing").show();
-        resetButton.enable(false);
         $("#PasswordTable").hide();
         getPasswordAndShow();
     }

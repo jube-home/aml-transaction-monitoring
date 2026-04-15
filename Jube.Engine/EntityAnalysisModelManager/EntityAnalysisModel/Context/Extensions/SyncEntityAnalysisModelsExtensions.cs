@@ -14,8 +14,6 @@
 namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Extensions
 {
     using System;
-    using System.Collections.Generic;
-    using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
     using Data.Repository;
@@ -41,8 +39,6 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                 }
 
                 var records = await repository.GetAsync(context.Services.CancellationToken).ConfigureAwait(false);
-
-                var listEntityAnalysisModelIdsAdded = new List<int>();
                 foreach (var record in records)
                 {
                     context.Services.CancellationToken.ThrowIfCancellationRequested();
@@ -678,15 +674,8 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                                         $"Entity Start: Model {entityAnalysisModel.Instance.Id} with DEFAULT Enable Database value {entityAnalysisModel.Flags.EnableRdbmsArchive}.");
                                 }
                             }
-
-                            listEntityAnalysisModelIdsAdded.Add(entityAnalysisModel.Instance.Id);
-
-
-                            var added = context.EntityAnalysisModels.ActiveEntityAnalysisModels.TryAdd(entityAnalysisModel.Instance.Id, entityAnalysisModel);
-
-                            context.Services.Log.Debug(added ? $"Entity Start: Model {entityAnalysisModel.Instance.Id} does not exist in the list of active models,  hence it has just been added." : $"Entity Start: Model {entityAnalysisModel.Instance.Id} already exists,  hence it has just been updated.");
-
-                            listEntityAnalysisModelIdsAdded.Add(entityAnalysisModel.Instance.Id);
+                            //TODO[RC]:  Make sure that deleted models are taken care of, not removed code.
+                            context.EntityAnalysisModels.ActiveEntityAnalysisModels.TryAdd(entityAnalysisModel.Instance.Id, entityAnalysisModel);
                         }
                         else
                         {
@@ -704,19 +693,6 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                             context.Services.Log.Debug(
                                 $"Entity Start: Loaded {context.EntityAnalysisModels.ActiveEntityAnalysisModels.Count} active models but need to remove models that have been deleted and are orphaned.");
                         }
-
-                        foreach (var id in context.EntityAnalysisModels.ActiveEntityAnalysisModels.Keys.Where(id =>
-                                     !listEntityAnalysisModelIdsAdded.Contains(id)))
-                        {
-                            context.Services.CancellationToken.ThrowIfCancellationRequested();
-
-                            context.EntityAnalysisModels.ActiveEntityAnalysisModels.Remove(id);
-
-                            if (context.Services.Log.IsDebugEnabled)
-                            {
-                                context.Services.Log.Debug($"Entity Start: Removed orphan {id} from active models.");
-                            }
-                        }
                     }
                     catch (Exception ex) when (ex is not OperationCanceledException)
                     {
@@ -724,7 +700,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                             $"Entity Start: Model {record.Id} has been returned,  checking to see if it is active has created an error as {ex}.");
                     }
                 }
-
+                
                 if (context.Services.Log.IsDebugEnabled)
                 {
                     context.Services.Log.Debug("Entity Start: Executed database procedures to get all models.");

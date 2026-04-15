@@ -23,7 +23,7 @@ namespace Jube.App.Middlewares
 
     public class TokenRefreshMiddleware
     {
-        private const string CookieName = "Authentication";
+        private const string CookieName = "authentication";
         private readonly DynamicEnvironment dynamicEnvironment;
         private readonly RequestDelegate next;
 

@@ -32,7 +32,7 @@ namespace Jube.App.Middlewares
 
     public class HybridAuthHandler : AuthenticationHandler<HybridAuthOptions>
     {
-        private const string CookieName = "Authentication";
+        private const string CookieName = "authentication";
         private const string ApiKeyHeader = "X-API-KEY";
         private readonly ApiTokensCache apiTokensCache;
         private readonly ILog log;
