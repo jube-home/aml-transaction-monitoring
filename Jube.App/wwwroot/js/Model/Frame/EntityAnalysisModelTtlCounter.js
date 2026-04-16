@@ -64,7 +64,7 @@ function SetSum() {
     }
 }
 
-$.get("../api/EntityAnalysisModelRequestXPath/ByEntityAnalysisModelId/" + parentKey + "/ByStringIntegerFloatDataType",
+$.get("../api/GetEntityAnalysisRequestXPathInlineScriptNamesByStringIntegerFloatDataTypeQuery/" + parentKey,
     function (data) {
         for (const value of data) {
             if (value.dataTypeId === 1) {
