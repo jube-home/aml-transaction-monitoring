@@ -407,57 +407,6 @@ namespace Jube.Preservation
                             }
                         }
                     }
-
-                    if (wrapper.Payload is { EntityPermission: not null })
-                    {
-                        if (wrapper.Payload.EntityPermission.VisualisationRegistryRole != null)  //TODO[RC]: Lost permissions on import.
-                        {
-                            foreach (var visualisationRegistryRole in wrapper.Payload.EntityPermission.VisualisationRegistryRole)
-                            {
-                                visualisationRegistryRole.VisualisationRegistryGuid
-                                    = visualisationRegistryRekey.TryGetValue(visualisationRegistryRole.VisualisationRegistryGuid, out var entityGuid)
-                                        ? entityGuid : visualisationRegistryRole.VisualisationRegistryGuid;
-
-                                visualisationRegistryRole.RoleRegistryGuid
-                                    = roleRegistryRekey.TryGetValue(visualisationRegistryRole.RoleRegistryGuid, out var roleGuid)
-                                        ? roleGuid : visualisationRegistryRole.RoleRegistryGuid;
-
-                                await visualisationRegistryRoleRepository.InsertAsync(visualisationRegistryRole, token);
-                            }
-                        }
-
-                        if (wrapper.Payload.EntityPermission.VisualisationRegistryParameterRole != null)
-                        {
-                            foreach (var visualisationRegistryParameterRole in wrapper.Payload.EntityPermission.VisualisationRegistryParameterRole)
-                            {
-                                visualisationRegistryParameterRole.VisualisationRegistryParameterGuid
-                                    = visualisationRegistryParameterRekey.TryGetValue(visualisationRegistryParameterRole.VisualisationRegistryParameterGuid, out var entityGuid)
-                                        ? entityGuid : visualisationRegistryParameterRole.VisualisationRegistryParameterGuid;
-
-                                visualisationRegistryParameterRole.RoleRegistryGuid
-                                    = roleRegistryRekey.TryGetValue(visualisationRegistryParameterRole.RoleRegistryGuid, out var roleGuid)
-                                        ? roleGuid : visualisationRegistryParameterRole.RoleRegistryGuid;
-
-                                await visualisationRegistryParameterRoleRepository.InsertAsync(visualisationRegistryParameterRole, token);
-                            }
-                        }
-
-                        if (wrapper.Payload.EntityPermission.VisualisationRegistryDatasourceRole != null)
-                        {
-                            foreach (var visualisationRegistryDatasourceRole in wrapper.Payload.EntityPermission.VisualisationRegistryDatasourceRole)
-                            {
-                                visualisationRegistryDatasourceRole.VisualisationRegistryDatasourceGuid
-                                    = visualisationRegistryDatasourceRekey.TryGetValue(visualisationRegistryDatasourceRole.VisualisationRegistryDatasourceGuid, out var entityGuid)
-                                        ? entityGuid : visualisationRegistryDatasourceRole.VisualisationRegistryDatasourceGuid;
-
-                                visualisationRegistryDatasourceRole.RoleRegistryGuid
-                                    = roleRegistryRekey.TryGetValue(visualisationRegistryDatasourceRole.RoleRegistryGuid, out var roleGuid)
-                                        ? roleGuid : visualisationRegistryDatasourceRole.RoleRegistryGuid;
-
-                                await visualisationRegistryDatasourceRoleRepository.InsertAsync(visualisationRegistryDatasourceRole, token);
-                            }
-                        }
-                    }
                 }
 
                 if (wrapper.Payload?.EntityAnalysisModel != null)
@@ -1158,6 +1107,54 @@ namespace Jube.Preservation
 
                     if (wrapper.Payload is { EntityPermission: not null })
                     {
+                                                if (wrapper.Payload.EntityPermission.VisualisationRegistryRole != null)  //TODO[RC]: Lost permissions on import.
+                        {
+                            foreach (var visualisationRegistryRole in wrapper.Payload.EntityPermission.VisualisationRegistryRole)
+                            {
+                                visualisationRegistryRole.VisualisationRegistryGuid
+                                    = visualisationRegistryRekey.TryGetValue(visualisationRegistryRole.VisualisationRegistryGuid, out var entityGuid)
+                                        ? entityGuid : visualisationRegistryRole.VisualisationRegistryGuid;
+
+                                visualisationRegistryRole.RoleRegistryGuid
+                                    = roleRegistryRekey.TryGetValue(visualisationRegistryRole.RoleRegistryGuid, out var roleGuid)
+                                        ? roleGuid : visualisationRegistryRole.RoleRegistryGuid;
+
+                                await visualisationRegistryRoleRepository.InsertAsync(visualisationRegistryRole, token);
+                            }
+                        }
+
+                        if (wrapper.Payload.EntityPermission.VisualisationRegistryParameterRole != null)
+                        {
+                            foreach (var visualisationRegistryParameterRole in wrapper.Payload.EntityPermission.VisualisationRegistryParameterRole)
+                            {
+                                visualisationRegistryParameterRole.VisualisationRegistryParameterGuid
+                                    = visualisationRegistryParameterRekey.TryGetValue(visualisationRegistryParameterRole.VisualisationRegistryParameterGuid, out var entityGuid)
+                                        ? entityGuid : visualisationRegistryParameterRole.VisualisationRegistryParameterGuid;
+
+                                visualisationRegistryParameterRole.RoleRegistryGuid
+                                    = roleRegistryRekey.TryGetValue(visualisationRegistryParameterRole.RoleRegistryGuid, out var roleGuid)
+                                        ? roleGuid : visualisationRegistryParameterRole.RoleRegistryGuid;
+
+                                await visualisationRegistryParameterRoleRepository.InsertAsync(visualisationRegistryParameterRole, token);
+                            }
+                        }
+
+                        if (wrapper.Payload.EntityPermission.VisualisationRegistryDatasourceRole != null)
+                        {
+                            foreach (var visualisationRegistryDatasourceRole in wrapper.Payload.EntityPermission.VisualisationRegistryDatasourceRole)
+                            {
+                                visualisationRegistryDatasourceRole.VisualisationRegistryDatasourceGuid
+                                    = visualisationRegistryDatasourceRekey.TryGetValue(visualisationRegistryDatasourceRole.VisualisationRegistryDatasourceGuid, out var entityGuid)
+                                        ? entityGuid : visualisationRegistryDatasourceRole.VisualisationRegistryDatasourceGuid;
+
+                                visualisationRegistryDatasourceRole.RoleRegistryGuid
+                                    = roleRegistryRekey.TryGetValue(visualisationRegistryDatasourceRole.RoleRegistryGuid, out var roleGuid)
+                                        ? roleGuid : visualisationRegistryDatasourceRole.RoleRegistryGuid;
+
+                                await visualisationRegistryDatasourceRoleRepository.InsertAsync(visualisationRegistryDatasourceRole, token);
+                            }
+                        }
+                        
                         if (wrapper.Payload.EntityPermission.EntityAnalysisModelRole != null)
                         {
                             foreach (var entityAnalysisModelRole in wrapper.Payload.EntityPermission.EntityAnalysisModelRole)
