@@ -44,6 +44,11 @@ namespace Jube.Data.Repository
             this.tenantRegistryId = tenantRegistryId;
         }
 
+        public Task<List<VisualisationRegistry>> GetAllTenantsAsync(CancellationToken token = default)
+        {
+            return dbContext.VisualisationRegistry.Where(w => w.Deleted == null || w.Deleted == 0).ToListAsync(token);
+        }
+
         public Task<VisualisationRegistry> GetByNameAsync(string name, CancellationToken token = default)
         {
             return dbContext.VisualisationRegistry
@@ -77,9 +82,9 @@ namespace Jube.Data.Repository
                                                                                 .Where(r => r.VisualisationRegistryGuid == w.Guid
                                                                                             && (r.Deleted == 0 || r.Deleted == null))
                                                                                 .Any(r => dbContext.RoleRegistry
-                                                                                    .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                                                                                    .Where(rr => rr.Guid == r.RoleRegistryGuid && (rr.Deleted == 0 || rr.Deleted == null))
                                                                                     .Any(rr => dbContext.UserRegistry
-                                                                                        .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                                                                                        .Any(u => u.RoleRegistryGuid == rr.Guid && u.Name == userName)))
                                                                             && (w.Deleted == 0 || w.Deleted == null), token);
         }
 
@@ -101,7 +106,7 @@ namespace Jube.Data.Repository
                                                                         .Any(r => dbContext.RoleRegistry
                                                                             .Where(rr => rr.Guid == r.RoleRegistryGuid)
                                                                             .Any(rr => dbContext.UserRegistry
-                                                                                .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                                                                                .Any(u => u.RoleRegistryGuid == rr.Guid && u.Name == userName)))
                                                                     && w.TenantRegistryId == tenantRegistryId
                                                                     && (w.Deleted == 0 || w.Deleted == null)).OrderBy(o => o.Id).ToListAsync(token);
         }

@@ -107,8 +107,8 @@ namespace Jube.App.Controllers.Repository
             }
         }
 
-        [HttpGet("ByEntityAnalysisModelId/{roleRegistryId:int}")]
-        public async Task<ActionResult<List<UserRegistryDto>>> GetByRoleRegistryIdAsync(int roleRegistryId, CancellationToken token = default)
+        [HttpGet("ByEntityAnalysisModelGuid/{roleRegistryGuid:guid}")]
+        public async Task<ActionResult<List<UserRegistryDto>>> GetByRoleRegistryGuidAsync(Guid roleRegistryGuid, CancellationToken token = default)
         {
             try
             {
@@ -120,7 +120,7 @@ namespace Jube.App.Controllers.Repository
                     return Forbid();
                 }
 
-                return Ok(mapper.Map<List<UserRegistryDto>>(await repository.GetByRoleRegistryIdAsync(roleRegistryId, token)));
+                return Ok(mapper.Map<List<UserRegistryDto>>(await repository.GetByRoleRegistryGuidAsync(roleRegistryGuid, token)));
             }
             catch (Exception e)
             {

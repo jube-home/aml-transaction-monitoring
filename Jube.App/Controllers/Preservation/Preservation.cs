@@ -17,6 +17,7 @@ namespace Jube.App.Controllers.Preservation
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
     using Code;
@@ -54,7 +55,7 @@ namespace Jube.App.Controllers.Preservation
             }
 
             this.log = log;
-            dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"), log);
+            dbContext = DataConnectionDbContext.GetNgpsqlDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
             permissionValidation = new PermissionValidation(dbContext, userName, log);
             this.log = log;
             this.dynamicEnvironment = dynamicEnvironment;
@@ -63,7 +64,7 @@ namespace Jube.App.Controllers.Preservation
         [HttpPost("Import")]
         public async Task<ActionResult> UploadAsync(List<IFormFile> files, string password, bool exhaustive,
             bool suppressions,
-            bool lists, bool dictionaries, bool visualisations, CancellationToken token = default)
+            bool lists, bool dictionaries, bool visualisations, bool roles, CancellationToken token = default)
         {
             if (!permissionValidation.Validate(new[]
                 {
@@ -87,26 +88,22 @@ namespace Jube.App.Controllers.Preservation
                     Suppressions = suppressions,
                     Lists = lists,
                     Dictionaries = dictionaries,
-                    Visualisations = visualisations
+                    Visualisations = visualisations,
+                    Roles = roles
                 };
 
-                var preservation = new Preservation(dbContext, userName,
+
+                var file = files.First();
+                await using var stream = file.OpenReadStream();
+                using var reader = new BinaryReader(stream, Encoding.Default, true);
+                var bytes = reader.ReadBytes((int)stream.Length);
+
+                await using var preservation = new Preservation(dbContext, userName,
                     dynamicEnvironment.AppSettings("PreservationSalt"),
                     dynamicEnvironment.AppSettings("JempFileLegacyEncryptionFallback").Equals("True", StringComparison.CurrentCultureIgnoreCase));
 
-                foreach (var stream in files.Select(file => file.OpenReadStream()))
-                {
-                    await using var stream1 = stream.ConfigureAwait(false);
-
-                    using var reader = new BinaryReader(stream);
-                    var bytes = reader.ReadBytes((int)stream.Length);
-
-                    await preservation.ImportAsync(bytes, importExportOptions, token).ConfigureAwait(false);
-
-                    return Ok();
-                }
-
-                return BadRequest();
+                await preservation.ImportAsync(bytes, importExportOptions, token).ConfigureAwait(false);
+                return Ok();
             }
             catch (InvalidHmacException)
             {
@@ -174,7 +171,8 @@ namespace Jube.App.Controllers.Preservation
                     Suppressions = model.Suppressions,
                     Lists = model.Lists,
                     Dictionaries = model.Dictionaries,
-                    Visualisations = model.Visualisations
+                    Visualisations = model.Visualisations,
+                    Roles = model.Roles
                 };
 
                 var export = await preservation.ExportAsync(importExportOptions, token).ConfigureAwait(false);

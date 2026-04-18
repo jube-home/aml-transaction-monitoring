@@ -282,7 +282,10 @@ function Delete(endpoint, key) {
 }
 
 function SetTable() {
-    if (window.OverrideSetTable) return;
+    if (window.OverrideSetTable) {
+        window.OverrideSetTable();
+        return;
+    }
 
     let rows = $('#TemplateTable tr').length;
     rows -= ($("#Guid").length > 0) ? 5 : 4;
@@ -311,6 +314,9 @@ function ReadyNew() {
     $("#Version").html("");
     $("#CreatedDate").html("");
     $("#CreatedUser").html("");
+    $("#Counters").html("0 / 0 (0%)");
+    $("#LastCounters").html(new Date());
+
 
     updateButton.hide();
     deleteButton.hide();

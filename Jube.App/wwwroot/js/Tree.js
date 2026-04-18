@@ -211,7 +211,7 @@ $(document).ready(function () {
         case 'UserRegistry':
             serviceRoot = serviceRoot + Page;
             topLevel = "/api/RoleRegistry";
-            topLevelId = "id";
+            topLevelId = "guid";
             ChildDescription = 'User Registry';
             ChildURLAdd = "/Administration/Frame/UserRegistry";
             ChildURLUpdate = "/Administration/Frame/UserRegistry";

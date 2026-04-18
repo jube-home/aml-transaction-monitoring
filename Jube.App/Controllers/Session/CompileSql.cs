@@ -159,7 +159,7 @@ namespace Jube.App.Controllers.Session
 
             model.WhereSql = "from \"Case\",\"CaseWorkflow\",\"EntityAnalysisModel\",\"TenantRegistry\"," +
                              "\"CaseWorkflowStatus\",\"UserInTenant\",\"CaseWorkflowRole\",\"CaseWorkflowStatusRole\"," +
-                             "(select \"RoleRegistry\".\"Guid\" from \"RoleRegistry\",\"UserRegistry\" where \"RoleRegistry\".\"Id\" = \"UserRegistry\".\"RoleRegistryId\" and (\"RoleRegistry\".\"Deleted\" = 0 or \"RoleRegistry\".\"Deleted\" IS NULL) and \"UserRegistry\".\"Name\" = (@" + positionUser + ")) \"RoleRegistry\"" +
+                             "(select \"RoleRegistry\".\"Guid\" from \"RoleRegistry\",\"UserRegistry\" where \"RoleRegistry\".\"Guid\" = \"UserRegistry\".\"RoleRegistryGuid\" and (\"RoleRegistry\".\"Deleted\" = 0 or \"RoleRegistry\".\"Deleted\" IS NULL) and \"UserRegistry\".\"Name\" = (@" + positionUser + ")) \"RoleRegistry\"" +
                              " where \"EntityAnalysisModel\".\"Id\" = \"CaseWorkflow\".\"EntityAnalysisModelId\"" +
                              " and \"EntityAnalysisModel\".\"TenantRegistryId\" = \"TenantRegistry\".\"Id\"" +
                              " and \"UserInTenant\".\"TenantRegistryId\" = \"TenantRegistry\".\"Id\"" +

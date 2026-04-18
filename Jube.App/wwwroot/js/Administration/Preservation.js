@@ -17,6 +17,7 @@ $(document).ready(function () {
     const listsSwitch = $("#Lists").kendoSwitch();
     const dictionariesSwitch = $("#Dictionaries").kendoSwitch();
     const visualisationsSwitch = $("#Visualisations").kendoSwitch();
+    const rolesSwitch = $("#Roles").kendoSwitch();
 
     $("#Download").kendoButton({
         click: async function (e) {
@@ -27,6 +28,7 @@ $(document).ready(function () {
                 Lists: listsSwitch.prop("checked"),
                 Dictionaries: dictionariesSwitch.prop("checked"),
                 Visualisations: visualisationsSwitch.prop("checked"),
+                Roles: rolesSwitch.prop("checked"),
             };
 
             const resp = await fetch("/api/Preservation/Export", {
@@ -59,6 +61,7 @@ $(document).ready(function () {
             Lists: listsSwitch.prop("checked"),
             Dictionaries: dictionariesSwitch.prop("checked"),
             Visualisations: visualisationsSwitch.prop("checked"),
+            Roles: rolesSwitch.prop("checked")
         };
 
         window.open("/api/Preservation/ExportPeek?Exhaustive=" + data.Exhaustive
@@ -66,7 +69,10 @@ $(document).ready(function () {
             + "&Lists=" + data.Lists
             + "&Dictionaries="
             + data.Dictionaries
-            + "&Visualisations=" + data.Visualisations);
+            + "&Visualisations="
+            + data.Visualisations
+            + "&Roles="
+            + data.Roles);
     });
 
     $("#Files").kendoUpload({
@@ -84,6 +90,7 @@ $(document).ready(function () {
                 Lists: listsSwitch.prop("checked"),
                 Dictionaries: dictionariesSwitch.prop("checked"),
                 Visualisations: visualisationsSwitch.prop("checked"),
+                Roles: rolesSwitch.prop("checked")
             };
         }
     });

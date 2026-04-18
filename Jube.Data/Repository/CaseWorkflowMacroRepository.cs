@@ -65,6 +65,8 @@ namespace Jube.Data.Repository
         {
             return await dbContext.CaseWorkflowMacro
                 .Where(w => w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
+                            && (w.CaseWorkflow.EntityAnalysisModel.Deleted == 0 || w.CaseWorkflow.EntityAnalysisModel.Deleted == null)// Added
+                            && (w.CaseWorkflow.Deleted == 0 || w.CaseWorkflow.Deleted == null)
                             && w.Active == 1
                             && w.CaseWorkflowId == casesWorkflowId
                             && (w.Deleted == 0 || w.Deleted == null)
@@ -72,16 +74,16 @@ namespace Jube.Data.Repository
                                 .Where(r => r.CaseWorkflowMacroGuid == w.Guid
                                             && (r.Deleted == 0 || r.Deleted == null))
                                 .Any(r => dbContext.RoleRegistry
-                                    .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                                    .Where(rr => rr.Guid == r.RoleRegistryGuid && (rr.Deleted == 0 || rr.Deleted == null))
                                     .Any(rr => dbContext.UserRegistry
-                                        .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                                        .Any(u => u.RoleRegistryGuid == rr.Guid && u.Name == userName)))
                             && dbContext.CaseWorkflowRole
                                 .Where(r => r.CaseWorkflowGuid == w.CaseWorkflow.Guid
                                             && (r.Deleted == 0 || r.Deleted == null))
                                 .Any(r => dbContext.RoleRegistry
-                                    .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                                    .Where(rr => rr.Guid == r.RoleRegistryGuid && (rr.Deleted == 0 || rr.Deleted == null))
                                     .Any(rr => dbContext.UserRegistry
-                                        .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                                        .Any(u => u.RoleRegistryGuid == rr.Guid && u.Name == userName)))
                 ).ToArrayAsync(token);
         }
 
@@ -89,25 +91,24 @@ namespace Jube.Data.Repository
         {
             return await dbContext.CaseWorkflowMacro
                 .Where(w => w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
+                            && (w.CaseWorkflow.EntityAnalysisModel.Deleted == 0 || w.CaseWorkflow.EntityAnalysisModel.Deleted == null)
+                            && (w.CaseWorkflow.Deleted == 0 || w.CaseWorkflow.Deleted == null)// Duplicate removed below
                             && w.Active == 1
-                            && w.CaseWorkflow.Guid == casesWorkflowGuid
-                            && (w.CaseWorkflow.EntityAnalysisModel.Deleted == 0 ||
-                                w.CaseWorkflow.EntityAnalysisModel.Deleted == null)
                             && (w.Deleted == 0 || w.Deleted == null)
                             && dbContext.CaseWorkflowMacroRole
                                 .Where(r => r.CaseWorkflowMacroGuid == w.Guid
                                             && (r.Deleted == 0 || r.Deleted == null))
                                 .Any(r => dbContext.RoleRegistry
-                                    .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                                    .Where(rr => rr.Guid == r.RoleRegistryGuid && (rr.Deleted == 0 || rr.Deleted == null))
                                     .Any(rr => dbContext.UserRegistry
-                                        .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                                        .Any(u => u.RoleRegistryGuid == rr.Guid && u.Name == userName)))
                             && dbContext.CaseWorkflowRole
                                 .Where(r => r.CaseWorkflowGuid == w.CaseWorkflow.Guid
                                             && (r.Deleted == 0 || r.Deleted == null))
                                 .Any(r => dbContext.RoleRegistry
-                                    .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                                    .Where(rr => rr.Guid == r.RoleRegistryGuid && (rr.Deleted == 0 || rr.Deleted == null))
                                     .Any(rr => dbContext.UserRegistry
-                                        .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                                        .Any(u => u.RoleRegistryGuid == rr.Guid && u.Name == userName)))
                 ).ToListAsync(token);
         }
 
@@ -130,20 +131,23 @@ namespace Jube.Data.Repository
         {
             return dbContext.CaseWorkflowMacro.FirstOrDefaultAsync(w =>
                 w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
+                && (w.CaseWorkflow.EntityAnalysisModel.Deleted == 0 || w.CaseWorkflow.EntityAnalysisModel.Deleted == null)// Added
+                && (w.CaseWorkflow.Deleted == 0 || w.CaseWorkflow.Deleted == null)
+                && w.Active == 1
                 && dbContext.CaseWorkflowMacroRole
                     .Where(r => r.CaseWorkflowMacroGuid == w.Guid
                                 && (r.Deleted == 0 || r.Deleted == null))
                     .Any(r => dbContext.RoleRegistry
-                        .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                        .Where(rr => rr.Guid == r.RoleRegistryGuid && (rr.Deleted == 0 || rr.Deleted == null))
                         .Any(rr => dbContext.UserRegistry
-                            .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                            .Any(u => u.RoleRegistryGuid == rr.Guid && u.Name == userName)))
                 && dbContext.CaseWorkflowRole
                     .Where(r => r.CaseWorkflowGuid == w.CaseWorkflow.Guid
                                 && (r.Deleted == 0 || r.Deleted == null))
                     .Any(r => dbContext.RoleRegistry
-                        .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                        .Where(rr => rr.Guid == r.RoleRegistryGuid && (rr.Deleted == 0 || rr.Deleted == null))
                         .Any(rr => dbContext.UserRegistry
-                            .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                            .Any(u => u.RoleRegistryGuid == rr.Guid && u.Name == userName)))
                 && w.Id == id && (w.Deleted == 0 || w.Deleted == null), token);
         }
 

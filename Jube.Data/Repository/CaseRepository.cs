@@ -79,21 +79,24 @@ namespace Jube.Data.Repository
             return dbContext.Case
                 .Where(w =>
                     (w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                    && (w.CaseWorkflow.EntityAnalysisModel.Deleted == 0 || w.CaseWorkflow.EntityAnalysisModel.Deleted == null)
+                    && (w.CaseWorkflow.Deleted == 0 || w.CaseWorkflow.Deleted == null)
+                    && (w.CaseWorkflowStatus.Deleted == 0 || w.CaseWorkflowStatus.Deleted == null)
                     && w.Id == id
                     && dbContext.CaseWorkflowStatusRole
                         .Where(r => r.CaseWorkflowStatusGuid == w.CaseWorkflowStatus.Guid
                                     && (r.Deleted == 0 || r.Deleted == null))
                         .Any(r => dbContext.RoleRegistry
-                            .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                            .Where(rr => rr.Guid == r.RoleRegistryGuid && (rr.Deleted == 0 || rr.Deleted == null))
                             .Any(rr => dbContext.UserRegistry
-                                .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                                .Any(u => u.RoleRegistryGuid == rr.Guid && u.Name == userName)))
                     && dbContext.CaseWorkflowRole
                         .Where(r => r.CaseWorkflowGuid == w.CaseWorkflow.Guid
                                     && (r.Deleted == 0 || r.Deleted == null))
                         .Any(r => dbContext.RoleRegistry
-                            .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                            .Where(rr => rr.Guid == r.RoleRegistryGuid && (rr.Deleted == 0 || rr.Deleted == null))
                             .Any(rr => dbContext.UserRegistry
-                                .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                                .Any(u => u.RoleRegistryGuid == rr.Guid && u.Name == userName)))
                 )
                 .FirstOrDefaultAsync(token);
         }

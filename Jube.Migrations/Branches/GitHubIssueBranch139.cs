@@ -22,8 +22,32 @@ namespace Jube.Migrations.Branches
         {
             CreateUserRegistryApiKey();
             CreateEntityAnalysisModelRole();
+            UpdateUserRegistry();
+            UpdateUserRegistryVersion();
         }
-        
+
+        private void UpdateUserRegistryVersion()
+        {
+            Alter.Table("UserRegistryVersion").AddColumn("RoleRegistryGuid").AsGuid().Nullable();
+
+            Execute.Sql(
+                """UPDATE "UserRegistryVersion" b SET "RoleRegistryGuid" = a."Guid" FROM "RoleRegistry" a WHERE a."Id" = b."RoleRegistryId";""");
+
+            Delete.Column("RoleRegistryId").FromTable("UserRegistryVersion");
+        }
+
+        private void UpdateUserRegistry()
+        {
+            Alter.Table("UserRegistry").AddColumn("RoleRegistryGuid").AsGuid().Nullable();
+
+            Execute.Sql(
+                """UPDATE "UserRegistry" b SET "RoleRegistryGuid" = a."Guid" FROM "RoleRegistry" a WHERE a."Id" = b."RoleRegistryId";""");
+
+            Create.Index().OnTable("UserRegistry").OnColumn("RoleRegistryGuid").Ascending();
+
+            Delete.Column("RoleRegistryId").FromTable("UserRegistry");
+        }
+
         private void CreateUserRegistryApiKey()
         {
             Create.Table("UserRegistryApiKey")

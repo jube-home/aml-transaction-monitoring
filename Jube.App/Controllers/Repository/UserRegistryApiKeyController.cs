@@ -89,7 +89,7 @@ namespace Jube.App.Controllers.Repository
         }
 
         [HttpGet("ByUserRegistryId/{userRegistryId:int}")]
-        public async Task<ActionResult<List<UserRegistryDto>>> GetByRoleRegistryIdAsync(int userRegistryId, CancellationToken token = default)
+        public async Task<ActionResult<List<UserRegistryDto>>> GetByUserRegistryIdAsync(int userRegistryId, CancellationToken token = default)
         {
             try
             {
@@ -133,7 +133,7 @@ namespace Jube.App.Controllers.Repository
 
                 var userRegistryRepository = new UserRegistryRepository(dbContext, userName);
                 var userRegistry = await userRegistryRepository.GetByIdAsync(model.UserRegistryId, token);
-                
+
                 if (userRegistry == null)
                 {
                     return BadRequest();

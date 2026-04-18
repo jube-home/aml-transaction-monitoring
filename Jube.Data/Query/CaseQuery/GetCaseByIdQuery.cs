@@ -52,16 +52,16 @@ namespace Jube.Data.Query.CaseQuery
                           .Where(r => r.CaseWorkflowGuid == i.Guid
                                       && (r.Deleted == 0 || r.Deleted == null))
                           .Any(r => dbContext.RoleRegistry
-                              .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                              .Where(rr => rr.Guid == r.RoleRegistryGuid && (rr.Deleted == 0 || rr.Deleted == null))
                               .Any(rr => dbContext.UserRegistry
-                                  .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                                  .Any(u => u.RoleRegistryGuid == rr.Guid && u.Name == userName)))
                       && dbContext.CaseWorkflowStatusRole
                           .Where(r => r.CaseWorkflowStatusGuid == s.Guid
                                       && (r.Deleted == 0 || r.Deleted == null))
                           .Any(r => dbContext.RoleRegistry
-                              .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                              .Where(rr => rr.Guid == r.RoleRegistryGuid && (rr.Deleted == 0 || rr.Deleted == null))
                               .Any(rr => dbContext.UserRegistry
-                                  .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                                  .Any(u => u.RoleRegistryGuid == rr.Guid && u.Name == userName)))
                 select new CaseQueryDto
                 {
                     Id = c.Id,

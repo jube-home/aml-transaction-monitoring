@@ -46,7 +46,9 @@ namespace Jube.Data.Repository
         public Task<List<UserRegistryApiKey>> GetAllAsync(CancellationToken token = default)
         {
             return dbContext.UserRegistryApiKey
-                .Where(w => w.Deleted == 0 || w.Deleted == null).ToListAsync(token);
+                .Where(w => (w.Deleted == 0 || w.Deleted == null)
+                            && (w.UserRegistry.RoleRegistry.Deleted == 0 || w.UserRegistry.RoleRegistry.Deleted == null))
+                .ToListAsync(token);
         }
 
         public Task<UserRegistryApiKey> GetByIdAsync(int id, CancellationToken token = default)
@@ -62,6 +64,7 @@ namespace Jube.Data.Repository
                 .Where(w =>
                     w.UserRegistry.RoleRegistry.TenantRegistryId == tenantRegistryId
                     && (w.Deleted == 0 || w.Deleted == null)
+                    && (w.UserRegistry.RoleRegistry.Deleted == 0 || w.UserRegistry.RoleRegistry.Deleted == null)
                     && w.UserRegistryId == userRegistryId).ToListAsync(token);
         }
 

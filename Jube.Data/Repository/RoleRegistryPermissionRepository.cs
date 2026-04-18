@@ -38,6 +38,12 @@ namespace Jube.Data.Repository
                 .Select(s => s.TenantRegistryId).FirstOrDefault();
         }
 
+        public RoleRegistryPermissionRepository(DbContext dbContext, int tenantRegistryId)
+        {
+            this.dbContext = dbContext;
+            this.tenantRegistryId = tenantRegistryId;
+        }
+
         public async Task<IEnumerable<RoleRegistryPermission>> GetAsync(CancellationToken token = default)
         {
             return await dbContext.RoleRegistryPermission.Where(w => w.RoleRegistry.TenantRegistryId == tenantRegistryId
@@ -112,6 +118,28 @@ namespace Jube.Data.Repository
             {
                 throw new KeyNotFoundException();
             }
+        }
+
+        public async Task<IEnumerable<RoleRegistryPermission>> GetByRoleRegistryIdOrderByIdAsync(
+            int roleRegistryId, CancellationToken token = default)
+        {
+            return await dbContext.RoleRegistryPermission
+                .Where(w =>
+                    w.RoleRegistry.TenantRegistryId == tenantRegistryId
+                    && w.RoleRegistry.Id == roleRegistryId
+                    && (w.Deleted == 0 || w.Deleted == null))
+                .OrderBy(o => o.Id).ToListAsync(token);
+        }
+
+        public Task DeleteByTenantRegistryIdOutsideOfInstanceAsync(int tenantRegistryIdOutsideOfInstance, int importId, CancellationToken token = default)
+        {
+            return dbContext.RoleRegistryPermission
+                .Where(d => d.RoleRegistry.TenantRegistryId == tenantRegistryIdOutsideOfInstance
+                            && (d.Deleted == 0 || d.Deleted == null))
+                .Set(s => s.ImportId, importId)
+                .Set(s => s.Deleted, Convert.ToByte(1))
+                .Set(s => s.DeletedDate, DateTime.Now)
+                .UpdateAsync(token);
         }
     }
 }

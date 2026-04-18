@@ -41,7 +41,6 @@ var maxResponseElevation = $("#MaxResponseElevation").kendoNumericTextBox({
 if (typeof id === "undefined") {
     initBuilderCoder(2, GetSelectedParentID());
     ReadyNew();
-    OverrideSetTable();
 } else {
     $.get(endpoint + "/" + id,
         function (data) {
@@ -64,9 +63,8 @@ if (typeof id === "undefined") {
 
             $("#Counters").html(`${data.activationCounter} / ${data.evaluationCounter} (${percent}%)`);
             $("#LastCounters").html(new Date(data.activationCounterDate));
-            
+
             ReadyExisting(data);
-            OverrideSetTable();
         });
 }
 

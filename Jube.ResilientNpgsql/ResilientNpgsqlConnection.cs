@@ -23,7 +23,6 @@ namespace Jube.ResilientNpgsqlConnection
 
     public class ResilientNpgsqlConnection : DbConnection
     {
-
         public ResilientNpgsqlConnection(string connectionString, ILog log, int maxRetries = 10)
         {
             UnderlyingConnection = new NpgsqlConnection(connectionString);
@@ -35,18 +34,28 @@ namespace Jube.ResilientNpgsqlConnection
                 .Or<PostgresException>(ex =>
                     ex.SqlState.StartsWith("08") ||
                     ex.SqlState.StartsWith("53") ||
-                    ex.SqlState is "57P01" or "57P02" or "57P03" or "40001" or "40P01"
+                    ex.SqlState is "57P01" or "57P02" or "57P03" or "40001" or "40P01" or "55P03"
                 )
                 .Or<SocketException>()
                 .Or<TimeoutException>()
                 .WaitAndRetryAsync(
                     maxRetries,
-                    attempt =>
-                        TimeSpan.FromSeconds(Math.Min(Math.Pow(2, attempt), 30)) +
-                        TimeSpan.FromMilliseconds(Random.Shared.Next(0, 1_000)),
-                    (_, _, _, _) =>
+                    (attempt, ex, _) =>
+                        ex is PostgresException { SqlState: "55P03" or "40001" or "40P01" }
+                            ? TimeSpan.FromMilliseconds(Random.Shared.Next(50, 500) * attempt)
+                            : TimeSpan.FromSeconds(Math.Min(Math.Pow(2, attempt), 30))
+                              + TimeSpan.FromMilliseconds(Random.Shared.Next(0, 1_000)),
+                    (innerEx, _, _, _) =>
                     {
-                        NpgsqlConnection.ClearPool(UnderlyingConnection);
+                        var shouldClearPool = innerEx is not PostgresException pg
+                                              || !pg.SqlState.StartsWith("53")
+                                              && pg.SqlState is not "55P03" and not "40001" and not "40P01";
+
+                        if (shouldClearPool)
+                        {
+                            NpgsqlConnection.ClearPool(UnderlyingConnection);
+                        }
+
                         try
                         {
                             if (UnderlyingConnection.State != ConnectionState.Open)
@@ -54,9 +63,9 @@ namespace Jube.ResilientNpgsqlConnection
                                 UnderlyingConnection.Open();
                             }
                         }
-                        catch (Exception ex)
+                        catch (Exception outerEx)
                         {
-                            log.Warn("Reconnect attempt failed, will retry", ex);
+                            log.Warn("Reconnect attempt failed, will retry", outerEx);
                         }
                         return Task.CompletedTask;
                     });
@@ -117,7 +126,6 @@ namespace Jube.ResilientNpgsqlConnection
         {
             await FailoverPolicy.ExecuteAsync(async () =>
             {
-                // A broken connection must be explicitly closed before it can be reopened.
                 if (UnderlyingConnection.State == ConnectionState.Broken)
                 {
                     await UnderlyingConnection.CloseAsync().ConfigureAwait(false);

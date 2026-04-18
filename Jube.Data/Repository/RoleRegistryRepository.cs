@@ -38,10 +38,15 @@ namespace Jube.Data.Repository
                 .Select(s => s.TenantRegistryId).FirstOrDefault();
         }
 
-        public RoleRegistryRepository(DbContext dbContext, TenantRegistry tenantRegistry)
+        public RoleRegistryRepository(DbContext dbContext, int tenantRegistryId)
         {
             this.dbContext = dbContext;
-            tenantRegistryId = tenantRegistry.Id;
+            this.tenantRegistryId = tenantRegistryId;
+        }
+
+        public Task<List<RoleRegistry>> GetAllTenantsAsync(CancellationToken token = default)
+        {
+            return dbContext.RoleRegistry.Where(w => w.Deleted == null || w.Deleted == 0).ToListAsync(token);
         }
 
         public Task<RoleRegistry> GetByNameAsync(string name, CancellationToken token = default)
@@ -120,6 +125,17 @@ namespace Jube.Data.Repository
             {
                 throw new KeyNotFoundException();
             }
+        }
+
+        public Task DeleteByTenantRegistryIdOutsideOfInstanceAsync(int tenantRegistryIdOutsideOfInstance, int importId, CancellationToken token = default)
+        {
+            return dbContext.RoleRegistry
+                .Where(d => d.TenantRegistryId == tenantRegistryIdOutsideOfInstance
+                            && (d.Deleted == 0 || d.Deleted == null))
+                .Set(s => s.ImportId, importId)
+                .Set(s => s.Deleted, Convert.ToByte(1))
+                .Set(s => s.DeletedDate, DateTime.Now)
+                .UpdateAsync(token);
         }
     }
 }

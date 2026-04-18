@@ -400,7 +400,6 @@ function Ready() {
         ExpandCollapseResponseElevation();
         ExpandCollapseCasesBypass();
         ExpandCollapseCases();
-        OverrideSetTable();
     } else {
         $.get(endpoint + "/" + id,
             function (data) {
@@ -520,7 +519,6 @@ function Ready() {
                 ExpandCollapseResponseElevation();
                 ExpandCollapseCasesBypass();
                 ExpandCollapseCases();
-                OverrideSetTable();
             });
     }
 }

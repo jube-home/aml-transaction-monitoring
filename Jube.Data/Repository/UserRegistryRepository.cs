@@ -49,6 +49,12 @@ namespace Jube.Data.Repository
             tenantRegistryId = roleRegistry.TenantRegistryId;
         }
 
+        public UserRegistryRepository(DbContext dbContext, int tenantRegistryId)
+        {
+            this.dbContext = dbContext;
+            this.tenantRegistryId = tenantRegistryId;
+        }
+
         public Task<UserRegistry> GetByNameAsync(string name, CancellationToken token = default)
         {
             return dbContext.UserRegistry
@@ -65,11 +71,17 @@ namespace Jube.Data.Repository
                 .ToListAsync(token);
         }
 
-        public async Task<IEnumerable<UserRegistry>> GetByRoleRegistryIdAsync(int roleRegistryId, CancellationToken token = default)
+        public Task<bool> AnyAsync(CancellationToken token = default)
+        {
+            return dbContext.UserRegistry.AnyAsync(w => w.RoleRegistry.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue, token);
+        }
+
+        public async Task<IEnumerable<UserRegistry>> GetByRoleRegistryGuidAsync(Guid roleRegistryGuid, CancellationToken token = default)
         {
             return await dbContext.UserRegistry
-                .Where(w => (w.RoleRegistry.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
-                            && w.RoleRegistryId == roleRegistryId && (w.Deleted == 0 || w.Deleted == null))
+                .Where(w => w.RoleRegistry.TenantRegistryId == tenantRegistryId
+                            && w.RoleRegistryGuid == roleRegistryGuid && (w.Deleted == 0 || w.Deleted == null)
+                            && (w.RoleRegistry.Deleted == 0 || w.RoleRegistry.Deleted == null))
                 .ToListAsync(token);
         }
 

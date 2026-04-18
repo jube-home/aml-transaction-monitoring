@@ -28,8 +28,8 @@ namespace Jube.Data.Query
             var query = from c in dbContext.Case
                 from n in dbContext.CaseWorkflowFormEntry.InnerJoin(w => w.CaseId == c.Id)
                 from a in dbContext.CaseWorkflowForm.InnerJoin(w => w.Id == n.CaseWorkflowFormId)
-                from i in dbContext.CaseWorkflow.InnerJoin(w => w.Guid == c.CaseWorkflowGuid)
-                from s in dbContext.CaseWorkflowStatus.InnerJoin(w => w.Guid == c.CaseWorkflowStatusGuid)
+                from i in dbContext.CaseWorkflow.InnerJoin(w => w.Guid == c.CaseWorkflowGuid && (w.Deleted == 0 || w.Deleted == null))
+                from s in dbContext.CaseWorkflowStatus.InnerJoin(w => w.Guid == c.CaseWorkflowStatusGuid && (w.Deleted == 0 || w.Deleted == null))
                 from m in dbContext.EntityAnalysisModel.InnerJoin(w =>
                     w.Id == i.EntityAnalysisModelId && (w.Deleted == 0 || w.Deleted == null))
                 from t in dbContext.TenantRegistry.InnerJoin(w => w.Id == m.TenantRegistryId)
@@ -41,16 +41,16 @@ namespace Jube.Data.Query
                           .Where(r => r.CaseWorkflowGuid == i.Guid
                                       && (r.Deleted == 0 || r.Deleted == null))
                           .Any(r => dbContext.RoleRegistry
-                              .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                              .Where(rr => rr.Guid == r.RoleRegistryGuid && (rr.Deleted == 0 || rr.Deleted == null))
                               .Any(rr => dbContext.UserRegistry
-                                  .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                                  .Any(u => u.RoleRegistryGuid == rr.Guid && u.Name == userName)))
                       && dbContext.CaseWorkflowStatusRole
                           .Where(r => r.CaseWorkflowStatusGuid == s.Guid
                                       && (r.Deleted == 0 || r.Deleted == null))
                           .Any(r => dbContext.RoleRegistry
-                              .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                              .Where(rr => rr.Guid == r.RoleRegistryGuid && (rr.Deleted == 0 || rr.Deleted == null))
                               .Any(rr => dbContext.UserRegistry
-                                  .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                                  .Any(u => u.RoleRegistryGuid == rr.Guid && u.Name == userName)))
                 orderby c.Id descending
                 select new Dto
                 {

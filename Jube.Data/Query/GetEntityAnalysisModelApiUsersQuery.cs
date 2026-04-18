@@ -25,6 +25,7 @@ namespace Jube.Data.Query
         public async Task<IEnumerable<Dto>> ExecuteAsync(int id, CancellationToken token = default)
         {
             return await dbContext.UserRegistry
+                .Where(u => u.Active == 1)// Added
                 .SelectMany(u => dbContext.UserRegistryApiKey
                         .Where(k => k.UserRegistryId == u.Id
                                     && (k.Deleted == 0 || k.Deleted == null)),
@@ -34,15 +35,14 @@ namespace Jube.Data.Query
                         k
                     })
                 .SelectMany(c => dbContext.RoleRegistry
-                        .Where(rr => rr.Id == c.u.RoleRegistryId),
+                        .Where(rr => rr.Guid == c.u.RoleRegistryGuid && (rr.Deleted == 0 || rr.Deleted == null)),
                     (c, rr) => new
                     {
                         c.u,
                         rr
                     })
                 .SelectMany(c => dbContext.EntityAnalysisModelRole
-                        .Where(r => r.RoleRegistryGuid == c.rr.Guid
-                                    && (r.Deleted == 0 || r.Deleted == null)),
+                        .Where(r => r.RoleRegistryGuid == c.rr.Guid && (r.Deleted == 0 || r.Deleted == null)),
                     (c, r) => new
                     {
                         c.u,

@@ -94,23 +94,25 @@ namespace Jube.Data.Repository
             return await dbContext.VisualisationRegistryParameter
                 .Where(w =>
                     (w.VisualisationRegistry.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                    && (w.VisualisationRegistry.Deleted == 0 || w.VisualisationRegistry.Deleted == null)// Added
                     && w.VisualisationRegistryId == visualisationRegistryId
                     && w.Active == 1
+                    && (w.Deleted == 0 || w.Deleted == null)// Moved up
                     && dbContext.VisualisationRegistryRole
                         .Where(r => r.VisualisationRegistryGuid == w.VisualisationRegistry.Guid
                                     && (r.Deleted == 0 || r.Deleted == null))
                         .Any(r => dbContext.RoleRegistry
-                            .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                            .Where(rr => rr.Guid == r.RoleRegistryGuid && (rr.Deleted == 0 || rr.Deleted == null))
                             .Any(rr => dbContext.UserRegistry
-                                .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                                .Any(u => u.RoleRegistryGuid == rr.Guid && u.Name == userName)))
                     && dbContext.VisualisationRegistryParameterRole
                         .Where(r => r.VisualisationRegistryParameterGuid == w.Guid
                                     && (r.Deleted == 0 || r.Deleted == null))
                         .Any(r => dbContext.RoleRegistry
-                            .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                            .Where(rr => rr.Guid == r.RoleRegistryGuid && (rr.Deleted == 0 || rr.Deleted == null))
                             .Any(rr => dbContext.UserRegistry
-                                .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
-                    && (w.Deleted == 0 || w.Deleted == null)).ToListAsync(token);
+                                .Any(u => u.RoleRegistryGuid == rr.Guid && u.Name == userName)))
+                ).ToListAsync(token);
         }
 
         public Task<VisualisationRegistryParameter> GetByIdAsync(int id, CancellationToken token = default)

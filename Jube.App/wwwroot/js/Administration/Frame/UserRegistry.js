@@ -12,7 +12,7 @@
  */
 
 const endpoint = "/api/UserRegistry";
-const parentKeyName = "roleRegistryId";
+const parentKeyName = "roleRegistryGuid";
 const validationFail = "There is invalid data in the form. Please check fields and correct.";
 
 const store = {
@@ -93,7 +93,7 @@ var revealedKey = null;
 var passwordLocked = $("#PasswordLocked").kendoSwitch().data("kendoSwitch");
 passwordLocked.enable(false);
 
-var roleRegistryId = $("#RoleRegistryId").kendoDropDownList({
+var roleRegistryGuid = $("#RoleRegistryGuid").kendoDropDownList({
     dataTextField: "text",
     dataValueField: "value"
 });
@@ -171,21 +171,21 @@ $("#Processing").hide();
 $.get("/api/RoleRegistry",
     function (data) {
         for (const value of data) {
-            roleRegistryId.data("kendoDropDownList").dataSource.add({
-                "value": value.id,
+            roleRegistryGuid.data("kendoDropDownList").dataSource.add({
+                "value": value.guid,
                 "text": value.name
             });
         }
 
         if (typeof id === "undefined") {
-            roleRegistryId.data("kendoDropDownList").value(parentKey);
+            roleRegistryGuid.data("kendoDropDownList").value(parentKey);
             passwordLocked.value(true);
             ReadyNew();
         } else {
             $.get(endpoint + "/" + id,
                 function (data) {
                     $("#Email").val(data.email);
-                    roleRegistryId.data("kendoDropDownList").value(data.roleRegistryId);
+                    roleRegistryGuid.data("kendoDropDownList").value(data.roleRegistryGuid);
 
                     passwordLocked.value(data.passwordLocked);
 
@@ -212,7 +212,7 @@ function getData() {
     return {
         name: $("#Name").val(),
         email: $("#Email").val(),
-        roleRegistryId: roleRegistryId.data("kendoDropDownList").value()
+        roleRegistryGuid: roleRegistryGuid.data("kendoDropDownList").value()
     };
 }
 

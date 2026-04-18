@@ -20,7 +20,7 @@ using Jube.Engine.Interfaces;
 public class Example : IInlineScript//Class entry point is available in table configuration.
 {
     //Attributes overlap with the same options available in Request XPath
-    [Cache(CacheIndexId = 1001)]
+    [CacheIndex(Id = 1001)]
     [ReportTable]    //ReportTable is evaluated on recall.
     [ResponsePayload]//ResponsePayload is evaluated in model synchronization and used in model response preparation.
     [Latitude]       //Latitude is evaluated in model synchronization and is used during model activation watcher dispatch.
@@ -35,7 +35,7 @@ public class Example : IInlineScript//Class entry point is available in table co
         SearchKeyCacheFetchLimit = 100,
         SearchKeyCacheTtlInterval = "h",
         SearchKeyCacheTtlValue = 1)]                      //SearchKey ensures that this is exposed in for aggregation in both the background engine.
-    public string? UserAgent { get; set; } = string.Empty;//Public properties are available for processing, being analogous,  when taken together with attributes, to a Request XPath entry
+    public string? UserAgent { get; set; } = String.Empty;//Public properties are available for processing, being analogous,  when taken together with attributes, to a Request XPath entry
 
     [ActivationRuleOverrideEvent(Guid = "bc81ff60-3254-4f1a-9003-ecae5e114142", Priority = 1)]
     [PayloadEvent]

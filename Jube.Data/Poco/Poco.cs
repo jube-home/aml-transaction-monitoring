@@ -1308,7 +1308,7 @@ namespace Jube.Data.Poco
         [Key(12)]
         public RoleRegistry RoleRegistry { get; set; }
     }
-    
+
     [Table]
     [MessagePackObject]
     public class VisualisationRegistryRole
@@ -2402,7 +2402,7 @@ namespace Jube.Data.Poco
         public int Id { get; set; }
 
         [Column] [Nullable] [Key(1)] public Guid Guid { get; set; }
-        [Column] [Nullable] [Key(2)] public int RoleRegistryId { get; set; }
+        [Column] [Nullable] [Key(2)] public Guid RoleRegistryGuid { get; set; }
         [Column] [Nullable] [Key(3)] public string Email { get; set; }
         [Column] [Nullable] [Key(4)] public string Name { get; set; }
         [Column] [Nullable] [Key(5)] public string Password { get; set; }
@@ -2421,7 +2421,7 @@ namespace Jube.Data.Poco
         [Column] [Nullable] [Key(18)] public byte? Active { get; set; }
         [Column] [Nullable] [Key(19)] public int? InheritedId { get; set; }
 
-        [Association(ThisKey = "RoleRegistryId", OtherKey = "Id", CanBeNull = true,
+        [Association(ThisKey = "RoleRegistryGuid", OtherKey = "Guid", CanBeNull = false,
             Relationship = Relationship.ManyToOne)]
         [Key(20)]
         public RoleRegistry RoleRegistry { get; set; }
@@ -2438,7 +2438,7 @@ namespace Jube.Data.Poco
         public int Id { get; set; }
 
         [Column] [Nullable] [Key(1)] public int UserRegistryId { get; set; }
-        [Column] [Nullable] [Key(2)] public int RoleRegistryId { get; set; }
+        [Column] [Nullable] [Key(2)] public Guid RoleRegistryGuid { get; set; }
         [Column] [Nullable] [Key(3)] public string Email { get; set; }
         [Column] [Nullable] [Key(4)] public string Name { get; set; }
         [Column] [Nullable] [Key(5)] public string Password { get; set; }
@@ -4475,10 +4475,14 @@ namespace Jube.Data.Poco
         [Column] [Nullable] [Key(12)] public int? TenantRegistryId { get; set; }
         [Column] [Nullable] [Key(13)] public int? Version { get; set; }
 
-        [Association(ThisKey = "Id", OtherKey = "RoleRegistryId", CanBeNull = false,
+        [Association(ThisKey = "Guid", OtherKey = "RoleRegistryGuid", CanBeNull = false,
             Relationship = Relationship.OneToMany)]
         [Key(14)]
         public UserRegistry UserRegistry { get; set; }
+        [Key(15)]
+        public IEnumerable<RoleRegistryPermission> RoleRegistryPermission { get; set; }
+        [Key(16)]
+        [Column] public int? ImportId { get; set; }
     }
 
     [Table]
@@ -4540,6 +4544,8 @@ namespace Jube.Data.Poco
             Relationship = Relationship.ManyToOne)]
         [Key(16)]
         public RoleRegistry RoleRegistry { get; set; }
+        [Key(17)]
+        [Column] public int? ImportId { get; set; }
     }
 
     [Table]

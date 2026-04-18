@@ -2835,7 +2835,7 @@ namespace Jube.Service.Authentication
                 Name = userName,
                 Email = userName,
                 Active = 1,
-                RoleRegistryId = roleRegistry.Id
+                RoleRegistryGuid = roleRegistry.Guid
             };
 
             var userRegistryRepository = new UserRegistryRepository(dbContext, roleRegistry);
@@ -2855,7 +2855,7 @@ namespace Jube.Service.Authentication
                 Active = 1
             };
 
-            var roleRegistryRepository = new RoleRegistryRepository(dbContext, tenantRegistry);
+            var roleRegistryRepository = new RoleRegistryRepository(dbContext, tenantRegistry.Id);
             roleRegistry = await roleRegistryRepository.InsertAsync(roleRegistry, token);
             return roleRegistry;
         }

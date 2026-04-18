@@ -352,7 +352,7 @@ namespace Jube.App.Controllers.Invoke
                 }
                 catch (Exception ex)
                 {
-                    return StatusCode(500,ex.Message);
+                    return StatusCode(500, ex.Message);
                 }
             }
             catch (Exception ex)
@@ -408,14 +408,14 @@ namespace Jube.App.Controllers.Invoke
                 {
                     return NotFound();
                 }
-                
+
                 foreach (var (_, value) in foundExhaustive)
                 {
                     if (!value.Collections.Users.Contains(User.Identity?.Name))
                     {
                         continue;
                     }
-                    
+
                     var response = Math.Round(engine.Context.RecallExhaustive(
                         guid,
                         JObject.Parse(Encoding.UTF8.GetString(ms.ToArray()))), 2);
@@ -435,53 +435,6 @@ namespace Jube.App.Controllers.Invoke
                 log.Error($"Exhaustive Recall:  An error has been raised as {ex}.  Returning 500.");
 
                 engine.Context.Counters.HttpCounterAllError += 1;
-                return StatusCode(500);
-            }
-        }
-
-        [HttpPost("ExampleFraudScoreLocalEndpoint")]
-        [ProducesResponseType(typeof(ValidationResult), (int)HttpStatusCode.BadRequest)]
-        public async Task<ActionResult<double>> ExampleFraudScoreLocalEndpointAsync()
-        {
-            try
-            {
-                if (!dynamicEnvironment.AppSettings("EnablePublicInvokeController")
-                        .Equals("True", StringComparison.OrdinalIgnoreCase))
-                {
-                    return NotFound();
-                }
-
-                var ms = new MemoryStream();
-                await Request.Body.CopyToAsync(ms).ConfigureAwait(false);
-
-                if (log.IsInfoEnabled)
-                {
-                    log.Info("Example FraudScore Local Endpoint Recall:  Recall received.");
-                }
-
-                var jObject = JObject.Parse(Encoding.UTF8.GetString(ms.ToArray()));
-
-                var responseCodeVolumeRatio = jObject.SelectToken("$.ResponseCodeEqual0Volume");
-
-                if (log.IsInfoEnabled)
-                {
-                    log.Info($"Example FraudScore Local Endpoint Recall:  Json parsed as {jObject}.  " +
-                             "This endpoint will just echo back the sqrt of the ResponseCodeVolumeRatio element." +
-                             " More typically this would be an R endpoint and it would recall a variety of models.");
-                }
-
-                if (responseCodeVolumeRatio != null)
-                {
-                    return Math.Sqrt(responseCodeVolumeRatio.ToObject<double>());
-                }
-
-                return 0;
-            }
-            catch (Exception ex)
-            {
-                log.Error(
-                    $"Example FraudScore Local Endpoint Recall:  An error has been raised as {ex}.  Returning 500.");
-
                 return StatusCode(500);
             }
         }

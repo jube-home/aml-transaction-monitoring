@@ -270,6 +270,11 @@ namespace Jube.Dictionary
                 throw new ArgumentNullException(nameof(key));
             }
 
+            if (capacity == 0)
+            {
+                return -1;
+            }
+
             var hash = key.GetHashCode() & 0x7FFFFFFF;
             var index = hash % capacity;
 

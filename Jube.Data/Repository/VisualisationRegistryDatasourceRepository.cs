@@ -89,23 +89,25 @@ namespace Jube.Data.Repository
         {
             return await dbContext.VisualisationRegistryDatasource
                 .Where(w => w.VisualisationRegistry.TenantRegistryId == tenantRegistryId
+                            && (w.VisualisationRegistry.Deleted == 0 || w.VisualisationRegistry.Deleted == null)// Added
                             && w.VisualisationRegistryId == visualisationRegistryId
+                            && w.Active == 1                        // Moved up
+                            && (w.Deleted == 0 || w.Deleted == null)// Moved up
                             && dbContext.VisualisationRegistryRole
                                 .Where(r => r.VisualisationRegistryGuid == w.VisualisationRegistry.Guid
                                             && (r.Deleted == 0 || r.Deleted == null))
                                 .Any(r => dbContext.RoleRegistry
-                                    .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                                    .Where(rr => rr.Guid == r.RoleRegistryGuid && (rr.Deleted == 0 || rr.Deleted == null))
                                     .Any(rr => dbContext.UserRegistry
-                                        .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                                        .Any(u => u.RoleRegistryGuid == rr.Guid && u.Name == userName)))
                             && dbContext.VisualisationRegistryDatasourceRole
                                 .Where(r => r.VisualisationRegistryDatasourceGuid == w.Guid
                                             && (r.Deleted == 0 || r.Deleted == null))
                                 .Any(r => dbContext.RoleRegistry
-                                    .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                                    .Where(rr => rr.Guid == r.RoleRegistryGuid && (rr.Deleted == 0 || rr.Deleted == null))
                                     .Any(rr => dbContext.UserRegistry
-                                        .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
-                            && w.Active == 1
-                            && (w.Deleted == 0 || w.Deleted == null)).ToListAsync(token);
+                                        .Any(u => u.RoleRegistryGuid == rr.Guid && u.Name == userName)))
+                ).ToListAsync(token);
         }
 
         public Task<VisualisationRegistryDatasource> GetByIdAsync(int id, CancellationToken token = default)
@@ -120,23 +122,25 @@ namespace Jube.Data.Repository
         {
             return dbContext.VisualisationRegistryDatasource
                 .Where(w => w.VisualisationRegistry.TenantRegistryId == tenantRegistryId
+                            && (w.VisualisationRegistry.Deleted == 0 || w.VisualisationRegistry.Deleted == null)// Added
+                            && w.Active == 1                                                                    // Moved up
+                            && w.Id == id                                                                       // Moved up
+                            && (w.Deleted == 0 || w.Deleted == null)                                            // Moved up
                             && dbContext.VisualisationRegistryRole
                                 .Where(r => r.VisualisationRegistryGuid == w.VisualisationRegistry.Guid
                                             && (r.Deleted == 0 || r.Deleted == null))
                                 .Any(r => dbContext.RoleRegistry
-                                    .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                                    .Where(rr => rr.Guid == r.RoleRegistryGuid && (rr.Deleted == 0 || rr.Deleted == null))
                                     .Any(rr => dbContext.UserRegistry
-                                        .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                                        .Any(u => u.RoleRegistryGuid == rr.Guid && u.Name == userName)))
                             && dbContext.VisualisationRegistryDatasourceRole
                                 .Where(r => r.VisualisationRegistryDatasourceGuid == w.Guid
                                             && (r.Deleted == 0 || r.Deleted == null))
                                 .Any(r => dbContext.RoleRegistry
-                                    .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                                    .Where(rr => rr.Guid == r.RoleRegistryGuid && (rr.Deleted == 0 || rr.Deleted == null))
                                     .Any(rr => dbContext.UserRegistry
-                                        .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
-                            && w.Active == 1
-                            && w.Id == id
-                            && (w.Deleted == 0 || w.Deleted == null)).FirstOrDefaultAsync(token);
+                                        .Any(u => u.RoleRegistryGuid == rr.Guid && u.Name == userName)))
+                ).FirstOrDefaultAsync(token);
         }
 
         public async Task<VisualisationRegistryDatasource> InsertAsync(VisualisationRegistryDatasource model, CancellationToken token = default)
@@ -187,7 +191,7 @@ namespace Jube.Data.Repository
             Dictionary<string, string> columns;
             try
             {
-                columns = await ValidateSeriesAsync(model.VisualisationRegistryId.Value, model.Command,interpolationConnectionString, log).ConfigureAwait(false);
+                columns = await ValidateSeriesAsync(model.VisualisationRegistryId.Value, model.Command, interpolationConnectionString, log).ConfigureAwait(false);
             }
             catch (Exception e)
             {

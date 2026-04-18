@@ -21,5 +21,6 @@ namespace Jube.App.Dto
         public bool Lists { get; set; }
         public bool Dictionaries { get; set; }
         public bool Visualisations { get; set; }
+        public bool Roles { get; set; }
     }
 }
