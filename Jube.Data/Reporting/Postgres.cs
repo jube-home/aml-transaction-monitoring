@@ -273,5 +273,27 @@ namespace Jube.Data.Reporting
 
             return value;
         }
+        
+        public async Task<int?> ExecuteScalarIdAsync(string sql,
+            List<object> parameters, CancellationToken token = default)
+        {
+            PostgresSqlValidator.AssertSelectOnly(sql);
+            await using var command = new ResilientNpgsqlCommand(connection, sql);
+
+            for (var i = 0; i < parameters.Count; i++)
+            {
+                command.Parameters.AddWithValue("@" + (i + 1), parameters[i]);
+            }
+
+            await command.PrepareAsync(token).ConfigureAwait(false);
+
+            var id = await command.ExecuteScalarAsync(token).ConfigureAwait(false);
+            if (id == null)
+            {
+                return null;
+            }
+
+            return (int)id;
+        }
     }
 }

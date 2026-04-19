@@ -27,7 +27,7 @@ namespace Jube.Data.Query.CaseQuery.Dto
         public bool Locked { get; set; }
         public string LockedUser { get; set; }
         public DateTime LockedDate { get; set; }
-        public int ClosedStatusId { get; set; }
+        public byte ClosedStatusId { get; set; }
         public DateTime ClosedDate { get; set; }
         public string ClosedUser { get; set; }
         public string CaseKey { get; set; }

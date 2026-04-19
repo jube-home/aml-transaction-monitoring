@@ -63,188 +63,43 @@ namespace Jube.Data.Query.CaseQuery
 
             using var postgres = new Postgres(reportConnectionString, log);
 
-            var value = await
-                postgres.ExecuteByOrderedParametersAsync(modelCompiled.SelectSqlDisplay
-                                                         + " "
-                                                         + modelCompiled.WhereSql
-                                                         + " " + modelCompiled.OrderSql + " limit 1", tokens, token).ConfigureAwait(false);
+            var caseId = await
+                postgres.ExecuteScalarIdAsync("select \"Case\".\"Id\""
+                                              + " "
+                                              + modelCompiled.WhereSql 
+                                              + " and ((\"Case\".\"Locked\" = 0 or \"Case\".\"Locked\" is null)" +
+                                              " or (\"Case\".\"Locked\" = 1 and \"Case\".\"LockedUser\" = (@3)))"
+                                              + " " + modelCompiled.OrderSql + " limit 1", tokens, token).ConfigureAwait(false);
 
-            sw.Stop();
+            var sessionCaseSearchCompiledSqlExecutionRepository = new SessionCaseSearchCompiledSqlExecutionRepository(dbContext, userName);
 
-            var modelInsert = new SessionCaseSearchCompiledSqlExecution
+            if (caseId == null)
             {
-                SessionCaseSearchCompiledSqlId = modelCompiled.Id,
-                Records = value.Count,
-                ResponseTime = sw.ElapsedTime().Milliseconds
-            };
+                var modelInsertNotFound = new SessionCaseSearchCompiledSqlExecution
+                {
+                    SessionCaseSearchCompiledSqlId = modelCompiled.Id,
+                    Records = 1,
+                    ResponseTime = sw.ElapsedTime().Milliseconds
+                };
 
-            var sessionCaseSearchCompiledSqlExecutionRepository =
-                new SessionCaseSearchCompiledSqlExecutionRepository(dbContext, userName);
+                await sessionCaseSearchCompiledSqlExecutionRepository.InsertAsync(modelInsertNotFound, token);
 
-            await sessionCaseSearchCompiledSqlExecutionRepository.InsertAsync(modelInsert, token);
-
-            var caseQueryDto = new CaseQueryDto();
-
-            if (value.Count <= 0)
-            {
                 throw new KeyNotFoundException();
             }
 
-            if (value[0].ContainsKey("Id"))
-            {
-                caseQueryDto.Id = value[0]["Id"]?.AsInt() ?? 0;
-            }
-            else
-            {
-                caseQueryDto.Id = 0;
-            }
+            var getCaseByIdQuery = new GetCaseByIdQuery(dbContext, userName);
+            var caseQueryDto = await getCaseByIdQuery.ExecuteAsync(caseId.Value, token);
 
-            if (value[0].ContainsKey("EntityAnalysisModelInstanceEntryGuid"))
-            {
-                caseQueryDto.EntityAnalysisModelInstanceEntryGuid
-                    = value[0]["EntityAnalysisModelInstanceEntryGuid"]?.AsGuid() ?? Guid.Empty;
-            }
-            else
-            {
-                caseQueryDto.EntityAnalysisModelInstanceEntryGuid = Guid.Empty;
-            }
+            sw.Stop();
 
-            if (value[0].ContainsKey("DiaryDate"))
+            var modelInsertFound = new SessionCaseSearchCompiledSqlExecution
             {
-                caseQueryDto.DiaryDate
-                    = value[0]["DiaryDate"]?.AsDateTime() ?? default(DateTime);
-            }
-            else
-            {
-                caseQueryDto.DiaryDate = default(DateTime);
-            }
+                SessionCaseSearchCompiledSqlId = modelCompiled.Id,
+                Records = 1,
+                ResponseTime = sw.ElapsedTime().Milliseconds
+            };
 
-            if (value[0].ContainsKey("CaseWorkflowGuid"))
-            {
-                caseQueryDto.CaseWorkflowGuid
-                    = value[0]["CaseWorkflowGuid"]?.AsGuid() ?? Guid.Empty;
-            }
-            else
-            {
-                caseQueryDto.CaseWorkflowGuid = Guid.Empty;
-            }
-
-            caseQueryDto.CaseWorkflowStatusGuid = value[0].ContainsKey("CaseWorkflowStatusGuid")
-                ? value[0]["CaseWorkflowStatusGuid"].AsGuid()
-                : Guid.Empty;
-
-            caseQueryDto.CreatedDate = value[0].ContainsKey("CreatedDate")
-                ? value[0]["CreatedDate"].AsDateTime()
-                : default(DateTime);
-
-            if (value[0].ContainsKey("Locked"))
-            {
-                caseQueryDto.Locked
-                    = value[0]["Locked"]?.AsShort() == 1;
-            }
-            else
-            {
-                caseQueryDto.Locked = false;
-            }
-
-            caseQueryDto.LockedUser =
-                value[0].ContainsKey("LockedUser") ? value[0]["LockedUser"]?.AsString() : null;
-
-            caseQueryDto.LockedDate = value[0].ContainsKey("LockedDate")
-                ? value[0]["LockedDate"].AsDateTime()
-                : default(DateTime);
-
-            if (value[0].ContainsKey("ClosedStatusId"))
-            {
-                caseQueryDto.ClosedStatusId
-                    = value[0]["ClosedStatusId"]?.AsShort() ?? 0;
-            }
-            else
-            {
-                caseQueryDto.ClosedStatusId = 0;
-            }
-
-            caseQueryDto.ClosedUser =
-                value[0].ContainsKey("ClosedUser") ? value[0]["ClosedUser"]?.AsString() : null;
-
-            caseQueryDto.CaseKey = value[0].ContainsKey("CaseKey") ? value[0]["CaseKey"]?.AsString() : null;
-
-            caseQueryDto.CaseKey = !value[0].ContainsKey("CaseKey") ? null : value[0]["CaseKey"]?.AsString();
-
-            if (value[0].ContainsKey("Diary"))
-            {
-                caseQueryDto.Diary
-                    = value[0]["Diary"]?.AsShort() == 1;
-            }
-            else
-            {
-                caseQueryDto.Diary = false;
-            }
-
-            caseQueryDto.DiaryUser =
-                value[0].ContainsKey("DiaryUser") ? value[0]["DiaryUser"]?.AsString() : null;
-
-            if (value[0].ContainsKey("Rating"))
-            {
-                caseQueryDto.Rating
-                    = value[0]["Rating"]?.AsShort() ?? 0;
-            }
-            else
-            {
-                caseQueryDto.Rating = 0;
-            }
-
-            caseQueryDto.CaseKeyValue = value[0].ContainsKey("CaseKeyValue")
-                ? value[0]["CaseKeyValue"]?.AsString()
-                : null;
-
-            if (value[0].ContainsKey("LastClosedStatus"))
-            {
-                caseQueryDto.LastClosedStatus
-                    = value[0]["LastClosedStatus"]?.AsShort() ?? 0;
-            }
-            else
-            {
-                caseQueryDto.LastClosedStatus = 0;
-            }
-
-            if (value[0].ContainsKey("EnableVisualisation"))
-            {
-                caseQueryDto.EnableVisualisation
-                    = value[0]["EnableVisualisation"]?.AsShort() == 1;
-            }
-            else
-            {
-                caseQueryDto.EnableVisualisation = false;
-            }
-
-            if (value[0].ContainsKey("VisualisationRegistryGuid"))
-            {
-                caseQueryDto.VisualisationRegistryGuid
-                    = value[0]["VisualisationRegistryGuid"]?.AsGuid() ?? Guid.Empty;
-            }
-            else
-            {
-                caseQueryDto.VisualisationRegistryGuid = Guid.Empty;
-            }
-
-            if (value[0].ContainsKey("ClosedStatusMigrationDate"))
-            {
-                caseQueryDto.ClosedStatusMigrationDate
-                    = value[0]["ClosedStatusMigrationDate"]?.AsDateTime() ?? default(DateTime);
-            }
-            else
-            {
-                caseQueryDto.ClosedStatusMigrationDate = default(DateTime);
-            }
-
-            caseQueryDto.ForeColor =
-                value[0].ContainsKey("ForeColor") ? value[0]["ForeColor"]?.AsString() : null;
-
-            caseQueryDto.BackColor =
-                value[0].ContainsKey("BackColor") ? value[0]["BackColor"]?.AsString() : null;
-
-            caseQueryDto.Json = value[0].ContainsKey("Json") ? value[0]["Json"]?.AsString() : null;
+            await sessionCaseSearchCompiledSqlExecutionRepository.InsertAsync(modelInsertFound, token);
 
             return await processCaseQuery.ProcessAsync(caseQueryDto, token);
         }
