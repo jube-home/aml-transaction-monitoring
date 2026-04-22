@@ -392,6 +392,7 @@ $(document).ready(function () {
                         var caseWorkflowItem = tree.dataItem(e.node);
                         if (caseWorkflowItem.guid === currentCaseWorkflowGuid
                             && (typeof currentCaseWorkflowFilterGuid === "undefined"
+                                || currentCaseWorkflowFilterGuid == null
                                 || currentCaseWorkflowFilterGuid === "00000000-0000-0000-0000-000000000000")) {
                             tree.findByUid(caseWorkflowItem.uid);
                             let selectItem = tree.findByUid(caseWorkflowItem.uid);
