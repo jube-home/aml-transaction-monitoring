@@ -70,33 +70,36 @@
     <button id="Login" type="submit">Log in</button>
     <span id="MessageAuthenticate"></span>
 </div>
-<div id="PasswordResetDiv">
-    <form id="FormChange">
+<template id="PasswordResetTemplate">
+    <div id="PasswordResetDiv">
+        <form id="FormChange">
+            <br/>
+            <table id="PasswordResetTable" class="tTStyle">
+                <tr>
+                    <td>
+                        <label for="NewPassword">New Password</label>
+                    </td>
+                    <td>
+                        <input type="password" id="NewPassword" name="NewPassword" class="k-textbox" autocomplete="new-password">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label for="VerifyNewPassword">Verify New Password</label>
+                    </td>
+                    <td>
+                        <input type="password" id="VerifyNewPassword" name="VerifyNewPassword" class="k-textbox" autocomplete="new-password">
+                    </td>
+                </tr>
+            </table>
+        </form>
         <br/>
-        <table id="PasswordResetTable" class="tTStyle">
-            <tr>
-                <td>
-                    <label for="NewPassword">New Password</label>
-                </td>
-                <td>
-                    <input type="password" id="NewPassword" name="NewPassword" class="k-textbox">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <label for="VerifyNewPassword">Verify New Password</label>
-                </td>
-                <td>
-                    <input type="password" id="VerifyNewPassword" name="VerifyNewPassword" class="k-textbox">
-                </td>
-            </tr>
-        </table>
-    </form>
-    <br/>
-    <div class="topPaddedGeneral">
-        <button id="Change" type="submit">Change Password and Login</button> <span id="MessageChange"></span>
+        <div class="topPaddedGeneral">
+            <button id="Change" type="submit">Change Password and Login</button> <span id="MessageChange"></span>
+        </div>
     </div>
-</div>
+</template>
+<div id="PasswordResetContainer"></div>
 @if (sandpit)
 {
     <hr/>

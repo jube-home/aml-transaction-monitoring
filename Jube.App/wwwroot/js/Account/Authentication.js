@@ -12,6 +12,7 @@
  */
 
 var isChange;
+var passwordResetRendered = false;
 
 $(document).ready(function () {
     $("#FormAuthenticate").kendoValidator({
@@ -66,12 +67,36 @@ $(document).ready(function () {
                     document.location.replace("/");
                 },
                 403: function (response) {
+                    if (!passwordResetRendered) {
+                        passwordResetRendered = true;
+                        $("#PasswordResetContainer").append($("#PasswordResetTemplate").prop("content").cloneNode(true));
+                        $("#FormChange").kendoValidator({
+                            errorTemplate: "<span class='errorMessage'>#=message#</span>",
+                            rules: {
+                                verifyPasswords: function (input) {
+                                    if (input.is("#VerifyNewPassword")) {
+                                        return input.val() === $("#NewPassword").val();
+                                    }
+                                    return true;
+                                }
+                            }
+                        });
+                        $("#Change").kendoButton({
+                            click: function (e) {
+                                if ($("#FormChange").data("kendoValidator").validate()) {
+                                    $("#MessageChange").css('color', 'green');
+                                    $("#MessageChange").html("Changing.");
+                                    $("#MessageServerValidation").hide();
+                                    $("#Change").data("kendoButton").enable(false);
+                                    PostAuthentication();
+                                }
+                            }
+                        });
+                    }
                     $("#MessageAuthenticate").html("green");
                     $("#MessageAuthenticate").html("Password must be changed.");
                     $("#UserName").attr("disabled", "disabled");
                     $("#Password").attr("disabled", "disabled");
-                    $("#PasswordResetDiv").show();
-                    $("#Change").show();
                     isChange = true;
                 },
                 401: function (response) {
