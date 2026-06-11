@@ -37,7 +37,7 @@
         <PackageReference Include="Isopoh.Cryptography.Argon2" Version="1.1.12"/>
         <PackageReference Include="linq2db" Version="3.6.0"/>
         <PackageReference Include="log4net" Version="2.0.14"/>
-        <PackageReference Include="MessagePack" Version="3.1.4"/>
+        <PackageReference Include="MessagePack" Version="3.1.7"/>
         <PackageReference Include="Microsoft.Extensions.Primitives" Version="9.0.10"/>
         <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.14.15">
             <PrivateAssets>all</PrivateAssets>
