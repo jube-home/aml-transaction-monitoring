@@ -18,7 +18,8 @@ var validationFail = "There is invalid data in the form. Please check fields and
 var priority = $("#Priority").kendoNumericTextBox({
     format: "n1",
     decimals: 1,
-    step: 0.1
+    step: 0.1,
+    min: 0
 });
 
 var gatewaySample = $("#GatewaySample").kendoSlider({
