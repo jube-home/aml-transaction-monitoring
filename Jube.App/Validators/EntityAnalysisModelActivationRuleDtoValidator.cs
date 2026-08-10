@@ -40,6 +40,7 @@ namespace Jube.App.Validators
             RuleFor(p => p.EntityAnalysisModelId).GreaterThan(0);
             RuleFor(p => p.Active).NotNull();
             RuleFor(p => p.Locked).NotNull();
+            RuleFor(p => p.Priority).GreaterThanOrEqualTo(0);
 
             var reviewStatusTypes = new List<int>
             {

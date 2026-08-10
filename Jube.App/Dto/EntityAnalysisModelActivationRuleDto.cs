@@ -22,6 +22,7 @@ namespace Jube.App.Dto
         public string BuilderRuleScript { get; set; }
         public string Json { get; set; }
         public string Name { get; set; }
+        public double Priority { get; set; }
         public double ResponseElevation { get; set; }
         public Guid CaseWorkflowGuid { get; set; }
         public bool EnableCaseWorkflow { get; set; }
