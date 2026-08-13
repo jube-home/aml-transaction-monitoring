@@ -51,17 +51,19 @@ $.getScript('/js/ace/ace.js', function () {
                 const editor = ace.edit("coder");
                 editor.setValue(data.html);
 
+                const $enableHttpEndpoint = $("#EnableHttpEndpoint");
                 if (data.enableHttpEndpoint) {
-                    $("#EnableHttpEndpoint").data("kendoSwitch").check(true);
+                    $enableHttpEndpoint.data("kendoSwitch").check(true);
                 } else {
-                    $("#EnableHttpEndpoint").data("kendoSwitch").check(false);
+                    $enableHttpEndpoint.data("kendoSwitch").check(false);
                 }
                 SetEnableHttpEndpoint();
 
+                const $enableNotification = $("#EnableNotification");
                 if (data.enableNotification) {
-                    $("#EnableNotification").data("kendoSwitch").check(true);
+                    $enableNotification.data("kendoSwitch").check(true);
                 } else {
-                    $("#EnableNotification").data("kendoSwitch").check(false);
+                    $enableNotification.data("kendoSwitch").check(false);
                 }
                 SetEnableNotification();
 
@@ -89,18 +91,20 @@ $.getScript('/js/ace/ace.js', function () {
 setInterval(CoderChangedCompile, 1000);
 
 function SetEnableHttpEndpoint() {
+    const $httpEndpointTable = $("#HttpEndpointTable");
     if ($('#EnableHttpEndpoint').prop('checked')) {
-        $('#HttpEndpointTable').show();
+        $httpEndpointTable.show();
     } else {
-        $('#HttpEndpointTable').hide();
+        $httpEndpointTable.hide();
     }
 }
 
 function SetEnableNotification() {
+    const $notificationTable = $("#NotificationTable");
     if ($('#EnableNotification').prop('checked')) {
-        $('#NotificationTable').show();
+        $notificationTable.show();
     } else {
-        $('#NotificationTable').hide();
+        $notificationTable.hide();
     }
 }
 

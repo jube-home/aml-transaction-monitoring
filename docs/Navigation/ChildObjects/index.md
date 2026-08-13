@@ -5,9 +5,7 @@ nav_order: 4
 parent: Navigation
 ---
 
-🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
-💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
-developer.
+🚀 Get to pre-production in weeks, not months, with private [training](https://www.jube.io/jube-training) direct from Jube's developer — real sovereignty, zero vendor lock-in.
 
 # Child Objects
 
@@ -59,7 +57,7 @@ Noting also,  in this example,  the name having been changed in the tree for sel
 
 As with update, to delete a child object,  start by expanding on the tree as described in the Navigate subsection of this section of the documentation,  then click on the child entry to be deleted.  Upon the child object being expanded into the right hand pane,  click on the Delete button to confirm that this child object requires deletion:
 
-![Image](RequestXPathNameUpdatedInTree.png)
+![Image](DeleteButtonForRequestXPath.png)
 
 Upon clicking Delete,  a prompt will be displayed which will ask for confirmation of this delete:
 
@@ -84,6 +82,8 @@ select "Name","Version","Deleted","InheritedId"
 from "EntityAnalysisModelRequestXpath"
 Order By "Id" desc
 ```
+
+![Image](ExamineDeletedAndUpdatedTable.png)
 
 It can be seen that old versions of the entries are still present, with the InheritedId navigating to the record that came before in the version chain.
 

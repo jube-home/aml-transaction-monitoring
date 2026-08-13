@@ -39,6 +39,9 @@ var Status;
 var Displays;
 var Forms;
 var ResponsePayload;
+var AllowedTags;
+var EntityAnalysisModelId;
+
 
 function formatNote(id, rawNote, createdUser, createdDate, actionId, priorityId) {
     let actionName;
@@ -57,16 +60,30 @@ function formatNote(id, rawNote, createdUser, createdDate, actionId, priorityId)
         }
     }
 
-    return '<div id="note_' + id + '">'
-        + '<hr/>'
-        + rawNote
-        + '<br/>'
-        + '<br/>'
-        + 'Created User: ' + createdUser + '<br/>'
-        + 'Created Date: ' + createdDate + '<br/>'
-        + 'Action: ' + actionName + '<br/>'
-        + 'Priority: ' + priorityName
-        + '<hr/></div>';
+    return `
+        <div id="note_${id}" style="
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 12px 16px;
+            margin: 8px 0;
+            background: #fafafa;
+        ">
+            <div style="margin-bottom: 10px; line-height: 1.5;">${rawNote}</div>
+            <div style="
+                font-size: 0.85em;
+                color: #666;
+                border-top: 1px solid #eee;
+                padding-top: 8px;
+                display: grid;
+                grid-template-columns: auto 1fr;
+                gap: 2px 12px;
+            ">
+                <span style="font-weight:600;">User</span>      <span>${createdUser}</span>
+                <span style="font-weight:600;">Date</span>      <span>${new Date(createdDate).toLocaleString()}</span>
+                <span style="font-weight:600;">Action</span>    <span>${actionName ?? '—'}</span>
+                <span style="font-weight:600;">Priority</span>  <span>${priorityName ?? '—'}</span>
+            </div>
+        </div>`;
 }
 
 function BuildNotes() {
@@ -89,15 +106,17 @@ function BuildNotes() {
 }
 
 $(document).ready(function () {
-    tabstrip = $("#tabstrip").kendoTabStrip({animation: false});
+    const $tabstrip = $("#tabstrip");
+    tabstrip = $tabstrip.kendoTabStrip({animation: false});
     MainTab = $("#MainTab").kendoTabStrip({animation: false});
 
     $("#editor").kendoEditor({
         keydown: function () {
+            var $addNote = $("#AddNote");
             if ($("#editor").data("kendoEditor").value().length > 0) {
-                $("#AddNote").data("kendoButton").enable(true);
+                $addNote.data("kendoButton").enable(true);
             } else {
-                $("#AddNote").data("kendoButton").enable(false);
+                $addNote.data("kendoButton").enable(false);
             }
         },
         tools: [
@@ -132,7 +151,7 @@ $(document).ready(function () {
             {
                 name: "fontName",
                 items: [
-                    {text: "Andale Mono", value: "\"Andale Mono\""}, // Font-family names composed of several words should be wrapped in \" \"
+                    {text: "Andale Mono", value: "\"Andale Mono\""},
                     {text: "Arial", value: "Arial"},
                     {text: "Arial Black", value: "\"Arial Black\""},
                     {text: "Book Antiqua", value: "\"Book Antiqua\""},
@@ -155,9 +174,10 @@ $(document).ready(function () {
         ]
     });
 
-    $("#AddNote").kendoButton();
+    var $addNote = $("#AddNote");
+    $addNote.kendoButton();
 
-    $("#AddNote").click(function () {
+    $addNote.click(function () {
         $("#AddNote").data("kendoButton").enable(false);
 
         let rawNote = $("#editor").data("kendoEditor").value();
@@ -203,41 +223,45 @@ $(document).ready(function () {
         dataValueField: "value"
     });
 
-    $("#Status").change(function () {
+    var $status = $("#Status");
+    $status.change(function () {
         UpdateCase(2);
     });
 
-    $("#Peek").kendoButton();
+    var $peek = $("#Peek");
+    $peek.kendoButton();
 
-    $("#Peek").click(function () {
+    $peek.click(function () {
         window.location.href = '/Case/CaseSearch';
     });
 
-    $("#CaseFormSubmitButton").kendoButton();
+    var $caseFormSubmitButton = $("#CaseFormSubmitButton");
+    $caseFormSubmitButton.kendoButton();
 
-    $("#Skim").kendoButton();
+    var $skim = $("#Skim");
+    $skim.kendoButton();
 
-    $("#Skim").click(function () {
+    $skim.click(function () {
         tabstrip.select(GetTab(1));
         if (CaseId) {
             CaseId = null;
         }
 
-        $('#journal').kendoGrid('destroy').empty();
+        safeDestroyGrid('#journal');
+        safeDestroyGrid('#forms');
+        safeDestroyGrid('#audit');
         $('#notes').empty();
-        $('#audit').kendoGrid('destroy').empty();
-        $('#forms').kendoGrid('destroy').empty();
-        const upload = $("#files").data('kendoUpload');
-        upload.destroy();
-        $(".k-upload").remove();
+        safeDestroyUpload();
         GetCase();
     });
 
-    $("#RefreshCaseJournal").click(function (e) {
+    var $refreshCaseJournal = $("#RefreshCaseJournal");
+    $refreshCaseJournal.click(function (e) {
         e.preventDefault();
-        $("#Drilling").text('Fetching ' + CaseKey + ' = ' + CaseKeyValue);
-        $("#Drilling").show();
-        $('#journal').kendoGrid('destroy').empty();
+        var $drilling = $("#Drilling");
+        $drilling.text('Fetching ' + CaseKey + ' = ' + CaseKeyValue);
+        $drilling.show();
+        safeDestroyGrid('#journal');
         DrillName = CaseKey;
         DrillValue = CaseKeyValue;
 
@@ -256,11 +280,13 @@ $(document).ready(function () {
             });
     });
 
-    $("#Drill").click(function (e) {
+    var $drill = $("#Drill");
+    $drill.click(function (e) {
         e.preventDefault();
-        $("#Drilling").text('Fetching ' + DrillName + ' = ' + DrillValue);
-        $("#Drilling").show();
-        $('#journal').kendoGrid('destroy').empty();
+        var $drilling = $("#Drilling");
+        $drilling.text('Fetching ' + DrillName + ' = ' + DrillValue);
+        $drilling.show();
+        safeDestroyGrid('#journal');
 
         $.get("/api/GetCaseJournalQuery",
             {
@@ -277,7 +303,7 @@ $(document).ready(function () {
             });
     });
 
-    $("#Status").kendoDropDownList({
+    $status.kendoDropDownList({
         dataTextField: "text",
         dataValueField: "value"
     });
@@ -290,7 +316,7 @@ $(document).ready(function () {
         }
     });
 
-    $("#CaseFormSubmitButton").click(function (e) {
+    $caseFormSubmitButton.click(function (e) {
         e.preventDefault();
         let clonedArray = {};
         const $inputs = jQuery('#CaseFormHTML :input');
@@ -298,7 +324,7 @@ $(document).ready(function () {
             clonedArray[this.id] = jQuery(this).val();
         });
 
-        const buttonObject = $("#CaseFormSubmitButton").kendoButton().data("kendoButton");
+        const buttonObject = $caseFormSubmitButton.kendoButton().data("kendoButton");
         buttonObject.enable(false);
         $("#PleaseWaitSpan").show();
 
@@ -315,24 +341,25 @@ $(document).ready(function () {
                 caseId: CaseId
             }),
             success: function () {
-                $("#CaseFormResponse").show();
+                var $caseFormResponse = $("#CaseFormResponse");
+                $caseFormResponse.show();
                 $("#CaseFormSubmitDiv").hide();
                 $("#CaseFormHTML").hide();
 
-                $("#CaseFormResponse").css('color', 'green');
-                $("#CaseFormResponse").html("Done.");
+                $caseFormResponse.css('color', 'green');
+                $caseFormResponse.html("Done.");
 
                 $('#forms').data("kendoGrid").dataSource.read();
             }
         });
     });
 
-    const refreshCaseJournal = $("#RefreshCaseJournal").kendoButton();
+    const refreshCaseJournal = $refreshCaseJournal.kendoButton();
     refreshCaseJournal.width(70);
 
-    $("#Drill").kendoButton();
-    $("#Drill").data("kendoButton");
-    $("#Drill").width(70);
+    $drill.kendoButton();
+    $drill.data("kendoButton");
+    $drill.width(70);
 
     $("#ActivationsOnly").kendoSwitch();
 
@@ -416,13 +443,13 @@ $(document).ready(function () {
     SessionCaseSearchCompiledSqlControllerGuid = getUrlVars()["SessionCaseSearchCompiledSqlControllerGuid"];
 
     if (!SessionCaseSearchCompiledSqlControllerGuid) {
-        $('#Skim').hide();
+        $skim.hide();
     } else {
-        $('#Skim').show();
+        $skim.show();
     }
 
     GetCase();
-    tabstrip = $("#tabstrip").kendoTabStrip().data("kendoTabStrip");
+    tabstrip = $tabstrip.kendoTabStrip().data("kendoTabStrip");
 });
 
 function LockCaseBar(lock) {
@@ -432,22 +459,25 @@ function LockCaseBar(lock) {
     const picker = $("#datetimepicker").data("kendoDateTimePicker");
     const next = $("#Skim").data("kendoButton");
     const back = $("#Peek").data("kendoButton");
+    const $locked = $("#Locked");
+    const $diary = $("#Diary");
+    const $rate = $('#Rate');
     if (lock) {
         closed.enable(false);
-        $("#Locked").data("kendoSwitch").enable(false);
-        $("#Diary").data("kendoSwitch").enable(false);
+        $locked.data("kendoSwitch").enable(false);
+        $diary.data("kendoSwitch").enable(false);
         lockedUser.enable(false);
-        $('#Rate').barrating('readonly', true);
+        $rate.barrating('readonly', true);
         picker.enable(false);
         status.enable(false);
         next.enable(false);
         back.enable(false);
     } else {
         closed.enable(true);
-        $("#Locked").data("kendoSwitch").enable(true);
-        $("#Diary").data("kendoSwitch").enable(true);
+        $locked.data("kendoSwitch").enable(true);
+        $diary.data("kendoSwitch").enable(true);
         lockedUser.enable(true);
-        $('#Rate').barrating('readonly', false);
+        $rate.barrating('readonly', false);
         status.enable(true);
         picker.enable(true);
         next.enable(true);
@@ -457,9 +487,10 @@ function LockCaseBar(lock) {
 
 function UpdateCaseTimeout() {
     if (!PendingUpdateCaseInstruction) {
-        $('#Updating').text("Updating");
-        $('#Updating').show();
-        $('#Updating').show();
+        var $updating = $('#Updating');
+        $updating.text("Updating");
+        $updating.show();
+        $updating.show();
 
         LockCaseBar(true);
 
@@ -472,7 +503,7 @@ function UpdateCaseTimeout() {
             lockedUser: autocomplete.value(),
             CaseWorkflowStatusGuid: $("#Status").data("kendoDropDownList").value(),
             diary: $("#Diary").prop("checked"),
-            diaryDate: $("#datetimepicker").data("kendoDateTimePicker").value(),
+            diaryDate: $("#datetimepicker").data("kendoDateTimePicker").value().toISOString(),
             id: CaseId,
             rating: $('#Rate').val(),
             payload: valuesJson
@@ -485,29 +516,28 @@ function UpdateCaseTimeout() {
             dataType: "json",
             data: JSON.stringify(data),
             error: function (jqXHR, textStatus, errorThrown) {
+                var $errorMessage = $("#ErrorMessage");
                 if (jqXHR.status === 400) {
-                    $("#ErrorMessage").show();
+                    $errorMessage.show();
                     let responseObject = jQuery.parseJSON(jqXHR.responseText);
                     DisplayServerValidationErrors(responseObject);
                     FadeInAfterUpdate();
                 } else {
-                    $("#ErrorMessage").html(processingFailed);
+                    $errorMessage.html(processingFailed);
                 }
             },
             success: function () {
+                var $notes = $('#notes');
                 if (PendingUpdateCaseInstructionRefreshDisplay === 1) {
-                    $('#journal').kendoGrid('destroy').empty();
-                    $('#notes').kendoGrid('destroy').empty();
-                    $('#forms').kendoGrid('destroy').empty();
-                    $('#audit').kendoGrid('destroy').empty();
-
-                    const upload = $("#files").data('kendoUpload');
-                    upload.destroy();
-
-                    $(".k-upload").remove();
-
+                    safeDestroyUpload();
+                    safeDestroyGrid('#journal');
+                    safeDestroyGrid('#forms');
+                    safeDestroyGrid('#audit');
+                    $notes.empty();
                     GetCase();
                 } else if (PendingUpdateCaseInstructionRefreshDisplay === 2) {
+                    safeDestroyUpload();
+                    $notes.empty();
                     GetCase();
                 }
                 FadeInAfterUpdate();
@@ -540,7 +570,8 @@ function UpdateCase(refreshDisplay) {
 }
 
 function CallMacro(e) {
-    $("#PleaseWaitMacro").show();
+    const $pleaseWaitMacro = $("#PleaseWaitMacro");
+    $pleaseWaitMacro.show();
     const macrosLength = Macros.length;
     for (let i = 0; i < macrosLength; i++) {
         if (Macros[i].id === e) {
@@ -569,25 +600,24 @@ function CallMacro(e) {
             break;
         }
     }
-    $("#PleaseWaitMacro").hide();
+    $pleaseWaitMacro.hide();
 }
 
 function NavigateCase(newCaseId) {
     CaseId = newCaseId;
     $("#ErrorOnUpdate").hide();
-    $('#journal').kendoGrid('destroy').empty();
+    safeDestroyGrid('#journal');
+    safeDestroyGrid('#forms');
+    safeDestroyGrid('#audit');
     $('#notes').empty();
-    $('#audit').kendoGrid('destroy').empty();
-    $('#forms').kendoGrid('destroy').empty();
-    const upload = $("#files").data('kendoUpload');
-    upload.destroy();
-    $(".k-upload").remove();
+    safeDestroyUpload();
     GetCase();
 }
 
 function GetCase() {
-    $('#Updating').text("Fetching");
-    $('#Updating').show();
+    var $updating = $('#Updating');
+    $updating.text("Fetching");
+    $updating.show();
 
     $.get("../api/UserInTenant",
         function (data) {
@@ -620,8 +650,9 @@ function GetCase() {
                         SetOutCase(data);
                     },
                     error: function (xhr, status, error) {
-                        $('#Updating').text("Not Found");
-                        $('#Updating').show();
+                        var $updating = $('#Updating');
+                        $updating.text("Not Found");
+                        $updating.show();
                     }
                 });
             } else {
@@ -633,17 +664,18 @@ function GetCase() {
                     },
                     error: function () {
                         id = setInterval(function () {
+                                var $updating = $('#Updating');
                                 counter--;
                                 if (counter < 0) {
                                     clearInterval(id);
-                                    $('#Updating').hide();
+                                    $updating.hide();
                                     counter = 10;
                                     GetCase();
                                 } else {
-                                    $('#Updating').text("Nothing to skim retrying in " +
+                                    $updating.text("Nothing to skim retrying in " +
                                         counter.toString() +
                                         ".");
-                                    $('#Updating').show();
+                                    $updating.show();
                                 }
                             },
                             1000);
@@ -659,6 +691,7 @@ function SetOutCase(data) {
     } else {
         $('#Updating').text("");
 
+        EntityAnalysisModelId = data.entityAnalysisModelId;
         CaseKey = data.caseKey;
         CaseKeyValue = data.caseKeyValue;
         DrillName = CaseKey;
@@ -666,53 +699,59 @@ function SetOutCase(data) {
         CaseId = data.id;
         CaseWorkflowGuid = data.caseWorkflowGuid;
 
+        const $caseStatusColour = $('#CaseStatusColour');
         switch (data.lastClosedStatus) {
             case 0:
-                $('#CaseStatusColour').css("color", "red");
+                $caseStatusColour.css("color", "red");
                 break;
             case 1:
-                $('#CaseStatusColour').css("color", "blue");
+                $caseStatusColour.css("color", "blue");
                 break;
             case 2:
-                $('#CaseStatusColour').css("color", "green");
+                $caseStatusColour.css("color", "green");
                 break;
             case 3:
-                $('#CaseStatusColour').css("color", "yellow");
+                $caseStatusColour.css("color", "yellow");
                 break;
             case 4:
-                $('#CaseStatusColour').css("color", "silver");
+                $caseStatusColour.css("color", "silver");
                 break;
             default:
-                $('#CaseStatusColour').css("color", "teal");
+                $caseStatusColour.css("color", "teal");
         }
 
         $("#ClosedStatus").data("kendoDropDownList").value(data.closedStatusId);
 
+        const $lockedSwitch = $("#Locked");
         if (data.locked) {
-            $("#Locked").data("kendoSwitch").check(true);
+            $lockedSwitch.data("kendoSwitch").check(true);
         } else {
-            $("#Locked").data("kendoSwitch").check(false);
+            $lockedSwitch.data("kendoSwitch").check(false);
         }
 
+        const $diarySwitch = $("#Diary");
         if (data.diary) {
-            $("#Diary").data("kendoSwitch").check(true);
+            $diarySwitch.data("kendoSwitch").check(true);
         } else {
-            $("#Diary").data("kendoSwitch").check(false);
+            $diarySwitch.data("kendoSwitch").check(false);
         }
 
-        $("#datetimepicker").data("kendoDateTimePicker").value(data.diaryDate);
+        const picker = $("#datetimepicker").data("kendoDateTimePicker");
+        picker.value(new Date(data.diaryDate));
+
         $("#ClosedUser").html(data.closedUser);
         $("#LockedUser").data("kendoDropDownList").value(data.lockedUser);
         $("#DiaryUser").html(data.diaryUser);
 
+        const $lastClosedStatus = $("#LastClosedStatus");
         if (data.lastClosedStatus === 0) {
-            $("#LastClosedStatus").html('Open');
+            $lastClosedStatus.html('Open');
         } else if (data.lastClosedStatus === 1) {
-            $("#LastClosedStatus").html('Suspend Open');
+            $lastClosedStatus.html('Suspend Open');
         } else if (data.lastClosedStatus === 2) {
-            $("#LastClosedStatus").html('Suspend Closed');
+            $lastClosedStatus.html('Suspend Closed');
         } else if (data.lastClosedStatus === 3) {
-            $("#LastClosedStatus").html('Closed');
+            $lastClosedStatus.html('Closed');
         }
 
         $("#CaseId").text(data.id);
@@ -720,8 +759,9 @@ function SetOutCase(data) {
         $("#CaseKeyValue").text(data.caseKeyValue);
         $('#Rate').barrating('set', data.rating);
 
-        $("#StatusTable").css('background-color', data.backColor);
-        $("#StatusTable").css('color', data.foreColor);
+        const $statusTable = $("#StatusTable");
+        $statusTable.css('background-color', data.backColor);
+        $statusTable.css('color', data.foreColor);
 
         createFilesUpload();
         createActivations(data.activation);
@@ -751,7 +791,6 @@ function SetOutCase(data) {
             });
 
         ResponsePayload = data.formattedPayload;
-
 
         if (Actions === undefined) {
             $.get("../api/CaseWorkflowPriority/ByCasesWorkflowGuidActiveOnly/" + CaseWorkflowGuid,
@@ -849,6 +888,7 @@ function SetOutCase(data) {
             }
         });
 
+        safeDestroyGrid('#cases');
         $("#cases").kendoGrid({
             dataSource: dataSourceCases,
             pageable: false,
@@ -903,7 +943,7 @@ function SetOutCase(data) {
                         after: {type: "string"},
                         caseId: {type: "number"},
                         createdUser: {type: "string"},
-                        createdDate: {type: "string"}
+                        createdDate: {type: "date"}
                     }
                 }
             }
@@ -933,12 +973,13 @@ function SetOutCase(data) {
                         name: {type: "string"},
                         caseId: {type: "string"},
                         createdUser: {type: "string"},
-                        createdDate: {type: "string"}
+                        createdDate: {type: "date"}
                     }
                 }
             }
         });
 
+        safeDestroyGrid('#audit');
         $("#audit").kendoGrid({
             dataSource: dataSourceAudit,
             height: 446,
@@ -955,10 +996,11 @@ function SetOutCase(data) {
                         "<a href='\\#' onclick='NavigateCase(#=caseId#)'>#=caseId#</a>"
                 },
                 {field: "createdUser", title: "Created User"},
-                {field: "createdDate", title: "Created Date"}
+                {field: "createdDate", type: "date", title: "Created Date"}
             ]
         });
 
+        safeDestroyGrid('#forms');
         $("#forms").kendoGrid({
             dataSource: dataSourceForms,
             height: 446,
@@ -974,7 +1016,7 @@ function SetOutCase(data) {
                         "<a href='\\#' onclick='NavigateCase(#=caseId#)'>#=caseId#</a>"
                 },
                 {field: "createdUser", title: "User"},
-                {field: "createdDate", title: "Created Date"}
+                {field: "createdDate", type: "date", title: "Created Date"}
             ]
         });
 
@@ -1017,8 +1059,9 @@ function SetOutCase(data) {
             });
         }
 
-        $("#Drilling").text('Fetching ' + CaseKey + ' = ' + CaseKeyValue);
-        $("#Drilling").show();
+        const $drilling = $("#Drilling");
+        $drilling.text('Fetching ' + CaseKey + ' = ' + CaseKeyValue);
+        $drilling.show();
 
         $.get("/api/GetCaseJournalQuery",
             {
@@ -1149,15 +1192,16 @@ function onSelectCaseFormMenu(e) {
     $.each(Forms,
         function (i, value) {
             if (value.id === SelectedCasesWorkflowFormID) {
+                const $caseFormHTML = $("#CaseFormHTML");
                 $("#CaseFormSubmitDiv").show();
-                $("#CaseFormHTML").show();
+                $caseFormHTML.show();
                 $("#PleaseWaitSpan").hide();
                 $("#CaseFormResponse").hide();
 
                 const buttonObject = $("#CaseFormSubmitButton").kendoButton().data("kendoButton");
                 buttonObject.enable(true);
 
-                $("#CaseFormHTML").html(value.html);
+                $caseFormHTML.html(value.html);
                 return false;
             }
         });
@@ -1205,8 +1249,9 @@ function DisplayMenu(selectedCasesWorkflowDisplayId) {
         html += '</table></div>';
 
         $('#CaseDisplayHTML').html(html);
-        $("#PayloadTable").css('background-color', tableBackColor);
-        $("#PayloadTable").css('color', tableForeColor);
+        const $payloadTable = $("#PayloadTable");
+        $payloadTable.css('background-color', tableBackColor);
+        $payloadTable.css('color', tableForeColor);
     } else {
         $.each(Displays,
             function (i, displayValue) {
@@ -1223,8 +1268,9 @@ function DisplayMenu(selectedCasesWorkflowDisplayId) {
                         dataType: "json",
                         data: JSON.stringify(data),
                         success: function (data) {
-                            $("#CaseDisplayHTML").html(data);
-                            $("#CaseDisplayHTML").show();
+                            const $caseDisplayHTML = $("#CaseDisplayHTML");
+                            $caseDisplayHTML.html(data);
+                            $caseDisplayHTML.show();
                         }
                     });
 
@@ -1276,70 +1322,203 @@ function onChanged() {
     }
 }
 
+function buildTagColumn(savedWidth) {
+    return {
+        field: "Tag",
+        title: "Tags",
+        width: savedWidth || 240,
+        sortable: false,
+        filterable: false,
+        reorderable: false,
+        template: function (dataItem) {
+            return `<span class="tag-cell" data-uid="${dataItem.uid}"></span>`;
+        }
+    };
+}
+
+function bindTagWidgets(grid) {
+    grid.tbody.find(".tag-cell").each(function () {
+        const $cell = $(this);
+        const uid = $cell.data("uid");
+        const dataItem = grid.dataSource.getByUid(uid);
+
+        if (!dataItem) {
+            console.warn("bindTagWidgets: no dataItem found for uid", uid);
+            return;
+        }
+
+        if ($cell.data("kendoMultiSelect")) return;
+
+        let tagSaveTimer = null;
+
+        $cell.kendoMultiSelect({
+            dataSource: AllowedTags,
+            dataTextField: "name",
+            dataValueField: "name",
+            value: (dataItem.Tag || []).map(t => typeof t === "object" ? t.name : t),
+            autoClose: false,
+            change: function (e) {
+                const selectedTags = this.value();
+                const previous = (dataItem.Tag || []).slice();
+
+                dataItem.set("Tag", selectedTags);
+
+                clearTimeout(tagSaveTimer);
+                tagSaveTimer = setTimeout(function () {
+                    $.ajax({
+                        url: "/api/Archive/Tag",
+                        method: "PUT",
+                        contentType: "application/json",
+                        data: JSON.stringify({
+                            entityAnalysisModelInstanceEntryGuid: dataItem.EntityAnalysisModelInstanceEntryGuid,
+                            tag: selectedTags
+                        }),
+                        error: function () {
+                            e.sender.value(previous);
+                            dataItem.set("Tag", previous);
+                            alert("Failed to save tags. Please try again.");
+                        }
+                    });
+                }, 800);
+            }
+        });
+    });
+}
+
 function generateGridCase(gridData) {
-    let parseFunction;
-    if (dateFields.length > 0) {
-        // noinspection JSUnusedAssignment
-        parseFunction = function (response) {
-            for (let i = 0; i < response.length; i++) {
-                for (let fieldIndex = 0; fieldIndex < dateFields.length; fieldIndex++) {
-                    const record = response[i];
-                    record[dateFields[fieldIndex]] = kendo.parseDate(record[dateFields[fieldIndex]]);
+    $.get("/api/EntityAnalysisModelTag/ByEntityAnalysisModelId/" + EntityAnalysisModelId)
+        .then(function (allowedTags) {
+            AllowedTags = allowedTags;
+
+            const schema = gridData.schema;
+            const rows = gridData.rows;
+
+            dateFields = Object.entries(schema)
+                .filter(([, type]) => type === "date")
+                .map(([name]) => name);
+
+            let parseFunction;
+            if (dateFields.length > 0) {
+                parseFunction = function (response) {
+                    for (let i = 0; i < response.length; i++) {
+                        for (let fieldIndex = 0; fieldIndex < dateFields.length; fieldIndex++) {
+                            const record = response[i];
+                            record[dateFields[fieldIndex]] = kendo.parseDate(record[dateFields[fieldIndex]]);
+                        }
+                    }
+                    return response;
+                };
+            }
+
+            const model = generateModel(schema);
+            const {columns: dataColumns, savedTagWidth} = generateColumns(schema);
+            const columns = [buildTagColumn(savedTagWidth), ...dataColumns];
+
+            if (dateFields.length > 0) {
+                for (let i = 0; i < rows.length; i++) {
+                    for (let f = 0; f < dateFields.length; f++) {
+                        rows[i][dateFields[f]] = kendo.parseDate(rows[i][dateFields[f]]);
+                    }
                 }
             }
-            return response;
-        };
-    }
 
-    const model = generateModel(gridData[0]);
-    const columns = generateColumns(gridData[0]);
-
-    $("#journal").kendoGrid({
-        toolbar: ["excel"],
-        groupable: true,
-        excel: {
-            fileName: "Case Key Journal " + CaseKey + ".xlsx",
-            proxyURL: "https://proxy.jube.io",
-            filterable: true,
-            allPages: true
-        },
-        selectable: "cell",
-        dataSource: {
-            data: gridData,
-            pageSize: 10,
-            schema: {
-                model: model
-            }
-        },
-        dataBound: SetPlacementColor,
-        change: onChanged,
-        height: 446,
-        scrollable: true,
-        columns: columns,
-        filterable: true,
-        sortable: true,
-        resizable: true,
-        reorderable: true,
-        pageable: {
-            refresh: false,
-            pageSizes: true,
-            buttonCount: 5
-        },
-        columnResize: function () {
-            const that = this;
-            setTimeout(function () {
-                    SaveCaseKeyJournalSession(that.columns);
+            $("#journal").kendoGrid({
+                toolbar: ["excel"],
+                groupable: true,
+                excel: {
+                    fileName: "Case Key Journal " + CaseKey + ".xlsx",
+                    proxyURL: "https://proxy.jube.io",
+                    filterable: true,
+                    allPages: true
                 },
-                5);
-        },
-        columnReorder: function () {
-            const that = this;
-            setTimeout(function () {
-                    SaveCaseKeyJournalSession(that.columns);
+                selectable: "cell",
+                dataSource: {
+                    data: rows,
+                    pageSize: rows.length,
+                    schema: {
+                        model: model,
+                        parse: parseFunction
+                    }
                 },
-                5);
-        }
-    });
+                dataBound: SetPlacementColorAndSetTags,
+                change: onChanged,
+                height: 1200,
+                scrollable: true,
+                columns: columns,
+                filterable: {
+                    operators: {
+                        string: {
+                            contains: "Contains",
+                            eq: "Is equal to",
+                            neq: "Is not equal to",
+                            startswith: "Starts with",
+                            endswith: "Ends with",
+                            doesnotcontain: "Does not contain",
+                            isempty: "Is empty",
+                            isnotempty: "Is not empty",
+                            isnull: "Is null",
+                            isnotnull: "Is not null"
+                        },
+                        number: {
+                            gte: "Is greater than or equal to",
+                            gt: "Is greater than",
+                            eq: "Is equal to",
+                            neq: "Is not equal to",
+                            lte: "Is less than or equal to",
+                            lt: "Is less than",
+                            isnull: "Is null",
+                            isnotnull: "Is not null"
+                        },
+                        date: {
+                            gte: "Is after or equal to",
+                            gt: "Is after",
+                            lte: "Is before or equal to",
+                            lt: "Is before",
+                            eq: "Is equal to",
+                            neq: "Is not equal to",
+                            isnull: "Is null",
+                            isnotnull: "Is not null"
+                        }
+                    }
+                },
+                sortable: true,
+                resizable: true,
+                reorderable: true,
+                columnMenu: true,
+                columnHide: function () {
+                    const that = this;
+                    setTimeout(function () {
+                        SaveCaseKeyJournalSession(that.columns);
+                    }, 5);
+                },
+                columnShow: function () {
+                    const that = this;
+                    setTimeout(function () {
+                        SaveCaseKeyJournalSession(that.columns);
+                    }, 5);
+                },
+                pageable: {
+                    refresh: false,
+                    pageSizes: true,
+                    buttonCount: 5
+                },
+                columnResize: function () {
+                    const that = this;
+                    setTimeout(function () {
+                        SaveCaseKeyJournalSession(that.columns);
+                    }, 5);
+                },
+                columnReorder: function () {
+                    const that = this;
+                    setTimeout(function () {
+                        SaveCaseKeyJournalSession(that.columns);
+                    }, 5);
+                }
+            });
+        })
+        .fail(function (xhr, status, err) {
+            console.error("Failed to load allowable tags:", err);
+        });
 }
 
 function GetCellPosition(columns, name) {
@@ -1350,10 +1529,14 @@ function GetCellPosition(columns, name) {
     }
 }
 
-function SetPlacementColor() {
+function SetPlacementColorAndSetTags() {
     try {
-        const dataElement = $("#journal").find(".k-grid-content");
-        $("#journal").find(".k-grid-toolbar").insertAfter(dataElement);
+        const $journal = $('#journal');
+        const grid = $journal.data('kendoGrid');
+        bindTagWidgets(grid, AllowedTags);
+
+        const dataElement = $journal.find(".k-grid-content");
+        $journal.find(".k-grid-toolbar").insertAfter(dataElement);
         const fakeScroll = $("#dummyScroll");
         fakeScroll.width(dataElement.children(0).width() + 'px');
 
@@ -1365,8 +1548,6 @@ function SetPlacementColor() {
             dataElement.scrollLeft($("#dummyScrollWrapper").scrollLeft());
         });
 
-        const grid = $('#journal').data('kendoGrid');
-
         const rows = grid.tbody.children();
         for (let j = 0; j < rows.length; j++) {
             const row = $(rows[j]);
@@ -1375,8 +1556,8 @@ function SetPlacementColor() {
             const boldLine = dataItem.get("BoldLine");
             if (boldLine) {
                 const boldLineMatchOnKey = dataItem.get(boldLine.boldLineKey);
-                // noinspection JSReferencingMutableVariableFromClosure
-                const matchValue = ResponsePayload.find(element => element.name === boldLine.boldLineKey).value;
+                const payloadEntry = ResponsePayload.find(element => element.name === boldLine.boldLineKey);
+                const matchValue = payloadEntry?.value;
 
                 if (boldLineMatchOnKey === matchValue) {
                     row.css("color", boldLine.boldLineFormatForeColor);
@@ -1391,6 +1572,8 @@ function SetPlacementColor() {
                     const cell = cellFormats[c];
                     const position = GetCellPosition(grid.columns, cell.cellFormatKey);
                     const td = row.children()[position];
+                    if (!td) continue;
+
                     if (cell.cellFormatForeRow === true && cell.cellFormatBackRow === true) {
                         row.css("color", cell.cellFormatForeColor);
                         row.css("background-color", cell.cellFormatBackColor);
@@ -1492,7 +1675,7 @@ function SaveCaseKeyJournalSession(columns) {
         contentType: "application/json; charset=utf-8",
         dataType: "json",
         data: JSON.stringify({
-            caseWorkflowGuid: caseWorkflowGuid,
+            caseWorkflowGuid: CaseWorkflowGuid,
             json: JSON.stringify(columns)
         }),
         success: function (data) {
@@ -1530,11 +1713,16 @@ function ExistsColumnInNewColumns(name, columns) {
 function isHidden(name) {
     if (name === 'BoldLine') {
         return true;
-    } else return name === 'CellFormat';
+    } else if (name === 'CellFormat') {
+        return true;
+    } else {
+        return name === 'Tag';
+    }
 }
 
 function generateColumns(gridData) {
     const columns = [];
+    let savedTagWidth = null;
 
     $.ajax({
         url: "../api/SessionCaseJournal/ByCasesWorkflowGuid/" + CaseWorkflowGuid,
@@ -1552,15 +1740,18 @@ function generateColumns(gridData) {
                 const savedColumns = JSON.parse(data.json);
                 for (property in savedColumns) {
                     if (Object.prototype.hasOwnProperty.call(savedColumns, property)) {
+                        if (savedColumns[property].field === "Tag") {
+                            savedTagWidth = savedColumns[property].width;
+                            continue;
+                        }
                         if (ExistsColumnInGridData(savedColumns[property].field, gridData)) {
                             column = {};
                             column["width"] = savedColumns[property].width;
                             column["field"] = savedColumns[property].field;
                             column["title"] = savedColumns[property].title;
-
-                            if (isHidden(savedColumns[property].field)) {
-                                column["hidden"] = true;
-                            }
+                            column["hidden"] = savedColumns[property].hidden !== undefined
+                                ? savedColumns[property].hidden
+                                : isHidden(savedColumns[property].field);
                             columns.push(column);
                         }
                     }
@@ -1569,13 +1760,12 @@ function generateColumns(gridData) {
                 for (property in gridData) {
                     if (Object.prototype.hasOwnProperty.call(gridData, property)) {
                         if (ExistsColumnInNewColumns(property, columns) !== true) {
+                            if (property === "Tag") continue;
                             column = {};
-                            column["width"] = "400px;";
+                            column["width"] = "400px";
                             column["field"] = property;
                             column["title"] = property;
-                            if (isHidden(property)) {
-                                column["hidden"] = true;
-                            }
+                            column["hidden"] = isHidden(property);
                             columns.push(column);
                         }
                     }
@@ -1583,14 +1773,12 @@ function generateColumns(gridData) {
             } else {
                 for (property in gridData) {
                     if (Object.prototype.hasOwnProperty.call(gridData, property)) {
+                        if (property === "Tag") continue;
                         column = {};
-                        column["width"] = "400px;";
+                        column["width"] = "400px";
                         column["field"] = property;
                         column["title"] = property;
-
-                        if (isHidden(property)) {
-                            column["hidden"] = true;
-                        }
+                        column["hidden"] = isHidden(property);
                         columns.push(column);
                     }
                 }
@@ -1598,60 +1786,32 @@ function generateColumns(gridData) {
         }
     });
 
-    return columns;
+    return {columns, savedTagWidth};
 }
 
-function generateModel(gridData) {
+function generateModel(schema) {
     const model = {};
     model.id = "Id";
     const fields = {};
-    for (let property in gridData) {
-        if (Object.prototype.hasOwnProperty.call(gridData, property)) {
-            const propType = typeof gridData[property];
 
-            if (propType === "number") {
-                fields[property] = {
-                    type: "number",
-                    validation: {
-                        required: true
-                    }
-                };
-            } else if (propType === "boolean") {
-                fields[property] = {
-                    type: "boolean",
-                    validation: {
-                        required: true
-                    }
-                };
-            } else if (propType === "string") {
-                const parsedDate = new Date(gridData[property]);
-                if (isNaN(parsedDate.getTime)) {
-                    fields[property] = {
-                        validation: {
-                            required: true
-                        }
-                    };
-                } else {
-                    fields[property] = {
-                        type: "date",
-                        validation: {
-                            required: true
-                        }
-                    };
-                    dateFields.push(property);
-                }
-            } else {
-                fields[property] = {
-                    validation: {
-                        required: true
-                    }
-                };
+    fields["Tag"] = {
+        type: "array",
+        defaultValue: [],
+        editable: false
+    };
+
+    for (const [name, type] of Object.entries(schema)) {
+        if (name === "Tag") continue;
+
+        fields[name] = {
+            type: type,
+            validation: {
+                required: true
             }
-
-        }
+        };
     }
-    model.fields = fields;
 
+    model.fields = fields;
     return model;
 }
 
@@ -1666,6 +1826,21 @@ function DisplayServerValidationErrors(responseObject) {
     for (let key in responseObject.errors) {
         list.append('<li>' + responseObject.errors[key].errorMessage + '</li>')
     }
+}
+
+function safeDestroyGrid(selector) {
+    const el = $(selector);
+    if (el.data('kendoGrid')) {
+        el.kendoGrid('destroy').empty();
+    }
+}
+
+function safeDestroyUpload() {
+    const upload = $("#files").data('kendoUpload');
+    if (upload) {
+        upload.destroy();
+    }
+    $(".k-upload").remove();
 }
 
 //# sourceURL=Case.js

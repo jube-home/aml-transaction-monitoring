@@ -55,6 +55,12 @@ namespace Jube.App.Validators
 
             RuleFor(p => p.ReportTable).NotNull();
             RuleFor(p => p.ResponsePayload).NotNull();
+
+            RuleFor(p => p.MaxDistanceRatio).InclusiveBetween(0, 1)
+                .When(p => p.MaxDistanceRatio.HasValue);
+
+            RuleFor(p => p.MaxCoverageRatio).GreaterThanOrEqualTo(0)
+                .When(p => p.MaxCoverageRatio.HasValue);
         }
     }
 }

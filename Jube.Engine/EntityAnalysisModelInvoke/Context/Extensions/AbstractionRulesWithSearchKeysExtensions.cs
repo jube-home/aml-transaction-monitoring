@@ -14,6 +14,7 @@
 namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
@@ -23,6 +24,7 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions
     using Cache.Redis.Models;
     using Data.Poco;
     using Dictionary;
+    using StackExchange.Redis;
     using TaskCancellation.TaskHelper;
     using EntityAnalysisModelAbstractionRule=EntityAnalysisModelManager.EntityAnalysisModel.Models.Models.EntityAnalysisModelAbstractionRule;
 
@@ -30,7 +32,6 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions
     {
         public static async Task<Context> ExecuteAbstractionRulesWithSearchKeysAsync(this Context context)
         {
-            var pendingExecutionThreads = new List<Task>();
             if (context.EntityAnalysisModel.Flags.EnableCache)
             {
                 if (context.Log.IsInfoEnabled)
@@ -39,84 +40,13 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions
                         $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} Entity cache storage is enabled so will now proceed to loop through the distinct grouping keys for this model.");
                 }
 
-                var abstractionRuleMatches = new Dictionary<int, List<DictionaryNoBoxing<string>>>();
-                foreach (var (key, value) in context.EntityAnalysisModel.Collections.DistinctSearchKeys)
-                {
-                    if (context.Log.IsInfoEnabled)
-                    {
-                        context.Log.Info(
-                            $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} is evaluating grouping key {key}.");
-                    }
+                var abstractionRuleMatches = new ConcurrentDictionary<int, List<DictionaryNoBoxing<string>>>();
+                var sortedSetKeysByGroupingKey = new ConcurrentDictionary<string, List<RedisValue>>();
 
-                    try
-                    {
-                        if (value.SearchKeyCache)
-                        {
-                            if (context.Log.IsInfoEnabled)
-                            {
-                                context.Log.Info(
-                                    $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} grouping key {key} is a search key,  so the values will be fetched from the cache later on.");
-                            }
-                        }
-                        else
-                        {
-                            if (context.Log.IsInfoEnabled)
-                            {
-                                context.Log.Info(
-                                    $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} checking if grouping key {key} exists in the current payload data.");
-                            }
+                var payloadMap = await FetchSortedSetKeysByGroupingKeyAsync(context, sortedSetKeysByGroupingKey).ConfigureAwait(false);
+                var parsedPayloadMap = BuildParsedPayloadMap(context, payloadMap);
 
-                            if (context.EntityAnalysisModelInstanceEntryPayload.Payload.ContainsKey(key))
-                            {
-                                var execute = new Execute
-                                {
-                                    EntityInstanceEntryDictionaryKvPs = context.EntityAnalysisModelInstanceEntryPayload.Dictionary,
-                                    AbstractionRuleGroupingKey = key,
-                                    DistinctSearchKey = value,
-                                    CachePayloadDocument = context.EntityAnalysisModelInstanceEntryPayload.Payload,
-                                    EntityAnalysisModelInstanceEntryPayload =
-                                        context.EntityAnalysisModelInstanceEntryPayload,
-                                    AbstractionRuleMatches = abstractionRuleMatches,
-                                    EntityAnalysisModel = context.EntityAnalysisModel,
-                                    Log = context.Log,
-                                    DynamicEnvironment = context.Environment,
-                                    CacheService = context.EntityAnalysisModel.Services.CacheService,
-                                    PendingWritesTasks = context.PendingWriteTasks
-                                };
-
-                                if (context.Log.IsInfoEnabled)
-                                {
-                                    context.Log.Info(
-                                        $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} has created a execute object to run all the abstraction rules rolling up to the grouping key.  It has been added to a collection to track it when multi threaded abstraction rules are enabled.");
-                                }
-
-                                pendingExecutionThreads.Add(TaskHelper.MeasureTaskTimeAndMemoryAllocatedAsync(TaskType.ExecuteAbstractionRulesWithSearchKeyAsync, async () => await execute.StartAsync().ConfigureAwait(false)));
-                            }
-                            else
-                            {
-                                if (context.Log.IsInfoEnabled)
-                                {
-                                    context.Log.Info(
-                                        $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} grouping key {key} does not exist in the current transaction data being processed.");
-                                }
-                            }
-                        }
-                    }
-                    catch (Exception ex) when (ex is not OperationCanceledException)
-                    {
-                        context.Log.Error(
-                            $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} checking if grouping key {key} has created an error as {ex}.");
-                    }
-                }
-
-                if (context.Log.IsInfoEnabled)
-                {
-                    context.Log.Info(
-                        $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} will now loop around all of the Abstraction rules for the purposes of performing the aggregations.");
-                }
-
-                await Task.WhenAll(pendingExecutionThreads).ConfigureAwait(false);
-
+                await ExecuteAbstractionRulesForGroupingKeysAsync(context, sortedSetKeysByGroupingKey, abstractionRuleMatches, parsedPayloadMap).ConfigureAwait(false);
                 await CalculateAbstractionRuleValuesOrLookupFromTheCacheAsync(context, context.EntityAnalysisModel.Services.CacheService, abstractionRuleMatches).ConfigureAwait(false);
 
                 if (context.Log.IsInfoEnabled)
@@ -139,46 +69,168 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions
             return context;
         }
 
-        private static async Task CalculateAbstractionRuleValuesOrLookupFromTheCacheAsync(Context context,
-            CacheService cacheService, Dictionary<int, List<DictionaryNoBoxing<string>>> abstractionRuleMatches)
+        private static Task ExecuteAbstractionRulesForGroupingKeysAsync(Context context, ConcurrentDictionary<string, List<RedisValue>> sortedSetKeysByGroupingKey, ConcurrentDictionary<int, List<DictionaryNoBoxing<string>>> abstractionRuleMatches, Dictionary<string, DictionaryNoBoxing<string>> parsedPayloadMap)
         {
-            var listEntityAnalysisModelIdAbstractionRuleNameSearchKeySearchValueRequest =
-                new List<EntityAnalysisModelIdAbstractionRuleNameSearchKeySearchValue>();
-            foreach (var abstractionRule in context.EntityAnalysisModel.Collections.ModelAbstractionRules)
+
+            var pendingExecutionThreads = new List<Task>();
+            foreach (var (key, value) in context.EntityAnalysisModel.Collections.DistinctSearchKeys)
             {
+                if (value.SearchKeyCache)
+                {
+                    continue;
+                }
+                if (!context.EntityAnalysisModelInstanceEntryPayload.Payload.ContainsKey(key))
+                {
+                    continue;
+                }
+
+                if (!sortedSetKeysByGroupingKey.TryGetValue(key, out var sortedSetKeys))
+                {
+                    if (context.Log.IsInfoEnabled)
+                    {
+                        context.Log.Info(
+                            $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} grouping key {key} had no sorted set keys available — rules for this grouping key will not be evaluated.");
+                    }
+
+                    continue;
+                }
+
+                var execute = new Execute
+                {
+                    EntityInstanceEntryDictionaryKvPs = context.EntityAnalysisModelInstanceEntryPayload.Dictionary,
+                    DistinctSearchKey = value,
+                    CachePayloadDocument = context.EntityAnalysisModelInstanceEntryPayload.Payload,
+                    EntityAnalysisModelInstanceEntryPayload = context.EntityAnalysisModelInstanceEntryPayload,
+                    AbstractionRuleMatches = abstractionRuleMatches,
+                    EntityAnalysisModel = context.EntityAnalysisModel,
+                    Log = context.Log,
+                    SortedSetKeys = sortedSetKeys,
+                    PayloadMap = parsedPayloadMap
+                };
+
+                if (context.Log.IsInfoEnabled)
+                {
+                    context.Log.Info(
+                        $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} has created an execute object for grouping key {key} with {sortedSetKeys.Count} sorted set keys.");
+                }
+
+                pendingExecutionThreads.Add(TaskHelper.MeasureTaskTimeAndMemoryAllocatedAsync(
+                    TaskType.ExecuteAbstractionRulesWithSearchKeyAsync,
+                    async () => await execute.StartAsync().ConfigureAwait(false)));
+            }
+
+            if (context.Log.IsInfoEnabled)
+            {
+                context.Log.Info(
+                    $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} will now loop around all of the Abstraction rules for the purposes of performing the aggregations.");
+            }
+
+            return Task.WhenAll(pendingExecutionThreads);
+        }
+
+        private static Dictionary<string, DictionaryNoBoxing<string>> BuildParsedPayloadMap(Context context, Dictionary<string, DictionaryNoBoxing<int>> payloadMap)
+        {
+
+            var parsedPayloadMap = new Dictionary<string, DictionaryNoBoxing<string>>(payloadMap.Count);
+            var parseIndexCache = context.EntityAnalysisModel.Collections.ParseIndexCache;
+
+            foreach (var (key, raw) in payloadMap)
+            {
+                var document = new DictionaryNoBoxing<string>(raw.Count);
+                foreach (var (i, value) in raw)
+                {
+                    switch (i)
+                    {
+                        case -1:
+                            document.AddUnchecked(context.EntityAnalysisModel.References.ReferenceDateName, value);
+                            continue;
+                        case < 0:
+                            continue;
+                    }
+
+                    if (parseIndexCache is not null && parseIndexCache.TryGetValue(i, out var name))
+                    {
+                        document.AddUnchecked(name, value);
+                    }
+                }
+                parsedPayloadMap[key] = document;
+            }
+            return parsedPayloadMap;
+        }
+
+        private static async Task<Dictionary<string, DictionaryNoBoxing<int>>> FetchSortedSetKeysByGroupingKeyAsync(Context context, ConcurrentDictionary<string, List<RedisValue>> sortedSetKeysByGroupingKey)
+        {
+
+            var sortedSetFetchTasks = new List<Task>();
+            foreach (var (key, value) in context.EntityAnalysisModel.Collections.DistinctSearchKeys)
+            {
+                if (context.Log.IsInfoEnabled)
+                {
+                    context.Log.Info(
+                        $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} is evaluating grouping key {key}.");
+                }
+
                 try
                 {
-                    if (abstractionRule.Search)
+                    if (value.SearchKeyCache)
                     {
                         if (context.Log.IsInfoEnabled)
                         {
                             context.Log.Info(
-                                $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} is evaluating abstraction rule {abstractionRule.Id}.");
+                                $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} grouping key {key} is a search key, so the values will be fetched from the cache later on.");
+                        }
+                    }
+                    else
+                    {
+                        if (context.Log.IsInfoEnabled)
+                        {
+                            context.Log.Info(
+                                $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} checking if grouping key {key} exists in the current payload data.");
                         }
 
-                        if (context.EntityAnalysisModel.Collections.DistinctSearchKeys.FirstOrDefault(x =>
-                                x.Key == abstractionRule.SearchKey && x.Value.SearchKeyCache).Value != null)
+                        if (context.EntityAnalysisModelInstanceEntryPayload.Payload.ContainsKey(key))
                         {
-                            if (context.Log.IsInfoEnabled)
-                            {
-                                context.Log.Info(
-                                    $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} abstraction rule {abstractionRule.Id} has its values in the cache.");
-                            }
+                            var limit = context.EntityAnalysisModel.Cache.CacheTtlLimit < value.SearchKeyFetchLimit
+                                ? context.EntityAnalysisModel.Cache.CacheTtlLimit
+                                : value.SearchKeyFetchLimit;
 
-                            listEntityAnalysisModelIdAbstractionRuleNameSearchKeySearchValueRequest.Add(
-                                new EntityAnalysisModelIdAbstractionRuleNameSearchKeySearchValue
+                            context.PendingWriteTasks.Add(TaskHelper.MeasureTaskTimeAndMemoryAllocatedAsync(TaskType.CachePayloadInsertAsync, async () => await context.EntityAnalysisModel.Services.CacheService.CachePayloadRepository
+                                .InsertPayloadJournalAndLedgerAsync(context.EntityAnalysisModel.Instance.TenantRegistryId,
+                                    context.EntityAnalysisModel.Instance.Guid,
+                                    key,
+                                    context.EntityAnalysisModelInstanceEntryPayload.Payload[key].AsString(),
+                                    context.EntityAnalysisModelInstanceEntryPayload.ReferenceDate,
+                                    context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid).ConfigureAwait(false)));
+
+                            sortedSetFetchTasks.Add(FetchSortedSetKeysAsync(key, limit));
+
+                            async Task FetchSortedSetKeysAsync(string groupingKey, int fetchLimit)
+                            {
+                                try
                                 {
-                                    AbstractionRuleName = abstractionRule.Name,
-                                    SearchKey = abstractionRule.SearchKey,
-                                    SearchValue = context.EntityAnalysisModelInstanceEntryPayload.Payload[abstractionRule.SearchKey].AsString()
-                                });
+                                    var keys = await context.EntityAnalysisModel.Services.CacheService.CachePayloadRepository
+                                        .GetSortedSetKeysAsync(
+                                            context.EntityAnalysisModel.Instance.TenantRegistryId,
+                                            context.EntityAnalysisModel.Instance.Guid,
+                                            groupingKey,
+                                            context.EntityAnalysisModelInstanceEntryPayload.Payload[groupingKey].AsString(),
+                                            fetchLimit,
+                                            context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid)
+                                        .ConfigureAwait(false);
 
-                            if (context.Log.IsInfoEnabled)
-                            {
-                                context.Log.Info(
-                                    $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} abstraction rule {abstractionRule.Id} has added " +
-                                    $"EntityAnalysisModelId:{context.EntityAnalysisModel.Instance.Id}, AbstractionRuleName:{abstractionRule.Name},SearchKey:{abstractionRule.SearchKey} " +
-                                    $"and SearchValue:{context.EntityAnalysisModelInstanceEntryPayload.Payload[abstractionRule.SearchKey].AsString()} to he bulk select list.");
+                                    sortedSetKeysByGroupingKey[groupingKey] = keys;
+
+                                    if (context.Log.IsInfoEnabled)
+                                    {
+                                        context.Log.Info(
+                                            $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} grouping key {groupingKey} returned {keys.Count} sorted set keys.");
+                                    }
+                                }
+                                catch (Exception ex) when (ex is not OperationCanceledException)
+                                {
+                                    context.Log.Error(
+                                        $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} grouping key {groupingKey} failed to fetch sorted set keys and will be excluded from this evaluation as {ex}.");
+                                }
                             }
                         }
                         else
@@ -186,30 +238,107 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions
                             if (context.Log.IsInfoEnabled)
                             {
                                 context.Log.Info(
-                                    $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} is aggregating abstraction rule {abstractionRule.Id} using documents in the entities collection of the cache.");
+                                    $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} grouping key {key} does not exist in the current transaction data being processed.");
                             }
-
-                            var aggregatedValue = EntityAnalysisModelAbstractionRuleAggregatorUtility.Aggregate(context.EntityAnalysisModelInstanceEntryPayload
-                                , abstractionRuleMatches
-                                , abstractionRule
-                                , context.Log);
-
-                            AddComputedValuesToAbstractionRulePayload(context, abstractionRule, aggregatedValue);
                         }
                     }
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    context.Log.Error(
+                        $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} checking if grouping key {key} has created an error as {ex}.");
+                }
+            }
 
-                    if (listEntityAnalysisModelIdAbstractionRuleNameSearchKeySearchValueRequest.Count == 0)
+            await Task.WhenAll(sortedSetFetchTasks).ConfigureAwait(false);
+
+            var distinctRedisValues = sortedSetKeysByGroupingKey.Values
+                .SelectMany(x => x)
+                .Select(x => x.ToString())
+                .Distinct()
+                .Select(s => (RedisValue)s)
+                .ToList();
+
+            if (context.Log.IsInfoEnabled)
+            {
+                context.Log.Info(
+                    $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} has {distinctRedisValues.Count} distinct payload keys across all grouping keys. Fetching batch.");
+            }
+
+            var payloadMap = await context.EntityAnalysisModel.Services.CacheService.CachePayloadRepository
+                .GetPayloadBatchAsync(
+                    context.EntityAnalysisModel.Instance.TenantRegistryId,
+                    context.EntityAnalysisModel.Instance.Guid,
+                    distinctRedisValues,
+                    context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid)
+                .ConfigureAwait(false);
+
+            if (context.Log.IsInfoEnabled)
+            {
+                context.Log.Info(
+                    $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} batch payload fetch returned {payloadMap.Count} records.");
+            }
+            return payloadMap;
+        }
+
+        private static async Task CalculateAbstractionRuleValuesOrLookupFromTheCacheAsync(Context context,
+            CacheService cacheService, ConcurrentDictionary<int, List<DictionaryNoBoxing<string>>> abstractionRuleMatches)
+        {
+            foreach (var abstractionRule in context.EntityAnalysisModel.Collections.ModelAbstractionRules)
+            {
+                try
+                {
+                    if (!abstractionRule.Search)
                     {
                         continue;
                     }
 
-                    foreach (var abstractionRuleNameValue in await cacheService.CacheAbstractionRepository
-                                 .GetAsync(
-                                     context.EntityAnalysisModel.Instance.TenantRegistryId, context.EntityAnalysisModel.Instance.Guid,
-                                     listEntityAnalysisModelIdAbstractionRuleNameSearchKeySearchValueRequest)
-                                 .ConfigureAwait(false))
+                    if (context.Log.IsInfoEnabled)
                     {
-                        AddComputedValuesToAbstractionRulePayload(context, abstractionRule, abstractionRuleNameValue.Value);
+                        context.Log.Info(
+                            $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} is evaluating abstraction rule {abstractionRule.Id}.");
+                    }
+
+                    var isCacheBacked = context.EntityAnalysisModel.Collections.DistinctSearchKeys.FirstOrDefault(x =>
+                        x.Key == abstractionRule.SearchKey && x.Value.SearchKeyCache).Value != null;
+
+                    if (isCacheBacked)
+                    {
+                        if (context.Log.IsInfoEnabled)
+                        {
+                            context.Log.Info(
+                                $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} abstraction rule {abstractionRule.Id} has its values in the cache.");
+                        }
+
+                        var request = new List<EntityAnalysisModelIdAbstractionRuleNameSearchKeySearchValue>
+                        {
+                            new EntityAnalysisModelIdAbstractionRuleNameSearchKeySearchValue
+                            {
+                                AbstractionRuleName = abstractionRule.Name,
+                                SearchKey = abstractionRule.SearchKey,
+                                SearchValue = context.EntityAnalysisModelInstanceEntryPayload.Payload[abstractionRule.SearchKey].AsString()
+                            }
+                        };
+
+                        foreach (var abstractionRuleNameValue in await cacheService.CacheAbstractionRepository
+                                     .GetAsync(context.EntityAnalysisModel.Instance.TenantRegistryId, context.EntityAnalysisModel.Instance.Guid, request)
+                                     .ConfigureAwait(false))
+                        {
+                            AddComputedValuesToAbstractionRulePayload(context, abstractionRule, abstractionRuleNameValue.Value);
+                        }
+                    }
+                    else
+                    {
+                        if (context.Log.IsInfoEnabled)
+                        {
+                            context.Log.Info(
+                                $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} is aggregating abstraction rule {abstractionRule.Id} using documents in the entities collection of the cache.");
+                        }
+
+                        var aggregatedValue = EntityAnalysisModelAbstractionRuleAggregatorUtility.Aggregate(
+                            context.EntityAnalysisModelInstanceEntryPayload, abstractionRuleMatches, abstractionRule, context.Log);
+
+                        AddComputedValuesToAbstractionRulePayload(context, abstractionRule, aggregatedValue);
                     }
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)

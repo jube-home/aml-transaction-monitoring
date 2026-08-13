@@ -101,6 +101,7 @@
                 </div>
                 <div id="FilesDiv" class="filesStyle">
                     <input name="Files" id="Files" type="file" aria-label="Files"/>
+                    <a href="/templates/EntityAnalysisModelDictionaryKvpTemplate.csv" download>Download CSV Template</a>
                 </div>
             </div>
             <div id="ListValuesDiv" class="filesStyle">
@@ -110,7 +111,7 @@
                 <script type="text/x-kendo-tmpl" id="template">
                     <div class="listView k-widget">
                         <dl>
-                            <dd>#:kvpKey# / #:kvpValue#</dd>
+                            <dd>#:kvpKey# / #:kvpValue##if(deleteExpiryDate){# / #:kendo.toString(deleteExpiryDate, "yyyy-MM-dd HH:mm")##}#</dd>
                         </dl>
                         <div class="edit-buttons">
                             <a class="k-button k-edit-button" href="\\#"><span class="k-icon k-i-edit"></span></a>
@@ -120,12 +121,20 @@
                 </script>
                 <script type="text/x-kendo-tmpl" id="editTemplate">
                     <div class="listView k-widget">
-                        <dl>
-                            <dd>
-                                <input type="text" class="k-textbox" data-bind="value:kvpKey" name="KVPKey" required validationMessage="Please enter a key for this dictionary."/> / 
-                                <input type="text" data-role="numerictextbox" data-type="number" data-bind="value:kvpValue" name="KVPValue" required validationMessage="Please enter a value for this dictionary."/>
-                            </dd>
-                        </dl>
+                        <div class="listViewEditForm">
+                            <div class="listViewEditRow">
+                                <label for="KVPKey">Key</label>
+                                <input type="text" class="k-textbox" data-bind="value:kvpKey" name="KVPKey"/>
+                            </div>
+                            <div class="listViewEditRow">
+                                <label for="KVPValue">Value</label>
+                                <input type="text" data-role="numerictextbox" data-type="number" data-bind="value:kvpValue" name="KVPValue"/>
+                            </div>
+                            <div class="listViewEditRow">
+                                <label for="DeleteExpiryDate">Delete Expiry Date</label>
+                                <input type="text" data-role="datetimepicker" class="expiryDateCell" data-bind="value:deleteExpiryDate" name="DeleteExpiryDate"/>
+                            </div>
+                        </div>
                         <div class="edit-buttons">
                             <a class="k-button k-update-button" href="\\#"><span class="k-icon k-i-check"></span></a>
                             <a class="k-button k-cancel-button" href="\\#"><span class="k-icon k-i-cancel"></span></a>

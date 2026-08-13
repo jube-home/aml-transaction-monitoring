@@ -16,12 +16,15 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Linq;
     using System.Text;
+    using System.Threading;
     using System.Threading.Tasks;
     using System.Web;
     using Data.Repository;
     using Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Models.Models;
     using Jube.Engine.EntityAnalysisModelManager.Helpers;
+    using Jube.Engine.Models;
     using Parser;
     using Parser.Compiler;
 
@@ -666,6 +669,27 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                                 }
                             }
 
+                            if (record.Priority.HasValue)
+                            {
+                                modelActivationRule.Priority = record.Priority.Value;
+
+                                if (context.Services.Log.IsDebugEnabled)
+                                {
+                                    context.Services.Log.Debug(
+                                        $"Entity Start: Entity Model {key} and Activation Rule {modelActivationRule.Id} set Priority value set as {modelActivationRule.Priority}.");
+                                }
+                            }
+                            else
+                            {
+                                modelActivationRule.Priority = 0;
+
+                                if (context.Services.Log.IsDebugEnabled)
+                                {
+                                    context.Services.Log.Debug(
+                                        $"Entity Start: Entity Model {key} and Activation Rule {modelActivationRule.Id} set DEFAULT Priority value set as {modelActivationRule.Priority}.");
+                                }
+                            }
+
                             if (record.EnableTtlCounter.HasValue)
                             {
                                 modelActivationRule.EnableTtlCounter = record.EnableTtlCounter == 1;
@@ -888,9 +912,10 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                             activationRuleScript.Append("Imports Jube.Dictionary\r\n");
                             activationRuleScript.Append("Imports Jube.Dictionary.Extensions\r\n");
                             activationRuleScript.Append("Imports System\r\n");
+                            activationRuleScript.Append("Imports Jube.HttpAdaptationProtocol\r\n");
                             activationRuleScript.Append("Public Class ActivationRule\r\n");
                             activationRuleScript.Append(
-                                "Public Shared Function Match(Data As DictionaryNoBoxing(Of String),TTLCounter As PooledDictionary(Of String, Double),Abstraction As PooledDictionary(Of string,double),HttpAdaptation As PooledDictionary(Of String, Double),ExhaustiveAdaptation As PooledDictionary(Of String, Double),List as Dictionary(Of String,List(Of String)),Calculation As PooledDictionary(Of String, Double),Sanctions As PooledDictionary(Of String, Double),KVP As PooledDictionary(Of String, Double),Activation as ICollection(Of String),Log as ILog) As Boolean\r\n");
+                                "Public Shared Function Match(Data As DictionaryNoBoxing(Of String),TTLCounter As PooledDictionary(Of String, Double),Abstraction As PooledDictionary(Of string,double),HttpAdaptation As PooledDictionary(Of String, Adaptation),ExhaustiveAdaptation As PooledDictionary(Of String, Double),List as Dictionary(Of String,List(Of String)),Calculation As PooledDictionary(Of String, Double),Sanctions As PooledDictionary(Of String, Double),KVP As PooledDictionary(Of String, Double),Activation as ICollection(Of String),Log as ILog) As Boolean\r\n");
                             activationRuleScript.Append("Dim Matched as Boolean\r\n");
                             activationRuleScript.Append("Try\r\n");
                             activationRuleScript.Append(modelActivationRule.ActivationRuleScript + "\r\n");
@@ -935,6 +960,9 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
 
                                 shadowEntityModelActivationRule.Add(modelActivationRule);
 
+                                await repository.UpdateCompileStatusAsync(modelActivationRule.Id, true, null,
+                                    context.Services.CancellationToken).ConfigureAwait(false);
+
                                 if (context.Services.Log.IsDebugEnabled)
                                 {
                                     context.Services.Log.Debug(
@@ -953,7 +981,8 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                                 compile.CompileCode(activationRuleScript.ToString(), context.Services.Log,
                                 [
                                     Path.Combine(context.Paths.BinaryPath ?? throw new InvalidOperationException(), "log4net.dll"),
-                                    Path.Combine(context.Paths.BinaryPath, "Jube.Dictionary.dll")
+                                    Path.Combine(context.Paths.BinaryPath, "Jube.Dictionary.dll"),
+                                    Path.Combine(context.Paths.BinaryPath, "Jube.HttpAdaptationProtocol.dll")
                                 ], Compile.Language.Vb);
 
                                 if (context.Services.Log.IsDebugEnabled)
@@ -979,7 +1008,12 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                                         (EntityAnalysisModelActivationRule.Match)Delegate.CreateDelegate(
                                             typeof(EntityAnalysisModelActivationRule.Match), methodInfo);
                                     shadowEntityModelActivationRule.Add(modelActivationRule);
-                                    context.Caching.HashCacheAssembly.Add(activationRuleScriptHash, compile.CompiledAssembly);
+                                    context.Caching.HashCacheAssembly.TryAdd(activationRuleScriptHash, compile.CompiledAssembly);
+                                    context.Caching.HashCacheAssemblyMetadata.TryAdd(activationRuleScriptHash,
+                                        new HashCacheAssemblyPayload(compile.CompiledAssemblyBytes, compile.CompiledAssemblyBinary, activationRuleScript.ToString()));
+
+                                    await repository.UpdateCompileStatusAsync(modelActivationRule.Id, true, null,
+                                        context.Services.CancellationToken).ConfigureAwait(false);
 
                                     if (context.Services.Log.IsDebugEnabled)
                                     {
@@ -989,6 +1023,9 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                                 }
                                 else
                                 {
+                                    await repository.UpdateCompileStatusAsync(modelActivationRule.Id, false, compile.ErrorsSummary,
+                                        context.Services.CancellationToken).ConfigureAwait(false);
+
                                     if (context.Services.Log.IsDebugEnabled)
                                     {
                                         context.Services.Log.Debug(
@@ -1001,12 +1038,30 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                         {
                             context.Services.Log.Error(
                                 $"Entity Start: Activation Rule ID {record.Id} returned for model {key} has created an error as {ex}.");
+
+                            await repository.UpdateCompileStatusAsync(record.Id, false, ex.Message,
+                                context.Services.CancellationToken).ConfigureAwait(false);
                         }
                     }
 
                     if (context.Services.Log.IsDebugEnabled)
                     {
                         context.Services.Log.Debug($"Entity Start: {key} replaced Activation Rule List with shadow activation rules.");
+                    }
+
+                    var previousActivationRulesById = value.Collections.ModelActivationRules.ToDictionary(r => r.Id);
+                    foreach (var newActivationRule in shadowEntityModelActivationRule)
+                    {
+                        if (!previousActivationRulesById.TryGetValue(newActivationRule.Id, out var previousActivationRule))
+                        {
+                            continue;
+                        }
+
+                        newActivationRule.EvaluationCounter =
+                            Interlocked.Exchange(ref previousActivationRule.EvaluationCounter, 0);
+                        newActivationRule.ActivationCounter =
+                            Interlocked.Exchange(ref previousActivationRule.ActivationCounter, 0);
+                        newActivationRule.ActivationCounterDate = previousActivationRule.ActivationCounterDate;
                     }
 
                     value.Collections.ModelActivationRules = shadowEntityModelActivationRule;
@@ -1025,6 +1080,10 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 context.Services.Log.Error($"SyncEntityAnalysisModelActivationRulesAsync: has produced an error {ex}");
+
+                await new EntityAnalysisModelSynchronisationErrorRepository(context.Services.DbContext)
+                    .InsertAsync(EntityAnalysisModelSynchronisationErrorRepository.EntityAnalysisModelSynchronisationErrorStepEnum.ActivationRules, ex.ToString(),
+                        context.Services.CancellationToken).ConfigureAwait(false);
             }
 
             return context;

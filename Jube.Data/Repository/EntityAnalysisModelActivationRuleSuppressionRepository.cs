@@ -18,8 +18,10 @@ namespace Jube.Data.Repository
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
+    using AutoMapper;
     using Context;
     using LinqToDB;
+    using Microsoft.Extensions.Logging.Abstractions;
     using Poco;
 
     public class EntityAnalysisModelActivationRuleSuppressionRepository
@@ -63,7 +65,8 @@ namespace Jube.Data.Repository
                 .Where(w =>
                     (w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
                     && w.EntityAnalysisModelGuid == entityAnalysisModelGuid
-                    && (w.Deleted == 0 || w.Deleted == null))
+                    && (w.Deleted == 0 || w.Deleted == null)
+                    && (w.DeleteExpiryDate == null || w.DeleteExpiryDate > DateTime.UtcNow))
                 .OrderBy(o => o.Id).ToListAsync(token).ConfigureAwait(false);
         }
 
@@ -71,13 +74,14 @@ namespace Jube.Data.Repository
         {
             return dbContext.EntityAnalysisModelActivationRuleSuppression.FirstOrDefaultAsync(w =>
                 (w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
-                && w.Id == id && (w.Deleted == 0 || w.Deleted == null), token);
+                && w.Id == id && (w.Deleted == 0 || w.Deleted == null)
+                && (w.DeleteExpiryDate == null || w.DeleteExpiryDate > DateTime.UtcNow), token);
         }
 
         public async Task<EntityAnalysisModelActivationRuleSuppression> InsertAsync(EntityAnalysisModelActivationRuleSuppression model, CancellationToken token = default)
         {
             model.CreatedUser = userName;
-            model.CreatedDate = DateTime.Now;
+            model.CreatedDate = DateTime.UtcNow;
             model.Version = 1;
             model.Id = await dbContext.InsertWithInt32IdentityAsync(model, token: token);
             return model;
@@ -92,7 +96,8 @@ namespace Jube.Data.Repository
                 existing = await dbContext.EntityAnalysisModelActivationRuleSuppression
                     .FirstOrDefaultAsync(w =>
                         w.Id == model.Id
-                        && (w.Deleted == 0 || w.Deleted == null), token);
+                        && (w.Deleted == 0 || w.Deleted == null)
+                        && (w.DeleteExpiryDate == null || w.DeleteExpiryDate > DateTime.UtcNow), token);
             }
             else
             {
@@ -102,7 +107,8 @@ namespace Jube.Data.Repository
                                               && w.EntityAnalysisModelGuid == model.EntityAnalysisModelGuid
                                               && w.EntityAnalysisModelActivationRuleName ==
                                               model.EntityAnalysisModelActivationRuleName
-                                              && (w.Deleted == 0 || w.Deleted == null), token);
+                                              && (w.Deleted == 0 || w.Deleted == null)
+                                              && (w.DeleteExpiryDate == null || w.DeleteExpiryDate > DateTime.UtcNow), token);
             }
 
             if (existing != null)
@@ -112,7 +118,7 @@ namespace Jube.Data.Repository
             else
             {
                 model.CreatedUser = userName;
-                model.CreatedDate = DateTime.Now;
+                model.CreatedDate = DateTime.UtcNow;
                 model.Version = 1;
                 var id = await dbContext.InsertWithInt32IdentityAsync(model, token: token);
                 model.Id = id;
@@ -123,20 +129,73 @@ namespace Jube.Data.Repository
 
         public async Task DeleteAsync(int id, CancellationToken token = default)
         {
-            var records = await dbContext.EntityAnalysisModelActivationRuleSuppression
-                .Where(d =>
-                    (d.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
-                    && d.Id == id
-                    && (d.Deleted == 0 || d.Deleted == null))
-                .Set(s => s.Deleted, Convert.ToByte(1))
-                .Set(s => s.DeletedDate, DateTime.Now)
-                .Set(s => s.DeletedUser, userName)
-                .UpdateAsync(token);
+            var existing = await dbContext.EntityAnalysisModelActivationRuleSuppression
+                .FirstOrDefaultAsync(w =>
+                    (w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                    && w.Id == id
+                    && (w.Deleted == 0 || w.Deleted == null)
+                    && (w.DeleteExpiryDate == null || w.DeleteExpiryDate > DateTime.UtcNow), token);
 
-            if (records == 0)
+            if (existing == null)
             {
                 throw new KeyNotFoundException();
             }
+
+            await dbContext.EntityAnalysisModelActivationRuleSuppression
+                .Where(d => d.Id == id)
+                .Set(s => s.Deleted, Convert.ToByte(1))
+                .Set(s => s.DeletedDate, DateTime.UtcNow)
+                .Set(s => s.DeletedUser, userName)
+                .UpdateAsync(token);
+
+            await InsertVersionAsync(existing, token);
+        }
+
+        public async Task<EntityAnalysisModelActivationRuleSuppression> UpdateDeleteExpiryDateAsync(
+            Guid entityAnalysisModelGuid, string suppressionKey, string suppressionKeyValue,
+            string entityAnalysisModelActivationRuleName, DateTime? deleteExpiryDate, CancellationToken token = default)
+        {
+            var existing = await dbContext.EntityAnalysisModelActivationRuleSuppression
+                .FirstOrDefaultAsync(w =>
+                    (w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                    && w.SuppressionKey == suppressionKey
+                    && w.SuppressionKeyValue == suppressionKeyValue
+                    && w.EntityAnalysisModelGuid == entityAnalysisModelGuid
+                    && w.EntityAnalysisModelActivationRuleName == entityAnalysisModelActivationRuleName
+                    && (w.Deleted == 0 || w.Deleted == null)
+                    && (w.DeleteExpiryDate == null || w.DeleteExpiryDate > DateTime.UtcNow), token);
+
+            if (existing == null)
+            {
+                throw new KeyNotFoundException();
+            }
+
+            var version = (existing.Version ?? 0) + 1;
+
+            await dbContext.EntityAnalysisModelActivationRuleSuppression
+                .Where(w => w.Id == existing.Id)
+                .Set(s => s.DeleteExpiryDate, deleteExpiryDate)
+                .Set(s => s.Version, version)
+                .UpdateAsync(token);
+
+            await InsertVersionAsync(existing, token);
+
+            existing.DeleteExpiryDate = deleteExpiryDate;
+            existing.Version = version;
+            return existing;
+        }
+
+        private Task InsertVersionAsync(EntityAnalysisModelActivationRuleSuppression existing, CancellationToken token)
+        {
+            var mapper = new Mapper(new MapperConfiguration(cfg =>
+            {
+                cfg.CreateMap<EntityAnalysisModelActivationRuleSuppression, EntityAnalysisModelActivationRuleSuppressionVersion>();
+            }, NullLoggerFactory.Instance));
+
+            var audit = mapper.Map<EntityAnalysisModelActivationRuleSuppressionVersion>(existing);
+            audit.EntityAnalysisModelActivationRuleSuppressionId = existing.Id;
+
+            return dbContext.InsertAsync(audit, token: token);
         }
 
         public Task DeleteByTenantRegistryIdOutsideOfInstanceAsync(int tenantRegistryIdOutsideOfInstance, int importId, CancellationToken token = default)
@@ -147,7 +206,7 @@ namespace Jube.Data.Repository
                     && (d.Deleted == 0 || d.Deleted == null))
                 .Set(s => s.ImportId, importId)
                 .Set(s => s.Deleted, Convert.ToByte(1))
-                .Set(s => s.DeletedDate, DateTime.Now)
+                .Set(s => s.DeletedDate, DateTime.UtcNow)
                 .UpdateAsync(token);
         }
     }

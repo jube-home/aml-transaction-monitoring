@@ -93,18 +93,33 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions
                 }
             }
         }
-        
+
         private static DictionaryNoBoxing<int> ParseToReducedInternedPayload(Context context)
         {
             var reducedInternedPayload = new DictionaryNoBoxing<int>();
-            reducedInternedPayload.Add(-1,context.EntityAnalysisModelInstanceEntryPayload.ReferenceDate);
+            reducedInternedPayload.Add(-1, context.EntityAnalysisModelInstanceEntryPayload.ReferenceDate);
+
+            foreach (var entityAnalysisModelInlineScriptPropertyAttribute in context.EntityAnalysisModel.Collections.EntityAnalysisModelInlineScripts.SelectMany(entityAnalysisModelInlineScript => entityAnalysisModelInlineScript.EntityAnalysisModelInlineScriptPropertyAttributes))
+            {
+                if (entityAnalysisModelInlineScriptPropertyAttribute.Value.CacheIndexId is not {} cacheId)
+                {
+                    continue;
+                }
+
+                if (context.EntityAnalysisModelInstanceEntryPayload.Payload.TryGetValue(entityAnalysisModelInlineScriptPropertyAttribute.Key, out var value))
+                {
+                    reducedInternedPayload.Add(cacheId, value);
+                }
+            }
+
             foreach (var entityAnalysisModelRequestXPath in context.EntityAnalysisModel.Collections.EntityAnalysisModelRequestXPaths.Where(w => w.Cache))
             {
                 if (context.EntityAnalysisModelInstanceEntryPayload.Payload.TryGetValue(entityAnalysisModelRequestXPath.Name, out var value))
                 {
-                    reducedInternedPayload.Add(entityAnalysisModelRequestXPath.CacheIndexId,value);   
+                    reducedInternedPayload.Add(entityAnalysisModelRequestXPath.CacheIndexId, value);
                 }
             }
+
             return reducedInternedPayload;
         }
     }

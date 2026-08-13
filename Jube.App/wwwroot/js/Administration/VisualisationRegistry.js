@@ -32,10 +32,11 @@ function loadTemplate(id) {
         function (data) {
             key = data["id"];
 
+            const $showInDirectory = $("#ShowInDirectory");
             if (data.showInDirectory) {
-                $("#ShowInDirectory").data("kendoSwitch").check(true);
+                $showInDirectory.data("kendoSwitch").check(true);
             } else {
-                $("#ShowInDirectory").data("kendoSwitch").check(false);
+                $showInDirectory.data("kendoSwitch").check(false);
             }
 
             $("#Columns").data("kendoNumericTextBox").value(data.columns);

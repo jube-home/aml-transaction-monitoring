@@ -63,6 +63,16 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jube.ResilientRedisConnecti
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jube.Tokenisation", "Jube.Tokenisation\Jube.Tokenisation.csproj", "{D69B24BA-7DE7-42D4-8FBB-67CB0A179B8B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jube.ApiTokensCache", "Jube.ApiTokensCache\Jube.ApiTokensCache.csproj", "{7E20570B-F143-4C73-8A86-D2CB87B2D2BF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jube.HttpHeaders", "Jube.HttpHeaders\Jube.HttpHeaders.csproj", "{D47BBBA0-FD6B-4AAC-B5FB-E22518152D56}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jube.Mfa", "Jube.Mfa\Jube.Mfa.csproj", "{7A90678A-6875-4F00-A76D-5991E6C8C14D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jube.HttpAdaptationProtocol", "Jube.HttpAdaptationProtocol\Jube.HttpAdaptationProtocol.csproj", "{B744540B-F554-468D-9734-85743F584297}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jube.LoadTest", "Jube.LoadTest\Jube.LoadTest.csproj", "{557CBA94-903C-481A-8DF6-9B03EA49DC7D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -189,6 +199,26 @@ Global
 		{D69B24BA-7DE7-42D4-8FBB-67CB0A179B8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D69B24BA-7DE7-42D4-8FBB-67CB0A179B8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D69B24BA-7DE7-42D4-8FBB-67CB0A179B8B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7E20570B-F143-4C73-8A86-D2CB87B2D2BF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7E20570B-F143-4C73-8A86-D2CB87B2D2BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7E20570B-F143-4C73-8A86-D2CB87B2D2BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7E20570B-F143-4C73-8A86-D2CB87B2D2BF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D47BBBA0-FD6B-4AAC-B5FB-E22518152D56}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D47BBBA0-FD6B-4AAC-B5FB-E22518152D56}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D47BBBA0-FD6B-4AAC-B5FB-E22518152D56}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D47BBBA0-FD6B-4AAC-B5FB-E22518152D56}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7A90678A-6875-4F00-A76D-5991E6C8C14D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7A90678A-6875-4F00-A76D-5991E6C8C14D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7A90678A-6875-4F00-A76D-5991E6C8C14D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7A90678A-6875-4F00-A76D-5991E6C8C14D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B744540B-F554-468D-9734-85743F584297}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B744540B-F554-468D-9734-85743F584297}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B744540B-F554-468D-9734-85743F584297}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B744540B-F554-468D-9734-85743F584297}.Release|Any CPU.Build.0 = Release|Any CPU
+		{557CBA94-903C-481A-8DF6-9B03EA49DC7D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{557CBA94-903C-481A-8DF6-9B03EA49DC7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{557CBA94-903C-481A-8DF6-9B03EA49DC7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{557CBA94-903C-481A-8DF6-9B03EA49DC7D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 	EndGlobalSection

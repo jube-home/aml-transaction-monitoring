@@ -16,6 +16,7 @@ namespace Jube.Cache
     using System.Collections.Concurrent;
     using log4net;
     using Redis;
+    using Redis.CacheUserRegistryApiKey;
     using Redis.Callback;
     using ResilientRedisConnection;
     using StackExchange.Redis;
@@ -23,11 +24,13 @@ namespace Jube.Cache
 
     public class CacheService
     {
+        private readonly bool activationRuleIdempotency;
         private readonly ConcurrentDictionary<Guid, TaskCompletionSource<Callback>> callbacks;
         private readonly int callbackTimeout;
         private readonly bool localCache;
         private readonly long localCacheBytes;
         private readonly bool localCacheFill;
+        private readonly TimeSpan maxLruAge;
         private readonly bool messagePackCompression;
         private readonly string postgresConnectionString;
         private readonly bool publishSubscribe;
@@ -37,7 +40,10 @@ namespace Jube.Cache
             string postgresConnectionString,
             ConcurrentDictionary<Guid, TaskCompletionSource<Callback>> callbacks, int callbackTimeout,
             bool localCache, bool localCacheFill, long localCacheBytes,
-            bool messagePackCompression, bool storePayloadCountsAndBytes, bool publishSubscribe, ILog log)
+            bool messagePackCompression, bool storePayloadCountsAndBytes, bool publishSubscribe,
+            bool hsetOffload,
+            TimeSpan maxLruAge,
+            bool activationRuleIdempotency, ILog log)
         {
             Log = log;
             this.localCache = localCache;
@@ -49,25 +55,47 @@ namespace Jube.Cache
             this.callbacks = callbacks;
             this.callbackTimeout = callbackTimeout;
             this.postgresConnectionString = postgresConnectionString;
+            this.maxLruAge = maxLruAge;
+            this.activationRuleIdempotency = activationRuleIdempotency;
 
-            ConnectionMultiplexer =
-                ConnectionMultiplexer.Connect(redisConnectionString);
+            var options = ConfigurationOptions.Parse(redisConnectionString);
+            options.ReconnectRetryPolicy = new ExponentialRetry(
+                100,
+                3000);
 
-            RedisDatabase = new ResilientRedisConnection(ConnectionMultiplexer, log).GetDatabase();
+            ConnectionMultiplexer = ConnectionMultiplexer.Connect(options);
+            ResilientRedisResilientRedisDatabase = new ResilientRedisConnection(ConnectionMultiplexer, postgresConnectionString, hsetOffload, log).GetDatabase();
+
+            CacheAbstractionRepository = new CacheAbstractionRepository(ResilientRedisResilientRedisDatabase, Log);
+            CachePayloadLatestRepository = new CachePayloadLatestRepository(postgresConnectionString, ResilientRedisResilientRedisDatabase, Log);
+            CacheReferenceDateRepository = new CacheReferenceDateRepository(ResilientRedisResilientRedisDatabase, Log);
+            CacheSanctionRepository = new CacheSanctionRepository(ResilientRedisResilientRedisDatabase, Log);
+            CacheTtlCounterEntryRepository = new CacheTtlCounterEntryRepository(ResilientRedisResilientRedisDatabase, Log);
+            CacheTtlCounterRepository = new CacheTtlCounterRepository(ResilientRedisResilientRedisDatabase, Log);
+            CacheWalRepository = new CacheWalRepository(ResilientRedisResilientRedisDatabase, Log);
+            CacheUserRegistryApiKeyRepository = new CacheUserRegistryApiKeyRepository(ConnectionMultiplexer, ResilientRedisResilientRedisDatabase, Log);
+            CacheTtlCounterIdempotencyRepository = new CacheTtlCounterIdempotencyRepository(ResilientRedisResilientRedisDatabase, log);
+            CacheActivationCaseIdempotencyRepository = new CacheActivationCaseIdempotencyRepository(ResilientRedisResilientRedisDatabase, log);
+            CacheActivationNotificationIdempotencyRepository = new CacheActivationNotificationIdempotencyRepository(ResilientRedisResilientRedisDatabase, log);
         }
 
         public Task InstantiateRepositoriesTask { get; set; }
         public ConnectionMultiplexer ConnectionMultiplexer { get; set; }
-        public ResilientRedisDatabase RedisDatabase { get; set; }
+        public IHybridResilientRedisDatabase ResilientRedisResilientRedisDatabase { get; set; }
         public CacheAbstractionRepository CacheAbstractionRepository { get; set; }
         public CachePayloadLatestRepository CachePayloadLatestRepository { get; set; }
         public CachePayloadRepository CachePayloadRepository { get; set; }
-        public CacheReferenceDate CacheReferenceDate { get; set; }
+        public CacheReferenceDateRepository CacheReferenceDateRepository { get; set; }
         public CacheSanctionRepository CacheSanctionRepository { get; set; }
         public CacheTtlCounterEntryRepository CacheTtlCounterEntryRepository { get; set; }
         public CacheTtlCounterRepository CacheTtlCounterRepository { get; set; }
         public CacheCallbackPublishSubscribe CacheCallbackPublishSubscribe { get; set; }
         public CacheWalRepository CacheWalRepository { get; set; }
+        public CacheUserRegistryApiKeyRepository CacheUserRegistryApiKeyRepository { get; set; }
+        public CacheTtlCounterIdempotencyRepository CacheTtlCounterIdempotencyRepository { get; set; }
+        public CacheActivationCaseIdempotencyRepository CacheActivationCaseIdempotencyRepository { get; set; }
+        public CacheActivationNotificationIdempotencyRepository CacheActivationNotificationIdempotencyRepository { get; set; }
+
         public bool Ready { get; private set; }
 
         private ILog Log
@@ -75,21 +103,15 @@ namespace Jube.Cache
             get;
         }
 
-        public async Task InstantiateRepositoriesAsync(TaskCoordinator taskCoordinator)
+        public async Task StartAsync(TaskCoordinator taskCoordinator)
         {
-            CacheAbstractionRepository = new CacheAbstractionRepository(RedisDatabase, Log);
-            CachePayloadLatestRepository = new CachePayloadLatestRepository(postgresConnectionString, RedisDatabase, Log);
+            CachePayloadRepository = await CachePayloadRepository.CreateAsync(ConnectionMultiplexer, ResilientRedisResilientRedisDatabase,
+                postgresConnectionString, Log,
+                localCache, localCacheFill, localCacheBytes, messagePackCompression,
+                storePayloadCountsAndBytes, publishSubscribe, maxLruAge, activationRuleIdempotency,
+                taskCoordinator.CancellationToken).ConfigureAwait(false);
 
-            CachePayloadRepository = await CachePayloadRepository.CreateAsync(ConnectionMultiplexer, RedisDatabase,
-                postgresConnectionString, Log, CommandFlags.FireAndForget,
-                localCache, localCacheFill, localCacheBytes, messagePackCompression, storePayloadCountsAndBytes, publishSubscribe, taskCoordinator.CancellationToken).ConfigureAwait(false);
-
-            CacheReferenceDate = new CacheReferenceDate(RedisDatabase, Log);
-            CacheSanctionRepository = new CacheSanctionRepository(RedisDatabase, Log);
-            CacheTtlCounterEntryRepository = new CacheTtlCounterEntryRepository(RedisDatabase, Log);
-            CacheTtlCounterRepository = new CacheTtlCounterRepository(RedisDatabase, Log);
-            CacheWalRepository = new CacheWalRepository(RedisDatabase, Log);
-            CacheCallbackPublishSubscribe = new CacheCallbackPublishSubscribe(ConnectionMultiplexer, RedisDatabase, callbacks, callbackTimeout, Log, taskCoordinator);
+            CacheCallbackPublishSubscribe = new CacheCallbackPublishSubscribe(ConnectionMultiplexer, ResilientRedisResilientRedisDatabase, callbacks, callbackTimeout, Log, taskCoordinator);
 
             Ready = true;
         }

@@ -14,7 +14,6 @@
 namespace Jube.App.Controllers.Invoke
 {
     using System;
-    using System.Collections.Generic;
     using System.IO;
     using System.Linq;
     using System.Net;
@@ -24,20 +23,23 @@ namespace Jube.App.Controllers.Invoke
     using Cache.Redis.Callback;
     using Data.Extension;
     using Dto;
+    using Dto.Sanctions;
     using DynamicEnvironment;
     using Engine;
     using Engine.BackgroundTasks.TaskStarters.Models;
     using Engine.EntityAnalysisModelInvoke;
     using Engine.EntityAnalysisModelInvoke.Exceptions;
-    using Engine.EntityAnalysisModelManager.EntityAnalysisModel;
     using Engine.Exhaustive.Extensions;
     using Engine.Sanctions;
     using FluentValidation.Results;
     using log4net;
+    using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
     using Newtonsoft.Json.Linq;
-    using SanctionEntryDto=Dto.SanctionEntryDto;
+    using SanctionEntryDto=Dto.Sanctions.SanctionEntryDto;
 
+    [Authorize]
     [Route("api/[controller]")]
     [Produces("application/json")]
     public class InvokeController : Controller
@@ -45,16 +47,23 @@ namespace Jube.App.Controllers.Invoke
         private readonly DynamicEnvironment dynamicEnvironment;
         private readonly Engine engine;
         private readonly ILog log;
+        private readonly string userName;
 
-        public InvokeController(ILog log, DynamicEnvironment dynamicEnvironment,
+        public InvokeController(ILog log, DynamicEnvironment dynamicEnvironment, IHttpContextAccessor httpContextAccessor,
             Engine engine = null)
         {
             this.engine = engine;
             this.log = log;
             this.dynamicEnvironment = dynamicEnvironment;
+
             if (this.engine != null)
             {
                 Interlocked.Increment(ref this.engine.Context.Counters.HttpCounterAllRequests);
+            }
+
+            if (httpContextAccessor.HttpContext?.User.Identity != null)
+            {
+                userName = httpContextAccessor.HttpContext.User.Identity.Name;
             }
         }
 
@@ -67,7 +76,7 @@ namespace Jube.App.Controllers.Invoke
                 if (!dynamicEnvironment.AppSettings("EnablePublicInvokeController")
                         .Equals("True", StringComparison.OrdinalIgnoreCase))
                 {
-                    return await Task.FromResult<ActionResult>(Forbid()).ConfigureAwait(false);
+                    return await Task.FromResult<ActionResult>(NotFound()).ConfigureAwait(false);
                 }
 
                 Interlocked.Increment(ref engine.Context.Counters.HttpCounterCallback);
@@ -97,63 +106,120 @@ namespace Jube.App.Controllers.Invoke
 
         [HttpGet("Sanction")]
         [ProducesResponseType(typeof(ValidationResult), (int)HttpStatusCode.BadRequest)]
-        public Task<ActionResult<List<SanctionEntryDto>>> SanctionAsync(string multiPartString, int distance)
+        public Task<ActionResult<SanctionSearchResponseDto>> SanctionAsync(string multiPartString, int distance,
+            double? maxDistanceRatio, double? maxCoverageRatio)
         {
             try
             {
-                if (!dynamicEnvironment.AppSettings("EnablePublicInvokeController")
-                        .Equals("True", StringComparison.OrdinalIgnoreCase))
+                if (!dynamicEnvironment.AppSettings("EnablePublicInvokeController").Equals("True", StringComparison.OrdinalIgnoreCase)
+                    || !dynamicEnvironment.AppSettings("EnableEngine").Equals("True", StringComparison.OrdinalIgnoreCase))
                 {
-                    return Task.FromResult<ActionResult<List<SanctionEntryDto>>>(Forbid());
+                    return Task.FromResult<ActionResult<SanctionSearchResponseDto>>(NotFound());
                 }
 
                 if (!engine.Context.Ready)
                 {
-                    return Task.FromResult<ActionResult<List<SanctionEntryDto>>>(StatusCode(503));
+                    return Task.FromResult<ActionResult<SanctionSearchResponseDto>>(StatusCode(503));
                 }
 
                 Interlocked.Increment(ref engine.Context.Counters.HttpCounterSanction);
 
+                var effectiveMaxDistanceRatio = maxDistanceRatio ??
+                                                LevenshteinDistance.ParseNullableDistanceRatio(dynamicEnvironment.AppSettings("SanctionsLevenshteinMaxDistanceRatio"));
+
+                var effectiveMaxCoverageRatio = maxCoverageRatio ??
+                                                LevenshteinDistance.ParseNullableCoverageRatio(dynamicEnvironment.AppSettings("SanctionsLevenshteinMaxCoverageRatio"));
+
                 if (log.IsInfoEnabled)
                 {
                     log.Info(
-                        $"Sanction Fetch: Reached Sanction Get controller with distance of {distance} and string of {multiPartString}.");
+                        $"Sanction Fetch: Reached Sanction Get controller with distance of {distance}, max distance ratio of {effectiveMaxDistanceRatio}, max coverage ratio of {effectiveMaxCoverageRatio} and string of {multiPartString}.");
                 }
 
-                return Task.FromResult<ActionResult<List<SanctionEntryDto>>>(
-                    LevenshteinDistance.CheckMultipartString(multiPartString, distance, engine.Context.Sanctions.SanctionsEntries)
-                        .Select(sanctionEntryReturn => new SanctionEntryDto
+                var sanctionEntryReturns = new LevenshteinDistance(effectiveMaxDistanceRatio, effectiveMaxCoverageRatio)
+                    .CheckMultipartString(multiPartString, distance, engine.Context.Sanctions.SanctionsEntries, engine.Context.Sanctions.SanctionsStopTokens);
+
+                var entries = sanctionEntryReturns
+                    .Select(sanctionEntryReturn => new SanctionEntryDto
+                    {
+                        Reference = sanctionEntryReturn.SanctionEntry.SanctionEntryReference,
+                        Value = String.Join(' ', sanctionEntryReturn.SanctionEntry.SanctionElementValue),
+                        SanctionEntrySourceId = sanctionEntryReturn.SanctionEntry.SanctionEntrySourceId,
+                        Source = engine.Context.Sanctions.SanctionsSources.TryGetValue(sanctionEntryReturn.SanctionEntry
+                            .SanctionEntrySourceId, out var source)
+                            ? source.Name
+                            : "Missing",
+                        Distance = sanctionEntryReturn.LevenshteinDistance,
+                        Id = sanctionEntryReturn.SanctionEntry.SanctionEntryId
+                    })
+                    .ToList();
+
+                var groupBySource = sanctionEntryReturns
+                    .GroupBy(sanctionEntryReturn => sanctionEntryReturn.SanctionEntry.SanctionEntrySourceId)
+                    .Select(sourceGroup =>
+                    {
+                        var sourceMatches = sourceGroup.ToList();
+
+                        return new SanctionSourceAggregationDto
                         {
-                            Reference = sanctionEntryReturn.SanctionEntry.SanctionEntryReference,
-                            Value = String.Join(' ', sanctionEntryReturn.SanctionEntry.SanctionElementValue),
-                            Source = engine.Context.Sanctions.SanctionsSources.TryGetValue(sanctionEntryReturn.SanctionEntry
-                                .SanctionEntrySourceId, out var source)
+                            SourceId = sourceGroup.Key,
+                            SourceName = engine.Context.Sanctions.SanctionsSources.TryGetValue(sourceGroup.Key, out var source)
                                 ? source.Name
                                 : "Missing",
-                            Distance = sanctionEntryReturn.LevenshteinDistance,
-                            Id = sanctionEntryReturn.SanctionEntry.SanctionEntryId
-                        })
-                        .ToList());
+                            Sum = SanctionAggregationCalculator.CalculateSum(sourceMatches),
+                            Average = SanctionAggregationCalculator.CalculateAverage(sourceMatches),
+                            Count = SanctionAggregationCalculator.CalculateCount(sourceMatches),
+                            Max = SanctionAggregationCalculator.CalculateMax(sourceMatches),
+                            Min = SanctionAggregationCalculator.CalculateMin(sourceMatches),
+                            First = SanctionAggregationCalculator.CalculateFirst(sourceMatches),
+                            Last = SanctionAggregationCalculator.CalculateLast(sourceMatches),
+                            Confidence = SanctionAggregationCalculator.CalculateConfidence(sourceMatches)
+                        };
+                    })
+                    .OrderBy(sourceAggregation => sourceAggregation.SourceName)
+                    .ToList();
+
+                var total = new SanctionAggregationDto
+                {
+                    Sum = SanctionAggregationCalculator.CalculateSum(sanctionEntryReturns),
+                    Average = SanctionAggregationCalculator.CalculateAverage(sanctionEntryReturns),
+                    Count = SanctionAggregationCalculator.CalculateCount(sanctionEntryReturns),
+                    Max = SanctionAggregationCalculator.CalculateMax(sanctionEntryReturns),
+                    Min = SanctionAggregationCalculator.CalculateMin(sanctionEntryReturns),
+                    First = SanctionAggregationCalculator.CalculateFirst(sanctionEntryReturns),
+                    Last = SanctionAggregationCalculator.CalculateLast(sanctionEntryReturns),
+                    Confidence = SanctionAggregationCalculator.CalculateConfidence(sanctionEntryReturns)
+                };
+
+                return Task.FromResult<ActionResult<SanctionSearchResponseDto>>(new SanctionSearchResponseDto
+                {
+                    Aggregations = new SanctionAggregationsDto
+                    {
+                        Total = total,
+                        BySource = groupBySource
+                    },
+                    Entries = entries
+                });
             }
             catch (Exception ex)
             {
                 log.Error($"Sanction Fetch: Has seen an error as {ex}. Returning 500.");
 
                 Interlocked.Increment(ref engine.Context.Counters.HttpCounterAllError);
-                return Task.FromResult<ActionResult<List<SanctionEntryDto>>>(StatusCode(500));
+                return Task.FromResult<ActionResult<SanctionSearchResponseDto>>(StatusCode(500));
             }
         }
 
         [HttpPut("Archive/Tag")]
         [ProducesResponseType(typeof(ValidationResult), (int)HttpStatusCode.BadRequest)]
-        public Task<ActionResult> EntityAnalysisModelInstanceEntryGuidAsync([FromBody] TagRequestDto model)
+        public Task<ActionResult> EntityAnalysisModelInstanceEntryGuidAsync([FromBody] ArchiveTagDto model)
         {
             try
             {
                 if (!dynamicEnvironment.AppSettings("EnablePublicInvokeController")
                         .Equals("True", StringComparison.OrdinalIgnoreCase))
                 {
-                    return Task.FromResult<ActionResult>(Forbid());
+                    return Task.FromResult<ActionResult>(NotFound());
                 }
 
                 if (!engine.Context.Ready)
@@ -165,64 +231,41 @@ namespace Jube.App.Controllers.Invoke
                 {
                     log.Info(
                         $"Tagging: Controller has Put request with guid {model.EntityAnalysisModelInstanceEntryGuid}," +
-                        $" name {model.Name} and value {model.Value}.");
+                        $" name {model.Tag}.");
                 }
 
                 Interlocked.Increment(ref engine.Context.Counters.HttpCounterTag);
 
-                var entityAnalysisModelGuid = Guid.Parse(model.EntityAnalysisModelGuid);
-                foreach (var (_, value) in
-                         from modelKvp in engine.Context.Tasks.EntityAnalysisModelManager.Context.EntityAnalysisModels.ActiveEntityAnalysisModels
-                         where entityAnalysisModelGuid == modelKvp.Value.Instance.Guid
-                         select modelKvp)
+                var tag = new TagMessage
                 {
-                    if (value.Collections.EntityAnalysisModelTags.Find(w => w.Name == model.Name) == null)
-                    {
-                        return Task.FromResult<ActionResult>(BadRequest());
-                    }
+                    Tag = model.Tag,
+                    EntityAnalysisModelInstanceEntryGuid = model.EntityAnalysisModelInstanceEntryGuid,
+                    UserName = userName
+                };
 
-                    var tag = new Tag
-                    {
-                        Name = model.Name,
-                        Value = model.Value,
-                        EntityAnalysisModelInstanceEntryGuid = Guid.Parse(model.EntityAnalysisModelInstanceEntryGuid),
-                        EntityAnalysisModelId = value.Instance.Id
-                    };
+                engine.Context.ConcurrentQueues.PendingTagging.Enqueue(tag);
 
-                    if (log.IsInfoEnabled)
-                    {
-                        log.Info(
-                            "HTTP Handler Entity: GUID matched for Requested Model GUID " +
-                            $"{tag.EntityAnalysisModelInstanceEntryGuid} and model {tag.EntityAnalysisModelId}.");
-                    }
-
-                    engine.Context.ConcurrentQueues.PendingTagging.Enqueue(tag);
-
-                    if (log.IsInfoEnabled)
-                    {
-                        log.Info(
-                            "Tagging: Controller has put tag in queue with guid " +
-                            $"{tag.EntityAnalysisModelInstanceEntryGuid}, model {tag.EntityAnalysisModelId}, " +
-                            $"name {model.Name} and value {model.Value}.  Returning Ok.");
-                    }
-
-                    return Task.FromResult<ActionResult>(Ok());
+                if (log.IsInfoEnabled)
+                {
+                    log.Info(
+                        "Tagging: Controller has put tag in queue with guid " +
+                        $"{tag.EntityAnalysisModelInstanceEntryGuid} and tags {model.Tag}.  Returning Ok.");
                 }
 
-                return Task.FromResult<ActionResult>(NotFound());
+                return Task.FromResult<ActionResult>(Ok());
             }
             catch (Exception ex)
             {
                 log.Error(
                     "Tagging: An error has been created while tagging guid " +
-                    $"{model.EntityAnalysisModelInstanceEntryGuid} " +
-                    $"and model {model.EntityAnalysisModelGuid} as {ex}.");
+                    $"{model.EntityAnalysisModelInstanceEntryGuid} as {ex}.");
 
                 engine.Context.Counters.HttpCounterAllError += 1;
 
                 return Task.FromResult<ActionResult>(StatusCode(500));
             }
         }
+
 #pragma warning disable ASP0018
         // ReSharper disable once RouteTemplates.RouteParameterIsNotPassedToMethod
         [HttpPost("EntityAnalysisModel/{guid}")]
@@ -238,7 +281,7 @@ namespace Jube.App.Controllers.Invoke
                 if (!dynamicEnvironment.AppSettings("EnablePublicInvokeController")
                         .Equals("True", StringComparison.OrdinalIgnoreCase))
                 {
-                    return Forbid();
+                    return NotFound();
                 }
 
                 if (engine.Context is not { Ready: true })
@@ -263,29 +306,31 @@ namespace Jube.App.Controllers.Invoke
                         Interlocked.Increment(ref engine.Context.Counters.HttpCounterModelAsync);
                     }
 
-                    EntityAnalysisModel entityAnalysisModel = null;
-                    foreach (var (_, value) in
-                             from modelKvp in engine.Context.Tasks.EntityAnalysisModelManager.Context.EntityAnalysisModels.ActiveEntityAnalysisModels
-                             where guid == modelKvp.Value.Instance.Guid
-                             select modelKvp)
+                    var foundModels = engine.Context.Tasks.EntityAnalysisModelManager.Context.EntityAnalysisModels.ActiveEntityAnalysisModels
+                        .Where(modelKvp => guid == modelKvp.Value.Instance.Guid).ToList();
+
+                    if (!foundModels.Any())
                     {
-                        entityAnalysisModel = value;
-
-                        if (log.IsInfoEnabled)
-                        {
-                            log.Info(
-                                $"HTTP Handler Entity: GUID matched for Requested Model GUID {guid}.  Model id is {entityAnalysisModel.Instance.Id}.");
-                        }
-
-                        break;
+                        return NotFound();
                     }
 
-                    if (entityAnalysisModel != null)
+                    foreach (var (_, value) in foundModels)
                     {
+                        if (!value.Collections.Users.Contains(User.Identity?.Name))
+                        {
+                            continue;
+                        }
+
                         if (log.IsInfoEnabled)
                         {
                             log.Info(
-                                $"HTTP Handler Entity: GUID payload {guid} model id is {entityAnalysisModel.Instance.Id} will now begin payload parsing.");
+                                $"HTTP Handler Entity: GUID matched for Requested Model GUID {guid}.  Model id is {value.Instance.Id}.");
+                        }
+
+                        if (log.IsInfoEnabled)
+                        {
+                            log.Info(
+                                $"HTTP Handler Entity: GUID payload {guid} model id is {value.Instance.Id} will now begin payload parsing.");
                         }
 
                         if (Request.ContentLength != null)
@@ -293,7 +338,7 @@ namespace Jube.App.Controllers.Invoke
                             try
                             {
                                 var context = await EntityAnalysisModelInvoke.InvokeAsync(
-                                    entityAnalysisModel,
+                                    value,
                                     ms, Int32.Parse(dynamicEnvironment.AppSettings("MaxInvokeControllerRequestBytes")),
                                     async).ConfigureAwait(false);
 
@@ -301,6 +346,7 @@ namespace Jube.App.Controllers.Invoke
                                 Response.ContentType = "application/json";
                                 Response.ContentLength = bytes.Length;
                                 await Response.Body.WriteAsync(bytes);
+                                return new EmptyResult();
                             }
                             catch (ExceededBytesException)
                             {
@@ -327,6 +373,7 @@ namespace Jube.App.Controllers.Invoke
                         }
 
                         return BadRequest("Content body is zero length.");
+
                     }
 
                     if (log.IsInfoEnabled)
@@ -335,11 +382,11 @@ namespace Jube.App.Controllers.Invoke
                             $"HTTP Handler Entity: Could not locate the model for Guid {guid}.");
                     }
 
-                    return NotFound();
+                    return Forbid();
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    return NotFound();
+                    return StatusCode(500, ex.Message);
                 }
             }
             catch (Exception ex)
@@ -368,7 +415,7 @@ namespace Jube.App.Controllers.Invoke
                 if (!dynamicEnvironment.AppSettings("EnablePublicInvokeController")
                         .Equals("True", StringComparison.OrdinalIgnoreCase))
                 {
-                    return Forbid();
+                    return NotFound();
                 }
 
                 if (!engine.Context.Ready)
@@ -381,76 +428,47 @@ namespace Jube.App.Controllers.Invoke
                 var ms = new MemoryStream();
                 await Request.Body.CopyToAsync(ms).ConfigureAwait(false);
 
-                var guid = Request.RouteValues["guid"].AsString();
+                var guid = Guid.Parse(Request.RouteValues["guid"].AsString());
 
                 if (log.IsInfoEnabled)
                 {
                     log.Info($"Exhaustive Recall:  Recall received for {guid}.  Invoking handler.");
                 }
 
-                var value = Math.Round(engine.Context.RecallExhaustive(
-                    Guid.Parse(guid),
-                    JObject.Parse(Encoding.UTF8.GetString(ms.ToArray()))), 2);
+                var foundExhaustive = engine.Context.Tasks.EntityAnalysisModelManager.Context.EntityAnalysisModels.ActiveEntityAnalysisModels
+                    .Where(w => w.Value.Collections.ExhaustiveModels.Any(a => a.Guid == guid)).ToList();
 
-                if (log.IsInfoEnabled)
+                if (foundExhaustive.Count == 0)
                 {
-                    log.Info($"Exhaustive Recall:  Has invoked the handler and returned a value of {value}.  Returning.");
+                    return NotFound();
                 }
 
-                return value;
+                foreach (var (_, value) in foundExhaustive)
+                {
+                    if (!value.Collections.Users.Contains(User.Identity?.Name))
+                    {
+                        continue;
+                    }
+
+                    var response = Math.Round(engine.Context.RecallExhaustive(
+                        guid,
+                        JObject.Parse(Encoding.UTF8.GetString(ms.ToArray()))), 2);
+
+                    if (log.IsInfoEnabled)
+                    {
+                        log.Info($"Exhaustive Recall:  Has invoked the handler and returned a value of {value}.  Returning.");
+                    }
+
+                    return response;
+                }
+
+                return Forbid();
             }
             catch (Exception ex)
             {
                 log.Error($"Exhaustive Recall:  An error has been raised as {ex}.  Returning 500.");
 
                 engine.Context.Counters.HttpCounterAllError += 1;
-                return StatusCode(500);
-            }
-        }
-
-        [HttpPost("ExampleFraudScoreLocalEndpoint")]
-        [ProducesResponseType(typeof(ValidationResult), (int)HttpStatusCode.BadRequest)]
-        public async Task<ActionResult<double>> ExampleFraudScoreLocalEndpointAsync()
-        {
-            try
-            {
-                if (!dynamicEnvironment.AppSettings("EnablePublicInvokeController")
-                        .Equals("True", StringComparison.OrdinalIgnoreCase))
-                {
-                    return Forbid();
-                }
-
-                var ms = new MemoryStream();
-                await Request.Body.CopyToAsync(ms).ConfigureAwait(false);
-
-                if (log.IsInfoEnabled)
-                {
-                    log.Info("Example FraudScore Local Endpoint Recall:  Recall received.");
-                }
-
-                var jObject = JObject.Parse(Encoding.UTF8.GetString(ms.ToArray()));
-
-                var responseCodeVolumeRatio = jObject.SelectToken("$.ResponseCodeEqual0Volume");
-
-                if (log.IsInfoEnabled)
-                {
-                    log.Info($"Example FraudScore Local Endpoint Recall:  Json parsed as {jObject}.  " +
-                             "This endpoint will just echo back the sqrt of the ResponseCodeVolumeRatio element." +
-                             " More typically this would be an R endpoint and it would recall a variety of models.");
-                }
-
-                if (responseCodeVolumeRatio != null)
-                {
-                    return Math.Sqrt(responseCodeVolumeRatio.ToObject<double>());
-                }
-
-                return 0;
-            }
-            catch (Exception ex)
-            {
-                log.Error(
-                    $"Example FraudScore Local Endpoint Recall:  An error has been raised as {ex}.  Returning 500.");
-
                 return StatusCode(500);
             }
         }

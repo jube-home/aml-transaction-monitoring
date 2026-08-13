@@ -1,0 +1,13 @@
+# Dozzle "simple" auth provider user file - see docs/GettingStarted/DeployingWithJubeCluster/index.md.
+#
+# This is a template, not a working credential file. Generate a real entry before deploying:
+#
+#   docker run --rm amir20/dozzle generate <username> --password <password> --name "<Display Name>"
+#
+# and replace the users block below with its output. Do not commit real password hashes to a
+# public repository - keep this file's real contents out of version control, or manage it the same
+# way as the other secrets in this cluster.
+users:
+  admin:
+    name: CHANGE ME
+    password: CHANGE ME - paste the bcrypt hash from `dozzle generate` here, not a plaintext password

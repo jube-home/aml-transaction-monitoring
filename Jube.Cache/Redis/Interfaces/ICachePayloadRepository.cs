@@ -14,6 +14,7 @@
 namespace Jube.Cache.Redis.Interfaces
 {
     using Dictionary;
+    using StackExchange.Redis;
 
     public interface ICachePayloadRepository
     {
@@ -25,7 +26,21 @@ namespace Jube.Cache.Redis.Interfaces
             Guid entityAnalysisModelGuid, DictionaryNoBoxing<int> payload,
             DateTime referenceDate, Guid entityAnalysisModelInstanceEntryGuid);
 
-        Task DeleteByReferenceDateAsync(int tenantRegistryId, Guid entityAnalysisModelGuid,
+        Task DeleteByReferenceDatePreferReplicaAsync(int tenantRegistryId, Guid entityAnalysisModelGuid,
             DateTime referenceDate, int limit, CancellationToken token = default);
+
+        Task<List<RedisValue>> GetSortedSetKeysAsync(
+            int tenantRegistryId,
+            Guid entityAnalysisModelGuid,
+            string key,
+            string value,
+            int limit,
+            Guid excludeGuid);
+
+        Task<Dictionary<string, DictionaryNoBoxing<int>>> GetPayloadBatchAsync(
+            int tenantRegistryId,
+            Guid entityAnalysisModelGuid,
+            IReadOnlyCollection<RedisValue> keys,
+            Guid entityAnalysisModelInstanceEntryGuid);
     }
 }

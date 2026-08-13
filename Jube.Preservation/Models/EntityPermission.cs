@@ -41,5 +41,7 @@ namespace Jube.Preservation.Models
         public IEnumerable<VisualisationRegistryDatasourceRole>? VisualisationRegistryDatasourceRole { get; set; }
         [Key(10)]
         public IEnumerable<VisualisationRegistryParameterRole>? VisualisationRegistryParameterRole { get; set; }
+        [Key(11)]
+        public IEnumerable<EntityAnalysisModelRole>? EntityAnalysisModelRole { get; set; }
     }
 }

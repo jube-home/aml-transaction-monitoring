@@ -211,7 +211,7 @@ $(document).ready(function () {
         case 'UserRegistry':
             serviceRoot = serviceRoot + Page;
             topLevel = "/api/RoleRegistry";
-            topLevelId = "id";
+            topLevelId = "guid";
             ChildDescription = 'User Registry';
             ChildURLAdd = "/Administration/Frame/UserRegistry";
             ChildURLUpdate = "/Administration/Frame/UserRegistry";
@@ -289,6 +289,7 @@ $(document).ready(function () {
 
             serviceRoot = serviceRoot + 'CaseWorkflow';
             topLevel = "/api/EntityAnalysisModel";
+            topLevelId = "id";
             ChildDescription = 'Case Workflow Display';
             ChildURLAdd = "/Model/Frame/CaseWorkflowDisplay";
             ChildURLUpdate = "/Model/Frame/CaseWorkflowDisplay";
@@ -526,6 +527,7 @@ function getUrlVars() {
 
 function DeleteNode(child, terminator) {
     const treeview = $("#Tree").getKendoTreeView();
+    const $contentPane = $("#ContentPane");
     let parentNode;
     let childNode;
     const nodes = treeview.dataSource.view();
@@ -544,13 +546,13 @@ function DeleteNode(child, terminator) {
                                 item = treeview.findByUid(childChildParentNodes[k].uid);
                                 treeview.remove(item);
                                 if (terminator === 1) {
-                                    $("#ContentPane").html('Entry ' + child + ' has been deleted.');
+                                    $contentPane.html('Entry ' + child + ' has been deleted.');
                                 }
                             }
                         }
                     } else {
                         if (terminator === 1) {
-                            $("#ContentPane").html('Entry ' + child + ' has been deleted.');
+                            $contentPane.html('Entry ' + child + ' has been deleted.');
                         }
                     }
                 }
@@ -565,13 +567,13 @@ function DeleteNode(child, terminator) {
                             item = treeview.findByUid(childNode.uid);
                             treeview.remove(item);
                             if (terminator === 1) {
-                                $("#ContentPane").html('Entry ' + child + ' has been deleted.');
+                                $contentPane.html('Entry ' + child + ' has been deleted.');
                             }
                         }
                     }
                 } else {
                     if (terminator === 1) {
-                        $("#ContentPane").html('Entry ' + child + ' has been deleted.');
+                        $contentPane.html('Entry ' + child + ' has been deleted.');
                     }
                 }
             }

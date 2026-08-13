@@ -69,7 +69,7 @@ namespace Jube.App.Controllers.Query
             {
                 if (!permissionValidation.Validate(new[]
                     {
-                        11, 17, 4
+                        11, 17, 4, 1
                     }))
                 {
                     return Forbid();
@@ -91,7 +91,7 @@ namespace Jube.App.Controllers.Query
             {
                 if (!permissionValidation.Validate(new[]
                     {
-                        11, 17, 4
+                        11, 17, 4, 1
                     }))
                 {
                     return Forbid();

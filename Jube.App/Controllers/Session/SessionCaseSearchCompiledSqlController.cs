@@ -22,9 +22,11 @@ namespace Jube.App.Controllers.Session
     using Code;
     using Data.Context;
     using Data.Poco;
+    using Data.Query.DynamicResultsSchema;
     using Data.Reporting;
     using Data.Repository;
     using Dto;
+    using Dto.Mapping;
     using DynamicEnvironment;
     using FluentMigrator.Runner;
     using FluentValidation;
@@ -43,6 +45,7 @@ namespace Jube.App.Controllers.Session
     public class SessionCaseSearchCompiledSqlController : Controller
     {
         private readonly DbContext dbContext;
+        private readonly DynamicEnvironment dynamicEnvironment;
         private readonly ILog log;
         private readonly IMapper mapper;
         private readonly PermissionValidation permissionValidation;
@@ -60,14 +63,17 @@ namespace Jube.App.Controllers.Session
             }
 
             this.log = log;
+            this.dynamicEnvironment = dynamicEnvironment;
             dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"), log);
             permissionValidation = new PermissionValidation(dbContext, userName, log);
-            reportConnectionString = dynamicEnvironment.AppSettings("ReportConnectionString") ?? dbContext.ConnectionString;
+            reportConnectionString = dynamicEnvironment.AppSettings("ReportConnectionString") ?? dbContext.Connection.ConnectionString;
 
             var config = new MapperConfiguration(cfg =>
             {
                 cfg.CreateMap<SessionCaseSearchCompiledSql, SessionCaseSearchCompiledSqlDto>();
                 cfg.CreateMap<SessionCaseSearchCompiledSqlDto, SessionCaseSearchCompiledSql>();
+                cfg.CreateMap<DateTime?, DateTimeOffset?>().ConvertUsing<NullableDateTimeToDateTimeOffsetConverter>();
+                cfg.CreateMap<DateTime, DateTimeOffset>().ConvertUsing(src => new DateTimeOffset(DateTime.SpecifyKind(src, DateTimeKind.Utc)));
             }, NullLoggerFactory.Instance);
 
             mapper = new Mapper(config);
@@ -87,7 +93,7 @@ namespace Jube.App.Controllers.Session
         }
 
         [HttpGet("ByGuid/{guid:Guid}")]
-        public async Task<ActionResult<List<dynamic>>> ExecuteByGuidAsync(Guid guid, CancellationToken token = default)
+        public async Task<ActionResult<DynamicResultSchemaDto>> ExecuteByGuidAsync(Guid guid, CancellationToken token = default)
         {
             try
             {
@@ -101,30 +107,32 @@ namespace Jube.App.Controllers.Session
 
                 var repository = new SessionCaseSearchCompiledSqlRepository(dbContext, userName);
 
-                var modelCompiled = repository.GetByGuid(guid);
-                if (modelCompiled == null)
+                var model = repository.GetByGuid(guid);
+                if (model == null)
                 {
                     return NotFound();
                 }
 
-                await CheckRebuildAsync(modelCompiled, token).ConfigureAwait(false);
+                await CheckRebuildAsync(model, token).ConfigureAwait(false);
 
-                using var postgres = new Postgres(reportConnectionString, log);
-                var tokens = JsonConvert.DeserializeObject<List<object>>(modelCompiled.FilterTokens);
+                using var postgres = new Postgres(reportConnectionString, log,
+                    dynamicEnvironment.AppSettings("ParserAssertSelectOnly").Equals("True", StringComparison.OrdinalIgnoreCase));
+
+                var tokens = JsonConvert.DeserializeObject<List<object>>(model.FilterTokens);
 
                 var sw = new StopWatch();
                 sw.Start();
 
-                var value = await postgres.ExecuteByOrderedParametersAsync(modelCompiled.SelectSqlSearch
+                var value = await postgres.ExecuteByOrderedParametersAsync(model.SelectSqlSearch
                                                                            + " "
-                                                                           + modelCompiled.WhereSql
-                                                                           + " " + modelCompiled.OrderSql + " limit 100", tokens, token).ConfigureAwait(false);
+                                                                           + model.WhereSql
+                                                                           + " " + model.OrderSql + " limit 100", tokens, token).ConfigureAwait(false);
 
                 sw.Stop();
 
                 var modelInsert = new SessionCaseSearchCompiledSqlExecution
                 {
-                    SessionCaseSearchCompiledSqlId = modelCompiled.Id,
+                    SessionCaseSearchCompiledSqlId = model.Id,
                     Records = value.Count,
                     ResponseTime = sw.ElapsedTime().Milliseconds
                 };
@@ -134,7 +142,7 @@ namespace Jube.App.Controllers.Session
 
                 await sessionCaseSearchCompiledSqlExecutionRepository.InsertAsync(modelInsert, token);
 
-                return Ok(value);
+                return Ok(DynamicResultSchema.Build(value));
             }
             catch (Exception e)
             {
@@ -143,14 +151,14 @@ namespace Jube.App.Controllers.Session
             }
         }
 
-        private async Task<SessionCaseSearchCompiledSql> CheckRebuildAsync(SessionCaseSearchCompiledSql modelCompiled, CancellationToken token = default)
+        private async Task<SessionCaseSearchCompiledSql> CheckRebuildAsync(SessionCaseSearchCompiledSql model, CancellationToken token = default)
         {
-            if (modelCompiled.Rebuild == 1 && (modelCompiled.RebuildDate != null || modelCompiled.RebuildDate == default(DateTime)))
+            if (model.Rebuild == 1 && model.RebuildDate == default(DateTime))
             {
-                return await CompileSql.CompileAsync(dbContext, modelCompiled, userName, log, reportConnectionString, token).ConfigureAwait(false);
+                return await CompileSql.CompileAsync(dbContext, model.CaseWorkflowGuid, model.CaseWorkflowFilterGuid, model.SelectJson, model.FilterJson, userName, log, dynamicEnvironment.AppSettings("ParserAssertSelectOnly").Equals("True", StringComparison.OrdinalIgnoreCase), reportConnectionString, token).ConfigureAwait(false);
             }
 
-            return modelCompiled;
+            return model;
         }
 
         [HttpGet("ByLast")]
@@ -210,9 +218,9 @@ namespace Jube.App.Controllers.Session
                     return BadRequest(results);
                 }
 
-                return Ok(mapper.Map<SessionCaseSearchCompiledSqlDto>(await CompileSql.CompileAsync(dbContext,
-                    mapper.Map<SessionCaseSearchCompiledSql>(model),
-                    userName, log, reportConnectionString, token).ConfigureAwait(false)));
+                return Ok(mapper.Map<SessionCaseSearchCompiledSqlDto>(await CompileSql.CompileAsync(dbContext, model.CaseWorkflowGuid,
+                    model.CaseWorkflowFilterGuid, model.SelectJson, model.FilterJson,
+                    userName, log, dynamicEnvironment.AppSettings("ParserAssertSelectOnly").Equals("True", StringComparison.OrdinalIgnoreCase), reportConnectionString, token).ConfigureAwait(false)));
             }
             catch (Exception e)
             {

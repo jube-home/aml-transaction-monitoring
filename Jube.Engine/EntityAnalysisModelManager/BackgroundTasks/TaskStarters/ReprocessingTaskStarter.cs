@@ -31,6 +31,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters
     using EntityAnalysisModel;
     using EntityAnalysisModelInvoke;
     using Helpers;
+    using Models;
     using Parser;
     using Parser.Compiler;
     using Reprocessing;
@@ -124,7 +125,9 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters
                                     // ReSharper disable once RedundantAssignment
                                     var deleted = false;
 
-                                    using var archiveDatabase = new Postgres(context.Services.ReportConnectionString ?? dbContext.ConnectionString, context.Services.Log);
+                                    using var archiveDatabase = new Postgres(context.Services.ReportConnectionString ?? dbContext.Connection.ConnectionString,
+                                        context.Services.Log,
+                                        context.Services.DynamicEnvironment.AppSettings("ParserAssertSelectOnly").Equals("True", StringComparison.OrdinalIgnoreCase));
                                     do
                                     {
                                         if (context.Services.Log.IsInfoEnabled)
@@ -225,7 +228,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters
                                                 processed += 1;
                                             }
 
-                                            if (lastUpdated <= DateTime.Now.AddSeconds(-10))
+                                            if (lastUpdated <= DateTime.UtcNow.AddSeconds(-10))
                                             {
                                                 if (await LogAndGetTerminateAsync(dbContext,
                                                         entityAnalysisModelRuleReprocessing.EntityAnalysisModelRuleReprocessingInstance,
@@ -244,7 +247,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters
                                                     break;
                                                 }
 
-                                                lastUpdated = DateTime.Now;
+                                                lastUpdated = DateTime.UtcNow;
                                             }
                                             else
                                             {
@@ -461,7 +464,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters
             EntityAnalysisModelRuleReprocessingInstance entityAnalysisModelRuleReprocessingInstance,
             GetArchiveRangeAndCountsQuery.Dto ranges)
         {
-            var lastReferenceDate = Convert.ToDateTime(ranges.Max);
+            var lastReferenceDate = DateTime.SpecifyKind(ranges.Max.GetValueOrDefault(), DateTimeKind.Utc);
             var allCount = 0l;
             DateTime adjustedStartDate = default;
 
@@ -474,7 +477,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters
                         $"Entity Reprocessing: Reprocessing instance {entityAnalysisModelRuleReprocessingInstance.EntityAnalysisModelsReprocessingRuleInstanceId} Has found a last reference date of {lastReferenceDate}.");
                 }
 
-                var firstReferenceDate = Convert.ToDateTime(ranges.Min);
+                var firstReferenceDate = DateTime.SpecifyKind(ranges.Min.GetValueOrDefault(), DateTimeKind.Utc);
 
                 if (context.Services.Log.IsInfoEnabled)
                 {
@@ -748,7 +751,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters
                                  .SelectMany(entityAnalysisModelInlineScript
                                      => SyntaxTreeHelpers.GetPublicProperties(entityAnalysisModelInlineScript.InlineScriptCode, entityAnalysisModelInlineScript.LanguageId == 2)))
                     {
-                        parser.EntityAnalysisModelInlineScriptProperties.TryAdd(publicProperty.Key, publicProperty.Value);
+                        parser.EntityAnalysisModelInlineScriptProperties.TryAdd(publicProperty.Key, publicProperty.Value.DataTypeId);
                     }
 
                     if (context.Services.Log.IsDebugEnabled)
@@ -923,7 +926,9 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters
                                         typeof(EntityAnalysisModelRuleReprocessingInstance.Match), methodInfo);
                             }
 
-                            context.Caching.HashCacheAssembly.Add(gatewayRuleScriptHash, compile.CompiledAssembly);
+                            context.Caching.HashCacheAssembly.TryAdd(gatewayRuleScriptHash, compile.CompiledAssembly);
+                            context.Caching.HashCacheAssemblyMetadata.TryAdd(gatewayRuleScriptHash,
+                                new HashCacheAssemblyPayload(compile.CompiledAssemblyBytes, compile.CompiledAssemblyBinary, gatewayRuleScript.ToString()));
 
                             if (context.Services.Log.IsDebugEnabled)
                             {

@@ -10,49 +10,37 @@
  * You should have received a copy of the GNU Affero General Public License along with Jube™. If not, 
  * see <https://www.gnu.org/licenses/>.
  *@
+
 @page
-@inject DynamicEnvironment.DynamicEnvironment DynamicEnvironment
-@{
-    var sandpit = DynamicEnvironment.AppSettings("EnableSandbox").Equals("True", StringComparison.OrdinalIgnoreCase);
-}
+@using Jube.DynamicEnvironment
+@model LoginModel
+@inject DynamicEnvironment DynamicEnvironment
+<script src="/js/Account/PasswordStrength.js"></script>
+<script src="/js/Account/Encryption.js"></script>
 <script src="/js/Account/Authentication.js"></script>
-<form id="FormAuthenticate">
-    @if (sandpit)
-    {
-        <h1>Login to The Sandbox!</h1>
-        <p>
-            The Sandbox offers a fully functional version of Jube, tailored for learning and training purposes. It leverages Jube's multi-tenancy capabilities to deliver the experience of an isolated environment, even though it operates on shared resources with logical data isolation. While the Visualization and Reporting features are limited to three example tables, the overall experience remains thorough and effective.
-        </p>
-        <p>
-            To maximize your learning and training experience, we recommend using The Sandbox in conjunction with the official documentation.
-        </p>
-        <p>Support is available through two channels:</p>
-        <ul>
-            <li><strong>Ask Jooby</strong>, our AI assistant, located in the bottom right-hand corner.</li>
-            <li><strong>Email</strong> at <a href="mailto:support@jube.io">support@jube.io</a>.</li>
-        </ul>
-        <p>Feel free to reach out using either option!</p>
-        <hr/>
-    }
+
+<script>
+    const negotiateAuthentication = @(DynamicEnvironment.AppSettings("NegotiateAuthentication")
+                                      .Equals("True", StringComparison.OrdinalIgnoreCase) ? "true" : "false");
+
+    const mfa = @(DynamicEnvironment.AppSettings("EnableMultifactorAuthentication")
+                  .Equals("True", StringComparison.OrdinalIgnoreCase) ? "true" : "false");
+
+    const passwordAsymmetricEncryption = @(DynamicEnvironment.AppSettings("PasswordAsymmetricEncryption")
+                                           .Equals("True", StringComparison.OrdinalIgnoreCase) ? "true" : "false");
+
+    const passwordAsymmetricEncryptionPublicKey = "@DynamicEnvironment.AppSettings("PasswordAsymmetricEncryptionPublicKey")";
+</script>
+
+<br/>
+<form id="FormAuthenticate" style="display:none;">
     <table id="AuthenticationTable" class="tTStyle">
         <tr>
             <td>
-                @if (!sandpit)
-                {
-                    <label for="UserName">User Name</label>
-                }
-                else
-                {
-                    <label for="UserName">Email</label>
-                }
+                <label for="UserName">User Name</label>
             </td>
             <td>
-                <input type="text" id="UserName" name="UserName" class="k-textbox">
-                @* ReSharper disable once Html.PathError *@
-                @if (sandpit)
-                {
-                    <a href="SandboxRegistration">Register</a>
-                }
+                <input type="text" id="UserName" name="UserName" class="k-textbox" autocomplete="off">
             </td>
         </tr>
         <tr>
@@ -60,7 +48,16 @@
                 <label for="Password">Password</label>
             </td>
             <td>
-                <input type="password" id="Password" name="Password" class="k-textbox">
+                <input type="password" id="Password" name="Password" class="k-textbox" autocomplete="off">
+            </td>
+        </tr>
+        <tr id="MfaRow" style="display:none;">
+            <td>
+                <label for="Mfa">MFA Token</label>
+            </td>
+            <td>
+                <input type="text" id="Mfa" name="Mfa" class="k-textbox" autocomplete="off"
+                       inputmode="numeric" maxlength="8">
             </td>
         </tr>
     </table>
@@ -70,44 +67,35 @@
     <button id="Login" type="submit">Log in</button>
     <span id="MessageAuthenticate"></span>
 </div>
-<div id="PasswordResetDiv">
-    <form id="FormChange">
+<template id="PasswordResetTemplate">
+    <div id="PasswordResetDiv">
+        <form id="FormChange">
+            <br/>
+            <table id="PasswordResetTable" class="tTStyle">
+                <tr>
+                    <td>
+                        <label for="NewPassword">New Password</label>
+                    </td>
+                    <td>
+                        <input type="password" id="NewPassword" name="NewPassword" class="k-textbox" autocomplete="off">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label for="VerifyNewPassword">Verify New Password</label>
+                    </td>
+                    <td>
+                        <input type="password" id="VerifyNewPassword" name="VerifyNewPassword" class="k-textbox"
+                               autocomplete="off">
+                    </td>
+                </tr>
+            </table>
+        </form>
         <br/>
-        <table id="PasswordResetTable" class="tTStyle">
-            <tr>
-                <td>
-                    <label for="NewPassword">New Password</label>
-                </td>
-                <td>
-                    <input type="password" id="NewPassword" name="NewPassword" class="k-textbox">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <label for="VerifyNewPassword">Verify New Password</label>
-                </td>
-                <td>
-                    <input type="password" id="VerifyNewPassword" name="VerifyNewPassword" class="k-textbox">
-                </td>
-            </tr>
-        </table>
-    </form>
-    <br/>
-    <div class="topPaddedGeneral">
-        <button id="Change" type="submit">Change Password and Login</button> <span id="MessageChange"></span>
+        <div class="topPaddedGeneral">
+            <button id="Change" type="submit">Change Password and Login</button>
+            <span id="MessageChange"></span>
+        </div>
     </div>
-</div>
-@if (sandpit)
-{
-    <hr/>
-    <p>
-        Please note that The Sandbox and its support services are provided on a <strong>"best efforts" basis</strong> and are subject to the following conditions:
-    </p>
-    <ul>
-        <li><strong>Use only test data</strong> within The Sandbox.</li>
-        <li><strong>Do not use</strong> The Sandbox for real or production data.</li>
-    </ul>
-    <p>
-        The Sandbox is designed as a helpful tool; however, it is provided <strong>WITHOUT ANY WARRANTY</strong>. This includes, but is not limited to, implied warranties of <strong>MERCHANTABILITY</strong> or <strong>FITNESS FOR A PARTICULAR PURPOSE</strong>.
-    </p>
-}
+</template>
+<div id="PasswordResetContainer"></div>

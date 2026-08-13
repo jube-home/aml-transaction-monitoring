@@ -24,6 +24,7 @@ namespace Jube.App.Controllers.Repository
     using Data.Poco;
     using Data.Repository;
     using Dto;
+    using Dto.Mapping;
     using DynamicEnvironment;
     using FluentValidation;
     using FluentValidation.Results;
@@ -63,6 +64,9 @@ namespace Jube.App.Controllers.Repository
             {
                 cfg.CreateMap<EntityAnalysisModelDictionaryKvpDto, EntityAnalysisModelDictionaryKvp>();
                 cfg.CreateMap<EntityAnalysisModelDictionaryKvp, EntityAnalysisModelDictionaryKvpDto>();
+                cfg.CreateMap<DateTime?, DateTimeOffset?>().ConvertUsing<NullableDateTimeToDateTimeOffsetConverter>();
+                cfg.CreateMap<DateTime, DateTimeOffset>().ConvertUsing(src => new DateTimeOffset(DateTime.SpecifyKind(src, DateTimeKind.Utc)));
+                cfg.CreateMap<DateTimeOffset?, DateTime?>().ConvertUsing<NullableDateTimeOffsetToDateTimeConverter>();
             }, NullLoggerFactory.Instance);
 
             mapper = new Mapper(config);

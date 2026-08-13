@@ -5,9 +5,7 @@ nav_order: 5
 parent: Navigation
 ---
 
-🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
-💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
-developer.
+🚀 Get to pre-production in weeks, not months, with private [training](https://www.jube.io/jube-training) direct from Jube's developer — real sovereignty, zero vendor lock-in.
 
 # Locked and Active
 
@@ -40,3 +38,5 @@ In the case of a child object:
 ![Image](MissingButtonsInChild.png)
 
 Notice both the absence of Update or Delete buttons.
+
+A small number of child objects — List Values, Dictionary Key Value Pairs, and Suppression — additionally support a Delete Expiry Date, rather than an Active flag. Where set, this has exactly the same effect as an explicit delete, but occurring automatically and unattended at a specified future date and time, without requiring any further manual intervention or synchronisation. See the [Lists](../../Configuration/Models/Lists/index.html), [Dictionary](../../Configuration/Models/Dictionaries/index.html) and [Activation Rules Suppression](../../Configuration/Models/ActivationRulesSuppression/index.html) pages for further detail.

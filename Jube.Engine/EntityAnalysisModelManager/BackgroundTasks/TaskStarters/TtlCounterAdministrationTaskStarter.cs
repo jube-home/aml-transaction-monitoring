@@ -14,6 +14,7 @@
 namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
@@ -118,9 +119,11 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters
                             var adjustedTtlCounterDate =
                                 ttlCounterAdministrationCacheService.GetAdjustedTtlCounterDate(ttlCounterWithinLoop, referenceDate.Value);
 
+                            var ttlCounterEntryDeleteLimit = Int32.Parse(context.Services.DynamicEnvironment.AppSettings("TtlCounterEntryDeleteLimit"));
+
                             var expiredTtlCounterEntries = await ttlCounterAdministrationCacheService.GetAllExpiredByTtlCounterAsync(
                                 entityAnalysisModel.Services.CacheService.CacheTtlCounterEntryRepository, ttlCounterWithinLoop,
-                                adjustedTtlCounterDate).ConfigureAwait(false);
+                                adjustedTtlCounterDate, ttlCounterEntryDeleteLimit).ConfigureAwait(false);
 
                             if (!expiredTtlCounterEntries.Any())
                             {
@@ -146,7 +149,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters
                                     LastExpiredHashSetReferenceDate = expiredSortedSetMaxTimestamp.FromUnixTimeMilliSeconds()
                                 }, context.Services.TaskCoordinator.CancellationToken).ConfigureAwait(false);
 
-                                var cacheTtlCounterEntryRemovalBatchEntryList = new List<CacheTtlCounterEntryRemovalBatchEntry>();
+                                var cacheTtlCounterEntryRemovalBatchEntryList = new ConcurrentBag<CacheTtlCounterEntryRemovalBatchEntry>();
                                 var tasks = new List<Task<TimedTaskResult>>();
                                 foreach (var expiredTtlCounterEntry in expiredTtlCounterEntries)
                                 {
@@ -207,10 +210,10 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters
                 }
             }
         }
-        
+
         private static async Task ProcessTtlCounterDeprecationAsync(EntityAnalysisModel entityAnalysisModel, TtlCounterAdministrationCacheService ttlCounterAdministrationCacheService,
             EntityAnalysisModelTtlCounter ttlCounterWithinLoop, ExpiredTtlCounterEntry expiredTtlCounterEntry,
-            List<CacheTtlCounterEntryRemovalBatchEntry> cacheTtlCounterEntryRemovalBatchEntryList,
+            ConcurrentBag<CacheTtlCounterEntryRemovalBatchEntry> cacheTtlCounterEntryRemovalBatchEntryList,
             CacheTtlCounterEntryRemovalBatch cacheTtlCounterEntryRemovalBatch)
         {
 

@@ -11,11 +11,11 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using FluentMigrator;
-
 namespace Jube.Migrations.Baseline
 {
+    using System;
+    using FluentMigrator;
+
     [Migration(20220429124922)]
     public class AddEntityAnalysisInlineScriptTable : Migration
     {
@@ -60,7 +60,7 @@ namespace Jube.Migrations.Baseline
                 ClassName = "IssueOTP",
                 Name = "Issue OTP",
                 MethodName = "Execute",
-                CreatedDate = DateTime.Now
+                CreatedDate = DateTime.UtcNow
             });
         }
 

@@ -11,10 +11,10 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-
 namespace Jube.Data.Extension
 {
+    using System;
+
     public static class Extension
     {
         public static string AsString(this object obj)
@@ -49,12 +49,12 @@ namespace Jube.Data.Extension
 
         public static Guid AsGuid(this object obj)
         {
-            return Guid.Parse(obj.ToString() ?? string.Empty);
+            return Guid.Parse(obj.ToString() ?? String.Empty);
         }
 
         public static DateTime AsDateTime(this object obj)
         {
-            return Convert.ToDateTime(obj);
+            return DateTime.SpecifyKind(Convert.ToDateTime(obj), DateTimeKind.Utc);
         }
     }
 }

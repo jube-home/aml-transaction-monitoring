@@ -15,6 +15,7 @@ namespace Jube.App.Controllers.Helper
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.IO;
     using System.Threading;
     using System.Threading.Tasks;
@@ -105,13 +106,19 @@ namespace Jube.App.Controllers.Helper
 
                                 if (splits.Length > 1)
                                 {
+                                    var deleteExpiryDateSpecified = splits.Length > 2;
+                                    var deleteExpiryDate = deleteExpiryDateSpecified
+                                        ? ParseDeleteExpiryDate(splits[2])
+                                        : null;
+
                                     if (entityAnalysisModelDictionaryKvp == null)
                                     {
                                         var entityAnalysisModelsDictionaryKvp = new EntityAnalysisModelDictionaryKvp
                                         {
                                             EntityAnalysisModelDictionaryId = entityAnalysisModelDictionaryId,
                                             KvpKey = splits[0],
-                                            KvpValue = Double.Parse(splits[1])
+                                            KvpValue = Double.Parse(splits[1]),
+                                            DeleteExpiryDate = deleteExpiryDate
                                         };
 
                                         await entityAnalysisModelDictionaryKvpRepository.InsertAsync(
@@ -120,6 +127,12 @@ namespace Jube.App.Controllers.Helper
                                     else
                                     {
                                         entityAnalysisModelDictionaryKvp.KvpValue = Double.Parse(splits[1]);
+
+                                        if (deleteExpiryDateSpecified)
+                                        {
+                                            entityAnalysisModelDictionaryKvp.DeleteExpiryDate = deleteExpiryDate;
+                                        }
+
                                         await entityAnalysisModelDictionaryKvpRepository.UpdateAsync(entityAnalysisModelDictionaryKvp, token);
                                     }
                                 }
@@ -153,6 +166,15 @@ namespace Jube.App.Controllers.Helper
                 log.Error(e);
                 return StatusCode(500);
             }
+        }
+
+        private static DateTime? ParseDeleteExpiryDate(string value)
+        {
+            return !string.IsNullOrWhiteSpace(value) &&
+                   DateTime.TryParseExact(value, "O", CultureInfo.InvariantCulture,
+                       DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var parsed)
+                ? parsed
+                : null;
         }
     }
 }

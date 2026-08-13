@@ -24,6 +24,7 @@ namespace Jube.App.Controllers.Repository
     using Data.Poco;
     using Data.Repository;
     using Dto;
+    using Dto.Mapping;
     using DynamicEnvironment;
     using FluentValidation;
     using FluentValidation.Results;
@@ -63,6 +64,8 @@ namespace Jube.App.Controllers.Repository
             {
                 cfg.CreateMap<EntityAnalysisModelGatewayRuleDto, EntityAnalysisModelGatewayRule>();
                 cfg.CreateMap<EntityAnalysisModelGatewayRule, EntityAnalysisModelGatewayRuleDto>();
+                cfg.CreateMap<DateTime?, DateTimeOffset?>().ConvertUsing<NullableDateTimeToDateTimeOffsetConverter>();
+                cfg.CreateMap<DateTime, DateTimeOffset>().ConvertUsing(src => new DateTimeOffset(DateTime.SpecifyKind(src, DateTimeKind.Utc)));
             }, NullLoggerFactory.Instance);
 
             mapper = new Mapper(config);
@@ -230,6 +233,33 @@ namespace Jube.App.Controllers.Repository
                 }
 
                 await repository.DeleteAsync(id, token);
+                return Ok();
+            }
+            catch (KeyNotFoundException)
+            {
+                return StatusCode(204);
+            }
+            catch (Exception e)
+            {
+                log.Error(e);
+                return StatusCode(500);
+            }
+        }
+
+        [HttpPost("{id:int}/Reset")]
+        public async Task<ActionResult> ResetCounterAsync(int id, CancellationToken token = default)
+        {
+            try
+            {
+                if (!permissionValidation.Validate(new[]
+                    {
+                        10
+                    }))
+                {
+                    return Forbid();
+                }
+
+                await repository.ResetCounterAsync(id, token);
                 return Ok();
             }
             catch (KeyNotFoundException)

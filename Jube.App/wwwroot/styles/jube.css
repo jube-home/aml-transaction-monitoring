@@ -294,7 +294,8 @@
     position: fixed;
     bottom: 0;
     float: left;
-    width: 400px;
+    width: auto;
+    white-space: nowrap;
 }
 
 .icon {
@@ -317,6 +318,29 @@
 
 .bottomPaddedGeneral {
     padding-bottom: 3px;
+}
+
+.panelStyle {
+    border-top: 1px solid #ddd;
+    padding-top: 15px;
+    padding-bottom: 15px;
+    max-width: 1100px;
+}
+
+.fieldGroup {
+    display: inline-block;
+    vertical-align: top;
+    margin-right: 15px;
+    margin-bottom: 10px;
+}
+
+.fieldGroup label {
+    display: block;
+    padding-bottom: 5px;
+}
+
+.fieldGroup .fieldGroupControl {
+    width: 260px !important;
 }
 
 .generalTextArea {
@@ -369,4 +393,36 @@
     box-sizing: border-box;
     padding: 6px 10px;
     margin-bottom: 6px;
+}
+
+.listViewEditForm {
+    margin: 0;
+    padding: 4px 0;
+}
+
+.listViewEditRow {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.listViewEditRow:last-child {
+    margin-bottom: 0;
+}
+
+.listViewEditRow label {
+    flex: 0 0 140px;
+    font-weight: bold;
+}
+
+.listViewEditRow input,
+.listViewEditRow .k-picker,
+.listViewEditRow .k-numerictextbox {
+    flex: 1 1 auto;
+    max-width: 220px;
+}
+
+.expiryDateCell {
+    width: 100%;
+    box-sizing: border-box;
 }

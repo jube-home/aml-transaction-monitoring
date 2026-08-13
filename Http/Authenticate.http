@@ -1,9 +1,0 @@
-POST http://localhost:5001/api/Authentication/ByUserNamePassword
-Content-Type: application/json
-
-{
-  "userName": "Administrator",
-  "password": "Testing12345!"
-}
-
-###

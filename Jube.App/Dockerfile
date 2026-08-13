@@ -1,4 +1,28 @@
 ﻿FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
+
+USER root
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+       libkrb5-3 \
+       libgssapi-krb5-2 \
+       krb5-user \
+       ca-certificates \
+       curl \
+       dnsutils \
+       inetutils-telnet \
+       iproute2 \
+       iputils-ping \
+       lsof \
+       mtr-tiny \
+       netcat-openbsd \
+       openssl \
+       procps \
+       socat \
+       strace \
+       tcpdump \
+       traceroute \
+    && rm -rf /var/lib/apt/lists/*
+
 USER $APP_UID
 WORKDIR /app
 EXPOSE 5001
@@ -15,6 +39,7 @@ COPY ["Accord.Core/Accord.Core.csproj", "Accord.Core/"]
 COPY ["Jube.Extensions/Jube.Extensions.csproj", "Jube.Extensions/"]
 COPY ["Jube.DynamicEnvironment/Jube.DynamicEnvironment.csproj", "Jube.DynamicEnvironment/"]
 COPY ["Jube.Engine/Jube.Engine.csproj", "Jube.Engine/"]
+COPY ["Jube.HttpAdaptationProtocol/Jube.HttpAdaptationProtocol.csproj", "Jube.HttpAdaptationProtocol/"]
 COPY ["Accord.Genetic/Accord.Genetic.csproj", "Accord.Genetic/"]
 COPY ["Accord.MachineLearning/Accord.MachineLearning.csproj", "Accord.MachineLearning/"]
 COPY ["Accord.Neuro/Accord.Neuro.csproj", "Accord.Neuro/"]
@@ -31,7 +56,12 @@ COPY ["Jube.Tests/Jube.Tests.csproj", "Jube.Tests/"]
 COPY ["Jube.ResilientNpgsql/Jube.ResilientNpgsql.csproj", "Jube.ResilientNpgsql/"]
 COPY ["Jube.ResilientRedisConnection/Jube.ResilientRedisConnection.csproj", "Jube.ResilientRedisConnection/"]
 COPY ["Jube.Tokenisation/Jube.Tokenisation.csproj", "Jube.Tokenisation/"]
+COPY ["Jube.ApiTokensCache/Jube.ApiTokensCache.csproj", "Jube.ApiTokensCache/"]
 COPY ["Jube.CLI/Jube.CLI.csproj", "Jube.CLI/"]
+COPY ["Jube.Cryptography/Jube.Cryptography.csproj", "Jube.Cryptography/"]
+COPY ["Jube.Preservation/Jube.Preservation.csproj", "Jube.Preservation/"]
+COPY ["Jube.Mfa/Jube.Mfa.csproj", "Jube.Mfa/"]
+COPY ["Jube.HttpHeaders/Jube.HttpHeaders.csproj", "Jube.HttpHeaders/"]
 
 RUN dotnet restore "Jube.App/Jube.App.csproj"
 COPY . .

@@ -1,14 +1,12 @@
 ---
 layout: default
 title: HTTP API Asynchronous Model Invocation
-nav_order: 1
+nav_order: 2
 parent: API
 grand_parent: Concepts
 ---
 
-🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
-💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
-developer.
+🚀 Get to pre-production in weeks, not months, with private [training](https://www.jube.io/jube-training) direct from Jube's developer — real sovereignty, zero vendor lock-in.
 
 # HTTP API Asynchronous Model Invocation
 Most of the procedures in this documentation makes use of synchronous HTTP requests in which the request is blocked for the client unitil absolute conclusion of the processing, notwithstanding a significant amount of asynchronous processing taking place in the processing to ensure reasonable response time by eliminating blocking waits on IO.
@@ -20,6 +18,8 @@ The .Net Thread Pool is perfect at sizing itself, however in periods of burst, t
 There exists a switch in the model invocation endpoint which will instruct the asynchronous processing of a transaction or event:
 
 [https://localhost:5001/api/invoke/EntityAnalysisModel/90c425fd-101a-420b-91d1-cb7a24a969cc](https://localhost:5001/api/invoke/EntityAnalysisModel/90c425fd-101a-420b-91d1-cb7a24a969cc/async)
+
+![Image](LocationOfAsyncSwitch.png)
 
 ![Image](ExampleAsync.png)
 

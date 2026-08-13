@@ -11,15 +11,15 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-
 namespace Jube.App.Dto
 {
+    using System;
+
     public class EntityAnalysisModelAsynchronousQueueBalanceDto
     {
         public string Name { get; set; }
         public string Instance { get; set; }
-        public DateTime CreatedDate { get; set; }
+        public DateTimeOffset? CreatedDate { get; set; }
         public int Archive { get; set; }
         public int ActivationWatcher { get; set; }
         public Guid EntityAnalysisModelGuid { get; set; }

@@ -55,7 +55,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
 
                     var model = new EntityAnalysisModelInstance
                     {
-                        CreatedDate = DateTime.Now,
+                        CreatedDate = DateTime.UtcNow,
                         EntityAnalysisInstanceGuid = context.EntityAnalysisModels.EntityAnalysisInstanceGuid,
                         EntityAnalysisModelInstanceGuid = value.Instance.EntityAnalysisModelInstanceGuid,
                         EntityAnalysisModelId = value.Instance.Id

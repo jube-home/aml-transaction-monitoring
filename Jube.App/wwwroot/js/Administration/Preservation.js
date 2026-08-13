@@ -12,50 +12,59 @@
  */
 
 $(document).ready(function () {
-    const exhaustiveSwitch = $("#Exhaustive").kendoSwitch();
-    const suppressionsSwitch = $("#Suppressions").kendoSwitch();
-    const listsSwitch = $("#Lists").kendoSwitch();
-    const dictionariesSwitch = $("#Dictionaries").kendoSwitch();
-    const visualisationsSwitch = $("#Visualisations").kendoSwitch();
+    const exhaustiveSwitch = $("#Exhaustive").kendoSwitch({ checked: true }).data("kendoSwitch");
+    const suppressionsSwitch = $("#Suppressions").kendoSwitch({ checked: true }).data("kendoSwitch");
+    const listsSwitch = $("#Lists").kendoSwitch({ checked: true }).data("kendoSwitch");
+    const dictionariesSwitch = $("#Dictionaries").kendoSwitch({ checked: true }).data("kendoSwitch");
+    const visualisationsSwitch = $("#Visualisations").kendoSwitch({ checked: true }).data("kendoSwitch");
+    const rolesSwitch = $("#Roles").kendoSwitch({ checked: true }).data("kendoSwitch");
+
     $("#Download").kendoButton({
-        click: function (e) {
-            let data = {
+        click: async function () {
+            const data = {
                 Password: $("#Password").val(),
-                Exhaustive: exhaustiveSwitch.prop("checked"),
-                Suppressions: suppressionsSwitch.prop("checked"),
-                Lists: listsSwitch.prop("checked"),
-                Dictionaries: dictionariesSwitch.prop("checked"),
-                Visualisations: visualisationsSwitch.prop("checked"),
+                Exhaustive: exhaustiveSwitch.check(),
+                Suppressions: suppressionsSwitch.check(),
+                Lists: listsSwitch.check(),
+                Dictionaries: dictionariesSwitch.check(),
+                Visualisations: visualisationsSwitch.check(),
+                Roles: rolesSwitch.check(),
             };
 
-            window.location.href = "/api/Preservation/Export?password=" + data.Password
-                + "&Exhaustive=" + data.Exhaustive
-                + "&Suppressions=" + data.Suppressions
-                + "&Lists=" + data.Lists
-                + "&Dictionaries="
-                + data.Dictionaries
-                + "&Visualisations=" + data.Visualisations;
+            const resp = await fetch("/api/Preservation/Export", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(data)
+            });
+
+            const blob = await resp.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+
+            const disposition = resp.headers.get("Content-Disposition");
+            const filename = disposition?.match(/filename[^;=\n]*=["']?([^"';\n]*)["']?/)?.[1]
+                ?? "export.jemp";
+
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
         }
     });
 
     $("#Peek").on("click", function (e) {
         e.preventDefault();
 
-        let data = {
-            Exhaustive: exhaustiveSwitch.prop("checked"),
-            Suppressions: suppressionsSwitch.prop("checked"),
-            Lists: listsSwitch.prop("checked"),
-            Dictionaries: dictionariesSwitch.prop("checked"),
-            Visualisations: visualisationsSwitch.prop("checked"),
-        };
+        const params = new URLSearchParams({
+            Exhaustive: exhaustiveSwitch.check(),
+            Suppressions: suppressionsSwitch.check(),
+            Lists: listsSwitch.check(),
+            Dictionaries: dictionariesSwitch.check(),
+            Visualisations: visualisationsSwitch.check(),
+            Roles: rolesSwitch.check()
+        });
 
-        window.open("/api/Preservation/ExportPeek?password=" + data.Password
-            + "&Exhaustive=" + data.Exhaustive
-            + "&Suppressions=" + data.Suppressions
-            + "&Lists=" + data.Lists
-            + "&Dictionaries="
-            + data.Dictionaries
-            + "&Visualisations=" + data.Visualisations);
+        window.open("/api/Preservation/ExportPeek?" + params.toString());
     });
 
     $("#Files").kendoUpload({
@@ -67,12 +76,7 @@ $(document).ready(function () {
         },
         upload: function (e) {
             e.data = {
-                Password: $("#Password").val(),
-                Exhaustive: exhaustiveSwitch.prop("checked"),
-                Suppressions: suppressionsSwitch.prop("checked"),
-                Lists: listsSwitch.prop("checked"),
-                Dictionaries: dictionariesSwitch.prop("checked"),
-                Visualisations: visualisationsSwitch.prop("checked"),
+                Password: $("#Password").val()
             };
         }
     });

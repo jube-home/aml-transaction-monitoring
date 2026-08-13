@@ -6,9 +6,7 @@ parent: Models
 grand_parent: Configuration
 ---
 
-🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
-💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
-developer.
+🚀 Get to pre-production in weeks, not months, with private [training](https://www.jube.io/jube-training) direct from Jube's developer — real sovereignty, zero vendor lock-in.
 
 # Abstraction Calculation
 An Abstraction Calculation compares one Abstraction Rule return value to another using reasonably simple arithmetic or functions based on VB .Net code fragments.  For example,  it is useful to take two values,  dividing one by another to create a ratio, which is oftentimes quite helpful in machine learning.
@@ -63,6 +61,8 @@ Add the function as described in the above table and as below to replicate the s
 ![Image](CoderExampleCompiled.png)
 
 Upon the function fragment showing Parsed and Compiled,  update the Abstraction Calculation:
+
+![Image](UpdatedWithCoder.png)
 
 Synchronise the model via Entity >> Synchronisation and repeat the HTTP POST to endpoint [https://localhost:5001/api/invoke/EntityAnalysisModel/90c425fd-101a-420b-91d1-cb7a24a969cc](https://localhost:5001/api/invoke/EntityAnalysisModel/90c425fd-101a-420b-91d1-cb7a24a969cc) for response as follows:
 

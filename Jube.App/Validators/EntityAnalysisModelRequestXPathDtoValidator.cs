@@ -13,6 +13,7 @@
 
 namespace Jube.App.Validators
 {
+    using System;
     using System.Collections.Generic;
     using Data.Repository;
     using Dto;
@@ -55,6 +56,13 @@ namespace Jube.App.Validators
 
             RuleFor(p => p.DataTypeId).Must(m => dataTypes.Contains(m));
             RuleFor(p => p.XPath).NotEmpty();
+
+            RuleFor(p => p.DefaultValue).NotEmpty();
+            RuleFor(p => p.DefaultValue)
+                .Must(m => Int32.TryParse(m, out _))
+                .When(p => p.DataTypeId == 4)
+                .WithMessage("Default value for a Date field must be an integer number of days offset from now.");
+
             RuleFor(p => p.SearchKey).NotNull();
             RuleFor(p => p.SearchKeyTtlInterval).NotNull();
             RuleFor(p => p.SearchKeyCacheTtlInterval).NotNull();
@@ -77,6 +85,15 @@ namespace Jube.App.Validators
             RuleFor(p => p.SearchKeyCacheTtlValue).GreaterThanOrEqualTo(0);
             RuleFor(p => p.ReportTable).NotNull();
             RuleFor(p => p.ResponsePayload).NotNull();
+
+            var encryptionTypes = new List<int>
+            {
+                0,
+                1,
+                2
+            };
+
+            RuleFor(p => p.EncryptionId).Must(m => encryptionTypes.Contains(m));
         }
     }
 }

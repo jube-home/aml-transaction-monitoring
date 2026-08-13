@@ -80,9 +80,9 @@ namespace Jube.Data.Repository
                                 .Where(r => r.CaseWorkflowGuid == w.Guid
                                             && (r.Deleted == 0 || r.Deleted == null))
                                 .Any(r => dbContext.RoleRegistry
-                                    .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                                    .Where(rr => rr.Guid == r.RoleRegistryGuid && (rr.Deleted == 0 || rr.Deleted == null))
                                     .Any(rr => dbContext.UserRegistry
-                                        .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                                        .Any(u => u.RoleRegistryGuid == rr.Guid && u.Name == userName)))
                 ).ToListAsync(token);
         }
 
@@ -98,10 +98,28 @@ namespace Jube.Data.Repository
                                 .Where(r => r.CaseWorkflowGuid == w.Guid
                                             && (r.Deleted == 0 || r.Deleted == null))
                                 .Any(r => dbContext.RoleRegistry
-                                    .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                                    .Where(rr => rr.Guid == r.RoleRegistryGuid && (rr.Deleted == 0 || rr.Deleted == null))
                                     .Any(rr => dbContext.UserRegistry
-                                        .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                                        .Any(u => u.RoleRegistryGuid == rr.Guid && u.Name == userName)))
                 ).ToListAsync(token);
+        }
+
+        public Task<CaseWorkflow> GetByGuidActiveOnlyWithRoleAsync(Guid guid, CancellationToken token = default)
+        {
+            return dbContext.CaseWorkflow
+                .Where(w => w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
+                            && w.Active == 1
+                            && w.Guid == guid
+                            && (w.EntityAnalysisModel.Deleted == 0 || w.EntityAnalysisModel.Deleted == null)
+                            && (w.Deleted == 0 || w.Deleted == null)
+                            && dbContext.CaseWorkflowRole
+                                .Where(r => r.CaseWorkflowGuid == w.Guid
+                                            && (r.Deleted == 0 || r.Deleted == null))
+                                .Any(r => dbContext.RoleRegistry
+                                    .Where(rr => rr.Guid == r.RoleRegistryGuid && (rr.Deleted == 0 || rr.Deleted == null))
+                                    .Any(rr => dbContext.UserRegistry
+                                        .Any(u => u.RoleRegistryGuid == rr.Guid && u.Name == userName)))
+                ).FirstOrDefaultAsync(token);
         }
 
         public Task<CaseWorkflow> GetByIdAsync(int id, CancellationToken token = default)
@@ -130,7 +148,7 @@ namespace Jube.Data.Repository
         {
             model.CreatedUser = userName ?? model.CreatedUser;
             model.Guid = model.Guid == Guid.Empty ? Guid.NewGuid() : model.Guid;
-            model.CreatedDate = DateTime.Now;
+            model.CreatedDate = DateTime.UtcNow;
             model.Version = 1;
             model.Id = await dbContext.InsertWithInt32IdentityAsync(model, token: token);
             return model;
@@ -154,11 +172,14 @@ namespace Jube.Data.Repository
             model.Version = existing.Version + 1;
             model.Guid = existing.Guid;
             model.CreatedUser = userName;
-            model.CreatedDate = DateTime.Now;
+            model.CreatedDate = DateTime.UtcNow;
 
             await dbContext.UpdateAsync(model, token: token);
 
-            var mapper = new Mapper(new MapperConfiguration(cfg => { cfg.CreateMap<CaseWorkflow, CaseWorkflowVersion>(); }, NullLoggerFactory.Instance));
+            var mapper = new Mapper(new MapperConfiguration(cfg =>
+            {
+                cfg.CreateMap<CaseWorkflow, CaseWorkflowVersion>();
+            }, NullLoggerFactory.Instance));
 
             var audit = mapper.Map<CaseWorkflowVersion>(existing);
             audit.CaseWorkflowId = existing.Id;
@@ -176,7 +197,7 @@ namespace Jube.Data.Repository
                             && (d.Locked == 0 || d.Locked == null)
                             && (d.Deleted == 0 || d.Deleted == null))
                 .Set(s => s.Deleted, Convert.ToByte(1))
-                .Set(s => s.DeletedDate, DateTime.Now)
+                .Set(s => s.DeletedDate, DateTime.UtcNow)
                 .Set(s => s.DeletedUser, userName)
                 .UpdateAsync(token);
 
@@ -193,7 +214,7 @@ namespace Jube.Data.Repository
                             && (d.Deleted == 0 || d.Deleted == null))
                 .Set(s => s.ImportId, importId)
                 .Set(s => s.Deleted, Convert.ToByte(1))
-                .Set(s => s.DeletedDate, DateTime.Now)
+                .Set(s => s.DeletedDate, DateTime.UtcNow)
                 .UpdateAsync(token);
         }
     }

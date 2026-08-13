@@ -114,20 +114,28 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
         {
             try
             {
+                var evaluationCounter = activationRule.EvaluationCounter;
+                var activationCounter = activationRule.ActivationCounter;
+                var activationCounterDate = activationRule.ActivationCounterDate;
+
                 var repository = new EntityAnalysisModelActivationRuleRepository(context.Services.DbContext);
 
                 if (context.Services.Log.IsDebugEnabled)
                 {
                     context.Services.Log.Debug(
-                        $"Entity Start: Executing EntityAnalysisModelActivationRuleRepository.UpdateCounter for Activation Rule ID of {activationRule.Id} and counter of {activationRule.ActivationCounter}.");
+                        $"Entity Start: Executing EntityAnalysisModelActivationRuleRepository.UpdateCounter for Activation Rule ID of {activationRule.Id} and counter of {activationCounter}.");
                 }
 
-                await repository.UpdateCounterAsync(activationRule.Id, activationRule.EvaluationCounter, activationRule.ActivationCounter, activationRule.ActivationCounterDate, context.Services.CancellationToken).ConfigureAwait(false);
+                await repository.UpdateCounterAsync(activationRule.Id, evaluationCounter, activationCounter, activationCounterDate,
+                    context.Services.CancellationToken).ConfigureAwait(false);
+
+                Interlocked.Add(ref activationRule.EvaluationCounter, -evaluationCounter);
+                Interlocked.Add(ref activationRule.ActivationCounter, -activationCounter);
 
                 if (context.Services.Log.IsDebugEnabled)
                 {
                     context.Services.Log.Debug(
-                        $"Entity Start: Finished Executing EntityAnalysisModelActivationRuleRepository.UpdateCounter for Activation Rule ID of {activationRule.Id} and has reset counter of {activationRule.ActivationCounter}.");
+                        $"Entity Start: Finished Executing EntityAnalysisModelActivationRuleRepository.UpdateCounter for Activation Rule ID of {activationRule.Id} and has drained counter of {activationCounter}.");
                 }
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
@@ -135,42 +143,40 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                 context.Services.Log.Error(
                     $"UpdateActivationRuleCounterAsync: Activation Rule ID {activationRule.Id} has created an error as {ex} on update counter.");
             }
-            finally
-            {
-                Interlocked.Exchange(ref activationRule.ActivationCounter, 0);
-                Interlocked.Exchange(ref activationRule.EvaluationCounter, 0);
-            }
         }
 
         private static async Task UpdateGatewayRuleCounterAsync(Context context, EntityModelGatewayRule gatewayRule)
         {
             try
             {
+                var evaluationCounter = gatewayRule.EvaluationCounter;
+                var activationCounter = gatewayRule.ActivationCounter;
+                var activationCounterDate = gatewayRule.ActivationCounterDate;
+
                 var repository = new EntityAnalysisModelGatewayRuleRepository(context.Services.DbContext);
 
                 if (context.Services.Log.IsDebugEnabled)
                 {
                     context.Services.Log.Debug(
-                        $"Entity Start: Executing EntityAnalysisModelGatewayRuleRepository.EntityAnalysisModelGatewayRuleId for Gateway Rule ID of {gatewayRule.EntityAnalysisModelGatewayRuleId} and counter of {gatewayRule.ActivationCounter}.");
+                        $"Entity Start: Executing EntityAnalysisModelGatewayRuleRepository.EntityAnalysisModelGatewayRuleId for Gateway Rule ID of {gatewayRule.EntityAnalysisModelGatewayRuleId} and counter of {activationCounter}.");
                 }
 
-                await repository.UpdateCounterAsync(gatewayRule.EntityAnalysisModelGatewayRuleId, gatewayRule.EvaluationCounter, gatewayRule.ActivationCounter, gatewayRule.ActivationCounterDate).ConfigureAwait(false);
+                await repository.UpdateCounterAsync(gatewayRule.EntityAnalysisModelGatewayRuleId, evaluationCounter, activationCounter, activationCounterDate,
+                    context.Services.CancellationToken).ConfigureAwait(false);
+
+                Interlocked.Add(ref gatewayRule.EvaluationCounter, -evaluationCounter);
+                Interlocked.Add(ref gatewayRule.ActivationCounter, -activationCounter);
 
                 if (context.Services.Log.IsDebugEnabled)
                 {
                     context.Services.Log.Debug(
-                        $"Entity Start: Finished EntityAnalysisModelGatewayRuleRepository.EntityAnalysisModelGatewayRuleId for Gateway Rule ID of {gatewayRule.EntityAnalysisModelGatewayRuleId} and has reset counter of {gatewayRule.ActivationCounter}.");
+                        $"Entity Start: Finished EntityAnalysisModelGatewayRuleRepository.EntityAnalysisModelGatewayRuleId for Gateway Rule ID of {gatewayRule.EntityAnalysisModelGatewayRuleId} and has drained counter of {activationCounter}.");
                 }
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 context.Services.Log.Error(
                     $"UpdateGatewayRuleCounterAsync: Gateway Rule ID {gatewayRule.EntityAnalysisModelGatewayRuleId} has created an error as {ex} on update counter.");
-            }
-            finally
-            {
-                Interlocked.Exchange(ref gatewayRule.ActivationCounter, 0);
-                Interlocked.Exchange(ref gatewayRule.EvaluationCounter, 0);
             }
         }
     }

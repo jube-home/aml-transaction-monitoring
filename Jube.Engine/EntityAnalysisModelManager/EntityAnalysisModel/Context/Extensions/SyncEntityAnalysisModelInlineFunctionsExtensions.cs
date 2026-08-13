@@ -22,6 +22,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
     using Helpers;
     using Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Models.Models;
     using Jube.Engine.EntityAnalysisModelManager.Helpers;
+    using Jube.Engine.Models;
     using Parser;
     using Parser.Compiler;
 
@@ -29,6 +30,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
     {
         public static async Task<Context> SyncEntityAnalysisModelInlineFunctionsAsync(this Context context)
         {
+            var shadowEntityAnalysisModelsInlineFunctions = new Dictionary<string, int>();
             try
             {
                 foreach (var (key, value) in context.EntityAnalysisModels.ActiveEntityAnalysisModels)
@@ -170,6 +172,30 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                                 }
                             }
 
+                            if (!record.EncryptionId.HasValue)
+                            {
+                                entityAnalysisModelInlineFunction.EncryptionId = 0;
+
+                                if (context.Services.Log.IsDebugEnabled)
+                                {
+                                    context.Services.Log.Debug(
+                                        $"Entity Start: Model {key} and Function Type {entityAnalysisModelInlineFunction.Id} set DEFAULT Encryption Id as {entityAnalysisModelInlineFunction.EncryptionId}.");
+                                }
+                            }
+                            else
+                            {
+                                entityAnalysisModelInlineFunction.EncryptionId = record.EncryptionId.Value;
+
+                                if (context.Services.Log.IsDebugEnabled)
+                                {
+                                    context.Services.Log.Debug(
+                                        $"Entity Start: Model {key} and Function Type {entityAnalysisModelInlineFunction.Id} set Encryption Id as {entityAnalysisModelInlineFunction.EncryptionId}.");
+                                }
+                            }
+
+                            shadowEntityAnalysisModelsInlineFunctions.TryAdd(entityAnalysisModelInlineFunction.Name,
+                                entityAnalysisModelInlineFunction.ReturnDataTypeId);
+
                             context.Services.CancellationToken.ThrowIfCancellationRequested();
 
                             var hasRuleScript = false;
@@ -265,6 +291,10 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
 
                                     shadowEntityAnalysisModelInlineFunctions.Add(entityAnalysisModelInlineFunction);
 
+                                    await new EntityAnalysisModelInlineFunctionRepository(context.Services.DbContext)
+                                        .UpdateCompileStatusAsync(entityAnalysisModelInlineFunction.Id, true, null,
+                                            context.Services.CancellationToken).ConfigureAwait(false);
+
                                     if (context.Services.Log.IsDebugEnabled)
                                     {
                                         context.Services.Log.Debug(
@@ -312,8 +342,14 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                                                 typeof(EntityAnalysisModelInlineFunction.Match),
                                                 methodInfo);
 
-                                        context.Caching.HashCacheAssembly.Add(activationRuleScriptHash, compile.CompiledAssembly);
+                                        context.Caching.HashCacheAssembly.TryAdd(activationRuleScriptHash, compile.CompiledAssembly);
+                                        context.Caching.HashCacheAssemblyMetadata.TryAdd(activationRuleScriptHash,
+                                            new HashCacheAssemblyPayload(compile.CompiledAssemblyBytes, compile.CompiledAssemblyBinary, activationRuleScript.ToString()));
                                         shadowEntityAnalysisModelInlineFunctions.Add(entityAnalysisModelInlineFunction);
+
+                                        await new EntityAnalysisModelInlineFunctionRepository(context.Services.DbContext)
+                                            .UpdateCompileStatusAsync(entityAnalysisModelInlineFunction.Id, true, null,
+                                                context.Services.CancellationToken).ConfigureAwait(false);
 
                                         if (context.Services.Log.IsDebugEnabled)
                                         {
@@ -323,6 +359,10 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                                     }
                                     else
                                     {
+                                        await new EntityAnalysisModelInlineFunctionRepository(context.Services.DbContext)
+                                            .UpdateCompileStatusAsync(entityAnalysisModelInlineFunction.Id, false, compile.ErrorsSummary,
+                                                context.Services.CancellationToken).ConfigureAwait(false);
+
                                         if (context.Services.Log.IsDebugEnabled)
                                         {
                                             context.Services.Log.Debug(
@@ -342,9 +382,14 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                         {
                             context.Services.Log.Error(
                                 $"Entity Start: Inline Function ID {record.Id} returned for model {key} has created an error as {ex}.");
+
+                            await new EntityAnalysisModelInlineFunctionRepository(context.Services.DbContext)
+                                .UpdateCompileStatusAsync(record.Id, false, ex.Message,
+                                    context.Services.CancellationToken).ConfigureAwait(false);
                         }
                     }
 
+                    context.Services.Parser.EntityAnalysisModelsInlineFunctions = shadowEntityAnalysisModelsInlineFunctions;
                     value.Collections.EntityAnalysisModelInlineFunctions = shadowEntityAnalysisModelInlineFunctions;
                     value.References.PayloadInitialSize = DictionaryNoBoxingHelpers.CalculateInitialSize(value);
 
@@ -363,6 +408,10 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 context.Services.Log.Error($"SyncEntityAnalysisModelInlineFunctionsAsync: has produced an error {ex}");
+
+                await new EntityAnalysisModelSynchronisationErrorRepository(context.Services.DbContext)
+                    .InsertAsync(EntityAnalysisModelSynchronisationErrorRepository.EntityAnalysisModelSynchronisationErrorStepEnum.InlineFunctions, ex.ToString(),
+                        context.Services.CancellationToken).ConfigureAwait(false);
             }
 
             return context;

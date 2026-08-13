@@ -16,15 +16,20 @@ namespace Jube.Engine.Sanctions
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.Linq;
+    using System.Text;
     using System.Threading.Tasks;
     using Fastenshtein;
     using Models;
 
-    public static class LevenshteinDistance
+    public sealed class LevenshteinDistance(double? maxDistanceRatio = null, double? maxCoverageRatio = null)
     {
-        public static List<SanctionEntryReturn> CheckMultipartString(string multiPartString, int distance,
-            Dictionary<int, SanctionEntry> sanctionsEntries)
+        public List<SanctionEntryReturn> CheckMultipartString(
+            string multiPartString,
+            int maxDistance,
+            ConcurrentDictionary<int, SanctionEntry> sanctionsEntries,
+            ConcurrentDictionary<string, byte> stopTokens)
         {
             var sanctionsEntriesReturn = new ConcurrentDictionary<int, SanctionEntryReturn>();
 
@@ -33,57 +38,151 @@ namespace Jube.Engine.Sanctions
                 return [];
             }
 
-            // Pre-clean and split the input string to unique parts
-            var multiPartStrings = multiPartString
-                .Split(' ', StringSplitOptions.RemoveEmptyEntries)
-                .Select(Clean)
-                .Distinct()
-                .ToArray();
+            var inputTokens = Tokenize(multiPartString, stopTokens);
 
-            if (multiPartStrings.Length == 0)
+            if (inputTokens.Length == 0)
             {
                 return [];
             }
 
             Parallel.ForEach(sanctionsEntries.Values, entry =>
             {
-                var sanctionValues = entry.SanctionElementValue
-                    .Select(Clean)
+                var entryTokens = entry.SanctionElementValue
+                    .SelectMany(value => Tokenize(value, stopTokens))
                     .Distinct()
                     .ToArray();
 
-                for (var dist = 0; dist <= distance; dist++)
+                if (entryTokens.Length == 0)
                 {
-                    // All input words must have at least one close enough match in the entry values
-                    var allWordsMatch = multiPartStrings.All(inputPart =>
-                        sanctionValues.Any(sValue =>
-                            Levenshtein.Distance(inputPart, sValue) <= dist));
+                    return;
+                }
 
-                    if (!allWordsMatch)
-                    {
-                        continue;
-                    }
+                var result = ScoreMatch(inputTokens, entryTokens, maxDistance);
 
+                if (result.HasValue)
+                {
                     sanctionsEntriesReturn.TryAdd(entry.SanctionEntryId,
                         new SanctionEntryReturn
                         {
                             SanctionEntry = entry,
-                            LevenshteinDistance = dist
+                            LevenshteinDistance = result.Value
                         });
-                    break;
                 }
             });
 
             return sanctionsEntriesReturn.Values.ToList();
         }
 
-        public static string Clean(string raw)
+        private int? ScoreMatch(
+            string[] inputTokens,
+            string[] entryTokens,
+            int maxDistance)
         {
-            var value = raw;
-            value = value.Replace(",", "");
-            value = value.Replace(" ", "");
-            value = value.ToLower();
-            return value;
+            var coverageRatio = (double)inputTokens.Length / entryTokens.Length;
+
+            if (coverageRatio < 0.5)
+            {
+                return null;
+            }
+
+            if (maxCoverageRatio.HasValue && coverageRatio > maxCoverageRatio.Value)
+            {
+                return null;
+            }
+
+            var pairsToMatch = Math.Min(inputTokens.Length, entryTokens.Length);
+
+            var usedEntryIndices = new HashSet<int>();
+            var worstDistance = 0;
+
+            foreach (var inputToken in inputTokens.OrderByDescending(t => t.Length).Take(pairsToMatch))
+            {
+                var bestDistance = Int32.MaxValue;
+                var bestIndex = -1;
+
+                for (var i = 0; i < entryTokens.Length; i++)
+                {
+                    if (usedEntryIndices.Contains(i))
+                    {
+                        continue;
+                    }
+
+                    var distance = new Levenshtein(entryTokens[i]).DistanceFrom(inputToken);
+                    if (distance < bestDistance)
+                    {
+                        bestDistance = distance;
+                        bestIndex = i;
+                    }
+                }
+
+                if (bestIndex == -1)
+                {
+                    return null;
+                }
+
+                var tokenThreshold = EffectiveTokenThreshold(
+                    inputToken.Length, entryTokens[bestIndex].Length, maxDistance);
+
+                if (bestDistance > tokenThreshold)
+                {
+                    return null;
+                }
+
+                usedEntryIndices.Add(bestIndex);
+                worstDistance = Math.Max(worstDistance, bestDistance);
+            }
+
+            return worstDistance;
+        }
+
+        private int EffectiveTokenThreshold(
+            int inputTokenLength, int entryTokenLength, int maxDistance)
+        {
+            if (!maxDistanceRatio.HasValue)
+            {
+                return maxDistance;
+            }
+
+            var shorterLength = Math.Min(inputTokenLength, entryTokenLength);
+            var ratioBound = Math.Max(1, (int)Math.Floor(shorterLength * maxDistanceRatio.Value));
+
+            return Math.Min(maxDistance, ratioBound);
+        }
+
+        public static double? ParseNullableDistanceRatio(string rawValue)
+        {
+            return !String.IsNullOrWhiteSpace(rawValue)
+                   && Double.TryParse(rawValue, NumberStyles.Float, CultureInfo.InvariantCulture, out var value)
+                ? Math.Clamp(value, 0, 1)
+                : null;
+        }
+
+        public static double? ParseNullableCoverageRatio(string rawValue)
+        {
+            return !String.IsNullOrWhiteSpace(rawValue)
+                   && Double.TryParse(rawValue, NumberStyles.Float, CultureInfo.InvariantCulture, out var value)
+                ? Math.Max(0, value)
+                : null;
+        }
+
+        private static string[] Tokenize(string raw, ConcurrentDictionary<string, byte> stopTokens)
+        {
+            return raw
+                .Normalize(NormalizationForm.FormD)
+                .Where(c => CharUnicodeInfo.GetUnicodeCategory(c)
+                            != UnicodeCategory.NonSpacingMark)
+                .Aggregate(new StringBuilder(), (sb, c) => sb.Append(c))
+                .ToString()
+                .ToLowerInvariant()
+                .Replace("-", " ")
+                .Replace(",", " ")
+                .Replace(".", " ")
+                .Replace("'", "")
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                .Select(t => t.Trim())
+                .Where(t => t.Length > 1 && !stopTokens.ContainsKey(t))
+                .Distinct()
+                .ToArray();
         }
     }
 }

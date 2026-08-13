@@ -124,6 +124,44 @@ namespace Jube.Data.Poco
 
     [Table]
     [MessagePackObject]
+    public class HashCacheAssemblyInstance
+    {
+        [Column] [Identity] [Key(0)] public long Id { get; set; }
+        [Column] [Nullable] [Key(1)] public string Instance { get; set; }
+        [Column] [Nullable] [Key(2)] public Guid Guid { get; set; }
+        [Column] [Nullable] [Key(3)] public DateTime? CreatedDate { get; set; }
+        [Column] [Nullable] [Key(4)] public long? Count { get; set; }
+        [Column] [Nullable] [Key(5)] public long? Bytes { get; set; }
+        [Column] [Nullable] [Key(6)] public DateTime? UpdatedDate { get; set; }
+    }
+
+    [Table]
+    [MessagePackObject]
+    public class HashCacheAssemblyInstanceEntry
+    {
+        [Column] [Identity] [Key(0)] public long Id { get; set; }
+        [Column] [Nullable] [Key(1)] public long? HashCacheAssemblyInstanceId { get; set; }
+        [Column] [Nullable] [Key(2)] public string ScriptHash { get; set; }
+        [Column] [Nullable] [Key(3)] public long? Bytes { get; set; }
+        [Column] [Nullable] [Key(4)] public string Code { get; set; }
+        [Column] [Nullable] [Key(5)] public byte[] Binary { get; set; }
+        [Column] [Nullable] [Key(6)] public DateTime? CreatedDate { get; set; }
+        [Column] [Nullable] [Key(7)] public DateTime? LastSeenDate { get; set; }
+    }
+
+    [Table]
+    [MessagePackObject]
+    public class HashCacheAssemblyInstanceJournal
+    {
+        [Column] [Identity] [Key(0)] public long Id { get; set; }
+        [Column] [Nullable] [Key(1)] public long? HashCacheAssemblyInstanceId { get; set; }
+        [Column] [Nullable] [Key(2)] public DateTime? CreatedDate { get; set; }
+        [Column] [Nullable] [Key(3)] public long? Count { get; set; }
+        [Column] [Nullable] [Key(4)] public long? Bytes { get; set; }
+    }
+
+    [Table]
+    [MessagePackObject]
     public class CacheTtlCounterEntryRemovalBatch
     {
         [Column] [Identity] [Key(0)] public long Id { get; set; }
@@ -268,6 +306,43 @@ namespace Jube.Data.Poco
 
     [Table]
     [MessagePackObject]
+    public class HttpResponseHeader
+    {
+        [Column] [Identity] [Key(0)] [PrimaryKey] public long Id { get; set; }
+        [Column] [Nullable] [Key(1)] public string Header { get; set; }
+        [Column] [Nullable] [Key(2)] public string Value { get; set; }
+    }
+
+    [Table]
+    [MessagePackObject]
+    public class ArchiveTag
+    {
+        [Column] [Identity] [Key(0)] [PrimaryKey] public long Id { get; set; }
+        [Column] [Nullable] [Key(1)] public Guid EntityAnalysisModelInstanceEntryGuid { get; set; }
+        [Column] [Nullable] [Key(2)] public string Name { get; set; }
+        [Column] [Key(3)] public int? Version { get; set; }
+        [Column] [Key(4)] public string CreatedUser { get; set; }
+        [Column] [Key(5)] public DateTime? CreatedDate { get; set; }
+        [Column] [Key(6)] public byte? Deleted { get; set; }
+        [Column] [Key(7)] public string DeletedUser { get; set; }
+        [Column] [Key(8)] public DateTime? DeletedDate { get; set; }
+    }
+
+    [Table]
+    [MessagePackObject]
+    public class ArchiveTagVersion
+    {
+        [Column] [Identity] [Key(0)] [PrimaryKey] public long Id { get; set; }
+        [Column] [Nullable] [Key(1)] public long? ArchiveTagId { get; set; }
+        [Column] [Nullable] [Key(2)] public Guid EntityAnalysisModelInstanceEntryGuid { get; set; }
+        [Column] [Nullable] [Key(3)] public string Name { get; set; }
+        [Column] [Key(4)] public int? Version { get; set; }
+        [Column] [Key(5)] public string CreatedUser { get; set; }
+        [Column] [Key(6)] public DateTime? CreatedDate { get; set; }
+    }
+
+    [Table]
+    [MessagePackObject]
     public class Case
     {
         [Column]
@@ -331,9 +406,9 @@ namespace Jube.Data.Poco
 
         [Column] [Nullable] [Key(2)] public string CreatedUser { get; set; }
         [Column] [Nullable] [Key(3)] public DateTime? CreatedDate { get; set; }
-        [Column] [Nullable] [Key(4)] public int? CaseWorkflowId { get; set; }
+        [Column] [Nullable] [Key(4)] public Guid? CaseWorkflowGuid { get; set; }
 
-        [Association(ThisKey = "CaseWorkflowId", OtherKey = "Id", CanBeNull = true,
+        [Association(ThisKey = "CaseWorkflowGuid", OtherKey = "Guid", CanBeNull = true,
             Relationship = Relationship.ManyToOne)]
         [Key(5)]
         public CaseWorkflow CaseWorkflow { get; set; }
@@ -457,7 +532,7 @@ namespace Jube.Data.Poco
         [Column] [Nullable] [Key(10)] public byte? Prepared { get; set; }
         [Column] [Nullable] [Key(11)] public string Error { get; set; }
         [Column] [Nullable] [Key(12)] public Guid CaseWorkflowGuid { get; set; }
-        [Column] [Nullable] [Key(13)] public Guid CaseWorkflowFilterGuid { get; set; }
+        [Column] [Nullable] [Key(13)] public Guid? CaseWorkflowFilterGuid { get; set; }
         [Column] [Nullable] [Key(14)] public string CreatedUser { get; set; }
         [Column] [Nullable] [Key(15)] public DateTime? CreatedDate { get; set; }
         [Column] [Nullable] [Key(16)] public byte? Rebuild { get; set; }
@@ -1279,6 +1354,38 @@ namespace Jube.Data.Poco
 
     [Table]
     [MessagePackObject]
+    public class EntityAnalysisModelRole
+    {
+        [Column]
+        [PrimaryKey]
+        [Identity]
+        [Key(0)]
+        public int Id { get; set; }
+
+        [Column] [Nullable] [Key(1)] public Guid EntityAnalysisModelGuid { get; set; }
+        [Column] [Nullable] [Key(2)] public Guid Guid { get; set; }
+        [Column] [Nullable] [Key(3)] public DateTime? CreatedDate { get; set; }
+        [Column] [Nullable] [Key(4)] public Guid RoleRegistryGuid { get; set; }
+        [Column] [Nullable] [Key(5)] public string CreatedUser { get; set; }
+        [Column] [Nullable] [Key(6)] public byte? Deleted { get; set; }
+        [Column] [Nullable] [Key(7)] public string DeletedUser { get; set; }
+        [Column] [Nullable] [Key(8)] public DateTime? DeletedDate { get; set; }
+        [Column] [Nullable] [Key(9)] public int? Version { get; set; }
+        [Column] [Nullable] [Key(10)] public int? ImportId { get; set; }
+
+        [Association(ThisKey = "EntityAnalysisModelGuid", OtherKey = "Guid", CanBeNull = true,
+            Relationship = Relationship.ManyToOne)]
+        [Key(11)]
+        public EntityAnalysisModel EntityAnalysisModel { get; set; }
+
+        [Association(ThisKey = "RoleRegistryGuid", OtherKey = "Guid", CanBeNull = false,
+            Relationship = Relationship.ManyToOne)]
+        [Key(12)]
+        public RoleRegistry RoleRegistry { get; set; }
+    }
+
+    [Table]
+    [MessagePackObject]
     public class VisualisationRegistryRole
     {
         [Column]
@@ -1687,6 +1794,23 @@ namespace Jube.Data.Poco
         [Column] [Nullable] [Key(3)] public string Name { get; set; }
         [Column] [Nullable] [Key(4)] public DateTime? CreatedDate { get; set; }
         [Column] [Nullable] [Key(5)] public byte? LanguageId { get; set; }
+        [Column] [Nullable] [Key(6)] public byte? Compiled { get; set; }
+        [Column] [Nullable] [Key(7)] public string CompileError { get; set; }
+    }
+
+    [Table]
+    [MessagePackObject]
+    public class EntityAnalysisModelSynchronisationError
+    {
+        [Column]
+        [PrimaryKey]
+        [Identity]
+        [Key(0)]
+        public int Id { get; set; }
+
+        [Column] [Nullable] [Key(1)] public int? SynchronisationStepId { get; set; }
+        [Column] [Nullable] [Key(2)] public string ErrorMessage { get; set; }
+        [Column] [Nullable] [Key(3)] public DateTime? CreatedDate { get; set; }
     }
 
     [Table]
@@ -1926,6 +2050,32 @@ namespace Jube.Data.Poco
         public EntityAnalysisModel EntityAnalysisModel { get; set; }
 
         [Column] [Nullable] [Key(13)] public int? ImportId { get; set; }
+        [Column] [Nullable] [Key(14)] public DateTime? DeleteExpiryDate { get; set; }
+    }
+
+    [Table]
+    [MessagePackObject]
+    public class EntityAnalysisModelActivationRuleSuppressionVersion
+    {
+        [Column]
+        [PrimaryKey]
+        [Identity]
+        [Key(0)]
+        public int Id { get; set; }
+
+        [Column] [Nullable] [Key(1)] public int? EntityAnalysisModelActivationRuleSuppressionId { get; set; }
+        [Column] [Nullable] [Key(2)] public Guid EntityAnalysisModelGuid { get; set; }
+        [Column] [Nullable] [Key(3)] public DateTime? CreatedDate { get; set; }
+        [Column] [Nullable] [Key(4)] public string CreatedUser { get; set; }
+        [Column] [Nullable] [Key(5)] public int? Version { get; set; }
+        [Column] [Nullable] [Key(6)] public DateTime? DeletedDate { get; set; }
+        [Column] [Nullable] [Key(7)] public string DeletedUser { get; set; }
+        [Column] [Nullable] [Key(8)] public byte? Deleted { get; set; }
+        [Column] [Nullable] [Key(9)] public string SuppressionKey { get; set; }
+        [Column] [Nullable] [Key(10)] public string SuppressionKeyValue { get; set; }
+        [Column] [Nullable] [Key(11)] public string EntityAnalysisModelActivationRuleName { get; set; }
+        [Column] [Nullable] [Key(12)] public int? InheritedId { get; set; }
+        [Column] [Nullable] [Key(13)] public DateTime? DeleteExpiryDate { get; set; }
     }
 
     [Table]
@@ -2012,6 +2162,8 @@ namespace Jube.Data.Poco
         [Column] [Nullable] [Key(20)] public DateTime? UpdatedDate { get; set; }
         [Column] [Nullable] [Key(21)] public string UpdatedUser { get; set; }
         [Column] [Nullable] [Key(22)] public int? ImportId { get; set; }
+        [Column] [Nullable] [Key(23)] public byte? Compiled { get; set; }
+        [Column] [Nullable] [Key(24)] public string CompileError { get; set; }
     }
 
     [Table]
@@ -2112,6 +2264,8 @@ namespace Jube.Data.Poco
         [Column] [Nullable] [Key(29)] public DateTime? UpdatedDate { get; set; }
         [Column] [Nullable] [Key(30)] public string UpdatedUser { get; set; }
         [Column] [Nullable] [Key(31)] public int? ImportId { get; set; }
+        [Column] [Nullable] [Key(32)] public byte? Compiled { get; set; }
+        [Column] [Nullable] [Key(33)] public string CompileError { get; set; }
     }
 
     [Table]
@@ -2265,6 +2419,25 @@ namespace Jube.Data.Poco
         [Column] [Nullable] [Key(54)] public int? ImportId { get; set; }
         [Column] [Nullable] [Key(55)] public double? Priority { get; set; }
         [Column] [Nullable] [Key(56)] public long? EvaluationCounter { get; set; }
+        [Column] [Nullable] [Key(57)] public byte? Compiled { get; set; }
+        [Column] [Nullable] [Key(58)] public string CompileError { get; set; }
+    }
+
+    [Table]
+    [MessagePackObject]
+    public class EntityAnalysisModelActivationRuleCounterHistory
+    {
+        [Column]
+        [PrimaryKey]
+        [Identity]
+        [Key(0)]
+        public int Id { get; set; }
+
+        [Column] [Nullable] [Key(1)] public int? EntityAnalysisModelActivationRuleId { get; set; }
+        [Column] [Nullable] [Key(2)] public long? EvaluationCounter { get; set; }
+        [Column] [Nullable] [Key(3)] public long? ActivationCounter { get; set; }
+        [Column] [Nullable] [Key(4)] public DateTime? CreatedDate { get; set; }
+        [Column] [Nullable] [Key(5)] public string Instance { get; set; }
     }
 
     [Table]
@@ -2293,6 +2466,7 @@ namespace Jube.Data.Poco
         [Column] [Nullable] [Key(14)] public byte? ReportTable { get; set; }
         [Column] [Nullable] [Key(15)] public string HttpEndpoint { get; set; }
         [Column] [Nullable] [Key(16)] public Guid Guid { get; set; }
+        [Column] [Nullable] [Key(17)] public double? Priority { get; set; }
     }
 
     [Table]
@@ -2329,6 +2503,35 @@ namespace Jube.Data.Poco
         [Column] [Nullable] [Key(17)] public DateTime? UpdatedDate { get; set; }
         [Column] [Nullable] [Key(18)] public string UpdatedUser { get; set; }
         [Column] [Nullable] [Key(19)] public int? ImportId { get; set; }
+        [Column] [Nullable] [Key(20)] public double? Priority { get; set; }
+    }
+
+    [Table]
+    [MessagePackObject]
+    public class UserRegistryApiKey
+    {
+        [Column]
+        [PrimaryKey]
+        [Identity]
+        [Key(0)]
+        public int Id { get; set; }
+
+        [Column] [Nullable] [Key(1)] public Guid Guid { get; set; }
+        [Column] [Nullable] [Key(2)] public string Name { get; set; }
+        [Column] [Nullable] [Key(3)] public string Description { get; set; }
+        [Column] [Nullable] [Key(4)] public int? ApiKeyVersionId { get; set; }
+        [Column] [Nullable] [Key(5)] public int? UserRegistryId { get; set; }
+        [Column] [Nullable] [Key(6)] public string ApiKey { get; set; }
+        [Column] [Nullable] [Key(7)] public string ApiKeyDisplay { get; set; }
+        [Column] [Nullable] [Key(8)] public DateTime? CreatedDate { get; set; }
+        [Column] [Nullable] [Key(9)] public string CreatedUser { get; set; }
+        [Column] [Nullable] [Key(10)] public byte? Deleted { get; set; }
+        [Column] [Nullable] [Key(11)] public DateTime? DeletedDate { get; set; }
+        [Column] [Nullable] [Key(12)] public string DeletedUser { get; set; }
+
+        [Association(ThisKey = "UserRegistryId", OtherKey = "Id", CanBeNull = true,
+            Relationship = Relationship.ManyToOne)]
+        [Column] [Nullable] [Key(13)] public UserRegistry UserRegistry { get; set; }
     }
 
     [Table]
@@ -2342,7 +2545,7 @@ namespace Jube.Data.Poco
         public int Id { get; set; }
 
         [Column] [Nullable] [Key(1)] public Guid Guid { get; set; }
-        [Column] [Nullable] [Key(2)] public int RoleRegistryId { get; set; }
+        [Column] [Nullable] [Key(2)] public Guid RoleRegistryGuid { get; set; }
         [Column] [Nullable] [Key(3)] public string Email { get; set; }
         [Column] [Nullable] [Key(4)] public string Name { get; set; }
         [Column] [Nullable] [Key(5)] public string Password { get; set; }
@@ -2361,10 +2564,12 @@ namespace Jube.Data.Poco
         [Column] [Nullable] [Key(18)] public byte? Active { get; set; }
         [Column] [Nullable] [Key(19)] public int? InheritedId { get; set; }
 
-        [Association(ThisKey = "RoleRegistryId", OtherKey = "Id", CanBeNull = true,
+        [Association(ThisKey = "RoleRegistryGuid", OtherKey = "Guid", CanBeNull = false,
             Relationship = Relationship.ManyToOne)]
         [Key(20)]
         public RoleRegistry RoleRegistry { get; set; }
+
+        [Column] [Nullable] [Key(21)] public byte? WirePasswordHash { get; set; }
     }
 
     [Table]
@@ -2378,7 +2583,7 @@ namespace Jube.Data.Poco
         public int Id { get; set; }
 
         [Column] [Nullable] [Key(1)] public int UserRegistryId { get; set; }
-        [Column] [Nullable] [Key(2)] public int RoleRegistryId { get; set; }
+        [Column] [Nullable] [Key(2)] public Guid RoleRegistryGuid { get; set; }
         [Column] [Nullable] [Key(3)] public string Email { get; set; }
         [Column] [Nullable] [Key(4)] public string Name { get; set; }
         [Column] [Nullable] [Key(5)] public string Password { get; set; }
@@ -2535,6 +2740,7 @@ namespace Jube.Data.Poco
         [Column] [Nullable] [Key(10)] public int? InheritedId { get; set; }
         [Column] [Nullable] [Key(11)] public int? Version { get; set; }
         [Column] [Nullable] [Key(12)] public Guid Guid { get; set; }
+        [Column] [Nullable] [Key(13)] public DateTime? DeleteExpiryDate { get; set; }
     }
 
     [Table]
@@ -2572,6 +2778,7 @@ namespace Jube.Data.Poco
         [Column] [Nullable] [Key(13)] public DateTime? UpdatedDate { get; set; }
         [Column] [Nullable] [Key(14)] public string UpdatedUser { get; set; }
         [Column] [Nullable] [Key(15)] public int? ImportId { get; set; }
+        [Column] [Nullable] [Key(16)] public DateTime? DeleteExpiryDate { get; set; }
     }
 
     [Table]
@@ -2662,6 +2869,25 @@ namespace Jube.Data.Poco
         [Column] [Nullable] [Key(24)] public string UpdatedUser { get; set; }
         [Column] [Nullable] [Key(25)] public int? ImportId { get; set; }
         [Column] [Nullable] [Key(26)] public long? EvaluationCounter { get; set; }
+        [Column] [Nullable] [Key(27)] public byte? Compiled { get; set; }
+        [Column] [Nullable] [Key(28)] public string CompileError { get; set; }
+    }
+
+    [Table]
+    [MessagePackObject]
+    public class EntityAnalysisModelGatewayRuleCounterHistory
+    {
+        [Column]
+        [PrimaryKey]
+        [Identity]
+        [Key(0)]
+        public int Id { get; set; }
+
+        [Column] [Nullable] [Key(1)] public int? EntityAnalysisModelGatewayRuleId { get; set; }
+        [Column] [Nullable] [Key(2)] public long? EvaluationCounter { get; set; }
+        [Column] [Nullable] [Key(3)] public long? ActivationCounter { get; set; }
+        [Column] [Nullable] [Key(4)] public DateTime? CreatedDate { get; set; }
+        [Column] [Nullable] [Key(5)] public string Instance { get; set; }
     }
 
     [Table]
@@ -2691,6 +2917,7 @@ namespace Jube.Data.Poco
         [Column] [Nullable] [Key(15)] public byte? ResponsePayload { get; set; }
         [Column] [Nullable] [Key(16)] public byte? ReportTable { get; set; }
         [Column] [Nullable] [Key(17)] public Guid Guid { get; set; }
+        [Column] [Nullable] [Key(18)] public byte? EncryptionId { get; set; }
     }
 
     [Table]
@@ -2728,6 +2955,9 @@ namespace Jube.Data.Poco
         [Column] [Nullable] [Key(18)] public DateTime? UpdatedDate { get; set; }
         [Column] [Nullable] [Key(19)] public string UpdatedUser { get; set; }
         [Column] [Nullable] [Key(20)] public int? ImportId { get; set; }
+        [Column] [Nullable] [Key(21)] public byte? Compiled { get; set; }
+        [Column] [Nullable] [Key(22)] public string CompileError { get; set; }
+        [Column] [Nullable] [Key(23)] public byte? EncryptionId { get; set; }
     }
 
     [Table]
@@ -2941,6 +3171,7 @@ namespace Jube.Data.Poco
         [Column] [Nullable] [Key(9)] public int? InheritedId { get; set; }
         [Column] [Nullable] [Key(10)] public int? Version { get; set; }
         [Column] [Nullable] [Key(11)] public Guid Guid { get; set; }
+        [Column] [Nullable] [Key(12)] public DateTime? DeleteExpiryDate { get; set; }
     }
 
     [Table]
@@ -2972,6 +3203,7 @@ namespace Jube.Data.Poco
         [Column] [Nullable] [Key(12)] public DateTime? UpdatedDate { get; set; }
         [Column] [Nullable] [Key(13)] public string UpdatedUser { get; set; }
         [Column] [Nullable] [Key(14)] public int? ImportId { get; set; }
+        [Column] [Nullable] [Key(15)] public DateTime? DeleteExpiryDate { get; set; }
     }
 
     [Table]
@@ -2995,7 +3227,7 @@ namespace Jube.Data.Poco
         [Column] [Nullable] [Key(9)] public int? ResponseElevationValueLimit { get; set; }
         [Column] [Nullable] [Key(10)] public int? ResponseElevationLimit { get; set; }
         [Column] [Nullable] [Key(11)] public int? ResponseElevationValueGatewayLimit { get; set; }
-        
+
         [Association(ThisKey = "EntityAnalysisModelGuid", OtherKey = "Guid", CanBeNull = true,
             Relationship = Relationship.ManyToOne)]
         [Key(12)]
@@ -3015,7 +3247,7 @@ namespace Jube.Data.Poco
         public int Id { get; set; }
 
         [Column] [Nullable] [Key(1)] public int? EntityAnalysisModelId { get; set; }
-        [Column] [Nullable] [Key(2)] public int? Priority { get; set; }
+        [Column] [Nullable] [Key(2)] public double? Priority { get; set; }
         [Column] [Nullable] [Key(3)] public string BuilderRuleScript { get; set; }
 
         [Column]
@@ -3124,6 +3356,7 @@ namespace Jube.Data.Poco
         [Column] [Nullable] [Key(30)] public Guid Guid { get; set; }
         [Column] [Nullable] [Key(31)] public byte? Cache { get; set; }
         [Column] [Nullable] [Key(33)] public int? CacheIndexId { get; set; }
+        [Column] [Nullable] [Key(34)] public byte? EncryptionId { get; set; }
     }
 
     [Table]
@@ -3176,6 +3409,7 @@ namespace Jube.Data.Poco
         [Column] [Nullable] [Key(33)] public int? ImportId { get; set; }
         [Column] [Nullable] [Key(34)] public byte? Cache { get; set; }
         [Column] [Nullable] [Key(35)] public int? CacheIndexId { get; set; }
+        [Column] [Nullable] [Key(36)] public byte? EncryptionId { get; set; }
     }
 
     [Table]
@@ -3207,6 +3441,9 @@ namespace Jube.Data.Poco
         [Column] [Nullable] [Key(17)] public int? CacheValue { get; set; }
         [Column] [Nullable] [Key(18)] public char? CacheInterval { get; set; }
         [Column] [Nullable] [Key(19)] public Guid Guid { get; set; }
+        [Column] [Nullable] [Key(20)] public byte? AggregationTypeId { get; set; }
+        [Column] [Nullable] [Key(21)] public double? MaxDistanceRatio { get; set; }
+        [Column] [Nullable] [Key(22)] public double? MaxCoverageRatio { get; set; }
     }
 
     [Table]
@@ -3309,6 +3546,9 @@ namespace Jube.Data.Poco
         [Column] [Nullable] [Key(20)] public DateTime? UpdatedDate { get; set; }
         [Column] [Nullable] [Key(21)] public string UpdatedUser { get; set; }
         [Column] [Nullable] [Key(22)] public int? ImportId { get; set; }
+        [Column] [Nullable] [Key(23)] public byte? AggregationTypeId { get; set; }
+        [Column] [Nullable] [Key(24)] public double? MaxDistanceRatio { get; set; }
+        [Column] [Nullable] [Key(25)] public double? MaxCoverageRatio { get; set; }
     }
 
     [Table]
@@ -3506,6 +3746,31 @@ namespace Jube.Data.Poco
         public EntityAnalysisModel EntityAnalysisModel { get; set; }
 
         [Column] [Nullable] [Key(12)] public int? ImportId { get; set; }
+        [Column] [Nullable] [Key(13)] public DateTime? DeleteExpiryDate { get; set; }
+    }
+
+    [Table]
+    [MessagePackObject]
+    public class EntityAnalysisModelSuppressionVersion
+    {
+        [Column]
+        [PrimaryKey]
+        [Identity]
+        [Key(0)]
+        public int Id { get; set; }
+
+        [Column] [Nullable] [Key(1)] public int? EntityAnalysisModelSuppressionId { get; set; }
+        [Column] [Nullable] [Key(2)] public Guid EntityAnalysisModelGuid { get; set; }
+        [Column] [Nullable] [Key(3)] public DateTime? CreatedDate { get; set; }
+        [Column] [Nullable] [Key(4)] public string CreatedUser { get; set; }
+        [Column] [Nullable] [Key(5)] public int? Version { get; set; }
+        [Column] [Nullable] [Key(6)] public DateTime? DeletedDate { get; set; }
+        [Column] [Nullable] [Key(7)] public string DeletedUser { get; set; }
+        [Column] [Nullable] [Key(8)] public byte? Deleted { get; set; }
+        [Column] [Nullable] [Key(9)] public string SuppressionKeyValue { get; set; }
+        [Column] [Nullable] [Key(10)] public string SuppressionKey { get; set; }
+        [Column] [Nullable] [Key(11)] public int? InheritedId { get; set; }
+        [Column] [Nullable] [Key(12)] public DateTime? DeleteExpiryDate { get; set; }
     }
 
     [Table]
@@ -4415,10 +4680,14 @@ namespace Jube.Data.Poco
         [Column] [Nullable] [Key(12)] public int? TenantRegistryId { get; set; }
         [Column] [Nullable] [Key(13)] public int? Version { get; set; }
 
-        [Association(ThisKey = "Id", OtherKey = "RoleRegistryId", CanBeNull = false,
+        [Association(ThisKey = "Guid", OtherKey = "RoleRegistryGuid", CanBeNull = false,
             Relationship = Relationship.OneToMany)]
         [Key(14)]
         public UserRegistry UserRegistry { get; set; }
+        [Key(15)]
+        public IEnumerable<RoleRegistryPermission> RoleRegistryPermission { get; set; }
+        [Key(16)]
+        [Column] public int? ImportId { get; set; }
     }
 
     [Table]
@@ -4480,6 +4749,8 @@ namespace Jube.Data.Poco
             Relationship = Relationship.ManyToOne)]
         [Key(16)]
         public RoleRegistry RoleRegistry { get; set; }
+        [Key(17)]
+        [Column] public int? ImportId { get; set; }
     }
 
     [Table]
@@ -4523,6 +4794,20 @@ namespace Jube.Data.Poco
 
     [Table]
     [MessagePackObject]
+    public class SanctionStopToken
+    {
+        [Column]
+        [PrimaryKey]
+        [Identity]
+        [Key(0)]
+        public int Id { get; set; }
+
+        [Column] [Nullable] [Key(1)] public string Token { get; set; }
+        [Column] [Nullable] [Key(2)] public byte? CategoryId { get; set; }
+    }
+
+    [Table]
+    [MessagePackObject]
     public class SanctionEntrySource
     {
         [Column]
@@ -4559,6 +4844,53 @@ namespace Jube.Data.Poco
         [Column] [Nullable] [Key(4)] public string SanctionEntryReference { get; set; }
         [Column] [Nullable] [Key(5)] public string SanctionPayload { get; set; }
         [Column] [Nullable] [Key(6)] public string SanctionEntryHash { get; set; }
+        [Column] [Nullable] [Key(7)] public string CreatedUser { get; set; }
+        [Column] [Nullable] [Key(8)] public byte? Deleted { get; set; }
+        [Column] [Nullable] [Key(9)] public DateTime? DeletedDate { get; set; }
+        [Column] [Nullable] [Key(10)] public string DeletedUser { get; set; }
+    }
+
+    [Table]
+    [MessagePackObject]
+    public class SanctionEntryImport
+    {
+        [Column]
+        [PrimaryKey]
+        [Identity]
+        [Key(0)]
+        public int Id { get; set; }
+
+        [Column] [Nullable] [Key(1)] public int? SanctionEntrySourceId { get; set; }
+        [Column] [Nullable] [Key(2)] public DateTime? StartDate { get; set; }
+        [Column] [Nullable] [Key(3)] public DateTime? EndDate { get; set; }
+        [Column] [Nullable] [Key(4)] public int? TotalRows { get; set; }
+        [Column] [Nullable] [Key(5)] public int? InsertedCount { get; set; }
+        [Column] [Nullable] [Key(6)] public int? RevivedCount { get; set; }
+        [Column] [Nullable] [Key(7)] public int? UnchangedCount { get; set; }
+        [Column] [Nullable] [Key(8)] public int? RemovedCount { get; set; }
+        [Column] [Nullable] [Key(9)] public int? RejectedCount { get; set; }
+        [Column] [Nullable] [Key(10)] public byte? Successful { get; set; }
+        [Column] [Nullable] [Key(11)] public string ErrorMessage { get; set; }
+        [Column] [Nullable] [Key(12)] public string CreatedUser { get; set; }
+        [Column] [Nullable] [Key(13)] public DateTime? CreatedDate { get; set; }
+    }
+
+    [Table]
+    [MessagePackObject]
+    public class SanctionEntryRejection
+    {
+        [Column]
+        [PrimaryKey]
+        [Identity]
+        [Key(0)]
+        public int Id { get; set; }
+
+        [Column] [Nullable] [Key(1)] public int? SanctionEntryImportId { get; set; }
+        [Column] [Nullable] [Key(2)] public int? SanctionEntrySourceId { get; set; }
+        [Column] [Nullable] [Key(3)] public int? RowNumber { get; set; }
+        [Column] [Nullable] [Key(4)] public string RawData { get; set; }
+        [Column] [Nullable] [Key(6)] public DateTime? CreatedDate { get; set; }
+        [Column] [Nullable] [Key(7)] public int? ReasonId { get; set; }
     }
 
     [Table]
@@ -4627,6 +4959,7 @@ namespace Jube.Data.Poco
         [Column] [Nullable] [Key(5)] public int FailureTypeId { get; set; }
         [Column] [Nullable] [Key(6)] public DateTime? CreatedDate { get; set; }
         [Column] [Nullable] [Key(7)] public byte Failed { get; set; }
+        [Column] [Nullable] [Key(9)] public int? AuthenticationTypeId { get; set; }
     }
 
     [Table]
@@ -4862,6 +5195,28 @@ namespace Jube.Data.Poco
         [Column] [Nullable] [Key(4)] public string CreatedUser { get; set; }
         [Column] [Nullable] [Key(5)] public int? ResponseTime { get; set; }
         [Column] [Nullable] [Key(6)] public int? VisualisationRegistryDatasourceId { get; set; }
+    }
+
+    [Table]
+    [MessagePackObject]
+    public class EntityAnalysisModelSampleExecutionLog
+    {
+        [Column]
+        [PrimaryKey]
+        [Identity]
+        [Key(0)]
+        public int Id { get; set; }
+
+        [Column] [Nullable] [Key(1)] public int? EntityAnalysisModelId { get; set; }
+        [Column] [Nullable] [Key(2)] public DateTime? DateFrom { get; set; }
+        [Column] [Nullable] [Key(3)] public DateTime? DateTo { get; set; }
+        [Column] [Nullable] [Key(4)] public double? Sample { get; set; }
+        [Column] [Nullable] [Key(5)] public byte? InError { get; set; }
+        [Column] [Nullable] [Key(6)] public string ErrorStack { get; set; }
+        [Column] [Nullable] [Key(7)] public int? RowCount { get; set; }
+        [Column] [Nullable] [Key(8)] public long? ResponseTime { get; set; }
+        [Column] [Nullable] [Key(9)] public DateTime? CreatedDate { get; set; }
+        [Column] [Nullable] [Key(10)] public string CreatedUser { get; set; }
     }
 
     [Table]

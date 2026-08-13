@@ -64,7 +64,6 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions
                         context.EntityAnalysisModelInstanceEntryPayload.InvokeTaskPerformance.ComputeTimes.WriteTasksPerformance.CacheSanctionUpdateAsync = new TaskPerformance(pendingWriteTasksResult.ThreadMemory, pendingWriteTasksResult.ComputeTime);
                         break;
                     case TaskType.SanctionsAsync:
-                    case TaskType.DictionaryKvPsAsync:
                     case TaskType.TtlCountersAsync:
                     case TaskType.AbstractionRulesWithSearchKeysAsync:
                     case TaskType.OnlineAggregationOfTtlCountersAsync:

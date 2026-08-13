@@ -11,11 +11,11 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using FluentMigrator;
-
 namespace Jube.Migrations.Baseline
 {
+    using System;
+    using FluentMigrator;
+
     [Migration(20220429124949)]
     public class AddEntityAnalysisModelTable : Migration
     {
@@ -63,7 +63,7 @@ namespace Jube.Migrations.Baseline
             {
                 Name = "Detailed Account Financial Transactions",
                 Guid = Guid.Parse("90c425fd-101a-420b-91d1-cb7a24a969cc"),
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 EntryXPath = "$.TxnId",
                 EntryName = "TxnId",
                 ReferenceDateXPath = "$.TxnDateTime",

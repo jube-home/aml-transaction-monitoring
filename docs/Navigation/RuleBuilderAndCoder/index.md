@@ -5,9 +5,7 @@ nav_order: 8
 parent: Navigation
 ---
 
-🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
-💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
-developer.
+🚀 Get to pre-production in weeks, not months, with private [training](https://www.jube.io/jube-training) direct from Jube's developer — real sovereignty, zero vendor lock-in.
 
 # Rule and Code Builder
 
@@ -16,6 +14,8 @@ Several pages in the platform rely on the construction of code and in most cases
 ![Image](BuilderRule.png)
 
 In the following example the Rule and Code Constructor is embedded in the Activation Rules page and has a comprehensive range of data available:
+
+![Image](ActivationRuleBuilder.png)
 
 ![Image](AvailableData.png)
 

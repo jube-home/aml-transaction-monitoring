@@ -18,12 +18,12 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
     using System.IO;
     using System.Linq;
     using System.Net.Http;
-    using System.Text;
+    using System.Threading;
     using System.Threading.Tasks;
     using Context;
     using Data.Context;
+    using Data.Poco;
     using Data.Repository;
-    using EntityAnalysisModelManager.Helpers;
     using Microsoft.VisualBasic.FileIO;
     using Sanctions;
     using Sanctions.Models;
@@ -32,6 +32,7 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
 
     public class SanctionsTaskStarter(Context context)
     {
+        private static readonly HttpClient Client = new HttpClient();
         public async Task StartAsync()
         {
             try
@@ -39,21 +40,20 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
                 while (!context.Services.TaskCoordinator.CancellationToken.IsCancellationRequested)
                 {
                     var dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(
-                            context.Services.DynamicEnvironment.AppSettings("ConnectionString"), context.Services.Log);
+                        context.Services.DynamicEnvironment.AppSettings("ConnectionString"), context.Services.Log);
 
                     try
                     {
                         if (context.Services.Log.IsDebugEnabled)
                         {
                             context.Services.Log.Debug(
-                                "Sanctions Cache Loader: Has opened the database connection for retrieving the Sanctions Cache.");
+                                "Sanctions Cache Loader: Has opened the database connection for retrieving the Sanctions Cache and Stop Tokens.");
                         }
 
+                        await LoadSanctionsStopTokensAsync(context, dbContext).ConfigureAwait(false);
                         await LoadSanctionsEntriesAsync(context, dbContext).ConfigureAwait(false);
-
-                        context.Sanctions.SanctionsLoadedForStartup = true;
-
                         await LoadSanctionsFromFilesAsync(context, dbContext).ConfigureAwait(false);
+                        context.Sanctions.SanctionsLoadedForStartup = true;
 
                         await dbContext.CloseAsync(context.Services.TaskCoordinator.CancellationToken).ConfigureAwait(false);
                         await dbContext.DisposeAsync(context.Services.TaskCoordinator.CancellationToken).ConfigureAwait(false);
@@ -131,21 +131,16 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
                             SanctionEntryReference = record.SanctionEntryReference ?? "NA"
                         };
 
-                        var sanctionPayloadStrings =
-                            record.SanctionEntryElementValue
-                                .Split([" "], StringSplitOptions.RemoveEmptyEntries);
-
-                        for (var i = 0; i < sanctionPayloadStrings.Length; i++)
-                        {
-                            sanctionPayloadStrings[i] =
-                                LevenshteinDistance.Clean(sanctionPayloadStrings[i]);
-                        }
+                        var sanctionPayloadStrings = record.SanctionEntryElementValue
+                            .Split([" "], StringSplitOptions.RemoveEmptyEntries)
+                            .Select(SanctionEntryFileImporter.NormalizeElementValue)
+                            .ToArray();
 
                         sanctionEntry.SanctionElementValue = sanctionPayloadStrings;
 
                         sanctionEntry.SanctionEntryId = record.Id;
 
-                        context.Sanctions.SanctionsEntries.Add(sanctionEntry.SanctionEntryId, sanctionEntry);
+                        context.Sanctions.SanctionsEntries.TryAdd(sanctionEntry.SanctionEntryId, sanctionEntry);
                     }
                     catch (Exception ex) when (ex is not OperationCanceledException)
                     {
@@ -163,10 +158,10 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
         {
             try
             {
+                var sanctionEntriesSources = await GetSanctionsSourcesAsync(context, dbContext).ConfigureAwait(false);
+
                 if (context.Services.DynamicEnvironment.AppSettings("EnableSanctionLoader").Equals("True", StringComparison.OrdinalIgnoreCase))
                 {
-                    var sanctionEntriesSources = await GetSanctionsSourcesAsync(context, dbContext).ConfigureAwait(false);
-
                     var processSanctionEntriesSources = sanctionEntriesSources.ToList();
                     foreach (var processSanctionEntriesSource in processSanctionEntriesSources)
                     {
@@ -176,37 +171,56 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
                         {
                             if (processSanctionEntriesSource.EnableHttpLocation)
                             {
-                                using var client = new HttpClient();
+                                var import = await StartImportAsync(dbContext,
+                                    processSanctionEntriesSource.SanctionEntrySourceId,
+                                    context.Services.TaskCoordinator.CancellationToken).ConfigureAwait(false);
 
-                                using var response = await client.GetAsync(processSanctionEntriesSource.HttpLocation, context.Services.TaskCoordinator.CancellationToken).ConfigureAwait(false);
-                                response.EnsureSuccessStatusCode();
-
-                                var stream = await response.Content.ReadAsStreamAsync(context.Services.TaskCoordinator.CancellationToken).ConfigureAwait(false);
-                                await using var stream1 = stream.ConfigureAwait(false);
-
-                                if (context.Services.Log.IsInfoEnabled)
+                                try
                                 {
-                                    context.Services.Log.Info($"Sanctions Loader: HTTP request successful for {processSanctionEntriesSource.HttpLocation}.");
+                                    using var response = await Client.GetAsync(processSanctionEntriesSource.HttpLocation, context.Services.TaskCoordinator.CancellationToken).ConfigureAwait(false);
+                                    response.EnsureSuccessStatusCode();
+
+                                    var stream = await response.Content.ReadAsStreamAsync(context.Services.TaskCoordinator.CancellationToken).ConfigureAwait(false);
+                                    await using var stream1 = stream.ConfigureAwait(false);
+
+                                    if (context.Services.Log.IsInfoEnabled)
+                                    {
+                                        context.Services.Log.Info($"Sanctions Loader: HTTP request successful for {processSanctionEntriesSource.HttpLocation}.");
+                                    }
+
+                                    using var tfp = new TextFieldParser(stream);
+                                    tfp.Delimiters =
+                                    [
+                                        processSanctionEntriesSource.Delimiter
+                                    ];
+
+                                    if (context.Services.Log.IsInfoEnabled)
+                                    {
+                                        context.Services.Log.Info("Sanctions Loader: Connection established, data downloaded, and opened with TextFieldParser.");
+                                    }
+
+                                    var (result, inserted, revived, unchanged) = await ProcessTextFieldParserAsync(
+                                        context, dbContext, tfp, processSanctionEntriesSource,
+                                        processSanctionEntriesSource.Skip, import.Id).ConfigureAwait(false);
+
+                                    var removedCount = await ReconcileSourceAsync(context, dbContext,
+                                        processSanctionEntriesSource.SanctionEntrySourceId, result.Hashes).ConfigureAwait(false);
+
+                                    await CompleteImportAsync(dbContext, import, result, inserted, revived, unchanged,
+                                        removedCount, context.Services.TaskCoordinator.CancellationToken).ConfigureAwait(false);
+
+                                    if (context.Services.Log.IsInfoEnabled)
+                                    {
+                                        context.Services.Log.Info(
+                                            $"Sanctions Loader: Has made a connection to {processSanctionEntriesSource.HttpLocation} has finished using the Text Field Parser.");
+                                    }
                                 }
-
-                                using var tfp = new TextFieldParser(stream);
-                                tfp.Delimiters =
-                                [
-                                    processSanctionEntriesSource.Delimiter
-                                ];
-
-                                if (context.Services.Log.IsInfoEnabled)
+                                catch (Exception ex) when (ex is not OperationCanceledException)
                                 {
-                                    context.Services.Log.Info("Sanctions Loader: Connection established, data downloaded, and opened with TextFieldParser.");
-                                }
+                                    await FailImportAsync(dbContext, import, ex,
+                                        context.Services.TaskCoordinator.CancellationToken).ConfigureAwait(false);
 
-                                await ProcessTextFieldParserAsync(context, dbContext, tfp, processSanctionEntriesSource,
-                                    processSanctionEntriesSource.Skip).ConfigureAwait(false);
-
-                                if (context.Services.Log.IsInfoEnabled)
-                                {
-                                    context.Services.Log.Info(
-                                        $"Sanctions Loader: Has made a connection to {processSanctionEntriesSource.HttpLocation} has finished using the Text Field Parser.");
+                                    throw;
                                 }
                             }
                             else
@@ -215,50 +229,92 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
                                     && processSanctionEntriesSource.EnableDirectoryLocation)
                                 {
                                     var files = Directory.GetFiles(processSanctionEntriesSource.DirectoryLocation);
-                                    foreach (var fileWithinLoop in files)
+
+                                    if (files.Length > 0)
                                     {
-                                        context.Services.TaskCoordinator.CancellationToken.ThrowIfCancellationRequested();
+                                        var import = await StartImportAsync(dbContext,
+                                            processSanctionEntriesSource.SanctionEntrySourceId,
+                                            context.Services.TaskCoordinator.CancellationToken).ConfigureAwait(false);
 
                                         try
                                         {
-                                            if (context.Services.Log.IsInfoEnabled)
+                                            var seenHashes = new HashSet<string>();
+                                            var totalRows = 0;
+                                            var rejectedRows = 0;
+                                            var inserted = 0;
+                                            var revived = 0;
+                                            var unchanged = 0;
+
+                                            foreach (var fileWithinLoop in files)
                                             {
-                                                context.Services.Log.Info(
-                                                    "Sanctions Loader: Has loaded the database connection. Will now try and open it using the Text Field Parser.");
+                                                context.Services.TaskCoordinator.CancellationToken.ThrowIfCancellationRequested();
+
+                                                try
+                                                {
+                                                    if (context.Services.Log.IsInfoEnabled)
+                                                    {
+                                                        context.Services.Log.Info(
+                                                            "Sanctions Loader: Has loaded the database connection. Will now try and open it using the Text Field Parser.");
+                                                    }
+
+                                                    var tfp = new TextFieldParser(fileWithinLoop)
+                                                    {
+                                                        Delimiters = [processSanctionEntriesSource.Delimiter]
+                                                    };
+
+                                                    var (result, fileInserted, fileRevived, fileUnchanged) =
+                                                        await ProcessTextFieldParserAsync(context, dbContext, tfp,
+                                                            processSanctionEntriesSource,
+                                                            processSanctionEntriesSource.Skip, import.Id).ConfigureAwait(false);
+
+                                                    seenHashes.UnionWith(result.Hashes);
+                                                    totalRows += result.TotalRows;
+                                                    rejectedRows += result.RejectedRows;
+                                                    inserted += fileInserted;
+                                                    revived += fileRevived;
+                                                    unchanged += fileUnchanged;
+
+                                                    if (context.Services.Log.IsInfoEnabled)
+                                                    {
+                                                        context.Services.Log.Info(
+                                                            "Sanctions Loader: Has finished looping through the Sanctions and has closed the database connection and the file.");
+                                                    }
+
+                                                    if (context.Services.Log.IsInfoEnabled)
+                                                    {
+                                                        context.Services.Log.Info($"Sanctions Loader: Is about to delete {fileWithinLoop}.");
+                                                    }
+
+                                                    File.Delete(fileWithinLoop);
+
+                                                    if (context.Services.Log.IsInfoEnabled)
+                                                    {
+                                                        context.Services.Log.Info($"Sanctions Loader: Has deleted {fileWithinLoop}.");
+                                                    }
+                                                }
+                                                catch (Exception ex) when (ex is not OperationCanceledException)
+                                                {
+                                                    if (context.Services.Log.IsInfoEnabled)
+                                                    {
+                                                        context.Services.Log.Info($"Sanctions Loader: Error loading record {ex}");
+                                                    }
+                                                }
                                             }
 
-                                            var tfp = new TextFieldParser(fileWithinLoop)
-                                            {
-                                                Delimiters = [processSanctionEntriesSource.Delimiter]
-                                            };
+                                            var removedCount = await ReconcileSourceAsync(context, dbContext,
+                                                processSanctionEntriesSource.SanctionEntrySourceId, seenHashes).ConfigureAwait(false);
 
-                                            await ProcessTextFieldParserAsync(context, dbContext, tfp, processSanctionEntriesSource,
-                                                processSanctionEntriesSource.Skip).ConfigureAwait(false);
-
-                                            if (context.Services.Log.IsInfoEnabled)
-                                            {
-                                                context.Services.Log.Info(
-                                                    "Sanctions Loader: Has finished looping through the Sanctions and has closed the database connection and the file.");
-                                            }
-
-                                            if (context.Services.Log.IsInfoEnabled)
-                                            {
-                                                context.Services.Log.Info($"Sanctions Loader: Is about to delete {fileWithinLoop}.");
-                                            }
-
-                                            File.Delete(fileWithinLoop);
-
-                                            if (context.Services.Log.IsInfoEnabled)
-                                            {
-                                                context.Services.Log.Info($"Sanctions Loader: Has deleted {fileWithinLoop}.");
-                                            }
+                                            await CompleteImportAsync(dbContext, import,
+                                                new SanctionEntryFileImportResult(seenHashes, totalRows, rejectedRows),
+                                                inserted, revived, unchanged, removedCount,
+                                                context.Services.TaskCoordinator.CancellationToken).ConfigureAwait(false);
                                         }
                                         catch (Exception ex) when (ex is not OperationCanceledException)
                                         {
-                                            if (context.Services.Log.IsInfoEnabled)
-                                            {
-                                                context.Services.Log.Info($"Sanctions Loader: Error loading record {ex}");
-                                            }
+                                            await FailImportAsync(dbContext, import, ex,
+                                                context.Services.TaskCoordinator.CancellationToken).ConfigureAwait(false);
+
+                                            throw;
                                         }
                                     }
                                 }
@@ -301,7 +357,7 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
             var sanctionEntriesSources = new List<SanctionEntriesSource>();
             try
             {
-                var repository = new SanctionsEntriesSourcesRepository(dbContext);
+                var repository = new SanctionEntrySourceRepository(dbContext);
 
                 if (context.Services.Log.IsDebugEnabled)
                 {
@@ -331,7 +387,7 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
                             {
                                 SanctionEntrySourceId = record.Id
                             };
-                            context.Sanctions.SanctionsSources.Add(record.Id, sanctionEntriesSource);
+                            context.Sanctions.SanctionsSources.TryAdd(record.Id, sanctionEntriesSource);
                         }
                         else
                         {
@@ -405,151 +461,202 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
             return sanctionEntriesSources;
         }
 
-        private static async Task ProcessTextFieldParserAsync(Context context, DbContext dbContext, TextFieldParser tfp,
-            SanctionEntriesSource processSanctionEntriesSource, int skip)
+        private static async Task LoadSanctionsStopTokensAsync(Context context, DbContext dbContext)
         {
             try
             {
-                tfp.TextFieldType = FieldType.Delimited;
-                var i = 1;
-                while (!tfp.EndOfData)
+                var repository = new SanctionStopTokenRepository(dbContext);
+
+                if (context.Services.Log.IsDebugEnabled)
                 {
+                    context.Services.Log.Debug(
+                        "Sanctions Cache Loader: Has instantiated the command object to return all Stop Tokens for the Sanctions Cache.");
+                }
+
+                var records = await repository.GetAsync(context.Services.TaskCoordinator.CancellationToken)
+                    .ConfigureAwait(false);
+
+                if (context.Services.Log.IsDebugEnabled)
+                {
+                    context.Services.Log.Debug(
+                        "Sanctions Cache Loader: Has executed a reader to return all Stop Tokens for the Sanctions Cache.");
+                }
+
+                foreach (var record in records)
+                {
+                    context.Services.TaskCoordinator.CancellationToken.ThrowIfCancellationRequested();
+
                     try
                     {
-                        if (context.Services.Log.IsInfoEnabled)
+                        if (String.IsNullOrWhiteSpace(record.Token))
                         {
-                            context.Services.Log.Info(
-                                $"Sanctions Loader: Has loaded the database connection.  Is processing record {i}.  Will now build the SQL Command object.");
+                            if (context.Services.Log.IsDebugEnabled)
+                            {
+                                context.Services.Log.Debug(
+                                    $"Sanctions Cache Loader: Stop Token id {record.Id} is null or whitespace and has been skipped.");
+                            }
+
+                            continue;
                         }
 
-                        var data = tfp.ReadFields();
-
-                        if (i > skip)
-                        {
-                            if (data.Length > 1)
-                            {
-                                var repository = new SanctionsEntryRepository(dbContext);
-
-                                var sanctionEntry = new SanctionEntry();
-                                var insert = new Data.Poco.SanctionEntry();
-
-                                var sb = new StringBuilder();
-                                var first = true;
-                                foreach (var sanctionSourceElementLocation in
-                                         processSanctionEntriesSource.MultiPartStringIndex.Split(
-                                             ",".ToCharArray()))
-                                {
-                                    if (first)
-                                    {
-                                        first = false;
-                                    }
-                                    else
-                                    {
-                                        sb.Append(' ');
-                                    }
-
-                                    sb.Append(TryParse(sanctionSourceElementLocation, out var parsedInt) ? data[parsedInt] : data[0]);
-                                }
-
-                                insert.SanctionEntryElementValue = sb.ToString();
-                                insert.SanctionEntrySourceId = processSanctionEntriesSource.SanctionEntrySourceId;
-                                insert.SanctionPayload = String.Join(',', data);
-                                insert.SanctionEntryReference = data[processSanctionEntriesSource.ReferenceIndex];
-
-                                var hashValue = HashHelper.GetHash(
-                                    processSanctionEntriesSource.SanctionEntrySourceId +
-                                    sb.ToString() +
-                                    data[processSanctionEntriesSource.ReferenceIndex]);
-
-                                insert.SanctionEntryHash = hashValue;
-                                insert.SanctionEntrySourceId = processSanctionEntriesSource.SanctionEntrySourceId;
-
-                                insert = await repository.UpsertAsync(insert, context.Services.TaskCoordinator.CancellationToken).ConfigureAwait(false);
-
-                                if (context.Sanctions.SanctionsEntries.TryAdd(insert.Id, sanctionEntry))
-                                {
-                                    var sanctionPayloadStrings =
-                                        sb.ToString()
-                                            .Split([" "], StringSplitOptions.RemoveEmptyEntries);
-
-                                    for (var j = 0; j < sanctionPayloadStrings.Length; j++)
-                                    {
-                                        sanctionPayloadStrings[j] =
-                                            LevenshteinDistance.Clean(sanctionPayloadStrings[j]);
-                                    }
-
-                                    sanctionEntry.SanctionEntrySourceId =
-                                        processSanctionEntriesSource.SanctionEntrySourceId;
-
-                                    sanctionEntry.SanctionEntryReference =
-                                        !String.IsNullOrEmpty(data[processSanctionEntriesSource.ReferenceIndex])
-                                            ? data[processSanctionEntriesSource.ReferenceIndex]
-                                            : "NA";
-
-                                    sanctionEntry.SanctionElementValue = sanctionPayloadStrings;
-                                    sanctionEntry.SanctionEntryId = insert.Id;
-
-                                    if (context.Services.Log.IsInfoEnabled)
-                                    {
-                                        context.Services.Log.Info(
-                                            $"Sanctions Loader: Has loaded records with value of {sb} for source {processSanctionEntriesSource.SanctionEntrySourceId} with reference of {data[processSanctionEntriesSource.ReferenceIndex]} and a hash value of {hashValue}.");
-                                    }
-                                }
-                                else
-                                {
-                                    if (context.Services.Log.IsInfoEnabled)
-                                    {
-                                        context.Services.Log.Info(
-                                            $"Sanctions Loader: Has not reloaded records with value of {sb} for source {processSanctionEntriesSource.SanctionEntrySourceId} with reference of {data[processSanctionEntriesSource.ReferenceIndex]} and a hash value of {hashValue} as already exists.");
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                if (context.Services.Log.IsInfoEnabled)
-                                {
-                                    context.Services.Log.Info($"Sanctions Loader: record {i} has no data.");
-                                }
-                            }
-                        }
-                        else
-                        {
-                            if (context.Services.Log.IsInfoEnabled)
-                            {
-                                context.Services.Log.Info(
-                                    $"Sanctions Loader: Skipped header row {i}");
-                            }
-                        }
+                        context.Sanctions.SanctionsStopTokens.TryAdd(record.Token, record.CategoryId ?? 1);
                     }
                     catch (Exception ex) when (ex is not OperationCanceledException)
                     {
-                        if (context.Services.Log.IsInfoEnabled)
-                        {
-                            context.Services.Log.Info($"Sanctions Loader: Error loading record {ex}");
-                        }
-                    }
-                    finally
-                    {
-                        i += 1;
-                        if (context.Services.Log.IsInfoEnabled)
-                        {
-                            context.Services.Log.Info($"Sanctions Loader: Moving to record {i}.");
-                        }
+                        context.Services.Log.Error($"Sanctions Cache Loader: has created an error as {ex}.");
                     }
                 }
 
-                tfp.Close();
-
-                if (context.Services.Log.IsInfoEnabled)
+                if (context.Services.Log.IsDebugEnabled)
                 {
-                    context.Services.Log.Info(
-                        $"Sanctions Loader: Has loaded the database connection.  Has set the delimiter to {processSanctionEntriesSource.Delimiter}.  Is about to start processing the records.");
+                    context.Services.Log.Debug(
+                        $"Sanctions Cache Loader: Has loaded {context.Sanctions.SanctionsStopTokens} Stop Tokens for the Sanctions Cache.");
                 }
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                context.Services.Log.Error($"ProcessTextFieldParser: has produced an error {ex}");
+                context.Services.Log.Error($"GetSanctionsStopTokensAsync: has produced an error {ex}");
             }
+        }
+
+        private static async Task<int> ReconcileSourceAsync(Context context, DbContext dbContext,
+            int sanctionEntrySourceId, HashSet<string> seenHashes)
+        {
+            var repository = new SanctionsEntryRepository(dbContext);
+
+            var removed = await SanctionEntryFileImporter.ReconcileRemovedAsync(repository, sanctionEntrySourceId,
+                seenHashes, "Sanctions Loader", context.Services.Log,
+                context.Services.TaskCoordinator.CancellationToken).ConfigureAwait(false);
+
+            foreach (var entry in removed)
+            {
+                context.Sanctions.SanctionsEntries.TryRemove(entry.Id, out _);
+            }
+
+            return removed.Count;
+        }
+
+        private static Task<SanctionEntryImport> StartImportAsync(DbContext dbContext,
+            int sanctionEntrySourceId, CancellationToken token)
+        {
+            var repository = new SanctionEntryImportRepository(dbContext);
+
+            return repository.InsertAsync(new SanctionEntryImport
+            {
+                SanctionEntrySourceId = sanctionEntrySourceId,
+                StartDate = DateTime.UtcNow,
+                CreatedUser = "Sanctions Loader",
+                CreatedDate = DateTime.UtcNow
+            }, token);
+        }
+
+        private static Task CompleteImportAsync(DbContext dbContext, SanctionEntryImport import,
+            SanctionEntryFileImportResult result, int inserted, int revived, int unchanged, int removed,
+            CancellationToken token)
+        {
+            import.EndDate = DateTime.UtcNow;
+            import.TotalRows = result.TotalRows;
+            import.InsertedCount = inserted;
+            import.RevivedCount = revived;
+            import.UnchangedCount = unchanged;
+            import.RemovedCount = removed;
+            import.RejectedCount = result.RejectedRows;
+            import.Successful = 1;
+
+            return new SanctionEntryImportRepository(dbContext).UpdateAsync(import, token);
+        }
+
+        private static Task FailImportAsync(DbContext dbContext, SanctionEntryImport import, Exception ex,
+            CancellationToken token)
+        {
+            import.EndDate = DateTime.UtcNow;
+            import.Successful = 0;
+            import.ErrorMessage = ex.Message;
+
+            return new SanctionEntryImportRepository(dbContext).UpdateAsync(import, token);
+        }
+
+        private static async Task<(SanctionEntryFileImportResult Result, int Inserted, int Revived, int Unchanged)>
+            ProcessTextFieldParserAsync(Context context, DbContext dbContext, TextFieldParser tfp,
+                SanctionEntriesSource processSanctionEntriesSource, int skip, int sanctionEntryImportId)
+        {
+            var repository = new SanctionsEntryRepository(dbContext);
+            var rejectionRepository = new SanctionEntryRejectionRepository(dbContext);
+
+            var inserted = 0;
+            var revived = 0;
+            var unchanged = 0;
+
+            var result = await SanctionEntryFileImporter.ImportAsync(tfp,
+                processSanctionEntriesSource.SanctionEntrySourceId,
+                processSanctionEntriesSource.MultiPartStringIndex, processSanctionEntriesSource.ReferenceIndex, skip,
+                async (record, token) =>
+                {
+                    var insert = new Data.Poco.SanctionEntry
+                    {
+                        SanctionEntryElementValue = record.ElementValue,
+                        SanctionEntrySourceId = processSanctionEntriesSource.SanctionEntrySourceId,
+                        SanctionPayload = record.Payload,
+                        SanctionEntryReference = record.Reference,
+                        SanctionEntryHash = record.Hash
+                    };
+
+                    var (persisted, outcome) = await repository.UpsertAsync(insert, token).ConfigureAwait(false);
+
+                    switch (outcome)
+                    {
+                        case SanctionEntryUpsertOutcome.Inserted:
+                            inserted++;
+                            break;
+                        case SanctionEntryUpsertOutcome.Revived:
+                            revived++;
+                            break;
+                        default:
+                            unchanged++;
+                            break;
+                    }
+
+                    var sanctionEntry = new SanctionEntry
+                    {
+                        SanctionEntrySourceId = processSanctionEntriesSource.SanctionEntrySourceId,
+                        SanctionEntryReference = !String.IsNullOrEmpty(record.Reference) ? record.Reference : "NA",
+                        SanctionElementValue = record.ElementValue
+                            .Split([" "], StringSplitOptions.RemoveEmptyEntries)
+                            .Select(SanctionEntryFileImporter.NormalizeElementValue)
+                            .ToArray(),
+                        SanctionEntryId = persisted.Id
+                    };
+
+                    if (context.Sanctions.SanctionsEntries.TryAdd(persisted.Id, sanctionEntry))
+                    {
+                        if (context.Services.Log.IsInfoEnabled)
+                        {
+                            context.Services.Log.Info(
+                                $"Sanctions Loader: Has loaded records with value of {record.ElementValue} for source {processSanctionEntriesSource.SanctionEntrySourceId} with reference of {record.Reference} and a hash value of {record.Hash}.");
+                        }
+                    }
+                    else if (context.Services.Log.IsInfoEnabled)
+                    {
+                        context.Services.Log.Info(
+                            $"Sanctions Loader: Has not reloaded records with value of {record.ElementValue} for source {processSanctionEntriesSource.SanctionEntrySourceId} with reference of {record.Reference} and a hash value of {record.Hash} as already exists.");
+                    }
+                },
+                async (rejection, token) =>
+                {
+                    await rejectionRepository.InsertAsync(new SanctionEntryRejection
+                    {
+                        SanctionEntryImportId = sanctionEntryImportId,
+                        SanctionEntrySourceId = processSanctionEntriesSource.SanctionEntrySourceId,
+                        RowNumber = rejection.RowNumber,
+                        RawData = rejection.RawData,
+                        ReasonId = (int)rejection.ReasonId,
+                        CreatedDate = DateTime.UtcNow
+                    }, token).ConfigureAwait(false);
+                },
+                context.Services.Log,
+                context.Services.TaskCoordinator.CancellationToken).ConfigureAwait(false);
+
+            return (result, inserted, revived, unchanged);
         }
     }
 }

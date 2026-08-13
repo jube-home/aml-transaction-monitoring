@@ -6,9 +6,7 @@ parent: Administration
 grand_parent: Configuration
 ---
 
-🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
-💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
-developer.
+🚀 Get to pre-production in weeks, not months, with private [training](https://www.jube.io/jube-training) direct from Jube's developer — real sovereignty, zero vendor lock-in.
 
 # Users
 All user interactions in the user interface are subject to authentication and authorisation.  Authentication rooted in a user account, which is more often than not accompanied by a password (keeping in mind the software also supports JSON Web Tokens for authentication).
@@ -62,6 +60,8 @@ Logging out clears the JSON Web Token from the header and cookies,  and accordin
 Click Logon to test the temporary password and be forced into change:
 
 ![Image](UpdatingPasswordForTestLogin.png)
+
+![Image](OnLoginOfTestUser.png)
 
 Upon change of password,  the permissions will be afforded as the role the user was allocated to, in this case administrator.
 

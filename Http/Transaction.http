@@ -1,17 +1,18 @@
-POST http://127.0.0.1:5001/api/invoke/EntityAnalysisModel/90c425fd-101a-420b-91d1-cb7a24a969cc
+POST http://localhost:5001/api/invoke/EntityAnalysisModel/90c425fd-101a-420b-91d1-cb7a24a969cc
 Content-Type: application/json
+X-API-KEY: 1NOuYGT6JaUAJYSSScPU3hMuysghAgfFrQnWXHnzQkvxoR5JATMxeE3k0stXgh8zBU5eYblF5O3p5lKiLnopCeQQ9z8x 
 
 {
-  "AccountId": "Test26",
-  "TxnId": "0987654321",
-  "TxnDateTime": "2025-09-01T21:41:37.248",
-  "Currency": "826",
+  "AccountId": "Test5",
+  "TxnId": "09876543222",
+  "TxnDateTime": "2001-08-01T00:57:39.248",
+  "Currency": "AED",
   "ResponseCode": "0",
   "CurrencyAmount": "123.45",
   "SettlementAmount": "100000",
   "AccountCurrency": "566",
-  "IP": "Test",
-  "DeviceId": "OlaRoseGoldPhone3",
+  "IP": "123.456.789.123",
+  "DeviceId": "OlaRoseGoldPhone5",
   "ChannelId": "1",
   "AppVersionCode": "12.34",
   "ServiceCode": "DID",
@@ -47,14 +48,14 @@ Content-Type: application/json
   "Email": "please@hash.me",
   "CreditCardHash": "0xDA39A3EE5E6B4B0JJJ1890AFD80709",
   "AcquirerBankName": "Caixa",
-  "ActionDate": "2019-04-17 01:18:15Z",
+  "ActionDate": "2025-09-01T21:41:37.248",
   "APMAccountId": "",
   "BankId": "57",
   "BillingAddress": "Address Line 1",
   "BillingCity": "Address Line 2",
   "BillingCountry": "DE",
-  "BillingFirstName": "Robert",
-  "BillingLastName": "Mugabe",
+  "BillingFirstName": "Richard",
+  "BillingLastName": "Churchman",
   "BillingPhone": "1234567890",
   "BillingState": "",
   "BillingZip": "123456",
@@ -68,5 +69,5 @@ Content-Type: application/json
   "OrderId": "10607324128",
   "TransactionTypeId": "1000",
   "TransactionResultId": "1006",
-  "Test":"Test1"
+  "Test1": "12345"
 }

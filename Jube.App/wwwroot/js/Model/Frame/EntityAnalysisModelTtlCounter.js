@@ -64,7 +64,7 @@ function SetSum() {
     }
 }
 
-$.get("../api/EntityAnalysisModelRequestXPath/ByEntityAnalysisModelId/" + parentKey + "/ByStringIntegerFloatDataType",
+$.get("../api/GetEntityAnalysisRequestXPathInlineScriptNamesByStringIntegerFloatDataTypeQuery/" + parentKey,
     function (data) {
         for (const value of data) {
             if (value.dataTypeId === 1) {
@@ -103,7 +103,7 @@ $.get("../api/EntityAnalysisModelRequestXPath/ByEntityAnalysisModelId/" + parent
                     let dropdownTtlCounterDataValue = ttlCounterDataValue.data("kendoDropDownList");
                     let firstValue = dropdownTtlCounterDataValue.dataItem(0) ? dropdownTtlCounterDataValue.dataItem(0).value : "";
                     dropdownTtlCounterDataValue.value(data.ttlCounterDataValue || firstValue);
-                    
+
                     if (data.onlineAggregation) {
                         onlineAggregation.data("kendoSwitch").check(true);
                     } else {

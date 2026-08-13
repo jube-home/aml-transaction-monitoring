@@ -73,7 +73,7 @@ namespace Jube.Data.Repository
         public async Task<EntityAnalysisModelReprocessingRuleInstance> InsertAsync(EntityAnalysisModelReprocessingRuleInstance model, CancellationToken token = default)
         {
             model.CreatedUser = userName;
-            model.CreatedDate = DateTime.Now;
+            model.CreatedDate = DateTime.UtcNow;
             model.Version = 1;
             model.Id = await dbContext.InsertWithInt32IdentityAsync(model, token: token);
             return model;
@@ -98,7 +98,7 @@ namespace Jube.Data.Repository
             }
 
             model.CreatedUser = userName;
-            model.CreatedDate = DateTime.Now;
+            model.CreatedDate = DateTime.UtcNow;
             model.Version = 1;
             model.StatusId = 0;
             model.Id = await dbContext.InsertWithInt32IdentityAsync(model, token: token);
@@ -122,7 +122,7 @@ namespace Jube.Data.Repository
             existing.ProcessedCount = processedCount;
             existing.ErrorCount = errorCount;
             existing.ReferenceDate = referenceDate;
-            existing.UpdatedDate = DateTime.Now;
+            existing.UpdatedDate = DateTime.UtcNow;
             existing.StatusId = 3;
 
             await dbContext.UpdateAsync(existing, token: token);
@@ -147,7 +147,7 @@ namespace Jube.Data.Repository
 
             model.Version = existing.Version + 1;
             model.CreatedUser = userName;
-            model.CreatedDate = DateTime.Now;
+            model.CreatedDate = DateTime.UtcNow;
             model.Id = existing.Id;
 
             var id = await dbContext
@@ -176,7 +176,7 @@ namespace Jube.Data.Repository
             return dbContext.EntityAnalysisModelReprocessingRuleInstance
                 .Where(d =>
                     d.Id == id)
-                .Set(s => s.CompletedDate, DateTime.Now)
+                .Set(s => s.CompletedDate, DateTime.UtcNow)
                 .Set(s => s.StatusId, (byte)4)
                 .UpdateAsync(token);
         }
@@ -190,7 +190,7 @@ namespace Jube.Data.Repository
                     && d.Id == id
                     && (d.Deleted == 0 || d.Deleted == null))
                 .Set(s => s.Deleted, Convert.ToByte(1))
-                .Set(s => s.DeletedDate, DateTime.Now)
+                .Set(s => s.DeletedDate, DateTime.UtcNow)
                 .Set(s => s.DeletedUser, userName)
                 .UpdateAsync(token);
         }

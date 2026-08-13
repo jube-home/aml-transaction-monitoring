@@ -49,6 +49,12 @@ namespace Jube.Data.Repository
             tenantRegistryId = roleRegistry.TenantRegistryId;
         }
 
+        public UserRegistryRepository(DbContext dbContext, int tenantRegistryId)
+        {
+            this.dbContext = dbContext;
+            this.tenantRegistryId = tenantRegistryId;
+        }
+
         public Task<UserRegistry> GetByNameAsync(string name, CancellationToken token = default)
         {
             return dbContext.UserRegistry
@@ -65,11 +71,17 @@ namespace Jube.Data.Repository
                 .ToListAsync(token);
         }
 
-        public async Task<IEnumerable<UserRegistry>> GetByRoleRegistryIdAsync(int roleRegistryId, CancellationToken token = default)
+        public Task<bool> AnyAsync(CancellationToken token = default)
+        {
+            return dbContext.UserRegistry.AnyAsync(w => w.RoleRegistry.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue, token);
+        }
+
+        public async Task<IEnumerable<UserRegistry>> GetByRoleRegistryGuidAsync(Guid roleRegistryGuid, CancellationToken token = default)
         {
             return await dbContext.UserRegistry
-                .Where(w => (w.RoleRegistry.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
-                            && w.RoleRegistryId == roleRegistryId && (w.Deleted == 0 || w.Deleted == null))
+                .Where(w => w.RoleRegistry.TenantRegistryId == tenantRegistryId
+                            && w.RoleRegistryGuid == roleRegistryGuid && (w.Deleted == 0 || w.Deleted == null)
+                            && (w.RoleRegistry.Deleted == 0 || w.RoleRegistry.Deleted == null))
                 .ToListAsync(token);
         }
 
@@ -96,7 +108,7 @@ namespace Jube.Data.Repository
 
             model.CreatedUser = userName;
             model.Version = 1;
-            model.CreatedDate = DateTime.Now;
+            model.CreatedDate = DateTime.UtcNow;
             model.Guid = model.Guid == Guid.Empty ? Guid.NewGuid() : model.Guid;
             model.Id = await dbContext.InsertWithInt32IdentityAsync(model, token: token);
 
@@ -105,7 +117,7 @@ namespace Jube.Data.Repository
                 User = model.Name,
                 TenantRegistryId = tenantRegistryId.Value,
                 SwitchedUser = userName,
-                SwitchedDate = DateTime.Now
+                SwitchedDate = DateTime.UtcNow
             };
 
             await dbContext.InsertAsync(userInTenant, token: token);
@@ -131,11 +143,14 @@ namespace Jube.Data.Repository
             model.Password = existing.Password;
             model.PasswordExpiryDate = existing.PasswordExpiryDate;
             model.PasswordCreatedDate = existing.PasswordCreatedDate;
-            model.CreatedDate = DateTime.Now;
+            model.CreatedDate = DateTime.UtcNow;
 
             await dbContext.UpdateAsync(model, token: token);
 
-            var mapper = new Mapper(new MapperConfiguration(cfg => { cfg.CreateMap<UserRegistry, UserRegistryVersion>(); }, NullLoggerFactory.Instance));
+            var mapper = new Mapper(new MapperConfiguration(cfg =>
+            {
+                cfg.CreateMap<UserRegistry, UserRegistryVersion>();
+            }, NullLoggerFactory.Instance));
 
             var audit = mapper.Map<UserRegistryVersion>(existing);
             audit.UserRegistryId = existing.Id;
@@ -160,7 +175,7 @@ namespace Jube.Data.Repository
             }
         }
 
-        public async Task SetPasswordAsync(int id, string password, DateTime expiryDate, CancellationToken token = default)
+        public async Task SetPasswordAsync(int id, string password, DateTime? expiryDate, bool wirePasswordHash = true, CancellationToken token = default)
         {
             var records = await dbContext.UserRegistry
                 .Where(d => (d.RoleRegistry.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
@@ -169,8 +184,9 @@ namespace Jube.Data.Repository
                 .Set(s => s.Password, password)
                 .Set(s => s.PasswordLocked, (byte)0)
                 .Set(s => s.FailedPasswordCount, 0)
+                .Set(s => s.WirePasswordHash, wirePasswordHash ? (byte)1 : (byte)0)
                 .Set(s => s.PasswordExpiryDate, expiryDate)
-                .Set(s => s.PasswordCreatedDate, DateTime.Now)
+                .Set(s => s.PasswordCreatedDate, DateTime.UtcNow)
                 .UpdateAsync(token);
 
             if (records == 0)
@@ -186,7 +202,7 @@ namespace Jube.Data.Repository
                             && d.Id == id
                             && (d.Deleted == 0 || d.Deleted == null))
                 .Set(s => s.PasswordLocked, (byte)1)
-                .Set(s => s.PasswordLockedDate, DateTime.Now)
+                .Set(s => s.PasswordLockedDate, DateTime.UtcNow)
                 .UpdateAsync(token);
 
             if (records == 0)
@@ -219,13 +235,69 @@ namespace Jube.Data.Repository
                             && d.Id == id
                             && (d.Deleted == 0 || d.Deleted == null))
                 .Set(s => s.Deleted, Convert.ToByte(1))
-                .Set(s => s.DeletedDate, DateTime.Now)
+                .Set(s => s.DeletedDate, DateTime.UtcNow)
                 .Set(s => s.DeletedUser, userName)
                 .UpdateAsync(token);
 
             if (records == 0)
             {
                 throw new KeyNotFoundException();
+            }
+        }
+
+        public async Task RecoverOrphanedUsersAsync(CancellationToken token = default)
+        {
+            if (!tenantRegistryId.HasValue)
+            {
+                throw new KeyNotFoundException();
+            }
+
+            var namesInTenant = await dbContext.UserInTenant
+                .Where(w => w.TenantRegistryId == tenantRegistryId)
+                .Select(s => s.User)
+                .ToListAsync(token);
+
+            var orphanedUsers = await dbContext.UserRegistry
+                .Where(w => namesInTenant.Contains(w.Name)
+                            && (w.Deleted == 0 || w.Deleted == null)
+                            && !dbContext.RoleRegistry.Any(r =>
+                                r.Guid == w.RoleRegistryGuid && (r.Deleted == 0 || r.Deleted == null)))
+                .ToListAsync(token);
+
+            if (orphanedUsers.Count == 0)
+            {
+                return;
+            }
+
+            var roleRegistryRepository = new RoleRegistryRepository(dbContext, userName);
+            var roleRegistry = await roleRegistryRepository.InsertAsync(new RoleRegistry
+            {
+                Name = "Orphaned Preservation Import",
+                Active = 1
+            }, token);
+
+            var permissionSpecifications = await new PermissionSpecificationRepository(dbContext).GetAsync(token);
+
+            var roleRegistryPermissionRepository = new RoleRegistryPermissionRepository(dbContext, userName);
+            foreach (var permissionSpecification in permissionSpecifications)
+            {
+                await roleRegistryPermissionRepository.InsertAsync(new RoleRegistryPermission
+                {
+                    RoleRegistryId = roleRegistry.Id,
+                    PermissionSpecificationId = permissionSpecification.Id,
+                    Active = 1
+                }, token);
+            }
+
+            foreach (var orphanedUser in orphanedUsers)
+            {
+                orphanedUser.RoleRegistryGuid = roleRegistry.Guid;
+
+                orphanedUser.Active = orphanedUser.Name == userName
+                    ? (byte)1
+                    : (byte)0;
+
+                await UpdateAsync(orphanedUser, token);
             }
         }
     }

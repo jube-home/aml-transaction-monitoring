@@ -1763,7 +1763,7 @@ namespace Jube.Engine.Exhaustive.Algorithms
             var exhaustiveSearchInstanceTrialInstance = new ExhaustiveSearchInstanceTrialInstance
             {
                 ExhaustiveSearchInstanceId = exhaustiveSearchInstanceId,
-                CreatedDate = DateTime.Now
+                CreatedDate = DateTime.UtcNow
             };
 
             return repository.InsertAsync(exhaustiveSearchInstanceTrialInstance, token);

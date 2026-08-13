@@ -62,11 +62,22 @@ namespace Jube.App
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
+                    webBuilder.ConfigureKestrel(options =>
+                    {
+                        options.Limits.MinRequestBodyDataRate = null;
+                        options.Limits.MinResponseDataRate = null;
+                        options.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(5);
+                        options.Limits.RequestHeadersTimeout = TimeSpan.FromMinutes(2);
+                        options.Limits.MaxConcurrentConnections = null;
+                        options.Limits.MaxConcurrentUpgradedConnections = null;
+                        options.Limits.Http2.MaxStreamsPerConnection = 100;
+                        options.Limits.Http2.InitialConnectionWindowSize = 131072;
+                        options.Limits.Http2.InitialStreamWindowSize = 98304;
+                    });
                 })
-                .ConfigureLogging(logging =>
+                .ConfigureLogging((_, logging) =>
                 {
                     logging.ClearProviders();
-                    logging.SetMinimumLevel(LogLevel.Trace);
                 });
         }
     }

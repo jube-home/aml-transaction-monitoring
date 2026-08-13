@@ -67,8 +67,10 @@ function initCaseFilterBuilder(isGuid, id, data) {
         GetCaseWorkflowStatus = "../api/CaseWorkflowStatus/ByCaseWorkflowId/" + id;
     }
 
+    const $builder = $("#Builder");
+
     if ($('#Select').length === 0) {
-        $("#Builder").append("<div id='Select'/>");
+        $builder.append("<div id='Select'/>");
     }
 
     if (typeof select !== "undefined") {
@@ -76,7 +78,7 @@ function initCaseFilterBuilder(isGuid, id, data) {
     }
 
     if ($("#Where").length === 0) {
-        $("#Builder").append("<div id='Where'/>");
+        $builder.append("<div id='Where'/>");
     }
 
     if (typeof where !== "undefined") {

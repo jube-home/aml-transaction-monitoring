@@ -19,54 +19,62 @@ namespace Jube.Cache.Redis.Serialization
 
     public static class MessagePackSerializerOptionsHelper
     {
-        public static MessagePackSerializerOptions ContractlessStandardResolverWithCompressionMessagePackSerializerOptions(bool compression)
+        private static readonly MessagePackSerializerOptions ContractlessStandardResolverWithCompression;
+        private static readonly MessagePackSerializerOptions ContractlessStandardResolverWithoutCompression;
+        private static readonly MessagePackSerializerOptions StandardWithCompression;
+        private static readonly MessagePackSerializerOptions StandardWithoutCompression;
+        private static readonly MessagePackSerializerOptions EnvelopeWithCompression;
+        private static readonly MessagePackSerializerOptions EnvelopeWithoutCompression;
+
+        static MessagePackSerializerOptionsHelper()
         {
-            var resolver = CompositeResolver.Create(
+            var contractlessResolver = CompositeResolver.Create(
                 NativeDecimalResolver.Instance,
                 NativeGuidResolver.Instance,
                 NativeDateTimeResolver.Instance,
-                ContractlessStandardResolver.Instance
-            );
+                ContractlessStandardResolver.Instance);
 
-            if (compression)
-            {
-                return ContractlessStandardResolver.Options.WithCompression(MessagePackCompression.Lz4BlockArray)
-                    .WithResolver(resolver);
-            }
+            ContractlessStandardResolverWithCompression = ContractlessStandardResolver.Options
+                .WithCompression(MessagePackCompression.Lz4BlockArray)
+                .WithResolver(contractlessResolver);
 
-            return ContractlessStandardResolver.Options
-                .WithResolver(resolver);
-        }
+            ContractlessStandardResolverWithoutCompression = ContractlessStandardResolver.Options
+                .WithResolver(contractlessResolver);
 
-        public static MessagePackSerializerOptions StandardMessagePackSerializerWithCompressionOptions(bool compression)
-        {
-            var resolver = CompositeResolver.Create(
+            var standardResolver = CompositeResolver.Create(
                 NativeDecimalResolver.Instance,
                 NativeGuidResolver.Instance,
                 NativeDateTimeResolver.Instance,
-                StandardResolver.Instance
-            );
+                StandardResolver.Instance);
 
-            if (compression)
-            {
-                return StandardResolver.Options.WithCompression(MessagePackCompression.Lz4BlockArray)
-                    .WithResolver(resolver);
-            }
+            StandardWithCompression = StandardResolver.Options
+                .WithCompression(MessagePackCompression.Lz4BlockArray)
+                .WithResolver(standardResolver);
 
-            return StandardResolver.Options
-                .WithResolver(resolver);
+            StandardWithoutCompression = StandardResolver.Options
+                .WithResolver(standardResolver);
+
+            EnvelopeWithCompression = StandardResolver.Options
+                .WithCompression(MessagePackCompression.Lz4BlockArray)
+                .WithResolver(EnvelopeDictionaryNoBoxingResolver.Instance);
+
+            EnvelopeWithoutCompression = StandardResolver.Options
+                .WithResolver(EnvelopeDictionaryNoBoxingResolver.Instance);
         }
 
         public static MessagePackSerializerOptions EnveloperMessagePackSerializerWithCompressionOptions(bool compression)
         {
-            if (compression)
-            {
-                return StandardResolver.Options.WithCompression(MessagePackCompression.Lz4BlockArray)
-                    .WithResolver(EnvelopeDictionaryNoBoxingResolver.Instance);
-            }
+            return compression ? EnvelopeWithCompression : EnvelopeWithoutCompression;
+        }
 
-            return StandardResolver.Options
-                .WithResolver(EnvelopeDictionaryNoBoxingResolver.Instance);
+        public static MessagePackSerializerOptions ContractlessStandardResolverWithCompressionMessagePackSerializerOptions(bool compression)
+        {
+            return compression ? ContractlessStandardResolverWithCompression : ContractlessStandardResolverWithoutCompression;
+        }
+
+        public static MessagePackSerializerOptions StandardMessagePackSerializerWithCompressionOptions(bool compression)
+        {
+            return compression ? StandardWithCompression : StandardWithoutCompression;
         }
     }
 }

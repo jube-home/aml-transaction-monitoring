@@ -26,9 +26,9 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Models.Mode
             PooledDictionary<string, double> kvp, ILog log);
 
         private readonly Lock lockActivationCounterDate = new Lock();
-        private DateTime activationCounterDate;
-        
+
         public long ActivationCounter;
+        private DateTime activationCounterDate;
         public long EvaluationCounter;
         public int EntityAnalysisModelGatewayRuleId { get; init; }
         public int RuleScriptTypeId { get; set; }
@@ -38,6 +38,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Models.Mode
         public Assembly GatewayRuleCompile { get; set; }
         public Match GatewayRuleCompileDelegate { get; set; }
         public double MaxResponseElevation { get; set; }
+        public double Priority { get; set; }
 
         public DateTime ActivationCounterDate
         {

@@ -76,13 +76,11 @@ function getDefaultValueStyle() {
             value = defaultValueString.val();
             break;
         case "2":
-            value = defaultNumeric.data("kendoNumericTextBox").value().toString();
-            break;
         case "3":
-            value = defaultNumeric.data("kendoNumericTextBox").value().toString();
-            break;
         case "4":
-            value = defaultNumeric.data("kendoNumericTextBox").value().toString();
+        case "6":
+        case "7":
+            value = (defaultNumeric.data("kendoNumericTextBox").value() || 0).toString();
             break;
         case "5":
             if (defaultCheckbox.prop("checked")) {
@@ -90,12 +88,6 @@ function getDefaultValueStyle() {
             } else {
                 value = "0";
             }
-            break;
-        case "6":
-            value = defaultNumeric.data("kendoNumericTextBox").value().toString();
-            break;
-        case "7":
-            value = defaultNumeric.data("kendoNumericTextBox").value().toString();
             break;
     }
     return value;
@@ -149,6 +141,17 @@ function setDefaultValueStyle() {
             divDefaultValueCheckbox.show();
             break;
     }
+
+    setEncryptionVisibility();
+}
+
+function setEncryptionVisibility() {
+    const $encryptionRow = $("#EncryptionRow");
+    if (dataTypeId.data("kendoDropDownList").value() === "1") {
+        $encryptionRow.show();
+    } else {
+        $encryptionRow.hide();
+    }
 }
 
 function ExpandCollapseSearchKey() {
@@ -157,19 +160,21 @@ function ExpandCollapseSearchKey() {
 }
 
 function SetSearchKey() {
+    const $searchKeySubTable = $("#SearchKeySubTable");
     if ($('#SearchKey').prop('checked')) {
-        $("#SearchKeySubTable").show();
+        $searchKeySubTable.show();
     } else {
-        $("#SearchKeySubTable").hide();
+        $searchKeySubTable.hide();
     }
     SetSearchKeyCache();
 }
 
 function SetSearchKeyCache() {
+    const $searchKeyCacheSubTable = $("#SearchKeyCacheSubTable");
     if (searchKeyCache.prop('checked') && searchKeyCache.prop('checked')) {
-        $("#SearchKeyCacheSubTable").show();
+        $searchKeyCacheSubTable.show();
     } else {
-        $("#SearchKeyCacheSubTable").hide();
+        $searchKeyCacheSubTable.hide();
     }
 }
 
@@ -197,6 +202,10 @@ if (typeof GetSelectedChildID() === "undefined") {
 
             $("input[name=SearchKeyCacheTtlInterval][value=" +
                 data.searchKeyCacheTtlInterval +
+                "]").prop('checked', true);
+
+            $("input[name=EncryptionId][value=" +
+                data.encryptionId +
                 "]").prop('checked', true);
 
             $("input[name=SearchInterval][value=" + data.searchInterval + "]")
@@ -241,17 +250,17 @@ if (typeof GetSelectedChildID() === "undefined") {
             $("#CreatedDate").html(new Date(data.createdDate).toLocaleString());
             $("#CreatedUser").html(data.createdUser);
 
+            setDefaultValueStyle();
+
             switch (data.dataTypeId) {
                 case 1:
                     defaultValueString.val(data.defaultValue);
                     break;
                 case 2:
-                    defaultNumeric.data("kendoNumericTextBox").value(data.defaultValue);
-                    break;
                 case 3:
-                    defaultNumeric.data("kendoNumericTextBox").value(data.defaultValue);
-                    break;
                 case 4:
+                case 6:
+                case 7:
                     defaultNumeric.data("kendoNumericTextBox").value(data.defaultValue);
                     break;
                 case 5:
@@ -263,7 +272,6 @@ if (typeof GetSelectedChildID() === "undefined") {
                     break;
             }
 
-            setDefaultValueStyle();
             ReadyExisting(data);
             SetSearchKey();
             SetSearchKeyCache();
@@ -304,7 +312,8 @@ function GetData() {
         searchKeyTtlIntervalValue: searchKeyTtlIntervalValue.val(),
         searchKeyTtlInterval: $('input[name=SearchKeyTtlInterval]:checked').val(),
         defaultValue: getDefaultValueStyle(),
-        cache: cache.prop("checked")
+        cache: cache.prop("checked"),
+        encryptionId: $('input[name=EncryptionId]:checked').val()
     };
 }
 

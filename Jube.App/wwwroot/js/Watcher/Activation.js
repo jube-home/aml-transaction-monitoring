@@ -16,19 +16,20 @@ const PendingJSONObjects = [];
 let InProgress = 0;
 
 function UpdateChart() {
-    const map = $("#map").data("kendoMap");
+    const map = $("#map").data("kendoMap"); // get existing instance, don't reinitialise
+
     $('#Status').text('Total Plotted: ' +
         map.markers.items.length +
         '; Pending Plotting: ' +
         PendingJSONObjects.length +
         '.');
+
     if (PendingJSONObjects.length > 0 && InProgress === 0) {
         InProgress = 1;
         const grid = $("#grid").data("kendoGrid");
 
-        let i;
         const pendingJsonObjectsSplice = PendingJSONObjects.splice(0, 100);
-        for (i = 0; i < pendingJsonObjectsSplice.length; i++) {
+        for (let i = 0; i < pendingJsonObjectsSplice.length; i++) {
             const jsonObject = pendingJsonObjectsSplice[i];
 
             if ($("#MapEntityOnce").prop('checked')) {
@@ -69,11 +70,8 @@ function UpdateChart() {
         for (let j = 0; j < rows.length; j++) {
             const row = $(rows[j]);
             const dataItem = grid.dataItem(row);
-            const backColor = dataItem.get("backColor");
-            const foreColor = dataItem.get("foreColor");
-
-            row.css("background-color", backColor);
-            row.css("color", foreColor);
+            row.css("background-color", dataItem.get("backColor"));
+            row.css("color", dataItem.get("foreColor"));
         }
         InProgress = 0;
     }
@@ -138,6 +136,7 @@ function createChart() {
 function createMap() {
     $("#map").kendoMap({
         center: [30.268107, -97.744821],
+        urlTemplate: "https://#= subdomain #.tile.openstreetmap.org/#= zoom #/#= x #/#= y #.png",
         zoom: 3,
         markerActivate: function (e) {
             if (e.marker.options.colorField !== '#ffffff') {
@@ -147,9 +146,9 @@ function createMap() {
         layers: [
             {
                 type: "tile",
-                urlTemplate: "http://#= subdomain #.tile.openstreetmap.org/#= zoom #/#= x #/#= y #.png",
+                urlTemplate: "https://#= subdomain #.tile.openstreetmap.org/#= zoom #/#= x #/#= y #.png",
                 subdomains: ["a", "b", "c"],
-                attribution: "&copy; <a href='http://osm.org/copyright'>OpenStreetMap contributors</a>"
+                attribution: "&copy; <a href='https://osm.org/copyright'>OpenStreetMap contributors</a>"
             }
         ],
         markers: []
@@ -176,15 +175,13 @@ $(document).ready(function () {
     $("#Replay").kendoButton().click(function () {
         const dateFromControl = $("#ReplayFrom").data("kendoDateTimePicker");
         const dateToControl = $("#ReplayTo").data("kendoDateTimePicker");
-        const dateFromFormat = kendo.toString(dateFromControl.value(), "s");
-        const dateToFormat = kendo.toString(dateToControl.value(), "s");
 
         $.ajax({
             url: '../api/ActivationWatcher/Replay',
             type: "GET",
             data: {
-                dateFrom: dateFromFormat,
-                dateTo: dateToFormat
+                dateFrom: dateFromControl.value()?.toISOString() ?? null,
+                dateTo: dateToControl.value()?.toISOString() ?? null
             },
             success: function (data) {
                 //Not implemented.

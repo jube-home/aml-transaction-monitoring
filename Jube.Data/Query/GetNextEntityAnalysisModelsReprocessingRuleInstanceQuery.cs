@@ -34,7 +34,8 @@ namespace Jube.Data.Query
                                 && w.EntityAnalysisModelReprocessingRule.Active == 1
                                 && w.EntityAnalysisModelReprocessingRule.EntityAnalysisModelId ==
                                 entityAnalysisModelId)
-                    .OrderBy(o => o.Id)
+                    .OrderBy(o => o.EntityAnalysisModelReprocessingRule.Priority)
+                    .ThenBy(o => o.Id)
                     .Select(s =>
                         new Dto
                         {
@@ -61,7 +62,7 @@ namespace Jube.Data.Query
                             d.Id ==
                             query.Id)
                         .Set(s => s.StatusId, Convert.ToByte(1))
-                        .Set(s => s.StartedDate, DateTime.Now)
+                        .Set(s => s.StartedDate, DateTime.UtcNow)
                         .UpdateAsync(token);
                 }
 

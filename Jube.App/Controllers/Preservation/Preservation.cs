@@ -1,13 +1,29 @@
+/* Copyright (C) 2022-present Jube Holdings Limited.
+ *
+ * This file is part of Jube™ software.
+ *
+ * Jube™ is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License
+ * as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ * Jube™ is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+
+ * You should have received a copy of the GNU Affero General Public License along with Jube™. If not,
+ * see <https://www.gnu.org/licenses/>.
+ */
+
 namespace Jube.App.Controllers.Preservation
 {
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Linq;
+    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
     using Code;
     using Cryptography.Exceptions;
     using Data.Context;
+    using Dto;
     using DynamicEnvironment;
     using Jube.Preservation;
     using log4net;
@@ -39,16 +55,14 @@ namespace Jube.App.Controllers.Preservation
             }
 
             this.log = log;
-            dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"), log);
+            dbContext = DataConnectionDbContext.GetNgpsqlDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"));
             permissionValidation = new PermissionValidation(dbContext, userName, log);
             this.log = log;
             this.dynamicEnvironment = dynamicEnvironment;
         }
 
         [HttpPost("Import")]
-        public async Task<ActionResult> UploadAsync(List<IFormFile> files, string password, bool exhaustive,
-            bool suppressions,
-            bool lists, bool dictionaries, bool visualisations, CancellationToken token = default)
+        public async Task<ActionResult> UploadAsync(List<IFormFile> files, string password, CancellationToken token = default)
         {
             if (!permissionValidation.Validate(new[]
                 {
@@ -65,33 +79,22 @@ namespace Jube.App.Controllers.Preservation
 
             try
             {
-                var importExportOptions = new ImportExportOptions
+                var importExportOptions = new ImportOptions()
                 {
-                    Password = password,
-                    Exhaustive = exhaustive,
-                    Suppressions = suppressions,
-                    Lists = lists,
-                    Dictionaries = dictionaries,
-                    Visualisations = visualisations
+                    Password = password
                 };
 
-                var preservation = new Preservation(dbContext, userName,
-                    dynamicEnvironment.AppSettings("PreservationSalt"));
+                var file = files.First();
+                await using var stream = file.OpenReadStream();
+                using var reader = new BinaryReader(stream, Encoding.Default, true);
+                var bytes = reader.ReadBytes((int)stream.Length);
 
-                foreach (var file in files)
-                {
-                    var stream = file.OpenReadStream();
-                    await using var stream1 = stream.ConfigureAwait(false);
+                await using var preservation = new Preservation(dbContext, userName,
+                    dynamicEnvironment.AppSettings("PreservationSalt"),
+                    dynamicEnvironment.AppSettings("JempFileLegacyEncryptionFallback").Equals("True", StringComparison.CurrentCultureIgnoreCase));
 
-                    using var reader = new BinaryReader(stream);
-                    var bytes = reader.ReadBytes((int)stream.Length);
-
-                    await preservation.ImportAsync(bytes, importExportOptions, token).ConfigureAwait(false);
-
-                    return Ok();
-                }
-
-                return BadRequest();
+                await preservation.ImportAsync(bytes, importExportOptions, token).ConfigureAwait(false);
+                return Ok();
             }
             catch (InvalidHmacException)
             {
@@ -121,7 +124,7 @@ namespace Jube.App.Controllers.Preservation
                 return Forbid();
             }
 
-            var importExportOptions = new ImportExportOptions
+            var importExportOptions = new ExportOptions
             {
                 Exhaustive = exhaustive,
                 Suppressions = suppressions,
@@ -135,9 +138,8 @@ namespace Jube.App.Controllers.Preservation
             return payload.Yaml;
         }
 
-        [HttpGet("Export")]
-        public async Task<ActionResult> ExportAsync(string password, bool exhaustive, bool suppressions, bool lists, bool dictionaries,
-            bool visualisations, CancellationToken token = default)
+        [HttpPost("Export")]
+        public async Task<ActionResult> ExportAsync([FromBody] ImportExportOptionsDto model, CancellationToken token = default)
         {
             if (!permissionValidation.Validate(new[]
                 {
@@ -150,16 +152,18 @@ namespace Jube.App.Controllers.Preservation
             try
             {
                 var preservation = new Preservation(dbContext, userName,
-                    dynamicEnvironment.AppSettings("PreservationSalt"));
+                    dynamicEnvironment.AppSettings("PreservationSalt"),
+                    dynamicEnvironment.AppSettings("JempFileLegacyEncryptionFallback").Equals("True", StringComparison.CurrentCultureIgnoreCase));
 
-                var importExportOptions = new ImportExportOptions
+                var importExportOptions = new ExportOptions
                 {
-                    Password = password,
-                    Exhaustive = exhaustive,
-                    Suppressions = suppressions,
-                    Lists = lists,
-                    Dictionaries = dictionaries,
-                    Visualisations = visualisations
+                    Password = model.Password,
+                    Exhaustive = model.Exhaustive,
+                    Suppressions = model.Suppressions,
+                    Lists = model.Lists,
+                    Dictionaries = model.Dictionaries,
+                    Visualisations = model.Visualisations,
+                    Roles = model.Roles
                 };
 
                 var export = await preservation.ExportAsync(importExportOptions, token).ConfigureAwait(false);

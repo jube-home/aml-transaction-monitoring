@@ -94,8 +94,8 @@ namespace Jube.Data.Repository
         {
             model.CreatedUser = userName ?? model.CreatedUser;
             model.Guid = model.Guid == Guid.Empty ? Guid.NewGuid() : model.Guid;
-            model.CreatedDate = DateTime.Now;
-            model.UpdatedDate = DateTime.Now;
+            model.CreatedDate = DateTime.UtcNow;
+            model.UpdatedDate = DateTime.UtcNow;
             model.Version = 1;
             model.Id = await dbContext.InsertWithInt32IdentityAsync(model, token: token).ConfigureAwait(false);
 
@@ -122,7 +122,7 @@ namespace Jube.Data.Repository
             model.Version = existing.Version + 1;
             model.Guid = existing.Guid;
             model.CreatedUser = userName;
-            model.CreatedDate = DateTime.Now;
+            model.CreatedDate = DateTime.UtcNow;
 
             await dbContext.UpdateAsync(model, token: token).ConfigureAwait(false);
 
@@ -148,7 +148,7 @@ namespace Jube.Data.Repository
                     && d.Guid == exhaustiveSearchInstanceGuid
                     && (d.Deleted == 0 || d.Deleted == null)
                     && d.StatusId != 19)
-                .Set(s => s.UpdatedDate, DateTime.Now)
+                .Set(s => s.UpdatedDate, DateTime.UtcNow)
                 .Set(s => s.StatusId, (byte)18)
                 .UpdateAsync(token);
         }
@@ -168,7 +168,7 @@ namespace Jube.Data.Repository
                     (d.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
                     && d.Id == id
                     && (d.Deleted == 0 || d.Deleted == null))
-                .Set(s => s.UpdatedDate, DateTime.Now)
+                .Set(s => s.UpdatedDate, DateTime.UtcNow)
                 .Set(s => s.StatusId, statusId)
                 .UpdateAsync(token).ConfigureAwait(false);
 
@@ -185,8 +185,8 @@ namespace Jube.Data.Repository
                     (d.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
                     && d.Id == id
                     && (d.Deleted == 0 || d.Deleted == null))
-                .Set(s => s.UpdatedDate, DateTime.Now)
-                .Set(s => s.CompletedDate, DateTime.Now)
+                .Set(s => s.UpdatedDate, DateTime.UtcNow)
+                .Set(s => s.CompletedDate, DateTime.UtcNow)
                 .UpdateAsync(token).ConfigureAwait(false);
 
             if (records == 0)
@@ -203,7 +203,7 @@ namespace Jube.Data.Repository
                     && d.Id == id
                     && (d.Deleted == 0 || d.Deleted == null))
                 .Set(s => s.Models, models)
-                .Set(s => s.UpdatedDate, DateTime.Now)
+                .Set(s => s.UpdatedDate, DateTime.UtcNow)
                 .UpdateAsync(token).ConfigureAwait(false);
 
             if (records == 0)
@@ -220,7 +220,7 @@ namespace Jube.Data.Repository
                     && d.Id == id
                     && (d.Deleted == 0 || d.Deleted == null))
                 .Set(s => s.ModelsSinceBest, modelsSinceBest)
-                .Set(s => s.UpdatedDate, DateTime.Now)
+                .Set(s => s.UpdatedDate, DateTime.UtcNow)
                 .UpdateAsync(token).ConfigureAwait(false);
 
             if (records == 0)
@@ -238,7 +238,7 @@ namespace Jube.Data.Repository
                     && (d.Deleted == 0 || d.Deleted == null))
                 .Set(s => s.Score, score)
                 .Set(s => s.TopologyComplexity, topologyComplexity)
-                .Set(s => s.UpdatedDate, DateTime.Now)
+                .Set(s => s.UpdatedDate, DateTime.UtcNow)
                 .UpdateAsync(token).ConfigureAwait(false);
 
             if (records == 0)
@@ -256,7 +256,7 @@ namespace Jube.Data.Repository
                     && (d.Locked == 0 || d.Locked == null)
                     && (d.Deleted == 0 || d.Deleted == null))
                 .Set(s => s.Deleted, Convert.ToByte(1))
-                .Set(s => s.DeletedDate, DateTime.Now)
+                .Set(s => s.DeletedDate, DateTime.UtcNow)
                 .Set(s => s.DeletedUser, userName)
                 .UpdateAsync(token).ConfigureAwait(false);
 
@@ -274,7 +274,7 @@ namespace Jube.Data.Repository
                     && (d.Deleted == 0 || d.Deleted == null))
                 .Set(s => s.ImportId, importId)
                 .Set(s => s.Deleted, Convert.ToByte(1))
-                .Set(s => s.DeletedDate, DateTime.Now)
+                .Set(s => s.DeletedDate, DateTime.UtcNow)
                 .UpdateAsync(token);
         }
     }

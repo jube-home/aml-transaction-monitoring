@@ -26,6 +26,7 @@ namespace Jube.Data.Query
         DbContext dbContext,
         string user,
         ILog log,
+        bool parserAssertSelectOnly,
         string reportConnectionString = null)
     {
         public async Task<List<IDictionary<string, object>>> ExecuteAsync(int id, Dictionary<string, object> parametersByName, CancellationToken token = default)
@@ -95,7 +96,7 @@ namespace Jube.Data.Query
                 }
             }
 
-            using var postgres = new Postgres(reportConnectionString ?? dbContext.ConnectionString, log);
+            using var postgres = new Postgres(reportConnectionString ?? dbContext.Connection.ConnectionString, log, parserAssertSelectOnly);
             return await postgres.ExecuteByNamedParametersAsync(visualisationRegistryDatasource.Command,
                 mergedParametersByName, token).ConfigureAwait(false);
         }

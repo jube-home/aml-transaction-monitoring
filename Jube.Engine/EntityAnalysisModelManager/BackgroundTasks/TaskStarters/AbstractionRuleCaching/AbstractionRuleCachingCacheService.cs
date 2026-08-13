@@ -54,7 +54,8 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters.Ab
                         $"Abstraction Rule Caching: For model {entityAnalysisModel.Instance.Id} and grouping key {distinctSearchKey.SearchKey} the date threshold for cache keys that have expired is {deleteLineCacheKeys}.");
                 }
 
-                values = await entityAnalysisModel.Services.CacheService.CachePayloadLatestRepository.GetDistinctKeysAsync(entityAnalysisModel.Instance.TenantRegistryId, entityAnalysisModel.Instance.Guid,
+                values = await entityAnalysisModel.Services.CacheService.CachePayloadLatestRepository.GetDistinctKeysPreferReplicaAsync(
+                    entityAnalysisModel.Instance.TenantRegistryId, entityAnalysisModel.Instance.Guid,
                     distinctSearchKey.SearchKey,
                     deleteLineCacheKeys).ConfigureAwait(false);
             }
@@ -110,7 +111,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters.Ab
             double? value = null;
             try
             {
-                value = await cacheAbstractionRepository.GetAsync(
+                value = await cacheAbstractionRepository.GetPreferReplicaAsync(
                     entityAnalysisModel.Instance.TenantRegistryId, entityAnalysisModel.Instance.Guid, abstractionRule.Name, distinctSearchKey.SearchKey, groupingValue).ConfigureAwait(false);
 
                 if (entityAnalysisModel.Services.Log.IsInfoEnabled)

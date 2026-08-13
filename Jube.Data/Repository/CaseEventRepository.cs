@@ -67,14 +67,14 @@ namespace Jube.Data.Repository
         {
             return dbContext.EntityAnalysisModelSearchKeyDistinctValueCalculationInstance
                 .Where(d => d.EntityAnalysisModelSearchKeyCalculationInstanceId == id)
-                .Set(s => s.AbstractionRulesMatchesUpdatedDate, DateTime.Now)
+                .Set(s => s.AbstractionRulesMatchesUpdatedDate, DateTime.UtcNow)
                 .UpdateAsync(token);
         }
 
         public async Task<CaseEvent> InsertAsync(CaseEvent model, CancellationToken token = default)
         {
             model.CreatedUser = userName;
-            model.CreatedDate = DateTime.Now;
+            model.CreatedDate = DateTime.UtcNow;
             model.Id = await dbContext.InsertWithInt32IdentityAsync(model, token: token).ConfigureAwait(false);
             return model;
         }

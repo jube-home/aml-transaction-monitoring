@@ -59,7 +59,7 @@ namespace Jube.Data.Repository
         {
             model.CreatedUser = userName;
             model.TenantRegistryId = tenantRegistryId;
-            model.CreatedDate = DateTime.Now;
+            model.CreatedDate = DateTime.UtcNow;
 
             if (model.ScheduleDate == default(DateTime) || model.ScheduleDate == null)
             {

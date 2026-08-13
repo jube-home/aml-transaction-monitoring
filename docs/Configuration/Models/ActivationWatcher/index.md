@@ -6,9 +6,7 @@ parent: Models
 grand_parent: Configuration
 ---
 
-🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
-💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
-developer.
+🚀 Get to pre-production in weeks, not months, with private [training](https://www.jube.io/jube-training) direct from Jube's developer — real sovereignty, zero vendor lock-in.
 
 # Activation Watcher 
 The purpose of the Activation Watcher is to provide a real time ticker of Response Elevations,  subject to the Activation Rule having been set to send messages to the Activation Watcher.
@@ -56,6 +54,8 @@ Navigate to the Watcher. Synchronise the model via Entity >> Synchronisation and
 ![Image](TickedOut.png)
 
 There will be nothing of note in the JSON response payload.  Note that the pin has been plotted based on a latitude and longitude sent to the watcher.
+
+![Image](WactherResponsePayload.png)
 
 In this example the Latitude and Longitude is passed in the JSON transaction message:
 

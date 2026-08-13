@@ -27,7 +27,7 @@ namespace Jube.Data.Query
         {
             var query = from c in dbContext.Case
                 from e in dbContext.CaseEvent.InnerJoin(w => w.CaseId == c.Id)
-                from i in dbContext.CaseWorkflow.InnerJoin(w => w.Guid == c.CaseWorkflowGuid)
+                from i in dbContext.CaseWorkflow.InnerJoin(w => w.Guid == c.CaseWorkflowGuid && (w.Deleted == 0 || w.Deleted == null))
                 from m in dbContext.EntityAnalysisModel.InnerJoin(w =>
                     w.Id == i.EntityAnalysisModelId && (w.Deleted == 0 || w.Deleted == null))
                 from t in dbContext.TenantRegistry.InnerJoin(w => w.Id == m.TenantRegistryId)
@@ -41,16 +41,16 @@ namespace Jube.Data.Query
                           .Where(r => r.CaseWorkflowGuid == i.Guid
                                       && (r.Deleted == 0 || r.Deleted == null))
                           .Any(r => dbContext.RoleRegistry
-                              .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                              .Where(rr => rr.Guid == r.RoleRegistryGuid && (rr.Deleted == 0 || rr.Deleted == null))
                               .Any(rr => dbContext.UserRegistry
-                                  .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                                  .Any(u => u.RoleRegistryGuid == rr.Guid && u.Name == userName)))
                       && dbContext.CaseWorkflowStatusRole
                           .Where(r => r.CaseWorkflowStatusGuid == s.Guid
                                       && (r.Deleted == 0 || r.Deleted == null))
                           .Any(r => dbContext.RoleRegistry
-                              .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                              .Where(rr => rr.Guid == r.RoleRegistryGuid && (rr.Deleted == 0 || rr.Deleted == null))
                               .Any(rr => dbContext.UserRegistry
-                                  .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                                  .Any(u => u.RoleRegistryGuid == rr.Guid && u.Name == userName)))
                 orderby e.Id descending
                 select e;
 
@@ -61,7 +61,7 @@ namespace Jube.Data.Query
                 {
                     Id = caseEvent.Id,
                     CaseId = caseEvent.CaseId.GetValueOrDefault(),
-                    CreatedDate = caseEvent.CreatedDate.GetValueOrDefault(),
+                    CreatedDate = new DateTimeOffset(caseEvent.CreatedDate.GetValueOrDefault().ToUniversalTime(), TimeSpan.Zero),
                     CreatedUser = caseEvent.CreatedUser,
                     Before = caseEvent.Before,
                     After = caseEvent.After,
@@ -81,6 +81,7 @@ namespace Jube.Data.Query
                         12 => "Suspend Closed",
                         13 => "Suspend Open",
                         14 => "Allocate Lock",
+                        15 => "Process Expired Case",
                         _ => "Unknown"
                     }
                 };
@@ -96,7 +97,7 @@ namespace Jube.Data.Query
             public int Id { get; set; }
             public int CaseId { get; set; }
             public string CaseEventType { get; set; }
-            public DateTime CreatedDate { get; set; }
+            public DateTimeOffset CreatedDate { get; set; }
             public string CreatedUser { get; set; }
             public string Before { get; set; }
             public string After { get; set; }

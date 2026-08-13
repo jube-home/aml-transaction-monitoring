@@ -35,13 +35,6 @@ namespace Jube.Data.Repository
                 .Select(s => s.TenantRegistryId).FirstOrDefault();
         }
 
-        public Task<SessionCaseJournal> GetByCaseWorkflowIdAsync(int id, CancellationToken token = default)
-        {
-            return dbContext.SessionCaseJournal.FirstOrDefaultAsync(w
-                => w.CreatedUser == userName &&
-                   w.CaseWorkflowId == id, token);
-        }
-
         public Task<SessionCaseJournal> GetByCaseWorkflowGuidAsync(Guid guid, CancellationToken token = default)
         {
             return dbContext.SessionCaseJournal.FirstOrDefaultAsync(w
@@ -52,20 +45,19 @@ namespace Jube.Data.Repository
         public async Task<SessionCaseJournal> UpsertAsync(SessionCaseJournal model, CancellationToken token = default)
         {
             var existing = await dbContext.SessionCaseJournal
-                .FirstOrDefaultAsync(w => w.CaseWorkflowId == model.CaseWorkflowId
+                .FirstOrDefaultAsync(w => w.CaseWorkflowGuid == model.CaseWorkflowGuid
                                           && w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
                                           && w.CreatedUser == userName, token);
 
-
             if (existing == null)
             {
-                model.CreatedDate = DateTime.Now;
+                model.CreatedDate = DateTime.UtcNow;
                 model.CreatedUser = userName;
                 model.Id = await dbContext.InsertWithInt32IdentityAsync(model, token: token);
                 return model;
             }
 
-            existing.CreatedDate = DateTime.Now;
+            existing.CreatedDate = DateTime.UtcNow;
             existing.Json = model.Json;
             await dbContext.UpdateAsync(existing, token: token);
             return model;

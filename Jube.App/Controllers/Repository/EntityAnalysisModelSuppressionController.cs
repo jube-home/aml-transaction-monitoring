@@ -24,6 +24,7 @@ namespace Jube.App.Controllers.Repository
     using Data.Poco;
     using Data.Repository;
     using Dto;
+    using Dto.Mapping;
     using DynamicEnvironment;
     using FluentValidation;
     using FluentValidation.Results;
@@ -63,6 +64,9 @@ namespace Jube.App.Controllers.Repository
             {
                 cfg.CreateMap<EntityAnalysisModelSuppressionDto, EntityAnalysisModelSuppression>();
                 cfg.CreateMap<EntityAnalysisModelSuppression, EntityAnalysisModelSuppressionDto>();
+                cfg.CreateMap<DateTime?, DateTimeOffset?>().ConvertUsing<NullableDateTimeToDateTimeOffsetConverter>();
+                cfg.CreateMap<DateTime, DateTimeOffset>().ConvertUsing(src => new DateTimeOffset(DateTime.SpecifyKind(src, DateTimeKind.Utc)));
+                cfg.CreateMap<DateTimeOffset?, DateTime?>().ConvertUsing<NullableDateTimeOffsetToDateTimeConverter>();
             }, NullLoggerFactory.Instance);
 
             mapper = new Mapper(config);
@@ -202,6 +206,44 @@ namespace Jube.App.Controllers.Repository
                 }
 
                 return BadRequest(results);
+            }
+            catch (KeyNotFoundException)
+            {
+                return StatusCode(204);
+            }
+            catch (Exception e)
+            {
+                log.Error(e);
+                return StatusCode(500);
+            }
+        }
+
+        [HttpPut]
+        [Route("DeleteExpiryDate")]
+        [ProducesResponseType(typeof(EntityAnalysisModelSuppressionDto), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ValidationResult), (int)HttpStatusCode.BadRequest)]
+        public async Task<ActionResult<EntityAnalysisModelSuppressionDto>> UpdateDeleteExpiryDateAsync(
+            [FromBody] EntityAnalysisModelSuppressionDto model, CancellationToken token = default)
+        {
+            try
+            {
+                if (!permissionValidation.Validate(new[]
+                    {
+                        2
+                    }))
+                {
+                    return Forbid();
+                }
+
+                var results = await validator.ValidateAsync(model, token);
+                if (!results.IsValid)
+                {
+                    return BadRequest(results);
+                }
+
+                return Ok(mapper.Map<EntityAnalysisModelSuppressionDto>(await repository.UpdateDeleteExpiryDateAsync(
+                    model.EntityAnalysisModelGuid, model.SuppressionKey, model.SuppressionKeyValue,
+                    model.DeleteExpiryDate?.UtcDateTime, token)));
             }
             catch (KeyNotFoundException)
             {

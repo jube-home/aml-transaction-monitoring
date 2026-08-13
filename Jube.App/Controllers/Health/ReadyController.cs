@@ -13,6 +13,7 @@
 
 namespace Jube.App.Controllers.Health
 {
+    using System;
     using System.Threading.Tasks;
     using Code.WatcherDispatch;
     using DynamicEnvironment;
@@ -26,8 +27,8 @@ namespace Jube.App.Controllers.Health
     {
         private readonly DynamicEnvironment dynamicEnvironment;
         private readonly Engine engine;
-        private readonly Relay relay;
         private readonly IHostApplicationLifetime lifetime;
+        private readonly Relay relay;
 
         public ReadyController(IHostApplicationLifetime lifetime,
             DynamicEnvironment dynamicEnvironment, Engine engine = null, Relay relay = null)
@@ -46,7 +47,7 @@ namespace Jube.App.Controllers.Health
                 return Task.FromResult<ActionResult>(StatusCode(503));
             }
 
-            if (dynamicEnvironment.AppSettings("EnableEngine").Equals("True"))
+            if (dynamicEnvironment.AppSettings("EnableEngine").Equals("True", StringComparison.OrdinalIgnoreCase))
             {
                 if (engine.Context is not { Ready: true })
                 {
@@ -54,7 +55,7 @@ namespace Jube.App.Controllers.Health
                 }
             }
 
-            if (!dynamicEnvironment.AppSettings("StreamingActivationWatcher").Equals("True"))
+            if (!dynamicEnvironment.AppSettings("StreamingActivationWatcher").Equals("True", StringComparison.OrdinalIgnoreCase))
             {
                 return Task.FromResult<ActionResult>(Ok());
             }

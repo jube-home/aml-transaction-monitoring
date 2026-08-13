@@ -23,6 +23,7 @@ namespace Jube.App.Controllers.Repository
     using Data.Poco;
     using Data.Repository;
     using Dto;
+    using Dto.Mapping;
     using DynamicEnvironment;
     using FluentValidation;
     using FluentValidation.Results;
@@ -60,10 +61,10 @@ namespace Jube.App.Controllers.Repository
 
             var config = new MapperConfiguration(cfg =>
             {
-                cfg.CreateMap<EntityAnalysisModelSynchronisationScheduleDto,
-                    EntityAnalysisModelSynchronisationSchedule>();
-                cfg.CreateMap<EntityAnalysisModelSynchronisationSchedule,
-                    EntityAnalysisModelSynchronisationScheduleDto>();
+                cfg.CreateMap<EntityAnalysisModelSynchronisationScheduleDto, EntityAnalysisModelSynchronisationSchedule>();
+                cfg.CreateMap<EntityAnalysisModelSynchronisationSchedule, EntityAnalysisModelSynchronisationScheduleDto>();
+                cfg.CreateMap<DateTime?, DateTimeOffset?>().ConvertUsing<NullableDateTimeToDateTimeOffsetConverter>();
+                cfg.CreateMap<DateTime, DateTimeOffset>().ConvertUsing(src => new DateTimeOffset(DateTime.SpecifyKind(src, DateTimeKind.Utc)));
             }, NullLoggerFactory.Instance);
 
             mapper = new Mapper(config);

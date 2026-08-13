@@ -11,11 +11,11 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using FluentMigrator;
-
 namespace Jube.Migrations.Baseline
 {
+    using System;
+    using FluentMigrator;
+
     [Migration(20220429125017)]
     public class AddTenantRegistryTable : Migration
     {
@@ -39,7 +39,7 @@ namespace Jube.Migrations.Baseline
             Insert.IntoTable("TenantRegistry").Row(new
             {
                 Name = "Administrator",
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 Active = 1,
                 Version = 1,
                 CreatedUser = "Administrator"

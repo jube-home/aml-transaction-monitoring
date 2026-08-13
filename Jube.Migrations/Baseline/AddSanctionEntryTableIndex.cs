@@ -11,11 +11,11 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using FluentMigrator;
-
 namespace Jube.Migrations.Baseline
 {
+    using System;
+    using FluentMigrator;
+
     [Migration(20220429125015)]
     public class AddSanctionEntryTableIndex : Migration
     {
@@ -40,7 +40,7 @@ namespace Jube.Migrations.Baseline
             Insert.IntoTable("SanctionEntry").Row(new
             {
                 SanctionEntryElementValue = "Robert Mugabe",
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 SanctionEntrySourceId = 1,
                 SanctionEntryReference = "Testing",
                 SanctionPayload = "Robert Mugabe",

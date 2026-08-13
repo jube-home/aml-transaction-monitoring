@@ -36,7 +36,7 @@ namespace Jube.Data.Repository
             return dbContext.EntityAnalysisModelSearchKeyDistinctValueCalculationInstance
                 .Where(d => d.Id == id)
                 .Set(s => s.EntryCount, entriesCount)
-                .Set(s => s.EntryCountUpdatedDate, DateTime.Now)
+                .Set(s => s.EntryCountUpdatedDate, DateTime.UtcNow)
                 .UpdateAsync(token);
         }
 
@@ -44,7 +44,7 @@ namespace Jube.Data.Repository
         {
             return dbContext.EntityAnalysisModelSearchKeyDistinctValueCalculationInstance
                 .Where(d => d.Id == id)
-                .Set(s => s.AbstractionRulesMatchesUpdatedDate, DateTime.Now)
+                .Set(s => s.AbstractionRulesMatchesUpdatedDate, DateTime.UtcNow)
                 .UpdateAsync(token);
         }
 
@@ -52,7 +52,7 @@ namespace Jube.Data.Repository
         {
             return dbContext.EntityAnalysisModelSearchKeyDistinctValueCalculationInstance
                 .Where(d => d.Id == id)
-                .Set(s => s.CompletedDate, DateTime.Now)
+                .Set(s => s.CompletedDate, DateTime.UtcNow)
                 .UpdateAsync(token);
         }
     }

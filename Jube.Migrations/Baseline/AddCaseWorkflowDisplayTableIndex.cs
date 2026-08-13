@@ -11,11 +11,11 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using FluentMigrator;
-
 namespace Jube.Migrations.Baseline
 {
+    using System;
+    using FluentMigrator;
+
     [Migration(20220429124910)]
     public class AddCaseWorkflowDisplayTableIndex : Migration
     {
@@ -48,7 +48,7 @@ namespace Jube.Migrations.Baseline
                 Name = "ExampleDisplayCurrencyAmount",
                 Active = 1,
                 CreatedUser = "Administrator",
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 Version = 1,
                 Html = "This is an example Cases Workflow Display:" + Environment.NewLine +
                        "The transaction amount is:" + Environment.NewLine +

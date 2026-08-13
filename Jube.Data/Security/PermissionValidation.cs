@@ -10,115 +10,72 @@
  * You should have received a copy of the GNU Affero General Public License along with Jube™. If not,
  * see <https://www.gnu.org/licenses/>.
  */
-
 namespace Jube.Data.Security
 {
+    using System;
+    using System.Data.Common;
     using System.Threading.Tasks;
     using Context;
     using Extension;
     using log4net;
     using ResilientNpgsqlConnection;
-    using ResilientNpgsqlConnection.Extensions.Jube.ResilientNpgsqlConnection;
 
     public class PermissionValidation
     {
-        public async Task<PermissionValidationDto> GetPermissionsAsync(string connectionString, string userName, ILog log)
+        public async Task<PermissionValidationDto> GetPermissionsAsync(
+            string connectionString, string userName, ILog log)
         {
-            var connection = new ResilientNpgsqlConnection(connectionString, log);
-            PermissionValidationDto permissionValidationDto;
-            try
-            {
-                await connection.OpenAsync().ConfigureAwait(false);
-                permissionValidationDto = await GetPermissionsFromDatabaseAsync(connection, userName).ConfigureAwait(false);
-            }
-            catch
-            {
-                await connection.CloseAsync().ConfigureAwait(false);
-                await connection.DisposeAsync().ConfigureAwait(false);
-                throw;
-            }
-            finally
-            {
-                await connection.CloseAsync().ConfigureAwait(false);
-                await connection.DisposeAsync().ConfigureAwait(false);
-            }
-
-            return permissionValidationDto;
+            await using var connection = new ResilientNpgsqlConnection(connectionString, log);
+            await connection.OpenAsync().ConfigureAwait(false);
+            return await GetPermissionsFromDatabaseAsync(connection, userName).ConfigureAwait(false);
         }
 
-        public Task<PermissionValidationDto> GetPermissionsAsync(DbContext dbContext, string userName, ILog log)
+        public Task<PermissionValidationDto> GetPermissionsAsync(
+            DbContext dbContext, string userName, ILog log)
         {
-            var connection = (ResilientNpgsqlConnection)dbContext.Connection;
+            var connection = dbContext.Connection as DbConnection
+                             ?? throw new InvalidOperationException(
+                                 $"Expected a DbConnection but got {dbContext.Connection.GetType().Name}. " +
+                                 "Only providers based on DbConnection (Npgsql, SqlClient, etc.) are supported.");
+
             return GetPermissionsFromDatabaseAsync(connection, userName);
         }
 
-        private async Task<bool> LandlordAsync(ResilientNpgsqlConnection connection, string userName)
+        private async Task<PermissionValidationDto> GetPermissionsFromDatabaseAsync(
+            DbConnection connection, string userName)
         {
-            var landlord = false;
-
-            const string sqlLandlord = "select tr.\"Landlord\",tr.\"Id\" " +
-                                       "from \"RoleRegistry\" rr " +
-                                       "inner join \"TenantRegistry\" tr on rr.\"TenantRegistryId\" = tr.\"Id\" " +
-                                       "inner join \"UserRegistry\" ur on ur.\"RoleRegistryId\" = rr.\"Id\" " +
-                                       "where ur.\"Name\" = @userName " +
-                                       "and (ur.\"Deleted\" = 0 or ur.\"Deleted\" IS NULL) " +
-                                       "and tr.\"Active\" = 1 " +
-                                       "order by tr.\"Id\"";
-
-            await using var commandSqlLandlord = new ResilientNpgsqlCommand(connection, sqlLandlord);
-            commandSqlLandlord.Parameters.AddWithValue("userName", userName);
-            await commandSqlLandlord.PrepareAsync().ConfigureAwait(false);
-
-            await using var readerLandlord = await commandSqlLandlord.ExecuteReaderAsync().ConfigureAwait(false);
-            while (await readerLandlord.ReadAsync().ConfigureAwait(false))
+            var dto = new PermissionValidationDto
             {
-                if (!await readerLandlord.IsDBNullAsync(0))
-                {
-                    if (readerLandlord.GetValue(0).AsShort() == 1)
-                    {
-                        landlord = true;
-                    }
-                }
+                Landlord = await IsLandlordAsync(connection, userName).ConfigureAwait(false)
+            };
 
-                break;
-            }
+            await using var command = connection.CreateCommand();
 
-            await readerLandlord.CloseAsync().ConfigureAwait(false);
-            return landlord;
-        }
-
-        private async Task<PermissionValidationDto> GetPermissionsFromDatabaseAsync(ResilientNpgsqlConnection connection,
-            string userName)
-        {
-            var permissionValidationDto = new PermissionValidationDto();
-
-            await using var command = new ResilientNpgsqlCommand(connection);
-
-            permissionValidationDto.Landlord = await LandlordAsync(connection, userName).ConfigureAwait(false);
-
-            if (permissionValidationDto.Landlord)
+            if (dto.Landlord)
             {
-                command.CommandText
-                    = "select \"Id\" " +
-                      "from \"PermissionSpecification\"";
+                command.CommandText =
+                    "select \"Id\" " +
+                    "from \"PermissionSpecification\"";
             }
             else
             {
-                command.CommandText
-                    = "select rrp.\"PermissionSpecificationId\" " +
-                      "from \"RoleRegistryPermission\" rrp " +
-                      "inner join \"RoleRegistry\" rr on rrp.\"RoleRegistryId\" = rr.\"Id\" " +
-                      "inner join \"UserRegistry\" ur on ur.\"RoleRegistryId\" = rr.\"Id\" " +
-                      "where ur.\"Active\" = 1 " +
-                      "and rr.\"Active\" = 1 " +
-                      "and rrp.\"Active\" = 1 " +
-                      "and (ur.\"Deleted\" = 0 or ur.\"Deleted\" IS NULL) " +
-                      "and (rr.\"Deleted\" = 0 or rr.\"Deleted\" IS NULL) " +
-                      "and (rrp.\"Deleted\" = 0 or rrp.\"Deleted\" IS NULL) " +
-                      "and (ur.\"PasswordLocked\" = 0 or ur.\"PasswordLocked\" IS NULL) " +
-                      "and ur.\"Name\" = (@userName)";
+                command.CommandText =
+                    "select rrp.\"PermissionSpecificationId\" " +
+                    "from \"RoleRegistryPermission\" rrp " +
+                    "inner join \"RoleRegistry\" rr on rrp.\"RoleRegistryId\" = rr.\"Id\" " +
+                    "inner join \"UserRegistry\" ur on ur.\"RoleRegistryGuid\" = rr.\"Guid\" " +
+                    "where ur.\"Active\" = 1 " +
+                    "and rr.\"Active\" = 1 " +
+                    "and rrp.\"Active\" = 1 " +
+                    "and (rr.\"Deleted\" = 0 or rr.\"Deleted\" IS NULL) " +
+                    "and (rrp.\"Deleted\" = 0 or rrp.\"Deleted\" IS NULL) " +
+                    "and (ur.\"PasswordLocked\" = 0 or ur.\"PasswordLocked\" IS NULL) " +
+                    "and ur.\"Name\" = @userName";
 
-                command.Parameters.AddWithValue("userName", userName);
+                var p = command.CreateParameter();
+                p.ParameterName = "userName";
+                p.Value = userName;
+                command.Parameters.Add(p);
             }
 
             await command.PrepareAsync().ConfigureAwait(false);
@@ -126,11 +83,45 @@ namespace Jube.Data.Security
             await using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
             while (await reader.ReadAsync().ConfigureAwait(false))
             {
-                permissionValidationDto.Permissions.Add(reader.GetValue(0).AsInt());
+                dto.Permissions.Add(reader.GetValue(0).AsInt());
             }
 
-            await reader.CloseAsync().ConfigureAwait(false);
-            return permissionValidationDto;
+            return dto;
+        }
+
+        private async Task<bool> IsLandlordAsync(DbConnection connection, string userName)
+        {
+            const string sql =
+                "select tr.\"Landlord\" " +
+                "from \"RoleRegistry\" rr " +
+                "inner join \"TenantRegistry\" tr on rr.\"TenantRegistryId\" = tr.\"Id\" " +
+                "inner join \"UserRegistry\" ur on ur.\"RoleRegistryGuid\" = rr.\"Guid\" " +
+                "where ur.\"Name\" = @userName " +
+                "and ur.\"Active\" = 1 " +
+                "and (rr.\"Deleted\" = 0 or rr.\"Deleted\" IS NULL) " +
+                "and tr.\"Active\" = 1 " +
+                "order by tr.\"Id\"";
+
+            await using var command = connection.CreateCommand();
+            command.CommandText = sql;
+
+            var p = command.CreateParameter();
+            p.ParameterName = "userName";
+            p.Value = userName;
+            command.Parameters.Add(p);
+
+            await command.PrepareAsync().ConfigureAwait(false);
+
+            await using var reader = await command.ExecuteReaderAsync().ConfigureAwait(false);
+            if (await reader.ReadAsync().ConfigureAwait(false))
+            {
+                if (!await reader.IsDBNullAsync(0).ConfigureAwait(false))
+                {
+                    return reader.GetValue(0).AsShort() == 1;
+                }
+            }
+
+            return false;
         }
     }
 }

@@ -70,7 +70,7 @@ namespace Jube.App.Controllers.Repository
         }
 
         [HttpGet("Replay")]
-        public async Task<ActionResult> ReplayAsync(DateTime dateFrom, DateTime dateTo, CancellationToken token = default)
+        public async Task<ActionResult> ReplayAsync(DateTimeOffset? dateFrom, DateTimeOffset? dateTo, CancellationToken token = default)
         {
             try
             {
@@ -82,7 +82,7 @@ namespace Jube.App.Controllers.Repository
                     return Forbid();
                 }
 
-                foreach (var activationWatcher in await repository.GetByDateRangeAscendingAsync(dateFrom, dateTo, 1000, token))
+                foreach (var activationWatcher in await repository.GetByDateRangeAscendingAsync(dateFrom?.UtcDateTime, dateTo?.UtcDateTime, 1000, token))
                 {
                     var stringRepresentationOfObj = JsonConvert.SerializeObject(activationWatcher, new JsonSerializerSettings
                     {

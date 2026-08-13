@@ -9,14 +9,14 @@
  * Jube™ is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty  
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
 
- * You should have received a copy of the GNU Affero General Public License along with Jube™. If not, 
+ * You should have received a copy of the GNU Affero General Public License along with Jube™. If not,
  * see <https://www.gnu.org/licenses/>.
  */
 
-// noinspection ES6ConvertVarToLetConst
-
 let key;
 let keyValue;
+
+const processingFailed = "Processing failed.  Please contact Support to check logs for the source of the error.";
 
 function onChange() {
     const grid = $("#grid").getKendoGrid();
@@ -53,18 +53,51 @@ function detailInit(e) {
                     id: "id",
                     fields: {
                         suppression: {type: "boolean"},
-                        name: {type: "string", editable: false}
+                        name: {type: "string", editable: false},
+                        deleteExpiryDate: {type: "date", defaultValue: null}
                     }
                 }
             }
         },
         dataBound: function () {
-            $(".toggleSuppressionActivationRule").each(function () {
-                const toggleSwitch = $(this);
-                toggleSwitch.kendoSwitch({
+            const grid = this;
+
+            grid.tbody.find("tr").each(function () {
+                const row = $(this);
+                const toggleSwitchElement = row.find(".toggleSuppressionActivationRule");
+                const dateInputElement = row.find(".expiryDateSuppressionActivationRule");
+
+                if (!toggleSwitchElement.length) {
+                    return;
+                }
+
+                const dataItem = grid.dataItem(row);
+
+                const datePicker = dateInputElement.kendoDateTimePicker({
+                    value: dataItem.deleteExpiryDate,
                     change: function (e) {
-                        UpdateSuppressionActivationRule(e.sender.element.attr("EntityAnalysisModelGuid"),
-                            e.sender.element.attr("Name"), e.checked);
+                        const newValue = e.sender.value();
+                        const $errorMessage = $("#ErrorMessage");
+                        if (!IsFutureDate(newValue)) {
+                            $errorMessage.html(
+                                '<div class="server-error-box"><div class="server-error-title">Validation Errors:</div>' +
+                                '<div class="server-error-line">Delete Expiry Date must be greater than the current date and time.</div></div>');
+                            e.sender.value(dataItem.deleteExpiryDate);
+                            return;
+                        }
+                        $errorMessage.empty();
+                        UpdateSuppressionActivationRuleDeleteExpiryDate(dataItem.entityAnalysisModelGuid,
+                            dataItem.name, newValue, e.sender, dataItem.deleteExpiryDate);
+                    }
+                }).data("kendoDateTimePicker");
+
+                datePicker.enable(dataItem.suppression === true);
+
+                toggleSwitchElement.kendoSwitch({
+                    change: function (e) {
+                        SyncExpiryDatePicker(datePicker, e.checked);
+                        UpdateSuppressionActivationRule(toggleSwitchElement.attr("EntityAnalysisModelGuid"),
+                            toggleSwitchElement.attr("Name"), e.checked);
                     }
                 });
             });
@@ -74,8 +107,14 @@ function detailInit(e) {
                 field: "suppression",
                 template:
                     '<input Name="#=name#" EntityAnalysisModelGuid="#=entityAnalysisModelGuid#" type="checkbox" class="toggleSuppressionActivationRule" #= (suppression==true) ? checked="checked" : "" # />',
-                width: 97,
+                width: 110,
                 title: "Suppression"
+            },
+            {
+                field: "deleteExpiryDate",
+                title: "Delete Expiry Date",
+                width: 230,
+                template: '<input type="text" class="expiryDateSuppressionActivationRule expiryDateCell" />'
             },
             {
                 field: "name",
@@ -83,6 +122,45 @@ function detailInit(e) {
             }
         ]
     });
+}
+
+function IsFutureDate(value) {
+    return !value || value > new Date();
+}
+
+function SyncExpiryDatePicker(picker, enabled) {
+    if (!picker) {
+        return;
+    }
+
+    picker.value(null);
+    picker.enable(enabled);
+}
+
+function DisplayValidationErrors(jqXHR) {
+    const $errorContainer = $("#ErrorMessage");
+    $errorContainer.empty();
+
+    if (jqXHR.status !== 400) {
+        $errorContainer.html(processingFailed);
+        return;
+    }
+
+    try {
+        const response = JSON.parse(jqXHR.responseText);
+        const $container = $(
+            '<div class="server-error-box"><div class="server-error-title">Validation Errors:</div></div>');
+
+        if (response.errors) {
+            Object.values(response.errors).forEach(function (e) {
+                $container.append('<div class="server-error-line">' + e.errorMessage + '</div>');
+            });
+        }
+
+        $errorContainer.append($container);
+    } catch (e) {
+        $errorContainer.html(processingFailed);
+    }
 }
 
 function UpdateSuppressionModel(EntityAnalysisModelGuid, checked) {
@@ -126,6 +204,62 @@ function UpdateSuppressionActivationRule(EntityAnalysisModelGuid, name, checked)
         },
         success: function () {
             $('#Updating').fadeOut();
+        }
+    });
+}
+
+function UpdateSuppressionModelDeleteExpiryDate(EntityAnalysisModelGuid, deleteExpiryDate, picker, previousValue) {
+    $('#Updating').show();
+    $.ajax({
+        url: "/api/EntityAnalysisModelSuppression/DeleteExpiryDate",
+        type: "PUT",
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",
+        data: JSON.stringify({
+            entityAnalysisModelGuid: EntityAnalysisModelGuid,
+            suppressionKeyValue: keyValue,
+            suppressionKey: key,
+            deleteExpiryDate: deleteExpiryDate
+        }),
+        error: function (jqXHR) {
+            $('#Updating').fadeOut();
+            DisplayValidationErrors(jqXHR);
+            if (picker) {
+                picker.value(previousValue || null);
+            }
+        },
+        success: function () {
+            $('#Updating').fadeOut();
+            $("#ErrorMessage").empty();
+        }
+    });
+}
+
+function UpdateSuppressionActivationRuleDeleteExpiryDate(EntityAnalysisModelGuid, name, deleteExpiryDate, picker,
+    previousValue) {
+    $('#Updating').show();
+    $.ajax({
+        url: "/api/EntityAnalysisModelActivationRuleSuppression/DeleteExpiryDate",
+        type: "PUT",
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",
+        data: JSON.stringify({
+            entityAnalysisModelGuid: EntityAnalysisModelGuid,
+            suppressionKeyValue: keyValue,
+            suppressionKey: key,
+            deleteExpiryDate: deleteExpiryDate,
+            entityAnalysisModelActivationRuleName: name
+        }),
+        error: function (jqXHR) {
+            $('#Updating').fadeOut();
+            DisplayValidationErrors(jqXHR);
+            if (picker) {
+                picker.value(previousValue || null);
+            }
+        },
+        success: function () {
+            $('#Updating').fadeOut();
+            $("#ErrorMessage").empty();
         }
     });
 }
@@ -179,7 +313,8 @@ $(document).ready(function () {
                     id: "id",
                     fields: {
                         suppression: {type: "boolean"},
-                        name: {type: "string", editable: false}
+                        name: {type: "string", editable: false},
+                        deleteExpiryDate: {type: "date", defaultValue: null}
                     }
                 }
             }
@@ -189,11 +324,43 @@ $(document).ready(function () {
         autoBind: false,
         detailInit: detailInit,
         dataBound: function () {
-            $(".toggleSuppression").each(function () {
-                const toggleSwitch = $(this);
-                toggleSwitch.kendoSwitch({
+            const grid = this;
+
+            grid.tbody.find("tr").each(function () {
+                const row = $(this);
+                const toggleSwitchElement = row.find(".toggleSuppression");
+                const dateInputElement = row.find(".expiryDateSuppression");
+
+                if (!toggleSwitchElement.length) {
+                    return;
+                }
+
+                const dataItem = grid.dataItem(row);
+
+                const datePicker = dateInputElement.kendoDateTimePicker({
+                    value: dataItem.deleteExpiryDate,
                     change: function (e) {
-                        UpdateSuppressionModel(e.sender.element.attr("EntityAnalysisModelGuid"), e.checked);
+                        const newValue = e.sender.value();
+                        const $errorMessage = $("#ErrorMessage");
+                        if (!IsFutureDate(newValue)) {
+                            $errorMessage.html(
+                                '<div class="server-error-box"><div class="server-error-title">Validation Errors:</div>' +
+                                '<div class="server-error-line">Delete Expiry Date must be greater than the current date and time.</div></div>');
+                            e.sender.value(dataItem.deleteExpiryDate);
+                            return;
+                        }
+                        $errorMessage.empty();
+                        UpdateSuppressionModelDeleteExpiryDate(dataItem.entityAnalysisModelGuid, newValue,
+                            e.sender, dataItem.deleteExpiryDate);
+                    }
+                }).data("kendoDateTimePicker");
+
+                datePicker.enable(dataItem.suppression === true);
+
+                toggleSwitchElement.kendoSwitch({
+                    change: function (e) {
+                        SyncExpiryDatePicker(datePicker, e.checked);
+                        UpdateSuppressionModel(toggleSwitchElement.attr("EntityAnalysisModelGuid"), e.checked);
                     }
                 });
             });
@@ -203,8 +370,14 @@ $(document).ready(function () {
                 field: "suppression",
                 template:
                     '<input EntityAnalysisModelGuid="#=entityAnalysisModelGuid#" type="checkbox" class="toggleSuppression" #= (suppression==true) ? checked="checked" : "" # />',
-                width: 120,
+                width: 110,
                 title: "Suppression"
+            },
+            {
+                field: "deleteExpiryDate",
+                title: "Delete Expiry Date",
+                width: 230,
+                template: '<input type="text" class="expiryDateSuppression expiryDateCell" />'
             },
             {
                 field: "name",

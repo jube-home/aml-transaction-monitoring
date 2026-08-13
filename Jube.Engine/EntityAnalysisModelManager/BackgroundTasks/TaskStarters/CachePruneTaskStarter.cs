@@ -31,6 +31,14 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters
                         "Cache Prune: Starting task.");
                 }
 
+                var waitCachePrune = Int32.Parse(context.Services.DynamicEnvironment.AppSettings("WaitCachePrune"));
+
+                if (context.Services.Log.IsDebugEnabled)
+                {
+                    context.Services.Log.Debug(
+                        $"Cache Prune: Active models processed.  Will sleep for {waitCachePrune}.");
+                }
+
                 var limit = GetDeletionLimitOrDefaultIfNull();
 
                 if (context.Services.Log.IsDebugEnabled)
@@ -57,7 +65,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters
                                 $"Cache Prune: For model {model.Instance.Id} the reference date will be looked up.");
                         }
 
-                        var referenceDate = await context.Services.CacheService.CacheReferenceDate.GetReferenceDateAsync(model.Instance.TenantRegistryId, model.Instance.Guid)
+                        var referenceDate = await context.Services.CacheService.CacheReferenceDateRepository.GetReferenceDateAsync(model.Instance.TenantRegistryId, model.Instance.Guid)
                             .ConfigureAwait(false);
 
                         if (context.Services.Log.IsDebugEnabled)
@@ -86,8 +94,9 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters
                             continue;
                         }
 
-                        await context.Services.CacheService.CachePayloadRepository.DeleteByReferenceDateAsync(model.Instance.TenantRegistryId, model.Instance.Guid,
-                            thresholdReferenceDatePayload.Value, limit, context.Services.TaskCoordinator.CancellationToken).ConfigureAwait(false);
+                        await context.Services.CacheService.CachePayloadRepository.DeleteByReferenceDatePreferReplicaAsync(model.Instance.TenantRegistryId, model.Instance.Guid,
+                            thresholdReferenceDatePayload.Value, limit,
+                            context.Services.TaskCoordinator.CancellationToken).ConfigureAwait(false);
 
                         if (context.Services.Log.IsDebugEnabled)
                         {
@@ -108,14 +117,6 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters
                                 $"Cache Prune: For model {model.Instance.Id} deletion routine has returned in the Payload Latest " +
                                 $"repository.  Will now loop around search keys to begin deletion of sorted sets linking to payload.");
                         }
-                    }
-
-                    var waitCachePrune = Int32.Parse(context.Services.DynamicEnvironment.AppSettings("WaitCachePrune"));
-
-                    if (context.Services.Log.IsDebugEnabled)
-                    {
-                        context.Services.Log.Debug(
-                            $"Cache Prune: Active models processed.  Will sleep for {waitCachePrune}.");
                     }
 
                     await Task.Delay(waitCachePrune, context.Services.TaskCoordinator.CancellationToken).ConfigureAwait(false);

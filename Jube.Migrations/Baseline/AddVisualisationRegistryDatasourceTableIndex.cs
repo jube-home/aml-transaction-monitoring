@@ -11,11 +11,11 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using FluentMigrator;
-
 namespace Jube.Migrations.Baseline
 {
+    using System;
+    using FluentMigrator;
+
     [Migration(20220429125025)]
     public class AddVisualisationRegistryDatasourceTableIndex : Migration
     {
@@ -53,7 +53,7 @@ namespace Jube.Migrations.Baseline
                 VisualisationRegistryId = 1,
                 Name = "ExamplePie",
                 Active = 1,
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 CreatedUser = "Administrator",
                 Version = 1,
                 VisualisationTypeId = 1,
@@ -94,7 +94,7 @@ namespace Jube.Migrations.Baseline
                 VisualisationRegistryId = 1,
                 Name = "ExampleBar",
                 Active = 1,
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 CreatedUser = "Administrator",
                 Version = 1,
                 VisualisationTypeId = 1,
@@ -149,7 +149,7 @@ namespace Jube.Migrations.Baseline
                 VisualisationRegistryId = 2,
                 Name = "ExamplePie",
                 Active = 1,
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 CreatedUser = "Administrator",
                 Version = 1,
                 VisualisationTypeId = 1,
@@ -188,7 +188,7 @@ namespace Jube.Migrations.Baseline
                 VisualisationRegistryId = 2,
                 Name = "ExampleBar",
                 Active = 1,
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 CreatedUser = "Administrator",
                 Version = 1,
                 VisualisationTypeId = 1,

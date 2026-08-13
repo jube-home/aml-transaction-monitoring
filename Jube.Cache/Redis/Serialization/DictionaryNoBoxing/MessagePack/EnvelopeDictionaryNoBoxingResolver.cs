@@ -13,42 +13,34 @@
 
 namespace Jube.Cache.Redis.Serialization.DictionaryNoBoxing.MessagePack
 {
-    using System.Collections.Concurrent;
     using global::MessagePack;
     using global::MessagePack.Formatters;
-    using global::MessagePack.Resolvers;
-    
+
     public class EnvelopeDictionaryNoBoxingResolver : IFormatterResolver
     {
         public static readonly EnvelopeDictionaryNoBoxingResolver Instance = new EnvelopeDictionaryNoBoxingResolver();
 
-        private readonly ConcurrentDictionary<Type, object> formatterCache = new ConcurrentDictionary<Type, object>();
+        private static readonly IMessagePackFormatter<EnvelopeDictionaryNoBoxing<int>> IntFormatter =
+            new EnvelopeDictionaryNoBoxingIntMessagePackFormatter();
 
-        private EnvelopeDictionaryNoBoxingResolver() { }
+        private static readonly IMessagePackFormatter<EnvelopeDictionaryNoBoxing<string>> StringFormatter =
+            new EnvelopeDictionaryNoBoxingStringMessagePackFormatter();
+
+        private EnvelopeDictionaryNoBoxingResolver() {}
 
         public IMessagePackFormatter<T> GetFormatter<T>()
         {
-            if (formatterCache.TryGetValue(typeof(T), out var cachedFormatter))
-            {
-                return (IMessagePackFormatter<T>)cachedFormatter;
-            }
-
-            object formatter;
             if (typeof(T) == typeof(EnvelopeDictionaryNoBoxing<int>))
             {
-                formatter = new EnvelopeDictionaryNoBoxingMessagePackFormatter<int>();
-            }
-            else if (typeof(T) == typeof(EnvelopeDictionaryNoBoxing<string>))
-            {
-                formatter = new EnvelopeDictionaryNoBoxingMessagePackFormatter<string>();
-            }
-            else
-            {
-                return StandardResolver.Instance.GetFormatter<T>();
+                return (IMessagePackFormatter<T>)IntFormatter;
             }
 
-            formatterCache[typeof(T)] = formatter;
-            return (IMessagePackFormatter<T>)formatter;
+            if (typeof(T) == typeof(EnvelopeDictionaryNoBoxing<string>))
+            {
+                return (IMessagePackFormatter<T>)StringFormatter;
+            }
+
+            return FallbackFormatter<T>.NotSupportedFormatter;
         }
     }
 }

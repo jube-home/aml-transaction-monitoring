@@ -87,7 +87,8 @@ function LoadList() {
                         id:
                         options.models[0].id,
                         kvpKey: options.models[0].kvpKey,
-                        kvpValue: options.models[0].kvpValue
+                        kvpValue: options.models[0].kvpValue,
+                        deleteExpiryDate: options.models[0].deleteExpiryDate
                     });
                 } else if (operation === "destroy") {
                     return {
@@ -98,7 +99,8 @@ function LoadList() {
                     return JSON.stringify({
                         entityAnalysisModelDictionaryId: id,
                         kvpKey: options.models[0].kvpKey,
-                        kvpValue: options.models[0].kvpValue
+                        kvpValue: options.models[0].kvpValue,
+                        deleteExpiryDate: options.models[0].deleteExpiryDate
                     });
                 }
             }
@@ -111,7 +113,8 @@ function LoadList() {
                     id: {editable: false, nullable: true},
                     kvpKey: "kvpKey",
                     kvpValue: "kvpValue",
-                    entityAnalysisModelDictionaryId: "entityAnalysisModelDictionaryId"
+                    entityAnalysisModelDictionaryId: "entityAnalysisModelDictionaryId",
+                    deleteExpiryDate: {type: "date", defaultValue: null}
                 }
             }
         }
@@ -127,6 +130,8 @@ function LoadList() {
         template: kendo.template($("#template").html()),
         editTemplate: kendo.template($("#editTemplate").html())
     }).data("kendoListView");
+
+    WireListViewValidation(listView, dataSource);
 
     $("#AddValue").kendoButton().click(function (e) {
         listView.add();

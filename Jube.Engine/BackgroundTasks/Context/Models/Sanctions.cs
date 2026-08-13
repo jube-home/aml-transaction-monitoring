@@ -13,13 +13,14 @@
 
 namespace Jube.Engine.BackgroundTasks.Context.Models
 {
-    using System.Collections.Generic;
+    using System.Collections.Concurrent;
     using Jube.Engine.Sanctions.Models;
 
     public class Sanctions
     {
-        public readonly Dictionary<int, SanctionEntry> SanctionsEntries = new Dictionary<int, SanctionEntry>();
-        public readonly Dictionary<int, SanctionEntriesSource> SanctionsSources = new Dictionary<int, SanctionEntriesSource>();
+        public readonly ConcurrentDictionary<int, SanctionEntry> SanctionsEntries = new ConcurrentDictionary<int, SanctionEntry>();
+        public readonly ConcurrentDictionary<int, SanctionEntriesSource> SanctionsSources = new ConcurrentDictionary<int, SanctionEntriesSource>();
+        public readonly ConcurrentDictionary<string, byte> SanctionsStopTokens = new ConcurrentDictionary<string, byte>();
         public bool SanctionsLoadedForStartup { get; set; }
     }
 }

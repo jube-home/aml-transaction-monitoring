@@ -14,12 +14,12 @@
 namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Models.Models
 {
     using System;
-    using System.Collections.Generic;
     using System.Net.Http;
     using System.Text;
     using System.Threading.Tasks;
     using log4net;
     using Newtonsoft.Json;
+    using EntityAnalysisModelInstanceEntryPayload=EntityAnalysisModelInvoke.Models.Payload.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryPayload;
 
     public class EntityAnalysisModelHttpAdaptation
     {
@@ -44,6 +44,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Models.Mode
         public string Name { get; set; }
         public bool ResponsePayload { get; set; }
         public bool ReportTable { get; set; }
+        public double Priority { get; set; }
 
         public string HttpEndpoint
         {
@@ -57,7 +58,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Models.Mode
             }
         }
 
-        public async Task<double> PostAsync(Dictionary<string, object> jsonForPlumberAsync, JsonSerializerSettings jsonSerializerSettings, ILog log)
+        public async Task<string> PostAsync(EntityAnalysisModelInstanceEntryPayload payload, JsonSerializerSettings jsonSerializerSettings, ILog log)
         {
             if (log.IsInfoEnabled)
             {
@@ -65,7 +66,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Models.Mode
             }
 
             var stringContent = new StringContent(
-                JsonConvert.SerializeObject(jsonForPlumberAsync, jsonSerializerSettings),
+                JsonConvert.SerializeObject(payload, jsonSerializerSettings),
                 Encoding.UTF8,
                 "application/json");
 
@@ -89,19 +90,10 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Models.Mode
             if (log.IsInfoEnabled)
             {
                 log.Info(
-                    $"R Plumber Hook: Has received data from {uri} with payload {valueString}. The JSON decoration will now be removed.");
+                    $"R Plumber Hook: Has received data from {uri} with payload {valueString}. This is returned unparsed, as the HTTP Adaptation Protocol response shape (bare number or Adaptation object) is decided by the caller.");
             }
 
-            valueString = valueString.Replace("[", "");
-            valueString = valueString.Replace("]", "");
-            var valueDouble = Double.Parse(valueString);
-
-            if (log.IsInfoEnabled)
-            {
-                log.Info($"R Plumber Hook: Is returning {valueDouble}.");
-            }
-
-            return valueDouble;
+            return valueString;
         }
     }
 }

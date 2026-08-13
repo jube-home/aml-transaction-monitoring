@@ -211,9 +211,10 @@ namespace Jube.Engine.Exhaustive
                 var getSampleDataResponse = await Extraction.GetSampleDataAsync(dbContext,
                     exhaustiveSearchInstance.TenantRegistryId,
                     exhaustiveSearchInstance.EntityAnalysisModelId,
-                    exhaustiveSearchInstance.FilterSql,
+                    exhaustiveSearchInstance.FilterJson,
                     exhaustiveSearchInstance.FilterTokens,
-                    mockData, log, environment.AppSettings("ReportConnectionString"), token).ConfigureAwait(false);
+                    mockData, log, environment.AppSettings("ParserAssertSelectOnly").Equals("True", StringComparison.OrdinalIgnoreCase),
+                    environment.AppSettings("ReportConnectionString"), token).ConfigureAwait(false);
 
                 variables = getSampleDataResponse.Item1;
                 data = getSampleDataResponse.Item2;
@@ -371,7 +372,8 @@ namespace Jube.Engine.Exhaustive
                         exhaustiveSearchInstance.FilterSql,
                         exhaustiveSearchInstance.FilterTokens,
                         variables,
-                        mockData, log, environment.AppSettings("ReportConnectionString"), token).ConfigureAwait(false);
+                        mockData, log, environment.AppSettings("ParserAssertSelectOnly").Equals("True", StringComparison.OrdinalIgnoreCase),
+                        environment.AppSettings("ReportConnectionString"), token).ConfigureAwait(false);
 
                 var repositoryExhaustiveSearchInstanceVariablesClassification =
                     new ExhaustiveSearchInstanceVariableClassificationRepository(dbContext);
@@ -1401,7 +1403,7 @@ namespace Jube.Engine.Exhaustive
 
                         var row = new EntityAnalysisModelInstanceEntryPayload
                         {
-                            Tag = new PooledDictionary<string, double>(splitsString.Length),
+                            Tag = [],
                             Abstraction = new PooledDictionary<string, double>(splitsString.Length)
                         };
 
@@ -1411,7 +1413,7 @@ namespace Jube.Engine.Exhaustive
 
                             if (i == 0)
                             {
-                                row.Tag.Add("Fraud", splitsDouble[i] > 0 ? 1 : 0);
+                                row.Tag = splitsDouble[i] > 0 ? ["Fraud"] : [];
                             }
                             else
                             {
@@ -1426,8 +1428,8 @@ namespace Jube.Engine.Exhaustive
                             ResponseElevation = 0,
                             EntityAnalysisModelActivationRuleId = 0,
                             ActivationRuleCount = 0,
-                            CreatedDate = DateTime.Now,
-                            ReferenceDate = DateTime.Now,
+                            CreatedDate = DateTime.UtcNow,
+                            ReferenceDate = DateTime.UtcNow,
                             EntityAnalysisModelInstanceEntryGuid = Guid.NewGuid(),
                             Json = Encoding.UTF8.GetString(BuildJsonResponses.BuildFullJson(row, jsonSerializationHelper.ArchiveJsonSerializer))
                         };

@@ -15,6 +15,7 @@ namespace Jube.App.Controllers.Helper
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.IO;
     using System.Threading;
     using System.Threading.Tasks;
@@ -94,10 +95,13 @@ namespace Jube.App.Controllers.Helper
                     {
                         try
                         {
+                            var splits = (await reader.ReadLineAsync(token))?.Split(",");
+
                             var entityAnalysisModelsListValue = new EntityAnalysisModelListValue
                             {
                                 EntityAnalysisModelListId = entityAnalysisModelListId,
-                                ListValue = await reader.ReadLineAsync(token)
+                                ListValue = splits?[0],
+                                DeleteExpiryDate = splits is {Length: > 1} ? ParseDeleteExpiryDate(splits[1]) : null
                             };
 
                             await entityAnalysisModelListValueRepository.InsertAsync(entityAnalysisModelsListValue, token);
@@ -130,6 +134,15 @@ namespace Jube.App.Controllers.Helper
                 log.Error(e);
                 return StatusCode(500);
             }
+        }
+
+        private static DateTime? ParseDeleteExpiryDate(string value)
+        {
+            return !string.IsNullOrWhiteSpace(value) &&
+                   DateTime.TryParseExact(value, "O", CultureInfo.InvariantCulture,
+                       DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var parsed)
+                ? parsed
+                : null;
         }
     }
 }

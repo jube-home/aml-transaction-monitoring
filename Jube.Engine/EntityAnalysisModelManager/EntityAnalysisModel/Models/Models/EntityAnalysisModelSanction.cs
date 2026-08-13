@@ -23,5 +23,8 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Models.Mode
         public bool ReportTable { get; set; }
         public int CacheValue { get; set; }
         public char CacheInterval { get; set; }
+        public byte AggregationTypeId { get; set; }
+        public double? MaxDistanceRatio { get; set; }
+        public double? MaxCoverageRatio { get; set; }
     }
 }

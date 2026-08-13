@@ -22,6 +22,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
     using Data.Repository;
     using Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Models.Models;
     using Jube.Engine.EntityAnalysisModelManager.Helpers;
+    using Jube.Engine.Models;
     using Parser;
     using Parser.Compiler;
 
@@ -299,6 +300,9 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                                             (EntityAnalysisModelAbstractionCalculation.Match)Delegate.CreateDelegate(
                                                 typeof(EntityAnalysisModelAbstractionCalculation.Match), methodInfo);
 
+                                        await repository.UpdateCompileStatusAsync(entityAnalysisModelAbstractionCalculation.Id,
+                                            true, null, context.Services.CancellationToken).ConfigureAwait(false);
+
                                         if (context.Services.Log.IsDebugEnabled)
                                         {
                                             context.Services.Log.Debug(
@@ -346,7 +350,12 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                                                 Delegate.CreateDelegate(
                                                     typeof(EntityAnalysisModelAbstractionCalculation.Match), methodInfo);
 
-                                            context.Caching.HashCacheAssembly.Add(activationRuleScriptHash, compile.CompiledAssembly);
+                                            context.Caching.HashCacheAssembly.TryAdd(activationRuleScriptHash, compile.CompiledAssembly);
+                                            context.Caching.HashCacheAssemblyMetadata.TryAdd(activationRuleScriptHash,
+                                                new HashCacheAssemblyPayload(compile.CompiledAssemblyBytes, compile.CompiledAssemblyBinary, activationRuleScript.ToString()));
+
+                                            await repository.UpdateCompileStatusAsync(entityAnalysisModelAbstractionCalculation.Id,
+                                                true, null, context.Services.CancellationToken).ConfigureAwait(false);
 
                                             if (context.Services.Log.IsDebugEnabled)
                                             {
@@ -356,6 +365,9 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                                         }
                                         else
                                         {
+                                            await repository.UpdateCompileStatusAsync(entityAnalysisModelAbstractionCalculation.Id,
+                                                false, compile.ErrorsSummary, context.Services.CancellationToken).ConfigureAwait(false);
+
                                             if (context.Services.Log.IsDebugEnabled)
                                             {
                                                 context.Services.Log.Debug(
@@ -396,6 +408,9 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                         {
                             context.Services.Log.Error(
                                 $"Entity Start: Abstraction Calculation ID {record.Id} returned for model {key} has created an error as {ex}.");
+
+                            await repository.UpdateCompileStatusAsync(record.Id, false, ex.Message,
+                                context.Services.CancellationToken).ConfigureAwait(false);
                         }
                     }
 
@@ -417,6 +432,10 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 context.Services.Log.Error($"SyncEntityAnalysisModelAbstractionCalculationsAsync: has produced an error {ex}");
+
+                await new EntityAnalysisModelSynchronisationErrorRepository(context.Services.DbContext)
+                    .InsertAsync(EntityAnalysisModelSynchronisationErrorRepository.EntityAnalysisModelSynchronisationErrorStepEnum.AbstractionCalculation, ex.ToString(),
+                        context.Services.CancellationToken).ConfigureAwait(false);
             }
 
             return context;

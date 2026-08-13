@@ -30,13 +30,14 @@ namespace Jube.Parser
         public Dictionary<string, int> EntityAnalysisModelInlineScriptProperties;
         public Dictionary<string, EntityAnalysisModelRequestXPath> EntityAnalysisModelRequestXPaths;
         public List<string> EntityAnalysisModelsAbstractionRule;
+        public List<string> EntityAnalysisModelsActivationRules;
         public List<string> EntityAnalysisModelsDictionaries;
         public List<string> EntityAnalysisModelsExhaustiveAdaptations;
         public List<string> EntityAnalysisModelsHttpAdaptations;
+        public Dictionary<string, int> EntityAnalysisModelsInlineFunctions;
         public List<string> EntityAnalysisModelsLists;
         public List<string> EntityAnalysisModelsSanctions;
         public List<string> EntityAnalysisModelsTtlCounters;
-        public List<string> EntityAnalysisModelsActivationRules;
 
         public Parser(ILog log,
             List<string> ruleScriptTokens
@@ -208,6 +209,11 @@ namespace Jube.Parser
             if (!this.ruleScriptTokens.Contains("OR"))
             {
                 this.ruleScriptTokens.Add("OR");
+            }
+
+            if (!this.ruleScriptTokens.Contains("GetValueOrThrow"))
+            {
+                this.ruleScriptTokens.Add("GetValueOrThrow");
             }
 
             var type = typeof(Extensions);
@@ -482,11 +488,14 @@ namespace Jube.Parser
             sb.AppendLine("Imports System");
 
             countLine += 1;
+            sb.AppendLine("Imports Jube.HttpAdaptationProtocol");
+
+            countLine += 1;
             sb.AppendLine("Public Class GatewayRule");
 
             countLine += 1;
             sb.AppendLine(
-                "Public Shared Function Match(Data As DictionaryNoBoxing(Of String),TTLCounter As PooledDictionary(Of String, Double),Abstraction As PooledDictionary(Of String, Double),HttpAdaptation As Dictionary(Of String, Double),ExhaustiveAdaptation As PooledDictionary(Of String, Double),List as PooledDictionary(Of String,List(Of String)),Deviation as PooledDictionary(Of String, Double),Calculation As PooledDictionary(Of String, Double),Sanctions As PooledDictionary(Of String, Double),KVP As PooledDictionary(Of String, Double),Activation as ICollection(Of String),Log as ILog) As Boolean");
+                "Public Shared Function Match(Data As DictionaryNoBoxing(Of String),TTLCounter As PooledDictionary(Of String, Double),Abstraction As PooledDictionary(Of String, Double),HttpAdaptation As PooledDictionary(Of String, Adaptation),ExhaustiveAdaptation As PooledDictionary(Of String, Double),List as PooledDictionary(Of String,List(Of String)),Deviation as PooledDictionary(Of String, Double),Calculation As PooledDictionary(Of String, Double),Sanctions As PooledDictionary(Of String, Double),KVP As PooledDictionary(Of String, Double),Activation as ICollection(Of String),Log as ILog) As Boolean");
 
             countLine += 1;
             sb.AppendLine("Dim Matched as Boolean");
@@ -549,10 +558,10 @@ namespace Jube.Parser
 
             countLine += 1;
             sb.AppendLine(
-                "Public Shared Function Match(Data As DictionaryNoBoxing(Of String),TTLCounter As PooledDictionary(Of String, Double),Abstraction As PooledDictionary(Of String, Double),List as Dictionary(Of String,List(Of String)),Deviation as PooledDictionary(Of String, Double),Calculation As PooledDictionary(Of String, Double),Sanctions As PooledDictionary(Of String, Double),KVP As PooledDictionary(Of String, Double),Log as ILog) As Boolean");
+                "Public Shared Function Match(Data As DictionaryNoBoxing(Of String),TTLCounter As PooledDictionary(Of String, Double),Abstraction As PooledDictionary(Of String, Double),List as Dictionary(Of String,List(Of String)),Deviation as PooledDictionary(Of String, Double),Calculation As PooledDictionary(Of String, Double),Sanctions As PooledDictionary(Of String, Double),KVP As PooledDictionary(Of String, Double),Log as ILog) As Double");
 
             countLine += 1;
-            sb.AppendLine("Dim Matched as Boolean");
+            sb.AppendLine("Dim Matched as Double");
 
             if (tryCatchWrap)
             {
@@ -688,7 +697,7 @@ namespace Jube.Parser
                                 var defaultValue = "";
                                 if (EntityAnalysisModelRequestXPaths != null || EntityAnalysisModelInlineScriptProperties != null)
                                 {
-                                    if (EntityAnalysisModelRequestXPaths.TryGetValue(elements[k], out EntityAnalysisModelRequestXPath value))
+                                    if (EntityAnalysisModelRequestXPaths.TryGetValue(elements[k], out var value))
                                     {
                                         if (!EntityAnalysisModelRequestXPaths[elements[k]].Cache && showOnlyCacheForPayload)
                                         {
@@ -744,7 +753,7 @@ namespace Jube.Parser
 
                                                     if (!DateTime.TryParse(defaultValue, out _))
                                                     {
-                                                        defaultValue = "'" + DateTime.Now.ToString("O") + "'";
+                                                        defaultValue = "'" + DateTime.UtcNow.ToString("O") + "'";
                                                     }
 
                                                     break;
@@ -800,6 +809,30 @@ namespace Jube.Parser
                                         };
 
                                         databaseCast = EntityAnalysisModelInlineScriptProperties[elements[k]] switch
+                                        {
+                                            2 => "::int",
+                                            3 => "::float8",
+                                            4 => "::timestamp",
+                                            5 => "::boolean",
+                                            6 or 7 => "::float8",
+                                            _ => databaseCast
+                                        };
+                                    }
+                                    else if (EntityAnalysisModelsInlineFunctions.ContainsKey(elements[k]))
+                                    {
+                                        asFunction = EntityAnalysisModelsInlineFunctions[elements[k]] switch
+                                        {
+                                            1 => "AsString()",
+                                            2 => "AsInt()",
+                                            3 => "AsDouble()",
+                                            4 => "AsDateTime()",
+                                            5 => "AsBool",
+                                            6 => "AsDouble()",
+                                            7 => "AsDouble()",
+                                            _ => "AsString()"
+                                        };
+
+                                        databaseCast = EntityAnalysisModelsInlineFunctions[elements[k]] switch
                                         {
                                             2 => "::int",
                                             3 => "::float8",
@@ -919,7 +952,7 @@ namespace Jube.Parser
                                     }
                                 }
 
-                                replaceString = replaceString + "Sanctions(\"" + elements[k] + "\")";
+                                replaceString = replaceString + "Sanctions.GetValueOrThrow(\"" + elements[k] + "\")";
                             }
                             else if (String.Equals("abstractionCalculation", firstString,
                                          StringComparison.OrdinalIgnoreCase))

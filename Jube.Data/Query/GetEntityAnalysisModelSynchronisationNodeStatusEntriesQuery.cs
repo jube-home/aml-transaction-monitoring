@@ -46,17 +46,17 @@ namespace Jube.Data.Query
             }
             {
                 var entries = await dbContext.EntityAnalysisModelSynchronisationNodeStatusEntry
-                    .Where(w => w.TenantRegistryId == tenantRegistryId 
-                                && w.HeartbeatDate >= DateTime.Now.AddHours(-1))
+                    .Where(w => w.TenantRegistryId == tenantRegistryId
+                                && w.HeartbeatDate >= DateTime.UtcNow.AddHours(-1))
                     .Select(s => new Dto
                     {
                         HeartbeatDate = s.HeartbeatDate.Value,
                         Instance = s.Instance,
                         SynchronisedDate = s.SynchronisedDate ?? default(DateTime),
                         SynchronisationPending = schedule.ScheduleDate > s.SynchronisedDate &&
-                                                 DateTime.Now > schedule.ScheduleDate
+                                                 DateTime.UtcNow > schedule.ScheduleDate
                                                  || !s.SynchronisedDate.HasValue,
-                        InstanceAvailable = s.HeartbeatDate > DateTime.Now.AddMinutes(-2)
+                        InstanceAvailable = s.HeartbeatDate > DateTime.UtcNow.AddMinutes(-2)
                     }).ToListAsync(token);
 
                 return entries;

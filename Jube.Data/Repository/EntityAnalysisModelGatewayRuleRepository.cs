@@ -16,6 +16,7 @@ namespace Jube.Data.Repository
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Net;
     using System.Threading;
     using System.Threading.Tasks;
     using AutoMapper;
@@ -98,7 +99,7 @@ namespace Jube.Data.Repository
         {
             model.CreatedUser = userName ?? model.CreatedUser;
             model.Guid = model.Guid == Guid.Empty ? Guid.NewGuid() : model.Guid;
-            model.CreatedDate = DateTime.Now;
+            model.CreatedDate = DateTime.UtcNow;
             model.Version = 1;
             model.Id = await dbContext.InsertWithInt32IdentityAsync(model, token: token);
             return model;
@@ -122,7 +123,7 @@ namespace Jube.Data.Repository
             model.Version = existing.Version + 1;
             model.Guid = existing.Guid;
             model.CreatedUser = userName;
-            model.CreatedDate = DateTime.Now;
+            model.CreatedDate = DateTime.UtcNow;
 
             await dbContext.UpdateAsync(model, token: token);
 
@@ -139,16 +140,60 @@ namespace Jube.Data.Repository
             return model;
         }
 
-        public Task UpdateCounterAsync(int id, long evaluationCounter, long activationCounter, DateTime activationCounterDate, CancellationToken token = default)
+        public async Task UpdateCounterAsync(int id, long evaluationCounter, long activationCounter, DateTime activationCounterDate, CancellationToken token = default)
         {
-            return dbContext.EntityAnalysisModelGatewayRule
+            await dbContext.BeginTransactionAsync(token).ConfigureAwait(false);
+            try
+            {
+                await dbContext.EntityAnalysisModelGatewayRule
+                    .Where(d =>
+                        (d.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                        && d.Id == id
+                        && (d.Deleted == 0 || d.Deleted == null))
+                    .Set(s => s.ActivationCounter, s => (s.ActivationCounter ?? 0) + activationCounter)
+                    .Set(s => s.EvaluationCounter, s => (s.EvaluationCounter ?? 0) + evaluationCounter)
+                    .Set(s => s.ActivationCounterDate,
+                        s => s.ActivationCounterDate == null || s.ActivationCounterDate < activationCounterDate
+                            ? activationCounterDate
+                            : s.ActivationCounterDate)
+                    .UpdateAsync(token).ConfigureAwait(false);
+
+                await new EntityAnalysisModelGatewayRuleCounterHistoryRepository(dbContext)
+                    .InsertAsync(id, evaluationCounter, activationCounter, Dns.GetHostName(), token).ConfigureAwait(false);
+
+                await dbContext.CommitTransactionAsync(token).ConfigureAwait(false);
+            }
+            catch
+            {
+                await dbContext.RollbackTransactionAsync(token).ConfigureAwait(false);
+                throw;
+            }
+        }
+
+        public async Task ResetCounterAsync(int id, CancellationToken token = default)
+        {
+            var records = await dbContext.EntityAnalysisModelGatewayRule
                 .Where(d =>
                     (d.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
                     && d.Id == id
                     && (d.Deleted == 0 || d.Deleted == null))
-                .Set(s => s.ActivationCounter, activationCounter)
-                .Set(s => s.ActivationCounterDate, activationCounterDate)
-                .Set(s => s.EvaluationCounter, evaluationCounter)
+                .Set(s => s.ActivationCounter, 0L)
+                .Set(s => s.EvaluationCounter, 0L)
+                .UpdateAsync(token).ConfigureAwait(false);
+
+            if (records == 0)
+            {
+                throw new KeyNotFoundException();
+            }
+        }
+
+        public Task UpdateCompileStatusAsync(int id, bool compiled, string compileError, CancellationToken token = default)
+        {
+            return dbContext.EntityAnalysisModelGatewayRule
+                .Where(d => (d.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                            && d.Id == id)
+                .Set(s => s.Compiled, Convert.ToByte(compiled ? 1 : 0))
+                .Set(s => s.CompileError, compileError)
                 .UpdateAsync(token);
         }
 
@@ -161,7 +206,7 @@ namespace Jube.Data.Repository
                     && (d.Locked == 0 || d.Locked == null)
                     && (d.Deleted == 0 || d.Deleted == null))
                 .Set(s => s.Deleted, Convert.ToByte(1))
-                .Set(s => s.DeletedDate, DateTime.Now)
+                .Set(s => s.DeletedDate, DateTime.UtcNow)
                 .Set(s => s.DeletedUser, userName)
                 .UpdateAsync(token);
         }
@@ -174,7 +219,7 @@ namespace Jube.Data.Repository
                     && (d.Deleted == 0 || d.Deleted == null))
                 .Set(s => s.ImportId, importId)
                 .Set(s => s.Deleted, Convert.ToByte(1))
-                .Set(s => s.DeletedDate, DateTime.Now)
+                .Set(s => s.DeletedDate, DateTime.UtcNow)
                 .UpdateAsync(token);
         }
     }

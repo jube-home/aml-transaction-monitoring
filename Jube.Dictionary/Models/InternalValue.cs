@@ -13,13 +13,12 @@
 
 namespace Jube.Dictionary.Models
 {
-    using System;
     using System.Globalization;
     using System.Runtime.CompilerServices;
     using System.Runtime.InteropServices;
 
     [StructLayout(LayoutKind.Explicit, Pack = 1)]
-    public readonly struct InternalValue : IEquatable<InternalValue>
+    public readonly struct InternalValue : IEquatable<InternalValue>, IComparable<InternalValue>
     {
         public enum ValueType : byte
         {
@@ -110,7 +109,7 @@ namespace Jube.Dictionary.Models
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public string AsString()
         {
-            return Type == ValueType.String ? _stringValue ?? string.Empty : string.Empty;
+            return Type == ValueType.String ? _stringValue ?? String.Empty : String.Empty;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -135,14 +134,25 @@ namespace Jube.Dictionary.Models
         public DateTime AsDateTime()
         {
             return Type == ValueType.DateTime
-                ? new DateTime(_value, DateTimeKind.Utc).ToLocalTime()
-                : default;
+                ? new DateTime(_value, DateTimeKind.Utc)
+                : default(DateTime);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Guid AsGuid()
         {
             return Type == ValueType.Guid ? _guidValue : Guid.Empty;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private double AsNumeric()
+        {
+            return Type switch
+            {
+                ValueType.Double => AsDouble(),
+                ValueType.Int => AsInt(),
+                _ => 0d
+            };
         }
 
         public override string ToString()
@@ -188,7 +198,7 @@ namespace Jube.Dictionary.Models
 
             return Type switch
             {
-                ValueType.String => string.Equals(_stringValue, other._stringValue),
+                ValueType.String => String.Equals(_stringValue, other._stringValue),
                 ValueType.Int => _value == other._value,
                 ValueType.Double => Math.Abs(AsDouble() - other.AsDouble()) < 0.0001,
                 ValueType.Bool => _value == other._value,
@@ -211,21 +221,539 @@ namespace Jube.Dictionary.Models
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator string(InternalValue value) => value.AsString();
+        public int CompareTo(InternalValue other)
+        {
+            if (Type == other.Type)
+            {
+                return Type switch
+                {
+                    ValueType.String => String.CompareOrdinal(_stringValue, other._stringValue),
+                    ValueType.Int => AsInt().CompareTo(other.AsInt()),
+                    ValueType.Double => AsDouble().CompareTo(other.AsDouble()),
+                    ValueType.Bool => AsBool().CompareTo(other.AsBool()),
+                    ValueType.DateTime => AsDateTime().CompareTo(other.AsDateTime()),
+                    ValueType.Guid => String.CompareOrdinal(_guidValue.ToString(), other._guidValue.ToString()),
+                    _ => 0
+                };
+            }
+
+            return AsNumeric().CompareTo(other.AsNumeric());
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator int(InternalValue value) => value.AsInt();
+        public static bool operator <(InternalValue left, InternalValue right)
+        {
+            return left.CompareTo(right) < 0;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator double(InternalValue value) => value.AsDouble();
+        public static bool operator >(InternalValue left, InternalValue right)
+        {
+            return left.CompareTo(right) > 0;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator bool(InternalValue value) => value.AsBool();
+        public static bool operator <=(InternalValue left, InternalValue right)
+        {
+            return left.CompareTo(right) <= 0;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator DateTime(InternalValue value) => value.AsDateTime();
+        public static bool operator >=(InternalValue left, InternalValue right)
+        {
+            return left.CompareTo(right) >= 0;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Guid(InternalValue value) => value.AsGuid();
+        public static double operator +(InternalValue left, InternalValue right)
+        {
+            return left.AsNumeric() + right.AsNumeric();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double operator -(InternalValue left, InternalValue right)
+        {
+            return left.AsNumeric() - right.AsNumeric();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double operator *(InternalValue left, InternalValue right)
+        {
+            return left.AsNumeric() * right.AsNumeric();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double operator /(InternalValue left, InternalValue right)
+        {
+            return left.AsNumeric() / right.AsNumeric();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator ==(InternalValue left, double right)
+        {
+            return left.CompareTo(new InternalValue(right)) == 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator !=(InternalValue left, double right)
+        {
+            return !(left == right);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator <(InternalValue left, double right)
+        {
+            return left.CompareTo(new InternalValue(right)) < 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator >(InternalValue left, double right)
+        {
+            return left.CompareTo(new InternalValue(right)) > 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator <=(InternalValue left, double right)
+        {
+            return left.CompareTo(new InternalValue(right)) <= 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator >=(InternalValue left, double right)
+        {
+            return left.CompareTo(new InternalValue(right)) >= 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator ==(double left, InternalValue right)
+        {
+            return right == left;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator !=(double left, InternalValue right)
+        {
+            return right != left;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator <(double left, InternalValue right)
+        {
+            return right > left;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator >(double left, InternalValue right)
+        {
+            return right < left;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator <=(double left, InternalValue right)
+        {
+            return right >= left;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator >=(double left, InternalValue right)
+        {
+            return right <= left;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double operator +(InternalValue left, double right)
+        {
+            return left.AsNumeric() + right;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double operator -(InternalValue left, double right)
+        {
+            return left.AsNumeric() - right;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double operator *(InternalValue left, double right)
+        {
+            return left.AsNumeric() * right;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double operator /(InternalValue left, double right)
+        {
+            return left.AsNumeric() / right;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double operator +(double left, InternalValue right)
+        {
+            return left + right.AsNumeric();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double operator -(double left, InternalValue right)
+        {
+            return left - right.AsNumeric();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double operator *(double left, InternalValue right)
+        {
+            return left * right.AsNumeric();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double operator /(double left, InternalValue right)
+        {
+            return left / right.AsNumeric();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator ==(InternalValue left, int right)
+        {
+            return left.CompareTo(new InternalValue(right)) == 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator !=(InternalValue left, int right)
+        {
+            return !(left == right);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator <(InternalValue left, int right)
+        {
+            return left.CompareTo(new InternalValue(right)) < 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator >(InternalValue left, int right)
+        {
+            return left.CompareTo(new InternalValue(right)) > 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator <=(InternalValue left, int right)
+        {
+            return left.CompareTo(new InternalValue(right)) <= 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator >=(InternalValue left, int right)
+        {
+            return left.CompareTo(new InternalValue(right)) >= 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator ==(int left, InternalValue right)
+        {
+            return right == left;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator !=(int left, InternalValue right)
+        {
+            return right != left;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator <(int left, InternalValue right)
+        {
+            return right > left;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator >(int left, InternalValue right)
+        {
+            return right < left;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator <=(int left, InternalValue right)
+        {
+            return right >= left;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator >=(int left, InternalValue right)
+        {
+            return right <= left;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double operator +(InternalValue left, int right)
+        {
+            return left.AsNumeric() + right;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double operator -(InternalValue left, int right)
+        {
+            return left.AsNumeric() - right;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double operator *(InternalValue left, int right)
+        {
+            return left.AsNumeric() * right;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double operator /(InternalValue left, int right)
+        {
+            return left.AsNumeric() / right;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double operator +(int left, InternalValue right)
+        {
+            return left + right.AsNumeric();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double operator -(int left, InternalValue right)
+        {
+            return left - right.AsNumeric();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double operator *(int left, InternalValue right)
+        {
+            return left * right.AsNumeric();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double operator /(int left, InternalValue right)
+        {
+            return left / right.AsNumeric();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator ==(InternalValue left, string? right)
+        {
+            return left.Equals(new InternalValue(right));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator !=(InternalValue left, string? right)
+        {
+            return !(left == right);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator <(InternalValue left, string? right)
+        {
+            return left.CompareTo(new InternalValue(right)) < 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator >(InternalValue left, string? right)
+        {
+            return left.CompareTo(new InternalValue(right)) > 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator <=(InternalValue left, string? right)
+        {
+            return left.CompareTo(new InternalValue(right)) <= 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator >=(InternalValue left, string? right)
+        {
+            return left.CompareTo(new InternalValue(right)) >= 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator ==(string? left, InternalValue right)
+        {
+            return right == left;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator !=(string? left, InternalValue right)
+        {
+            return right != left;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator <(string? left, InternalValue right)
+        {
+            return right > left;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator >(string? left, InternalValue right)
+        {
+            return right < left;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator <=(string? left, InternalValue right)
+        {
+            return right >= left;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator >=(string? left, InternalValue right)
+        {
+            return right <= left;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator ==(InternalValue left, DateTime right)
+        {
+            return left.Equals(new InternalValue(right));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator !=(InternalValue left, DateTime right)
+        {
+            return !(left == right);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator <(InternalValue left, DateTime right)
+        {
+            return left.CompareTo(new InternalValue(right)) < 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator >(InternalValue left, DateTime right)
+        {
+            return left.CompareTo(new InternalValue(right)) > 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator <=(InternalValue left, DateTime right)
+        {
+            return left.CompareTo(new InternalValue(right)) <= 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator >=(InternalValue left, DateTime right)
+        {
+            return left.CompareTo(new InternalValue(right)) >= 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator ==(DateTime left, InternalValue right)
+        {
+            return right == left;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator !=(DateTime left, InternalValue right)
+        {
+            return right != left;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator <(DateTime left, InternalValue right)
+        {
+            return right > left;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator >(DateTime left, InternalValue right)
+        {
+            return right < left;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator <=(DateTime left, InternalValue right)
+        {
+            return right >= left;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator >=(DateTime left, InternalValue right)
+        {
+            return right <= left;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator ==(InternalValue left, bool right)
+        {
+            return left.Equals(new InternalValue(right));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator !=(InternalValue left, bool right)
+        {
+            return !(left == right);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator ==(bool left, InternalValue right)
+        {
+            return right == left;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator !=(bool left, InternalValue right)
+        {
+            return right != left;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator ==(InternalValue left, Guid right)
+        {
+            return left.Equals(new InternalValue(right));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator !=(InternalValue left, Guid right)
+        {
+            return !(left == right);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator ==(Guid left, InternalValue right)
+        {
+            return right == left;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator !=(Guid left, InternalValue right)
+        {
+            return right != left;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator string(InternalValue value)
+        {
+            return value.AsString();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator int(InternalValue value)
+        {
+            return value.AsInt();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator double(InternalValue value)
+        {
+            return value.AsDouble();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator bool(InternalValue value)
+        {
+            return value.AsBool();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator DateTime(InternalValue value)
+        {
+            return value.AsDateTime();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Guid(InternalValue value)
+        {
+            return value.AsGuid();
+        }
     }
 }

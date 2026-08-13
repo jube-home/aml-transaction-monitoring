@@ -16,6 +16,7 @@ namespace Jube.App.Controllers.Query
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Globalization;
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
@@ -37,10 +38,12 @@ namespace Jube.App.Controllers.Query
     public class GetByVisualisationRegistryDatasourceCommandExecutionQueryController : Controller
     {
         private readonly DbContext dbContext;
+        private readonly DynamicEnvironment dynamicEnvironment;
         private readonly ILog log;
         private readonly PermissionValidation permissionValidation;
         private readonly GetByVisualisationRegistryDatasourceCommandExecutionQuery query;
         private readonly string userName;
+
 
         public GetByVisualisationRegistryDatasourceCommandExecutionQueryController(ILog log,
             IHttpContextAccessor httpContextAccessor, DynamicEnvironment dynamicEnvironment)
@@ -51,12 +54,13 @@ namespace Jube.App.Controllers.Query
             }
 
             this.log = log;
+            this.dynamicEnvironment = dynamicEnvironment;
 
             dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"), log);
             permissionValidation = new PermissionValidation(dbContext, userName, log);
             query = dynamicEnvironment.AppSettings("ReportConnectionString") != null ?
-                new GetByVisualisationRegistryDatasourceCommandExecutionQuery(dbContext, userName, log, dynamicEnvironment.AppSettings("ReportConnectionString"))
-                : new GetByVisualisationRegistryDatasourceCommandExecutionQuery(dbContext, userName, log, dynamicEnvironment.AppSettings("ConnectionString"));
+                new GetByVisualisationRegistryDatasourceCommandExecutionQuery(dbContext, userName, log, dynamicEnvironment.AppSettings("ParserAssertSelectOnly").Equals("True", StringComparison.OrdinalIgnoreCase), dynamicEnvironment.AppSettings("ReportConnectionString"))
+                : new GetByVisualisationRegistryDatasourceCommandExecutionQuery(dbContext, userName, log, dynamicEnvironment.AppSettings("ParserAssertSelectOnly").Equals("True", StringComparison.OrdinalIgnoreCase), dynamicEnvironment.AppSettings("ConnectionString"));
         }
 
         protected override void Dispose(bool disposing)
@@ -125,7 +129,7 @@ namespace Jube.App.Controllers.Query
                     Error = error,
                     ResponseTime = (int)sw.ElapsedMilliseconds,
                     VisualisationRegistryDatasourceId = id,
-                    CreatedDate = DateTime.Now,
+                    CreatedDate = DateTime.UtcNow,
                     CreatedUser = userName
                 };
 
@@ -182,7 +186,16 @@ namespace Jube.App.Controllers.Query
                         parametersByName.Add(cleanName, parameter.Value == null ? Double.Parse(visualisationRegistry.DefaultValue) : Double.Parse(parameter.Value.ToString()));
                         break;
                     case 4:
-                        parametersByName.Add(cleanName, parameter.Value == null ? DateTime.Now.AddDays(Int32.Parse(visualisationRegistry.DefaultValue) * -1) : DateTime.Parse(parameter.Value.ToString()));
+                        parametersByName.Add(cleanName, parameter.Value == null
+                            ? DateTime.UtcNow.AddDays(Int32.Parse(visualisationRegistry.DefaultValue) * -1)
+                            : DateTimeOffset.TryParse(parameter.Value.ToString(), CultureInfo.InvariantCulture,
+                                dynamicEnvironment.AppSettings("AssumeLocalDateInPayloadExtraction")
+                                    .Equals("True", StringComparison.CurrentCultureIgnoreCase)
+                                    ? DateTimeStyles.AssumeLocal
+                                    : DateTimeStyles.AssumeUniversal,
+                                out var dto)
+                                ? dto.UtcDateTime
+                                : DateTime.UtcNow);
                         break;
                     case 5:
                         parametersByName.Add(cleanName, parameter.Value == null ? Byte.Parse(visualisationRegistry.DefaultValue) : Byte.Parse(parameter.Value.ToString()));

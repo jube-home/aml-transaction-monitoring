@@ -1,0 +1,1110 @@
+services:
+  etcd1:
+    hostname: etcd1
+    image: quay.io/coreos/etcd:v3.5.3
+    environment:
+      - ETCDCTL_API=3
+    # etcd is Patroni's consensus/leader-election store. Five nodes, deliberately odd (see the
+    # CRITICAL_HOST_TIEBREAKER zone on etcd5 below) - etcd is a quorum/majority-vote system, and an odd node
+    # count avoids the tied vote a same-sized even count can produce during a network partition.
+    command: >
+      etcd
+      -name etcd1
+      -data-dir /etcd-data
+      -advertise-client-urls http://etcd1:2379
+      -listen-client-urls http://0.0.0.0:2379
+      -listen-peer-urls http://0.0.0.0:2380
+      -initial-cluster etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380,etcd4=http://etcd4:2380,etcd5=http://etcd5:2380
+      -initial-cluster-token etcd-cluster
+      -initial-advertise-peer-urls http://etcd1:2380
+      -initial-cluster-state new
+    volumes:
+      - etcd1_data:/etcd-data
+    networks:
+      jube-cluster:
+        aliases:
+          - etcd1
+    deploy:
+      # dnsrr (not Swarm's default VIP load balancing) gives each replica its own resolvable DNS name -
+      # required since etcd/Patroni/Sentinel all need to address specific named peers directly (e.g. etcd's
+      # own -initial-cluster list above), not "any node" via a load-balanced virtual IP.
+      endpoint_mode: dnsrr
+      placement:
+        constraints:
+          # Pins this service to a specific host (zone) rather than letting Swarm reschedule it onto whichever
+          # node has capacity - unpinned, that would defeat the zone-per-node fault-isolation design this
+          # cluster relies on. CRITICAL_HOST_1 also hosts patroni1/redis-master/sentinel1 below - one full
+          # stack replica per physical zone.
+          - node.labels.zone == $CRITICAL_HOST_1
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 10
+        window: 120s
+
+  etcd2:
+    hostname: etcd2
+    image: quay.io/coreos/etcd:v3.5.3
+    environment:
+      - ETCDCTL_API=3
+    command: >
+      etcd
+      -name etcd2
+      -data-dir /etcd-data
+      -advertise-client-urls http://etcd2:2379
+      -listen-client-urls http://0.0.0.0:2379
+      -listen-peer-urls http://0.0.0.0:2380
+      -initial-cluster etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380,etcd4=http://etcd4:2380,etcd5=http://etcd5:2380
+      -initial-cluster-token etcd-cluster
+      -initial-advertise-peer-urls http://etcd2:2380
+      -initial-cluster-state new
+    volumes:
+      - etcd2_data:/etcd-data
+    networks:
+      jube-cluster:
+        aliases:
+          - etcd2
+    deploy:
+      endpoint_mode: dnsrr
+      placement:
+        constraints:
+          - node.labels.zone == $CRITICAL_HOST_2
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 10
+        window: 120s
+
+  etcd3:
+    hostname: etcd3
+    image: quay.io/coreos/etcd:v3.5.3
+    environment:
+      - ETCDCTL_API=3
+    command: >
+      etcd
+      -name etcd3
+      -data-dir /etcd-data
+      -advertise-client-urls http://etcd3:2379
+      -listen-client-urls http://0.0.0.0:2379
+      -listen-peer-urls http://0.0.0.0:2380
+      -initial-cluster etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380,etcd4=http://etcd4:2380,etcd5=http://etcd5:2380
+      -initial-cluster-token etcd-cluster
+      -initial-advertise-peer-urls http://etcd3:2380
+      -initial-cluster-state new
+    volumes:
+      - etcd3_data:/etcd-data
+    networks:
+      jube-cluster:
+        aliases:
+          - etcd3
+    deploy:
+      endpoint_mode: dnsrr
+      placement:
+        constraints:
+          - node.labels.zone == $CRITICAL_HOST_3
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 10
+        window: 120s
+  
+  etcd4:
+    hostname: etcd4
+    image: quay.io/coreos/etcd:v3.5.3
+    environment:
+      - ETCDCTL_API=3
+    command: >
+      etcd
+      -name etcd4
+      -data-dir /etcd-data
+      -advertise-client-urls http://etcd4:2379
+      -listen-client-urls http://0.0.0.0:2379
+      -listen-peer-urls http://0.0.0.0:2380
+      -initial-cluster etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380,etcd4=http://etcd4:2380,etcd5=http://etcd5:2380
+      -initial-cluster-token etcd-cluster
+      -initial-advertise-peer-urls http://etcd4:2380
+      -initial-cluster-state new
+    volumes:
+      - etcd4_data:/etcd-data
+    networks:
+      jube-cluster:
+        aliases:
+          - etcd4
+    deploy:
+      endpoint_mode: dnsrr
+      placement:
+        constraints:
+          - node.labels.zone == $CRITICAL_HOST_4
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 10
+        window: 120s
+
+  etcd5:
+    hostname: etcd5
+    image: quay.io/coreos/etcd:v3.5.3
+    environment:
+      - ETCDCTL_API=3
+    command: >
+      etcd
+      -name etcd5
+      -data-dir /etcd-data
+      -advertise-client-urls http://etcd5:2379
+      -listen-client-urls http://0.0.0.0:2379
+      -listen-peer-urls http://0.0.0.0:2380
+      -initial-cluster etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380,etcd4=http://etcd4:2380,etcd5=http://etcd5:2380
+      -initial-cluster-token etcd-cluster
+      -initial-advertise-peer-urls http://etcd5:2380
+      -initial-cluster-state new
+    volumes:
+      - etcd5_data:/etcd-data
+    networks:
+      jube-cluster:
+        aliases:
+          - etcd5
+    deploy:
+      endpoint_mode: dnsrr
+      placement:
+        constraints:
+          - node.labels.zone == $CRITICAL_HOST_TIEBREAKER
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 10
+        window: 120s
+
+  patroni1:
+    image: ${PATRONI_IMAGE}
+    secrets:
+      - PATRONI_REPLICATION_PASSWORD
+      - PATRONI_SUPERUSER_PASSWORD
+      - PATRONI_ADMIN_PASSWORD
+    env_file:
+      - .env
+    hostname: patroni1
+    environment:
+      - PATRONI_CONFIG_FILE=/etc/patroni.yml
+      - PATRONI_NAME=patroni1
+      - PATRONI_SCOPE=postgres-cluster
+      - PATRONI_ETCD3_HOSTS=etcd1:2379,etcd2:2379,etcd3:2379,etcd4:2379,etcd5:2379
+    volumes:
+      - patroni1_data:/var/lib/postgresql/data
+      - ./patroni/patroni1.yml:/etc/patroni.yml:ro
+      - ./pgbackrest/pgbackrest.conf:/etc/pgbackrest/pgbackrest.conf:ro
+      - /mnt/pgbackrest:/var/lib/pgbackrest
+      - patroni1_runtime:/var/run/postgresql
+      - patroni1_tmp:/var/lib/postgresql/tmp
+    tmpfs:
+      - /var/spool/pgbackrest
+    networks:
+      jube-cluster:
+        aliases:
+          - patroni1
+    deploy:
+      # Same dnsrr/zone-pinning reasoning as etcd1 above.
+      endpoint_mode: dnsrr
+      placement:
+        constraints:
+          - node.labels.zone == $CRITICAL_HOST_1
+      restart_policy:
+        condition: on-failure
+        delay: 30s
+        max_attempts: 10
+        window: 3600s
+
+  patroni2:
+    image: ${PATRONI_IMAGE}
+    secrets:
+      - PATRONI_REPLICATION_PASSWORD
+      - PATRONI_SUPERUSER_PASSWORD
+      - PATRONI_ADMIN_PASSWORD
+    env_file:
+      - .env
+    hostname: patroni2
+    environment:
+      - PATRONI_CONFIG_FILE=/etc/patroni.yml
+      - PATRONI_NAME=patroni2
+      - PATRONI_SCOPE=postgres-cluster
+      - PATRONI_ETCD3_HOSTS=etcd1:2379,etcd2:2379,etcd3:2379,etcd4:2379,etcd5:2379
+    volumes:
+      - patroni2_data:/var/lib/postgresql/data
+      - ./patroni/patroni2.yml:/etc/patroni.yml:ro
+      - ./pgbackrest/pgbackrest.conf:/etc/pgbackrest/pgbackrest.conf:ro
+      - /mnt/pgbackrest:/var/lib/pgbackrest
+      - patroni2_runtime:/var/run/postgresql
+      - patroni2_tmp:/var/lib/postgresql/tmp
+    tmpfs:
+      - /var/spool/pgbackrest
+    networks:
+      jube-cluster:
+        aliases:
+          - patroni2
+    deploy:
+      endpoint_mode: dnsrr
+      placement:
+        constraints:
+          - node.labels.zone == $CRITICAL_HOST_2
+      restart_policy:
+        condition: on-failure
+        delay: 30s
+        max_attempts: 10
+        window: 3600s
+
+  patroni3:
+    image: ${PATRONI_IMAGE}
+    secrets:
+      - PATRONI_REPLICATION_PASSWORD
+      - PATRONI_SUPERUSER_PASSWORD
+      - PATRONI_ADMIN_PASSWORD
+    env_file:
+      - .env
+    hostname: patroni3
+    environment:
+      - PATRONI_CONFIG_FILE=/etc/patroni.yml
+      - PATRONI_NAME=patroni3
+      - PATRONI_SCOPE=postgres-cluster
+      - PATRONI_ETCD3_HOSTS=etcd1:2379,etcd2:2379,etcd3:2379,etcd4:2379,etcd5:2379
+    volumes:
+      - patroni3_data:/var/lib/postgresql/data
+      - ./patroni/patroni3.yml:/etc/patroni.yml:ro
+      - ./pgbackrest/pgbackrest.conf:/etc/pgbackrest/pgbackrest.conf:ro
+      - /mnt/pgbackrest:/var/lib/pgbackrest
+      - patroni3_runtime:/var/run/postgresql
+      - patroni3_tmp:/var/lib/postgresql/tmp
+    tmpfs:
+      - /var/spool/pgbackrest
+    networks:
+      jube-cluster:
+        aliases:
+          - patroni3
+    deploy:
+      endpoint_mode: dnsrr
+      placement:
+        constraints:
+          - node.labels.zone == $CRITICAL_HOST_3
+      restart_policy:
+        condition: on-failure
+        delay: 30s
+        max_attempts: 10
+        window: 3600s
+  
+  patroni4:
+    image: ${PATRONI_IMAGE}
+    secrets:
+      - PATRONI_REPLICATION_PASSWORD
+      - PATRONI_SUPERUSER_PASSWORD
+      - PATRONI_ADMIN_PASSWORD
+    env_file:
+      - .env
+    hostname: patroni4
+    environment:
+      - PATRONI_CONFIG_FILE=/etc/patroni.yml
+      - PATRONI_NAME=patroni4
+      - PATRONI_SCOPE=postgres-cluster
+      - PATRONI_ETCD3_HOSTS=etcd1:2379,etcd2:2379,etcd3:2379,etcd4:2379,etcd5:2379
+    volumes:
+      - patroni4_data:/var/lib/postgresql/data
+      - ./patroni/patroni4.yml:/etc/patroni.yml:ro
+      - ./pgbackrest/pgbackrest.conf:/etc/pgbackrest/pgbackrest.conf:ro
+      - /mnt/pgbackrest:/var/lib/pgbackrest
+      - patroni4_runtime:/var/run/postgresql
+      - patroni4_tmp:/var/lib/postgresql/tmp
+    tmpfs:
+      - /var/spool/pgbackrest
+    networks:
+      jube-cluster:
+        aliases:
+          - patroni4
+    deploy:
+      endpoint_mode: dnsrr
+      placement:
+        constraints:
+          - node.labels.zone == $CRITICAL_HOST_4
+      restart_policy:
+        condition: on-failure
+        delay: 30s
+        max_attempts: 10
+        window: 3600s
+  
+  haproxy:
+    hostname: haproxy
+    image: haproxy:2.8
+    secrets:
+      - HAPROXY_COOKIE_SECRET
+    volumes:
+      - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg.tpl:ro
+    # haproxy.cfg's dynamic-cookie-key has no file-reading support of its own (verified against the real
+    # haproxy:2.8 image - it takes a single literal argument), so the Docker secret has to be templated into
+    # the config before haproxy parses it. This substitutes the [@HAPROXY_COOKIE_SECRET@] token - the same
+    # [@Key@] convention Jube's own DynamicEnvironment tokenisation uses - with the mounted secret's contents
+    # into a writable copy, then hands off to haproxy the same way the image's own entrypoint would (-W -db,
+    # matching docker-entrypoint.sh's behaviour for a bare "haproxy" command).
+    command: ["sh", "-c", "sed \"s#\\[@HAPROXY_COOKIE_SECRET@\\]#$(cat /run/secrets/HAPROXY_COOKIE_SECRET)#\" /usr/local/etc/haproxy/haproxy.cfg.tpl > /tmp/haproxy.cfg && exec haproxy -W -db -f /tmp/haproxy.cfg"]
+    ports:
+      - target: 7000
+        published: 7000
+        protocol: tcp
+        mode: host
+      - target: 5002
+        published: 5002
+        protocol: tcp
+        mode: host
+      - target: 5001
+        published: 5001
+        protocol: tcp
+        mode: host
+    networks:
+      jube-cluster:
+        aliases:
+          - haproxy
+    deploy:
+#      placement:
+#        constraints:
+#          - node.labels.zone != $CRITICAL_HOST_TIEBREAKER
+      mode: global
+      restart_policy:
+        condition: on-failure
+        delay: 15s
+  
+  redis-master:
+    image: redis:7-alpine
+    hostname: redis-master
+    secrets:
+      - REDIS_PASSWORD
+    # Every node defers to Sentinel on startup rather than hardcoding itself as master: this queries each
+    # Sentinel in turn for who it currently considers master, and only falls back to the static topology below
+    # (this node seeds as a plain master) if no Sentinel can be reached or has an opinion yet - true only on a
+    # genuinely fresh cluster. This matters because a container restart (crash, redeploy, `service update
+    # --force`) always re-runs this script: without querying Sentinel first, a node Sentinel already failed
+    # away from could restart and declare itself master again with its own old data - a second, independent
+    # master directly contradicting what the rest of the cluster now agrees is authoritative.
+    command:
+      - sh
+      - -c
+      - |
+        PASS=$$(cat /run/secrets/REDIS_PASSWORD)
+        MASTER_HOST=""
+        for S in sentinel1 sentinel2 sentinel3 sentinel4 sentinel5; do
+          MASTER_HOST=$$(redis-cli -h "$$S" -p 26379 --connect-timeout 2 SENTINEL get-master-addr-by-name redis-master 2>/dev/null | sed -n 1p)
+          [ -n "$$MASTER_HOST" ] && break
+        done
+        if [ -n "$$MASTER_HOST" ] && [ "$$MASTER_HOST" != "redis-master" ]; then
+          exec redis-server /redis.conf \
+            --requirepass "$$PASS" \
+            --masterauth "$$PASS" \
+            --replicaof "$$MASTER_HOST" 6379 \
+            --replica-announce-ip redis-master
+        else
+          exec redis-server /redis.conf \
+            --requirepass "$$PASS" \
+            --masterauth "$$PASS" \
+            --replica-announce-ip redis-master
+        fi
+    volumes:
+      # NAS-backed, unlike the three replicas' local Swarm-managed volumes below - a backup decision, not a
+      # role/failover one now that startup role is Sentinel-driven for all four (see command above). This is a
+      # further, independent layer of backup beyond in-cluster replica redundancy - the same durability-
+      # independence reasoning as pgBackRest's repository, applied to Redis. The replicas deliberately don't
+      # need this: any one of them can always fully re-sync from whichever node Sentinel currently considers
+      # master, so paying NAS latency for volumes that exist to be disposable and rebuildable would be pure
+      # overhead with no corresponding benefit.
+      - /mnt/redis:/data
+      - ./redis/redis.conf:/redis.conf:ro
+    networks:
+      jube-cluster:
+        aliases:
+          - redis-master
+    deploy:
+      # Same dnsrr/zone-pinning reasoning as etcd1 above.
+      endpoint_mode: dnsrr
+      placement:
+        constraints:
+          - node.labels.zone == $CRITICAL_HOST_1
+      restart_policy:
+        condition: on-failure
+        delay: 15s
+        max_attempts: 10
+        window: 120s
+  
+  redis-replica1:
+    image: redis:7-alpine
+    hostname: redis-replica1
+    secrets:
+      - REDIS_PASSWORD
+    # Same Sentinel-first startup logic as redis-master above, minus the plain-master fallback branch - this
+    # node always ends up as a replica of whoever Sentinel currently considers master.
+    command:
+      - sh
+      - -c
+      - |
+        PASS=$$(cat /run/secrets/REDIS_PASSWORD)
+        MASTER_HOST=""
+        for S in sentinel1 sentinel2 sentinel3 sentinel4 sentinel5; do
+          MASTER_HOST=$$(redis-cli -h "$$S" -p 26379 --connect-timeout 2 SENTINEL get-master-addr-by-name redis-master 2>/dev/null | sed -n 1p)
+          [ -n "$$MASTER_HOST" ] && break
+        done
+        [ -z "$$MASTER_HOST" ] && MASTER_HOST=redis-master
+        exec redis-server /redis.conf \
+          --replicaof "$$MASTER_HOST" 6379 \
+          --requirepass "$$PASS" \
+          --masterauth "$$PASS" \
+          --protected-mode no \
+          --replica-announce-ip redis-replica1
+    volumes:
+      # Local, Swarm-managed volume (not NAS) - see redis-master's volumes comment above for why.
+      - redis-replica1-data:/data
+      - ./redis/redis.conf:/redis.conf:ro
+    networks:
+      jube-cluster:
+        aliases:
+          - redis-replica1
+    deploy:
+      endpoint_mode: dnsrr
+      placement:
+        constraints:
+          - node.labels.zone == $CRITICAL_HOST_2
+      restart_policy:
+        condition: on-failure
+        delay: 15s
+        max_attempts: 10
+        window: 120s
+  
+  redis-replica2:
+    image: redis:7-alpine
+    hostname: redis-replica2
+    secrets:
+      - REDIS_PASSWORD
+    command:
+      - sh
+      - -c
+      - |
+        PASS=$$(cat /run/secrets/REDIS_PASSWORD)
+        MASTER_HOST=""
+        for S in sentinel1 sentinel2 sentinel3 sentinel4 sentinel5; do
+          MASTER_HOST=$$(redis-cli -h "$$S" -p 26379 --connect-timeout 2 SENTINEL get-master-addr-by-name redis-master 2>/dev/null | sed -n 1p)
+          [ -n "$$MASTER_HOST" ] && break
+        done
+        [ -z "$$MASTER_HOST" ] && MASTER_HOST=redis-master
+        exec redis-server /redis.conf \
+          --replicaof "$$MASTER_HOST" 6379 \
+          --requirepass "$$PASS" \
+          --masterauth "$$PASS" \
+          --protected-mode no \
+          --replica-announce-ip redis-replica2
+    volumes:
+      - redis-replica2-data:/data
+      - ./redis/redis.conf:/redis.conf:ro
+    networks:
+      jube-cluster:
+        aliases:
+          - redis-replica2
+    deploy:
+      endpoint_mode: dnsrr
+      placement:
+        constraints:
+          - node.labels.zone == $CRITICAL_HOST_3
+      restart_policy:
+        condition: on-failure
+        delay: 15s
+        max_attempts: 10
+        window: 120s
+  
+  redis-replica3:
+    image: redis:7-alpine
+    hostname: redis-replica3
+    secrets:
+      - REDIS_PASSWORD
+    command:
+      - sh
+      - -c
+      - |
+        PASS=$$(cat /run/secrets/REDIS_PASSWORD)
+        MASTER_HOST=""
+        for S in sentinel1 sentinel2 sentinel3 sentinel4 sentinel5; do
+          MASTER_HOST=$$(redis-cli -h "$$S" -p 26379 --connect-timeout 2 SENTINEL get-master-addr-by-name redis-master 2>/dev/null | sed -n 1p)
+          [ -n "$$MASTER_HOST" ] && break
+        done
+        [ -z "$$MASTER_HOST" ] && MASTER_HOST=redis-master
+        exec redis-server /redis.conf \
+          --replicaof "$$MASTER_HOST" 6379 \
+          --requirepass "$$PASS" \
+          --masterauth "$$PASS" \
+          --protected-mode no \
+          --replica-announce-ip redis-replica3
+    volumes:
+      - redis-replica3-data:/data
+      - ./redis/redis.conf:/redis.conf:ro
+    networks:
+      jube-cluster:
+        aliases:
+          - redis-replica3
+    deploy:
+      endpoint_mode: dnsrr
+      placement:
+        constraints:
+          - node.labels.zone == $CRITICAL_HOST_4
+      restart_policy:
+        condition: on-failure
+        delay: 15s
+        max_attempts: 10
+        window: 120s
+  
+  sentinel1:
+    image: redis:7-alpine
+    hostname: sentinel1
+    # Five Sentinels, deliberately odd for the same quorum/majority-vote reasoning as etcd's five nodes (see
+    # etcd1 above) - avoids a tied vote during a partition when deciding whether to fail over redis-master.
+    secrets:
+      - REDIS_PASSWORD
+    command:
+      - sh
+      - -c
+      - |
+        REDIS_PASS=$$(cat /run/secrets/REDIS_PASSWORD)
+        cp /etc/sentinel-template/sentinel.conf /tmp/sentinel.conf
+        sed -i "s/__REDIS_PASSWORD__/$$REDIS_PASS/g" /tmp/sentinel.conf
+        exec redis-sentinel /tmp/sentinel.conf
+    volumes:
+      - ./redis/sentinel1:/etc/sentinel-template:ro
+    networks:
+      jube-cluster:
+        aliases:
+          - sentinel1
+    deploy:
+      endpoint_mode: dnsrr
+      placement:
+        constraints:
+          - node.labels.zone == $CRITICAL_HOST_1
+      restart_policy:
+        condition: on-failure
+        delay: 15s
+        max_attempts: 5
+        window: 180s
+
+  sentinel2:
+    image: redis:7-alpine
+    hostname: sentinel2
+    secrets:
+      - REDIS_PASSWORD
+    command:
+      - sh
+      - -c
+      - |
+        REDIS_PASS=$$(cat /run/secrets/REDIS_PASSWORD)
+        cp /etc/sentinel-template/sentinel.conf /tmp/sentinel.conf
+        sed -i "s/__REDIS_PASSWORD__/$$REDIS_PASS/g" /tmp/sentinel.conf
+        exec redis-sentinel /tmp/sentinel.conf
+    volumes:
+      - ./redis/sentinel2:/etc/sentinel-template:ro
+    networks:
+      jube-cluster:
+        aliases:
+          - sentinel2
+    deploy:
+      endpoint_mode: dnsrr
+      placement:
+        constraints:
+          - node.labels.zone == $CRITICAL_HOST_2
+      restart_policy:
+        condition: on-failure
+        delay: 15s
+        max_attempts: 5
+        window: 180s
+
+  sentinel3:
+    image: redis:7-alpine
+    hostname: sentinel3
+    secrets:
+      - REDIS_PASSWORD
+    command:
+      - sh
+      - -c
+      - |
+        REDIS_PASS=$$(cat /run/secrets/REDIS_PASSWORD)
+        cp /etc/sentinel-template/sentinel.conf /tmp/sentinel.conf
+        sed -i "s/__REDIS_PASSWORD__/$$REDIS_PASS/g" /tmp/sentinel.conf
+        exec redis-sentinel /tmp/sentinel.conf
+    volumes:
+      - ./redis/sentinel3:/etc/sentinel-template:ro
+    networks:
+      jube-cluster:
+        aliases:
+          - sentinel3
+    deploy:
+      endpoint_mode: dnsrr
+      placement:
+        constraints:
+          - node.labels.zone == $CRITICAL_HOST_3
+      restart_policy:
+        condition: on-failure
+        delay: 15s
+        max_attempts: 5
+        window: 180s
+
+  sentinel4:
+    image: redis:7-alpine
+    hostname: sentinel4
+    secrets:
+      - REDIS_PASSWORD
+    command:
+      - sh
+      - -c
+      - |
+        REDIS_PASS=$$(cat /run/secrets/REDIS_PASSWORD)
+        cp /etc/sentinel-template/sentinel.conf /tmp/sentinel.conf
+        sed -i "s/__REDIS_PASSWORD__/$$REDIS_PASS/g" /tmp/sentinel.conf
+        exec redis-sentinel /tmp/sentinel.conf
+    volumes:
+      - ./redis/sentinel4:/etc/sentinel-template:ro
+    networks:
+      jube-cluster:
+        aliases:
+          - sentinel4
+    deploy:
+      endpoint_mode: dnsrr
+      placement:
+        constraints:
+          - node.labels.zone == $CRITICAL_HOST_4
+      restart_policy:
+        condition: on-failure
+        delay: 15s
+        max_attempts: 5
+        window: 180s
+
+  sentinel5:
+    image: redis:7-alpine
+    hostname: sentinel5
+    secrets:
+      - REDIS_PASSWORD
+    command:
+      - sh
+      - -c
+      - |
+        REDIS_PASS=$$(cat /run/secrets/REDIS_PASSWORD)
+        cp /etc/sentinel-template/sentinel.conf /tmp/sentinel.conf
+        sed -i "s/__REDIS_PASSWORD__/$$REDIS_PASS/g" /tmp/sentinel.conf
+        exec redis-sentinel /tmp/sentinel.conf
+    volumes:
+      - ./redis/sentinel5:/etc/sentinel-template:ro
+    networks:
+      jube-cluster:
+        aliases:
+          - sentinel5
+    deploy:
+      endpoint_mode: dnsrr
+      placement:
+        constraints:
+          - node.labels.zone == $CRITICAL_HOST_TIEBREAKER
+      restart_policy:
+        condition: on-failure
+        delay: 15s
+        max_attempts: 5
+        window: 180s
+        
+  jube-ui:
+    image: ${JUBE_IMAGE}
+    secrets:
+      - JUBE_APP_PASSWORD
+      - JUBE_REPORTING_PASSWORD
+      - JUBE_MIGRATION_PASSWORD
+      - JWT_KEY
+      - PASSWORD_HASHING_KEY
+      - REDIS_PASSWORD
+      - API_HMAC_KEY
+      - PASSWORD_ASYMMETRIC_ENCRYPTION_PRIVATE_KEY
+    environment:
+      - ASPNETCORE_URLS=http://0.0.0.0:5001
+      - ConnectionString=Host=haproxy;Port=5432;Database=postgres;Username=jube_app;Password=[@JUBE_APP_PASSWORD@];Pooling=true;Minimum Pool Size=0;Maximum Pool Size=1000;No Reset On Close=true;Keepalive=60;Connection Idle Lifetime=300;Connection Pruning Interval=10;
+      # Port 5433, not 5432 - HAProxy's postgres_replicas backend (see haproxy.cfg), routing reporting/read
+      # queries to a Patroni replica instead of the primary.
+      - ReportConnectionString=Host=haproxy;Port=5433;Database=postgres;Username=jube_reporting;Password=[@JUBE_REPORTING_PASSWORD@];Pooling=true;Minimum Pool Size=0;Maximum Pool Size=1000;No Reset On Close=true;Keepalive=60;Connection Idle Lifetime=300;Connection Pruning Interval=10;
+      - EnableSandbox=False
+      - JWTKey=[@JWT_KEY@]
+      - ApiHmacKey=[@API_HMAC_KEY@]
+      - PasswordAsymmetricEncryption=True
+      - PasswordAsymmetricEncryptionPrivateKey=[@PASSWORD_ASYMMETRIC_ENCRYPTION_PRIVATE_KEY@]
+      # Only the private key flows through Docker secrets/[@Key@] tokenisation like the values above - the
+      # public key isn't sensitive, so secrets-init.sh just prints it once for a manual paste here instead
+      # of provisioning a secret for it. Required whenever PasswordAsymmetricEncryption=True: Jube refuses
+      # to start with RSA password encryption enabled and either key missing.
+      - PasswordAsymmetricEncryptionPublicKey=CHANGE-ME-paste-public-key-printed-by-secrets-init.sh
+      - RedisConnectionString=sentinel1:26379,sentinel2:26379,sentinel3:26379,sentinel4:26379,sentinel5:26379,serviceName=redis-master,password=[@REDIS_PASSWORD@],abortConnect=false,syncTimeout=8000,responseTimeout=8000,connectTimeout=10000,keepAlive=60
+      - EnableExhaustiveTraining=False
+      - Landlord=False
+      - EnableReprocessing=False
+      - EnableSanctionLoader=False
+      - CachePruneServer=False
+      - EnableTtlCounter=False
+      - EnableSearchKeyCache=False
+      - EnableCasesAutomation=False
+      - PasswordHashingKey=[@PASSWORD_HASHING_KEY@]
+      - EnableMigration=False
+      # jube-ui never runs the rules engine or entity model - it's the presentation layer only, so unlike
+      # jube-api/jube-jobs below it also has no ElementSymmetricEncryptionKey secret/env var: that key only
+      # matters to Inline Scripts' AES helper, which can only ever run where EnableEngine/EnableEntityModel is
+      # True.
+      - EnableEngine=False
+      - EnableEntityModel=False
+      - LocalCache=False
+      - LocalCacheBytes=0
+      - LocalCacheFill=False
+      - RedisPublishSubscribeEvents=False
+      - RedisBackplane=True
+      - EnablePublicInvokeController=False
+      - Log4NetLogLevel=INFO
+      - DOTNET_GC_SERVER=1
+      - SecretsPath=/run/secrets/
+      - NegotiateAuthentication=False
+      - KRB5_CONFIG=/etc/krb5.conf
+      - KRB5_KTNAME=FILE:/etc/krb5.keytab
+      - KRB5RCACHETYPE=none
+      # Uncomment for Kerberos/GSSAPI diagnostics during go-live. Writes the full
+      # negotiation (keytab selection, KDC traffic, enctypes) to stderr, which lands
+      # in `docker service logs`. Verbose and logs principal names - disable after.
+      # - KRB5_TRACE=/dev/stderr
+      - JWTValidIssuer=https://CHANGE-ME.yourcorp.com
+      - JWTValidAudience=https://CHANGE-ME.yourcorp.com
+    networks:
+      jube-cluster:
+        aliases:
+          - jube-ui
+    volumes:
+      - ./krb5/krb5.conf:/etc/krb5.conf:ro
+      - ./krb5/jube.keytab:/etc/krb5.keytab:ro
+    deploy:
+#      placement:
+#        max_replicas_per_node: 1
+#        constraints:
+#          - node.labels.zone != $CRITICAL_HOST_TIEBREAKER
+      # replicas: 0 here (and on jube-api) deliberately - both are scaled up manually only after jube-jobs has
+      # run its database migration (EnableMigration=True there, see jube-jobs below), so a fresh deployment
+      # can never race the application tier against an unmigrated schema.
+      replicas: 0
+      endpoint_mode: dnsrr
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+      update_config:
+        parallelism: 1
+        delay: 120s
+        order: stop-first
+        failure_action: rollback
+        monitor: 30s
+        max_failure_ratio: 0.1
+      rollback_config:
+        parallelism: 1
+        delay: 60s
+        order: stop-first
+        failure_action: continue
+  
+  jube-api:
+    image: ${JUBE_IMAGE}
+    secrets:
+      - JUBE_APP_PASSWORD
+      - JUBE_REPORTING_PASSWORD
+      - JUBE_MIGRATION_PASSWORD
+      - JWT_KEY
+      - PASSWORD_HASHING_KEY
+      - REDIS_PASSWORD
+      - API_HMAC_KEY
+      - ENCRYPTION_KEY
+      - PASSWORD_ASYMMETRIC_ENCRYPTION_PRIVATE_KEY
+    environment:
+      - ASPNETCORE_URLS=http://0.0.0.0:5001
+      - ConnectionString=Host=haproxy;Port=5432;Database=postgres;Username=jube_app;Password=[@JUBE_APP_PASSWORD@];Pooling=true;Minimum Pool Size=0;Maximum Pool Size=1000;No Reset On Close=true;Keepalive=60;Connection Idle Lifetime=300;Connection Pruning Interval=10;
+      # Port 5433, not 5432 - HAProxy's postgres_replicas backend (see haproxy.cfg), routing reporting/read
+      # queries to a Patroni replica instead of the primary.
+      - ReportConnectionString=Host=haproxy;Port=5433;Database=postgres;Username=jube_reporting;Password=[@JUBE_REPORTING_PASSWORD@];Pooling=true;Minimum Pool Size=0;Maximum Pool Size=1000;No Reset On Close=true;Keepalive=60;Connection Idle Lifetime=300;Connection Pruning Interval=10;
+      - EnableSandbox=False
+      - JWTKey=[@JWT_KEY@]
+      - ApiHmacKey=[@API_HMAC_KEY@]
+      - ElementSymmetricEncryptionKey=[@ENCRYPTION_KEY@]
+      - PasswordAsymmetricEncryption=True
+      - PasswordAsymmetricEncryptionPrivateKey=[@PASSWORD_ASYMMETRIC_ENCRYPTION_PRIVATE_KEY@]
+      # Only the private key flows through Docker secrets/[@Key@] tokenisation like the values above - the
+      # public key isn't sensitive, so secrets-init.sh just prints it once for a manual paste here instead
+      # of provisioning a secret for it. Required whenever PasswordAsymmetricEncryption=True: Jube refuses
+      # to start with RSA password encryption enabled and either key missing.
+      - PasswordAsymmetricEncryptionPublicKey=CHANGE-ME-paste-public-key-printed-by-secrets-init.sh
+      - RedisConnectionString=sentinel1:26379,sentinel2:26379,sentinel3:26379,sentinel4:26379,sentinel5:26379,serviceName=redis-master,password=[@REDIS_PASSWORD@],abortConnect=false,syncTimeout=8000,responseTimeout=8000,connectTimeout=10000,keepAlive=60
+      - EnableExhaustiveTraining=False
+      - Landlord=True
+      - EnableReprocessing=False
+      - EnableSanctionLoader=False
+      - CachePruneServer=False
+      - EnableTtlCounter=False
+      - EnableSearchKeyCache=False
+      - EnableCasesAutomation=False
+      - PasswordHashingKey=[@PASSWORD_HASHING_KEY@]
+      - EnableMigration=False
+      - EnableEngine=True
+      - LocalCache=True
+      - LocalCacheBytes=4294967296
+      - LocalCacheFill=False
+      - RedisPublishSubscribeEvents=True
+      - EnableEntityModel=True
+      - EnablePublicInvokeController=True
+      - Log4NetLogLevel=WARN
+      - ActivationWatcherBulkCopyThresholdjube-=20
+      - ArchiverPersistThreads=4
+      - BulkCopyThreshold=20
+      - DOTNET_GC_SERVER=1
+      - SecretsPath=/run/secrets/
+      - NegotiateAuthentication=False
+      - KRB5_CONFIG=/etc/krb5.conf
+      - KRB5_KTNAME=FILE:/etc/krb5.keytab
+      - KRB5RCACHETYPE=none
+      # Uncomment for Kerberos/GSSAPI diagnostics during go-live. Writes the full
+      # negotiation (keytab selection, KDC traffic, enctypes) to stderr, which lands
+      # in `docker service logs`. Verbose and logs principal names - disable after.
+      # - KRB5_TRACE=/dev/stderr
+      - JWTValidIssuer=https://CHANGE-ME.yourcorp.com
+      - JWTValidAudience=https://CHANGE-ME.yourcorp.com
+    networks:
+      jube-cluster:
+        aliases:
+          - jube-api
+    volumes:
+      - ./krb5/krb5.conf:/etc/krb5.conf:ro
+      - ./krb5/jube.keytab:/etc/krb5.keytab:ro
+    deploy:
+#      placement:
+#        max_replicas_per_node: 1
+#        constraints:
+#          - node.labels.zone != $CRITICAL_HOST_TIEBREAKER
+      # Same replicas: 0 / manual-scale-up-after-migration reasoning as jube-ui above.
+      replicas: 0
+      endpoint_mode: dnsrr
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+      update_config:
+        parallelism: 1
+        delay: 120s
+        order: stop-first
+        failure_action: rollback
+        monitor: 30s
+        max_failure_ratio: 0.1
+      rollback_config:
+        parallelism: 1
+        delay: 60s
+        order: stop-first
+        monitor: 30s
+        failure_action: continue
+
+  jube-jobs:
+    image: ${JUBE_IMAGE}
+    secrets:
+      - JUBE_APP_PASSWORD
+      - JUBE_REPORTING_PASSWORD
+      - JUBE_MIGRATION_PASSWORD
+      - JWT_KEY
+      - PASSWORD_HASHING_KEY
+      - REDIS_PASSWORD
+      - ENCRYPTION_KEY
+    environment:
+      - ASPNETCORE_URLS=http://0.0.0.0:5001
+      - ConnectionString=Host=haproxy;Port=5432;Database=postgres;Username=jube_app;Password=[@JUBE_APP_PASSWORD@];Pooling=true;Minimum Pool Size=0;Maximum Pool Size=1000;No Reset On Close=true;Keepalive=60;Connection Idle Lifetime=300;Connection Pruning Interval=10;
+      - ReportConnectionString=Host=haproxy;Port=5433;Database=postgres;Username=jube_reporting;Password=[@JUBE_REPORTING_PASSWORD@];Pooling=true;Minimum Pool Size=0;Maximum Pool Size=1000;No Reset On Close=true;Keepalive=60;Connection Idle Lifetime=300;Connection Pruning Interval=10;
+      - MigrationConnectionString=Host=haproxy;Port=5432;Database=postgres;Username=jube_migration;Password=[@JUBE_MIGRATION_PASSWORD@];Pooling=true;Minimum Pool Size=0;Maximum Pool Size=1000;No Reset On Close=true;Keepalive=60;Connection Idle Lifetime=300;Connection Pruning Interval=10;
+      - RedisConnectionString=sentinel1:26379,sentinel2:26379,sentinel3:26379,sentinel4:26379,sentinel5:26379,serviceName=redis-master,password=[@REDIS_PASSWORD@],abortConnect=false,syncTimeout=8000,responseTimeout=8000,connectTimeout=10000,keepAlive=60
+      - JWTKey=[@JWT_KEY@]
+      - ElementSymmetricEncryptionKey=[@ENCRYPTION_KEY@]
+      # jube-jobs is the only service with these background-processing flags (plus EnableMigration below) set
+      # True - jube-api/jube-ui have every one of them False. Several are documented as safe to run on only
+      # one instance at a time; letting every scaled jube-api/jube-ui replica also run them would mean N
+      # copies of the same job racing each other. jube-jobs is deployed as a singleton for exactly this reason
+      # (replicas: 0 below, scaled to exactly 1 manually) - jube-api/jube-ui are the stateless,
+      # horizontally-scaled request handlers.
+      - EnableExhaustiveTraining=True
+      - EnableReprocessing=True
+      - EnableSanctionLoader=True
+      - CachePruneServer=True
+      - EnableTtlCounter=True
+      - EnableSearchKeyCache=True
+      - EnableCasesAutomation=True
+      - StreamingActivationWatcher=False
+      - EnableCallback=True
+      - PasswordHashingKey=[@PASSWORD_HASHING_KEY@]
+      - EnableMigration=True
+      - EnableEngine=True
+      - EnableEntityModel=True
+      - EnablePublicInvokeController=False
+      - LocalCache=False
+      - LocalCacheBytes=0
+      - LocalCacheFill=False
+      - RedisPublishSubscribeEvents=False
+      - Log4NetLogLevel=INFO
+      - DOTNET_GC_SERVER=1
+      - SecretsPath=/run/secrets/
+    networks:
+      jube-cluster:
+        aliases:
+          - jube-jobs
+    deploy:
+#      placement:
+#        constraints:
+#          - node.labels.zone != $CRITICAL_HOST_TIEBREAKER
+      replicas: 0
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+      update_config:
+        parallelism: 1
+        delay: 180s
+        order: stop-first
+        failure_action: rollback
+        monitor: 30s
+        max_failure_ratio: 0.1
+      rollback_config:
+        parallelism: 1
+        delay: 60s
+        order: stop-first
+        failure_action: continue
+
+  dozzle:
+    image: amir20/dozzle:latest
+    # Dozzle's own login, on top of the network-layer restriction on this port (see the deployment doc's Port
+    # Map) - defense in depth, since its log viewer can surface anything an application logs. Generate real
+    # credentials before deploying (`docker run --rm amir20/dozzle generate <user> --password <pass> --name
+    # "<name>"`) and replace ./dozzle/users.yml with the output - the committed template is intentionally not
+    # a working credential file.
+    command:
+      - --auth-provider
+      - simple
+    environment:
+      - DOZZLE_MODE=swarm
+    volumes:
+      # Docker socket access is powerful regardless of the read-only bind-mount flag - a process with socket
+      # access can still start/stop/inspect containers via the Docker API. This is what Dozzle needs to
+      # introspect the cluster, and the standard mechanism for this class of tool, but it's a real trust
+      # decision, not a fully contained one.
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./dozzle/users.yml:/data/users.yml:ro
+    ports:
+      - "8080:8080"
+    networks:
+      jube-cluster:
+        aliases:
+          - dozzle
+    deploy:
+      # One Dozzle instance per manager node (not a fixed replica count) - paired with DOZZLE_MODE=swarm,
+      # each instance discovers and aggregates logs from every task across the whole Swarm, not just
+      # containers local to its own node. This is what the internal-only agent port 7007 is for
+      # (agent-to-UI communication between instances) - Dozzle's documented pattern for Swarm log
+      # aggregation, rather than something specific to this cluster.
+      mode: global
+      restart_policy:
+        condition: on-failure
+        delay: 30s
+      placement:
+        constraints:
+          - node.role == manager
+
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    volumes:
+      - kuma_data:/app/data
+      # Same docker.sock trust note as dozzle above.
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - "3001:3001"
+    networks:
+      jube-cluster:
+        aliases:
+          - uptime-kuma
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 30s
+      # Pinned to exactly one replica (not scaled or global) because Uptime Kuma keeps its state in a local
+      # SQLite database, which can't be shared across replicas - more than one would mean two independent,
+      # diverging monitors. Paired with the manager-only placement constraint below so an unpinned single
+      # replica can't get rescheduled onto a node without its data volume.
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+
+volumes:
+  etcd1_data:
+    external: true
+  etcd2_data:
+    external: true
+  etcd3_data:
+    external: true
+  etcd4_data:
+    external: true
+  etcd5_data:
+    external: true
+  patroni1_data:
+    external: true
+  patroni1_runtime:
+    external: true
+  patroni1_tmp:
+    external: true
+  patroni2_data:
+    external: true
+  patroni2_tmp:
+    external: true    
+  patroni2_runtime:
+    external: true
+  patroni3_data:
+    external: true
+  patroni3_tmp:
+    external: true    
+  patroni3_runtime:
+    external: true    
+  patroni4_data:
+    external: true
+  patroni4_tmp:
+    external: true    
+  patroni4_runtime:
+    external: true    
+  redis-replica1-data:
+    external: true
+  redis-replica2-data:
+    external: true
+  redis-replica3-data:
+    external: true
+  kuma_data:
+    external: true
+
+secrets:
+  PATRONI_SUPERUSER_PASSWORD:
+    external: true
+  PATRONI_REPLICATION_PASSWORD:
+    external: true
+  PATRONI_ADMIN_PASSWORD:
+    external: true
+  JUBE_APP_PASSWORD:
+    external: true
+  JUBE_REPORTING_PASSWORD:
+    external: true
+  JUBE_MIGRATION_PASSWORD:
+    external: true
+  REDIS_PASSWORD:
+    external: true
+  JWT_KEY:
+    external: true
+  PASSWORD_HASHING_KEY:
+    external: true
+  API_HMAC_KEY:
+    external: true
+  ENCRYPTION_KEY:
+    external: true
+  PASSWORD_ASYMMETRIC_ENCRYPTION_PRIVATE_KEY:
+    external: true
+  HAPROXY_COOKIE_SECRET:
+    external: true
+
+networks:
+  jube-cluster:
+    driver: overlay
+    driver_opts:
+      encrypted: "true"
+    attachable: true
+    ipam:
+      config:
+        - subnet: 10.0.1.0/24

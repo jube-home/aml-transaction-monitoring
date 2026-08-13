@@ -15,6 +15,8 @@ namespace Jube.Data.Reporting
 {
     using System;
     using System.Collections.Generic;
+    using System.Data;
+    using System.Data.Common;
     using System.Dynamic;
     using System.Linq;
     using System.Threading;
@@ -23,16 +25,19 @@ namespace Jube.Data.Reporting
     using Extension;
     using log4net;
     using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
     using ResilientNpgsqlConnection;
     using ResilientNpgsqlConnection.Extensions.Jube.ResilientNpgsqlConnection;
 
     public class Postgres : IDisposable
     {
         private readonly ResilientNpgsqlConnection connection;
+        private readonly bool parserAssertSelectOnly;
         private bool disposed;
 
-        public Postgres(string connectionString, ILog log)
+        public Postgres(string connectionString, ILog log, bool parserAssertSelectOnly)
         {
+            this.parserAssertSelectOnly = parserAssertSelectOnly;
             connection = new ResilientNpgsqlConnection(connectionString, log);
             try
             {
@@ -59,32 +64,56 @@ namespace Jube.Data.Reporting
         public async Task<Dictionary<string, string>> IntrospectAsync(string sql, Dictionary<string, object> parameters, CancellationToken token = default)
         {
             var values = new Dictionary<string, string>();
-            var tableName = "Temp_" + Guid.NewGuid().ToString("N");
+            var wrapSql = $"SELECT * FROM ({sql}) b LIMIT 0";
 
-            var wrapSql = $"select * into TEMPORARY TABLE {tableName} from (select * from ({sql}) b LIMIT 0) c";
-            await using var commandTempTable = new ResilientNpgsqlCommand(connection, wrapSql);
+            if (parserAssertSelectOnly)
+            {
+                PostgresSqlValidator.AssertSelectOnly(wrapSql);
+            }
+
+            await using var command = new ResilientNpgsqlCommand(connection, wrapSql);
 
             foreach (var (key, value) in parameters.Where(parameter => sql.Contains("@" + parameter.Key)))
             {
-                commandTempTable.Parameters.AddWithValue(key, value);
+                command.Parameters.AddWithValue(key, value);
             }
 
-            await commandTempTable.ExecuteNonQueryAsync(token).ConfigureAwait(false);
+            await using var reader = await command.ExecuteReaderAsync(
+                CommandBehavior.SchemaOnly | CommandBehavior.KeyInfo, token).ConfigureAwait(false);
 
-            var introspectionSql = "SELECT attname, format_type(atttypid, atttypmod) AS type" +
-                                   " FROM pg_attribute" +
-                                   $" WHERE attrelid = '{tableName}'::regclass" +
-                                   " AND attnum > 0 " +
-                                   " AND NOT attisdropped " +
-                                   " ORDER BY attnum";
-
-
-            await using var command = new ResilientNpgsqlCommand(connection, introspectionSql);
-
-            await using var reader = await command.ExecuteReaderAsync(token).ConfigureAwait(false);
-            while (await reader.ReadAsync(token).ConfigureAwait(false))
+            var schema = reader.GetColumnSchema();
+            foreach (var col in schema)
             {
-                values.Add(reader.GetValue(0).AsString(), reader.GetValue(1).AsString());
+                values.Add(col.ColumnName, col.DataTypeName ?? "unknown");
+            }
+
+            return values;
+        }
+
+        public async Task<Dictionary<string, string>> IntrospectAsync(string sql, List<object> parameters, CancellationToken token = default)
+        {
+            var values = new Dictionary<string, string>();
+            var wrapSql = $"SELECT * FROM ({sql}) b LIMIT 0";
+
+            if (parserAssertSelectOnly)
+            {
+                PostgresSqlValidator.AssertSelectOnly(wrapSql);
+            }
+
+            await using var command = new ResilientNpgsqlCommand(connection, wrapSql);
+
+            for (var i = 0; i < parameters.Count; i++)
+            {
+                command.Parameters.AddWithValue("@" + (i + 1), parameters[i]);
+            }
+
+            await using var reader = await command.ExecuteReaderAsync(
+                CommandBehavior.SchemaOnly | CommandBehavior.KeyInfo, token).ConfigureAwait(false);
+
+            var schema = reader.GetColumnSchema();
+            foreach (var col in schema)
+            {
+                values.Add(col.ColumnName, col.DataTypeName ?? "unknown");
             }
 
             return values;
@@ -92,6 +121,11 @@ namespace Jube.Data.Reporting
 
         public async Task PrepareAsync(string sql, List<object> parameters, CancellationToken token = default)
         {
+            if (parserAssertSelectOnly)
+            {
+                PostgresSqlValidator.AssertSelectOnly(sql);
+            }
+
             await using var command = new ResilientNpgsqlCommand(connection, sql);
 
             for (var i = 0; i < parameters.Count; i++)
@@ -103,7 +137,7 @@ namespace Jube.Data.Reporting
         }
 
         public async Task<List<string>> ExecuteReturnOnlyJsonFromArchiveSampleAsync(int entityAnalysisModelId,
-            string filterSql,
+            string sql,
             string filterTokens,
             int limit, bool mockData, CancellationToken token = default)
         {
@@ -115,25 +149,64 @@ namespace Jube.Data.Reporting
 
             var tableName = mockData ? "MockArchive" : "Archive";
 
-            var sql =
+            var dynamicGatedSql =
                 $"select \"Json\" from \"{tableName}\" where \"EntityAnalysisModelId\" = (@{tokens.Count - 1})"
-                + " and " + filterSql
+                + " and " + sql
                 + $" order by \"EntityAnalysisModelInstanceEntryGuid\" limit (@{limit})";
 
-            await using var command = new ResilientNpgsqlCommand(connection, sql);
+            if (parserAssertSelectOnly)
+            {
+                PostgresSqlValidator.AssertSelectOnly(dynamicGatedSql);
+            }
+
+            await using var command = new ResilientNpgsqlCommand(connection, dynamicGatedSql);
 
             for (var i = 0; i < tokens.Count; i++)
             {
                 command.Parameters.AddWithValue("@" + (i + 1), tokens[i]);
             }
 
-            await command.PrepareAsync(token).ConfigureAwait(false);
-
             await using var reader = await command.ExecuteReaderAsync(token).ConfigureAwait(false);
 
             while (await reader.ReadAsync(token).ConfigureAwait(false))
             {
                 value.Add(reader.GetValue(0).AsString());
+            }
+
+            return value;
+        }
+
+        public async Task<List<JObject>> ExecuteReturnOnlyJsonFromArchiveSampleAsync(int entityAnalysisModelId,
+            double sample, DateTime? dateFrom, DateTime? dateTo, CancellationToken token = default)
+        {
+            var value = new List<JObject>();
+
+            var dynamicGatedSql = """
+                                  SELECT a."Json"
+                                  FROM "Archive" a
+                                  INNER JOIN "EntityAnalysisModel" e ON a."EntityAnalysisModelId" = e."Id"
+                                  WHERE e."Id" = @entityAnalysisModelId
+                                  AND a."ReferenceDate" BETWEEN @dateFrom AND @dateTo
+                                  AND random() < @sample
+                                  LIMIT 100000
+                                  """;
+
+            if (parserAssertSelectOnly)
+            {
+                PostgresSqlValidator.AssertSelectOnly(dynamicGatedSql);
+            }
+
+            await using var command = new ResilientNpgsqlCommand(connection, dynamicGatedSql);
+            command.Parameters.AddWithValue("@entityAnalysisModelId", entityAnalysisModelId);
+            command.Parameters.AddWithValue("@sample", sample);
+            command.Parameters.AddWithValue("@dateFrom", dateFrom ?? DateTime.UtcNow);
+            command.Parameters.AddWithValue("@dateTo", dateTo ?? DateTime.UtcNow.AddDays(-1));
+
+            await using var reader = await command.ExecuteReaderAsync(token).ConfigureAwait(false);
+
+            while (await reader.ReadAsync(token).ConfigureAwait(false))
+            {
+                value.Add(JObject.Parse(reader.GetValue(0).AsString()));
             }
 
             return value;
@@ -146,16 +219,20 @@ namespace Jube.Data.Reporting
             int limit,
             CancellationToken token = default)
         {
-            var value = new List<DictionaryNoBoxing<string>>();
+            if (parserAssertSelectOnly)
+            {
+                PostgresSqlValidator.AssertSelectOnly(sql);
+            }
 
             await using var command = new ResilientNpgsqlCommand(connection, sql);
+
             command.Parameters.AddWithValue("adjustedStartDate", adjustedStartDate);
             command.Parameters.AddWithValue("limit", limit);
             command.Parameters.AddWithValue("skip", skip);
 
-            await command.PrepareAsync(token).ConfigureAwait(false);
-
             await using var reader = await command.ExecuteReaderAsync(token).ConfigureAwait(false);
+
+            var value = new List<DictionaryNoBoxing<string>>();
             while (await reader.ReadAsync(token).ConfigureAwait(false))
             {
                 var dictionaryNoBoxing = new DictionaryNoBoxing<string>();
@@ -206,7 +283,10 @@ namespace Jube.Data.Reporting
         public async Task<List<IDictionary<string, object>>> ExecuteByNamedParametersAsync(string sql,
             Dictionary<string, object> parameters, CancellationToken token = default)
         {
-            var value = new List<IDictionary<string, object>>();
+            if (parserAssertSelectOnly)
+            {
+                PostgresSqlValidator.AssertSelectOnly(sql);
+            }
 
             await using var command = new ResilientNpgsqlCommand(connection, sql);
 
@@ -215,9 +295,9 @@ namespace Jube.Data.Reporting
                 command.Parameters.AddWithValue("@" + key, o);
             }
 
-            await command.PrepareAsync(token).ConfigureAwait(false);
-
             await using var reader = await command.ExecuteReaderAsync(token).ConfigureAwait(false);
+
+            var value = new List<IDictionary<string, object>>();
             while (await reader.ReadAsync(token).ConfigureAwait(false))
             {
                 IDictionary<string, object> eo = new ExpandoObject();
@@ -238,7 +318,10 @@ namespace Jube.Data.Reporting
         public async Task<List<IDictionary<string, object>>> ExecuteByOrderedParametersAsync(string sql,
             List<object> parameters, CancellationToken token = default)
         {
-            var value = new List<IDictionary<string, object>>();
+            if (parserAssertSelectOnly)
+            {
+                PostgresSqlValidator.AssertSelectOnly(sql);
+            }
 
             await using var command = new ResilientNpgsqlCommand(connection, sql);
 
@@ -247,9 +330,9 @@ namespace Jube.Data.Reporting
                 command.Parameters.AddWithValue("@" + (i + 1), parameters[i]);
             }
 
-            await command.PrepareAsync(token).ConfigureAwait(false);
-
             await using var reader = await command.ExecuteReaderAsync(token).ConfigureAwait(false);
+
+            var value = new List<IDictionary<string, object>>();
             while (await reader.ReadAsync(token).ConfigureAwait(false))
             {
                 IDictionary<string, object> eo = new ExpandoObject();
@@ -265,6 +348,30 @@ namespace Jube.Data.Reporting
             }
 
             return value;
+        }
+
+        public async Task<int?> ExecuteScalarIdAsync(string sql,
+            List<object> parameters, CancellationToken token = default)
+        {
+            if (parserAssertSelectOnly)
+            {
+                PostgresSqlValidator.AssertSelectOnly(sql);
+            }
+
+            await using var command = new ResilientNpgsqlCommand(connection, sql);
+
+            for (var i = 0; i < parameters.Count; i++)
+            {
+                command.Parameters.AddWithValue("@" + (i + 1), parameters[i]);
+            }
+
+            var id = await command.ExecuteScalarAsync(token).ConfigureAwait(false);
+            if (id == null)
+            {
+                return null;
+            }
+
+            return (int)id;
         }
     }
 }

@@ -134,22 +134,24 @@ function SetAggregationParams(value) {
 }
 
 function ExpandCollapseSearchKey() {
+    const $searchTable = $("#SearchTable");
     if ($('#Search').prop('checked')) {
-        $('#SearchTable').show();
+        $searchTable.show();
     } else {
-        $('#SearchTable').hide();
+        $searchTable.hide();
     }
 }
 
 function ExpandCollapseOffset() {
+    const $offsetTable = $("#OffsetTable");
     if ($('#Offset').prop('checked')) {
-        $('#OffsetTable').show();
+        $offsetTable.show();
     } else {
-        $('#OffsetTable').hide();
+        $offsetTable.hide();
     }
 }
 
-$.get("../api/EntityAnalysisModelRequestXPath/ByEntityAnalysisModelId/" + parentKey,
+$.get("../api/GetEntityAnalysisRequestXPathInlineScriptNamesByStringIntegerFloatDataTypeQuery/" + parentKey,
     function (data) {
         for (const value of data) {
             switch (value.dataTypeId) {
@@ -173,6 +175,7 @@ $.get("../api/EntityAnalysisModelRequestXPath/ByEntityAnalysisModelId/" + parent
                     });
                     break;
                 case 4:
+                    // Note: endpoint may not return dataTypeId 4 (date).
                     searchFunctionKeyDate.getKendoDropDownList().dataSource.add({
                         "value": value.name,
                         "text": value.name
@@ -182,22 +185,6 @@ $.get("../api/EntityAnalysisModelRequestXPath/ByEntityAnalysisModelId/" + parent
                     break;
             }
         }
-
-        $.get("../api/GetEntityAnalysisInlineScriptSearchKeysQuery/" + parentKey,
-            function (data) {
-                for (const value of data) {
-                    searchKey.getKendoDropDownList().dataSource.add({
-                        "value": value.name,
-                        "text": value.name
-                    });
-                }
-            });
-
-        searchKey.getKendoDropDownList().dataSource.sort({
-            field: "text",
-            dir: "asc"
-        });
-
         if (typeof id === "undefined") {
             initBuilderCoder(3, parentKey);
             ExpandCollapseOffset();

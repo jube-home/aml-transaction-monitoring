@@ -11,11 +11,11 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using FluentMigrator;
-
 namespace Jube.Migrations.Baseline
 {
+    using System;
+    using FluentMigrator;
+
     [Migration(20220429124912)]
     public class AddCaseWorkflowFormTableIndex : Migration
     {
@@ -55,7 +55,7 @@ namespace Jube.Migrations.Baseline
                 CaseWorkflowId = 1,
                 Name = "ExampleForm",
                 Active = 1,
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 CreatedUser = "Administrator",
                 Version = 1,
                 Html = "<p>This form will support most unstyled elements available to HTML forms.</p>" +

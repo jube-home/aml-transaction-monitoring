@@ -23,6 +23,7 @@ namespace Jube.App.Controllers.Session
     using Data.Poco;
     using Data.Repository;
     using Dto;
+    using Dto.Mapping;
     using DynamicEnvironment;
     using FluentValidation;
     using FluentValidation.Results;
@@ -62,6 +63,8 @@ namespace Jube.App.Controllers.Session
             {
                 cfg.CreateMap<SessionCaseJournal, SessionCaseJournalDto>();
                 cfg.CreateMap<SessionCaseJournalDto, SessionCaseJournal>();
+                cfg.CreateMap<DateTime?, DateTimeOffset?>().ConvertUsing<NullableDateTimeToDateTimeOffsetConverter>();
+                cfg.CreateMap<DateTime, DateTimeOffset>().ConvertUsing(src => new DateTimeOffset(DateTime.SpecifyKind(src, DateTimeKind.Utc)));
             }, NullLoggerFactory.Instance);
 
             mapper = new Mapper(config);
@@ -78,28 +81,6 @@ namespace Jube.App.Controllers.Session
             }
 
             base.Dispose(disposing);
-        }
-
-        [HttpGet("ByCasesWorkflowId/{id:int}")]
-        public async Task<ActionResult<SessionCaseJournal>> GetByCaseWorkflowIdAsync(int id, CancellationToken token = default)
-        {
-            try
-            {
-                if (!permissionValidation.Validate(new[]
-                    {
-                        1
-                    }))
-                {
-                    return Forbid();
-                }
-
-                return Ok(mapper.Map<SessionCaseJournalDto>(await repository.GetByCaseWorkflowIdAsync(id, token)));
-            }
-            catch (Exception e)
-            {
-                log.Error(e);
-                return StatusCode(500);
-            }
         }
 
         [HttpGet("ByCasesWorkflowGuid/{guid:guid}")]

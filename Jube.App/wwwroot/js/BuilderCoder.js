@@ -20,7 +20,6 @@ let FirstCompile = true;
 let completions = [];
 let builder;
 let PendingCoderChangedCompileTimer;
-const showCoder = true;
 let coder;
 let showBuilder = false;
 let ruleType;
@@ -29,6 +28,25 @@ let builderValidationInterval;
 let tabStrip;
 let entityAnalysisModelId;
 let ruleParseType;
+let builderReady = false;
+
+function loadScript(url) {
+    return new Promise(function (resolve, reject) {
+        $.getScript(url).done(resolve).fail(reject);
+    });
+}
+
+function loadCompletions() {
+    return new Promise(function (resolve, reject) {
+        $.getJSON("../api/Completions/ByEntityAnalysisModelIdParseTypeId",
+            {
+                entityAnalysisModelId: entityAnalysisModelId,
+                parseTypeId: ruleParseType
+            })
+            .done(resolve)
+            .fail(reject);
+    });
+}
 
 function getBuilderCoder() {
     let value;
@@ -143,13 +161,24 @@ function CoderChangedCompile() {
 }
 
 function validateBuilder() {
+    if (!builderReady || !builder) {
+        return false;
+    }
+    const instance = builder.data('queryBuilder');
+    if (!instance || !instance.filters || instance.filters.length === 0) {
+        return false;
+    }
     return builder.queryBuilder('validate');
 }
 
 function setRuleType(denormIndex) {
     ruleType = denormIndex;
+    const $builderWarnings = $('#BuilderWarnings');
     if (ruleType === 2) {
         coder.session.setValue(createBuilderRuleText());
+        $builderWarnings.hide();
+    } else {
+        $builderWarnings.show();
     }
 }
 
@@ -183,6 +212,11 @@ function FilterExists(name, filters) {
 }
 
 function initBuilder(data) {
+    if (!completions || completions.length === 0) {
+        console.warn('initBuilder called with no completions — aborting.');
+        return;
+    }
+
     let rules;
     if (data) {
         rules = data.ruleJsonBuilder;
@@ -274,11 +308,56 @@ function initBuilder(data) {
             contains: {op: '.Contains(?)'},
             ends_with: {op: '.EndsWith(?)'},
             has: {op: '.contains([?])'}
-        },
-        rules: rules
+        }
     });
 
-    validateBuilder()
+    if (rules) {
+        const dropped = [];
+
+        try {
+            const parsedRules = typeof rules === 'string' ? JSON.parse(rules) : rules;
+
+            function stripUnknownFilters(group) {
+                if (!group || !Array.isArray(group.rules)) return group;
+                group.rules = group.rules.filter(function (rule) {
+                    if (rule.rules) {
+                        stripUnknownFilters(rule);
+                        return true;
+                    }
+                    if (!FilterExists(rule.id, filters)) {
+                        dropped.push(rule.id);
+                        return false;
+                    }
+                    return true;
+                });
+                return group;
+            }
+
+            const cleanedRules = stripUnknownFilters(parsedRules);
+
+            if (cleanedRules && cleanedRules.rules && cleanedRules.rules.length > 0) {
+                builder.queryBuilder('setRules', cleanedRules);
+            } else if (dropped.length === 0) {
+                console.warn('Could not restore builder rules: empty or malformed rule object');
+            }
+        } catch (e) {
+            console.warn('Could not restore builder rules:', e.message);
+        }
+
+        if (dropped.length > 0) {
+            const msg = '⚠ The following fields are no longer available and have been removed from the rule: '
+                + dropped.join(', ')
+                + '. This rule should be reviewed.';
+            console.warn(msg);
+            $('#BuilderWarnings').text(msg);
+        }
+    }
+
+    builderReady = true;
+
+    if (builderValidationInterval) {
+        clearInterval(builderValidationInterval);
+    }
     builderValidationInterval = setInterval(validateBuilder, 1300);
 }
 
@@ -289,7 +368,7 @@ function initCoder(data) {
         getCompletions: (editor, session, pos, prefix, callback) => {
             if (prefix.length === 0) {
                 callback(null, []);
-                return
+                return;
             }
 
             callback(null, completions.map(function (ea) {
@@ -299,7 +378,7 @@ function initCoder(data) {
                     score: ea.score,
                     meta: ea.meta
                 };
-            }))
+            }));
         }
     };
 
@@ -348,85 +427,84 @@ function initBuilderCoder(parseType, modelId, data) {
 
     entityAnalysisModelId = modelId;
 
-    $.getJSON("../api/Completions/ByEntityAnalysisModelIdParseTypeId",
-        {
-            entityAnalysisModelId: entityAnalysisModelId,
-            parseTypeId: ruleParseType
-        }
-        , function (completionsData) {
-            completions = completionsData;
-            $.getScript('/js/ace/ace.js', function () {
-                ace.config.set('basePath', '/js/ace/');
-                $.getScript('/js/ace/ext-language_tools.js', function () {
-                    if (showBuilder) {
-                        $("#rule").append("<div id='RuleType'></div>")
+    let ruleDiv = $("#rule");
 
-                        let ruleTypeDiv = $("#RuleType");
+    if (showBuilder) {
+        ruleDiv.append("<div id='RuleType'></div>");
+        let ruleTypeDiv = $("#RuleType");
+        ruleTypeDiv.append("<ul id='RuleTypeList'></ul>");
+        let ruleTypeList = $("#RuleTypeList");
+        ruleTypeList.append("<li>Builder</li>");
+        ruleTypeDiv.append("<div id='Builder'></div>");
+        ruleTypeList.append("<li>Coder</li>");
+        ruleTypeDiv.append("<div id='CoderWrapper' style='padding-top: .3em'></div>");
+        let coderWrapper = $("#CoderWrapper");
+        coderWrapper.append("<div class='validationLink'><a href='#' onclick='converge()'>Reset</a></div>");
+        coderWrapper.append("<div id='Coder' class='coder'></div>");
+        coderWrapper.append("<div id='CompileStatus' class='compileErrors'></div>");
+        $('#CompileStatus').html("Return False").css("color", "blue");
+        tabStrip = ruleTypeDiv.kendoTabStrip({animation: false}).data("kendoTabStrip");
+        ruleDiv.append("<div id='BuilderWarnings' style='color: darkorange; font-size: 0.85em; padding: 0.3em 0;'></div>");
+    } else {
+        ruleDiv.append("<div id='CoderWrapper' style='padding-top: .3em'></div>");
+        let coderWrapper = $("#CoderWrapper");
+        coderWrapper.append("<div id='Coder' class='coder'></div>");
+        coderWrapper.append("<div id='CompileStatus' class='compileErrors'></div>");
+        $('#CompileStatus').html("Return False").css("color", "blue");
+    }
 
-                        ruleTypeDiv.append("<ul id='RuleTypeList'></ul>")
-                        let ruleTypeList = $("#RuleTypeList");
+    const scriptPromises = [
+        loadScript('/js/ace/ace.js').then(function () {
+            ace.config.set('basePath', '/js/ace/');
+            return loadScript('/js/ace/ext-language_tools.js');
+        })
+    ];
 
-                        ruleTypeList.append("<li>Builder</li>")
-                        ruleTypeDiv.append("<div id='Builder'></div>")
-                        ruleTypeList.append("<li>Coder</li>")
+    if (showBuilder) {
+        scriptPromises.push(
+            loadScript('/js/builder/query-builder.standalone.min.js').then(function () {
+                $('<link/>', {
+                    rel: 'stylesheet',
+                    type: 'text/css',
+                    href: '/styles/query-builder.default.min.css'
+                }).appendTo('head');
+            })
+        );
+    }
 
-                        ruleTypeDiv.append("<div id='CoderWrapper' style='padding-top: .3em'></div>");
-                        let coderWrapper = $("#CoderWrapper");
+    Promise.all([loadCompletions(), ...scriptPromises])
+        .then(function (results) {
+            completions = results[0];
 
-                        coderWrapper.append("<div class='validationLink'><a href='#' onclick='converge()'>Reset</a></div>");
-                        coderWrapper.append("<div id='Coder' class='coder'></div>");
-                        coderWrapper.append("<div id='CompileStatus' class='compileErrors'></div>");
-                        let compileStatus = $('#CompileStatus');
+            initCoder(data);
 
-                        compileStatus.html("Return False");
-                        compileStatus.css("color", "blue");
+            if (showBuilder) {
+                initBuilder(data);
 
-                        tabStrip = ruleTypeDiv.kendoTabStrip({
-                            animation: false
-                        }).data("kendoTabStrip");
-                    } else {
-                        $("#rule").append("<div id='CoderWrapper' style='padding-top: .3em'></div>");
-                        let coderWrapper = $("#CoderWrapper");
+                if (data) {
+                    ruleType = data.ruleType;
+                    tabStrip.select(ruleType - 1);
+                    checkDivergence();
+                } else {
+                    tabStrip.select(0);
+                    ruleType = 1;
+                }
 
-                        coderWrapper.append("<div id='Coder' class='coder'></div>");
-                        coderWrapper.append("<div id='CompileStatus' class='compileErrors'></div>");
-                        let compileStatus = $('#CompileStatus');
+                const $builderWarnings = $("#BuilderWarnings");
+                if (ruleType === 2) {
+                    $builderWarnings.hide();
+                } else {
+                    $builderWarnings.show();
+                }
 
-                        compileStatus.html("Return False");
-                        compileStatus.css("color", "blue");
-                    }
-
-                    initCoder(data);
-
-                    if (showBuilder === true) {
-                        $.getScript('/js/builder/query-builder.standalone.min.js', function () {
-                            $('<link/>', {
-                                rel: 'stylesheet',
-                                type: 'text/css',
-                                href: '/styles/query-builder.default.min.css'
-                            }).appendTo('head');
-
-                            initBuilder(data);
-
-                            if (data) {
-                                ruleType = data.ruleType;
-                                tabStrip.select(ruleType - 1);
-
-                                checkDivergence();
-                            } else {
-                                tabStrip.select(0);
-                                ruleType = 1;
-                            }
-
-                            function onSelect(e) {
-                                setRuleType($(e.item).index() + 1);
-                            }
-
-                            tabStrip.bind("select", onSelect);
-                        });
-                    }
+                tabStrip.bind("select", function (e) {
+                    setRuleType($(e.item).index() + 1);
                 });
-            });
+            }
+        })
+        .catch(function (err) {
+            console.error('Failed to initialise builder/coder:', err);
+            $('#BuilderWarnings').text('⚠ Failed to load rule editor. Please refresh the page.');
         });
 }
 

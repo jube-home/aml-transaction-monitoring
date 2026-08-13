@@ -13,21 +13,42 @@
 
 namespace Jube.Data.Repository
 {
+    using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
     using Context;
     using LinqToDB;
     using Poco;
 
+    public enum SanctionEntryUpsertOutcome
+    {
+        Inserted,
+        Revived,
+        Unchanged
+    }
+
     public class SanctionsEntryRepository(DbContext dbContext)
     {
         public async Task<IEnumerable<SanctionEntry>> GetAsync(CancellationToken token = default)
         {
-            return await dbContext.SanctionEntry.ToListAsync(token).ConfigureAwait(false);
+            return await dbContext.SanctionEntry
+                .Where(w => w.Deleted == 0 || w.Deleted == null)
+                .ToListAsync(token).ConfigureAwait(false);
         }
 
-        public async Task<SanctionEntry> UpsertAsync(SanctionEntry model, CancellationToken token = default)
+        public async Task<IEnumerable<SanctionEntry>> GetActiveBySanctionEntrySourceIdAsync(
+            int sanctionEntrySourceId, CancellationToken token = default)
+        {
+            return await dbContext.SanctionEntry
+                .Where(w => w.SanctionEntrySourceId == sanctionEntrySourceId
+                            && (w.Deleted == 0 || w.Deleted == null))
+                .ToListAsync(token).ConfigureAwait(false);
+        }
+
+        public async Task<(SanctionEntry Entry, SanctionEntryUpsertOutcome Outcome)> UpsertAsync(SanctionEntry model,
+            CancellationToken token = default)
         {
             var existing =
                 await dbContext.SanctionEntry.FirstOrDefaultAsync(w =>
@@ -36,11 +57,38 @@ namespace Jube.Data.Repository
 
             if (existing != null)
             {
-                return existing;
+                if (existing.Deleted != 1)
+                {
+                    return (existing, SanctionEntryUpsertOutcome.Unchanged);
+                }
+
+                await dbContext.SanctionEntry
+                    .Where(w => w.Id == existing.Id)
+                    .Set(s => s.Deleted, (byte?)null)
+                    .Set(s => s.DeletedDate, (DateTime?)null)
+                    .Set(s => s.DeletedUser, (string)null)
+                    .UpdateAsync(token).ConfigureAwait(false);
+
+                existing.Deleted = null;
+                existing.DeletedDate = null;
+                existing.DeletedUser = null;
+
+                return (existing, SanctionEntryUpsertOutcome.Revived);
+
             }
 
             model.Id = await dbContext.InsertWithInt32IdentityAsync(model, token: token);
-            return model;
+            return (model, SanctionEntryUpsertOutcome.Inserted);
+        }
+
+        public Task DeleteAsync(int id, string userName, CancellationToken token = default)
+        {
+            return dbContext.SanctionEntry
+                .Where(w => w.Id == id)
+                .Set(s => s.Deleted, Convert.ToByte(1))
+                .Set(s => s.DeletedDate, DateTime.UtcNow)
+                .Set(s => s.DeletedUser, userName)
+                .UpdateAsync(token);
         }
     }
 }

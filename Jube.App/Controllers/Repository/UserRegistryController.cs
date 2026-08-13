@@ -1,5 +1,5 @@
 ﻿/* Copyright (C) 2022-present Jube Holdings Limited.
- *
+    *
  * This file is part of Jube™ software.
  *
  * Jube™ is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License
@@ -23,6 +23,8 @@ namespace Jube.App.Controllers.Repository
     using Data.Poco;
     using Data.Repository;
     using Data.Security;
+    using Dto;
+    using Dto.Mapping;
     using Dto.UserRegistry;
     using DynamicEnvironment;
     using FluentValidation;
@@ -66,6 +68,8 @@ namespace Jube.App.Controllers.Repository
             {
                 cfg.CreateMap<UserRegistryDto, UserRegistry>();
                 cfg.CreateMap<UserRegistry, UserRegistryDto>();
+                cfg.CreateMap<DateTime?, DateTimeOffset?>().ConvertUsing<NullableDateTimeToDateTimeOffsetConverter>();
+                cfg.CreateMap<DateTime, DateTimeOffset>().ConvertUsing(src => new DateTimeOffset(DateTime.SpecifyKind(src, DateTimeKind.Utc)));
             }, NullLoggerFactory.Instance);
 
             mapper = new Mapper(config);
@@ -106,8 +110,8 @@ namespace Jube.App.Controllers.Repository
             }
         }
 
-        [HttpGet("ByEntityAnalysisModelId/{roleRegistryId:int}")]
-        public async Task<ActionResult<List<UserRegistryDto>>> GetByRoleRegistryIdAsync(int roleRegistryId, CancellationToken token = default)
+        [HttpGet("ByEntityAnalysisModelGuid/{roleRegistryGuid:guid}")]
+        public async Task<ActionResult<List<UserRegistryDto>>> GetByRoleRegistryGuidAsync(Guid roleRegistryGuid, CancellationToken token = default)
         {
             try
             {
@@ -119,7 +123,7 @@ namespace Jube.App.Controllers.Repository
                     return Forbid();
                 }
 
-                return Ok(mapper.Map<List<UserRegistryDto>>(await repository.GetByRoleRegistryIdAsync(roleRegistryId, token)));
+                return Ok(mapper.Map<List<UserRegistryDto>>(await repository.GetByRoleRegistryGuidAsync(roleRegistryGuid, token)));
             }
             catch (Exception e)
             {
@@ -180,10 +184,10 @@ namespace Jube.App.Controllers.Repository
             }
         }
 
-        [HttpGet("SetPassword/{id:int}")]
+        [HttpPost("SetPassword")]
         [ProducesResponseType(typeof(UserRegistryDto), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ValidationResult), (int)HttpStatusCode.BadRequest)]
-        public async Task<ActionResult<UserRegistryPasswordResponseDto>> UpdatePasswordAsync(int id,
+        public async Task<ActionResult<UserRegistryPasswordResponseDto>> UpdatePasswordAsync([FromBody] UserRegistryPasswordResetDto model,
             CancellationToken token = default)
         {
             try
@@ -198,16 +202,29 @@ namespace Jube.App.Controllers.Repository
 
                 var userRegistryPasswordResponseDto = new UserRegistryPasswordResponseDto
                 {
-                    Password = HashPassword.CreatePasswordInClear(8),
-                    PasswordExpiryDate = DateTime.Now
+                    Password = HashPassword.CreateSecurePassword(16),
+                    PasswordExpiryDate = DateTime.UtcNow
                 };
 
-                var hashedPassword = HashPassword.GenerateHash(userRegistryPasswordResponseDto.Password,
-                    dynamicEnvironment.AppSettings("PasswordHashingKey"));
+                var userRegistry = await repository.GetByIdAsync(model.Id, token);
+                if (userRegistry == null)
+                {
+                    throw new KeyNotFoundException();
+                }
 
-                await repository.SetPasswordAsync(id, hashedPassword, userRegistryPasswordResponseDto.PasswordExpiryDate, token);
+                var password = userRegistryPasswordResponseDto.Password;
+                if (model.WirePasswordHash)
+                {
+                    password = HashPassword.Sha256(userRegistryPasswordResponseDto.Password + userRegistry.Name);
+                }
+
+                var hashedPassword = HashPassword.Argon2(password, dynamicEnvironment.AppSettings("PasswordHashingKey"));
+
+                await repository.SetPasswordAsync(model.Id, hashedPassword, userRegistryPasswordResponseDto.PasswordExpiryDate?.UtcDateTime,
+                    model.WirePasswordHash, token);
 
                 return userRegistryPasswordResponseDto;
+
             }
             catch (Exception e)
             {

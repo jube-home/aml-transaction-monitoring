@@ -22,6 +22,7 @@ namespace Jube.App.Controllers.Repository
     using Data.Context;
     using Data.Query;
     using Dto;
+    using Dto.Mapping;
     using DynamicEnvironment;
     using log4net;
     using Microsoft.AspNetCore.Authorization;
@@ -54,10 +55,10 @@ namespace Jube.App.Controllers.Repository
 
             var config = new MapperConfiguration(cfg =>
             {
-                cfg.CreateMap<EntityAnalysisModelAsynchronousQueueBalanceDto,
-                    GetEntityAnalysisModelAsynchronousQueueBalancesQuery.Dto>();
-                cfg.CreateMap<GetEntityAnalysisModelAsynchronousQueueBalancesQuery.Dto,
-                    EntityAnalysisModelAsynchronousQueueBalanceDto>();
+                cfg.CreateMap<EntityAnalysisModelAsynchronousQueueBalanceDto, GetEntityAnalysisModelAsynchronousQueueBalancesQuery.Dto>();
+                cfg.CreateMap<GetEntityAnalysisModelAsynchronousQueueBalancesQuery.Dto, EntityAnalysisModelAsynchronousQueueBalanceDto>();
+                cfg.CreateMap<DateTime?, DateTimeOffset?>().ConvertUsing<NullableDateTimeToDateTimeOffsetConverter>();
+                cfg.CreateMap<DateTime, DateTimeOffset>().ConvertUsing(src => new DateTimeOffset(DateTime.SpecifyKind(src, DateTimeKind.Utc)));
             }, NullLoggerFactory.Instance);
 
             mapper = new Mapper(config);

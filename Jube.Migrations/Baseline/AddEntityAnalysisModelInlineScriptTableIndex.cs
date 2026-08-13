@@ -11,11 +11,11 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using FluentMigrator;
-
 namespace Jube.Migrations.Baseline
 {
+    using System;
+    using FluentMigrator;
+
     [Migration(20220429124933)]
     public class AddEntityAnalysisModelInlineScriptTableIndex : Migration
     {
@@ -45,7 +45,7 @@ namespace Jube.Migrations.Baseline
                 EntityAnalysisModelId = 1,
                 Name = "Issue OTP",
                 Active = 1,
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 CreatedUser = "Administrator",
                 Version = 1,
                 EntityAnalysisInlineScriptId = 1

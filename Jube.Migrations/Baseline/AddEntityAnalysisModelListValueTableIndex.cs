@@ -11,11 +11,11 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using FluentMigrator;
-
 namespace Jube.Migrations.Baseline
 {
+    using System;
+    using FluentMigrator;
+
     [Migration(20220426071437)]
     public class AddEntityAnalysisModelListValueTableIndex : Migration
     {
@@ -41,7 +41,7 @@ namespace Jube.Migrations.Baseline
             {
                 EntityAnalysisModelListId = 1,
                 ListValue = "123.456.789.123",
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 CreatedUser = "Administrator",
                 Version = 1
             });

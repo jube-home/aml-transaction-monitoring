@@ -6,9 +6,7 @@ parent: Models
 grand_parent: Configuration
 ---
 
-🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
-💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
-developer.
+🚀 Get to pre-production in weeks, not months, with private [training](https://www.jube.io/jube-training) direct from Jube's developer — real sovereignty, zero vendor lock-in.
 
 # Lists
 The Lists Page facilitates the creation of lists of data that can be referenced as an operator in all rules in the models.  For example, the Lists page can be used to maintain a list of bad customer account identifiers that can be referenced using the Builder or Coder.
@@ -61,6 +59,12 @@ Include the value as follows in the input box:
 
 ![Image](ExampleValueForListValue.png)
 
+The Add/Update Value form also exposes an optional Delete Expiry Date field, alongside the List Value, using a date and time picker.
+
+Delete Expiry Date has the same effect as deleting the List Value: once the date and time entered is reached, the value is automatically excluded from processing and from the grid,  without an explicit delete ever being actioned. Leaving Delete Expiry Date blank,  which is the default,  means the value never expires and will need to be removed manually if it is to stop being available. The date and time entered must be in the future; an attempt to set a value in the past is rejected by the server, with the reason displayed above the grid.
+
+This applies to any field on the List Value entry, not only Delete Expiry Date: an empty List Value is likewise rejected server-side. On rejection the entry is automatically re-opened for editing and highlighted in red, in addition to the message shown above the grid, making it clear exactly which entry needs correcting.
+
 To update a List Value,  click on the pen icon for the list value to be updated. Upon clicking the Pen icon:  
 
 ![Image](EditButtonExistingListValue.png)
@@ -97,11 +101,11 @@ Upon confirming the delete,  it will be removed from the list of values:
 
 ![Image](ValueDeleted.png)
 
-It is also possible to upload a list of values by uploading a CSV file of the following structure:
+It is also possible to upload a list of values by uploading a CSV file given the downloadable template in the page.
 
-![Image](ExampleCSV.png)
+Note there is no column header in the above file and structure. Each line is a List Value, optionally followed by a comma and a Delete Expiry Date. The Delete Expiry Date must be in .NET's round-trip ("O") format, for example `2027-01-01T00:00:00.0000000Z` - this is enforced strictly, with no other date format accepted, to avoid the day/month ambiguity inherent in free-form date parsing of a text file. Where the Delete Expiry Date is omitted or left blank, the List Value never expires. A template CSV file, illustrating both a List Value with no expiry and one with a Delete Expiry Date, can be downloaded directly from the List page using the Download CSV Template link found next to the Select Files control.
 
-Note there is no column header in the above file and structure. The control to upload a file is the button Select Files:
+The control to upload a file is the button Select Files:
 
 ![Image](SelectFilesButton.png)
 

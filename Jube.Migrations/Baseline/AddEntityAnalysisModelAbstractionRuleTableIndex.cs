@@ -11,11 +11,11 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using FluentMigrator;
-
 namespace Jube.Migrations.Baseline
 {
+    using System;
+    using FluentMigrator;
+
     [Migration(20220429125029)]
     public class AddEntityAnalysisModelAbstractionRuleTableIndex : Migration
     {
@@ -76,7 +76,7 @@ namespace Jube.Migrations.Baseline
                 SearchValue = 1,
                 SearchKey = "AccountId",
                 Active = 1,
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 CreatedUser = "Administrator",
                 Version = 1,
                 ResponsePayload = 1,
@@ -105,7 +105,7 @@ namespace Jube.Migrations.Baseline
                 SearchValue = 1,
                 SearchKey = "AccountId",
                 Active = 1,
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 CreatedUser = "Administrator",
                 Version = 1,
                 ResponsePayload = 1,

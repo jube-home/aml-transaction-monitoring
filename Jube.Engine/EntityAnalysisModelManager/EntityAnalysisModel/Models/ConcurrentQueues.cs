@@ -27,7 +27,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Models
     {
         public ConcurrentDictionary<Guid, TaskCompletionSource<Callback>> Callbacks;
         public ConcurrentQueue<Context> PendingEntityInvoke = new ConcurrentQueue<Context>();
-        public ConcurrentQueue<Tag> PendingTagging { get; set; } = new ConcurrentQueue<Tag>();
+        public ConcurrentQueue<TagMessage> PendingTagging { get; set; } = new ConcurrentQueue<TagMessage>();
         public ConcurrentQueue<Notification> PendingNotifications { get; set; }
         public ConcurrentQueue<ActivationWatcher> PersistToActivationWatcherAsync { get; set; } = new ConcurrentQueue<ActivationWatcher>();
         public ConcurrentQueue<EntityAnalysisModelInstanceEntryPayload> PersistToDatabaseAsync { get; } = new ConcurrentQueue<EntityAnalysisModelInstanceEntryPayload>();

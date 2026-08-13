@@ -14,12 +14,12 @@
 namespace Jube.App.Code.WatcherDispatch
 {
     using System.Threading.Tasks;
+    using Cache;
     using DynamicEnvironment;
     using log4net;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.SignalR;
     using Microsoft.Extensions.DependencyInjection;
-    using Newtonsoft.Json.Serialization;
     using RabbitMQ.Client;
     using signalr;
     using TaskCancellation;
@@ -40,11 +40,11 @@ namespace Jube.App.Code.WatcherDispatch
             var taskCoordinator = scope.ServiceProvider.GetService<TaskCoordinator>();
             var hub = scope.ServiceProvider.GetService<IHubContext<WatcherHub>>();
             var environment = scope.ServiceProvider.GetService<DynamicEnvironment>();
-            var contractResolver = scope.ServiceProvider.GetService<DefaultContractResolver>();
             var log = scope.ServiceProvider.GetService<ILog>();
             var rabbitMqConnection = scope.ServiceProvider.GetService<IConnection>();
+            var cacheService = scope.ServiceProvider.GetService<CacheService>();
 
-            await relay.StartAsync(hub, environment, log, rabbitMqConnection, contractResolver, taskCoordinator).ConfigureAwait(false);
+            await relay.StartAsync(hub, environment, log, rabbitMqConnection, taskCoordinator, cacheService).ConfigureAwait(false);
         }
     }
 }

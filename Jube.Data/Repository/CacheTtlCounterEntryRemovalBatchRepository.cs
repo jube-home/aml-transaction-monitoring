@@ -25,7 +25,7 @@ namespace Jube.Data.Repository
     {
         public async Task<CacheTtlCounterEntryRemovalBatch> InsertAsync(CacheTtlCounterEntryRemovalBatch model, CancellationToken token = default)
         {
-            model.CreatedDate = DateTime.Now;
+            model.CreatedDate = DateTime.UtcNow;
             model.Id = await dbContext.InsertWithInt32IdentityAsync(model, token: token);
 
             return model;
@@ -35,7 +35,7 @@ namespace Jube.Data.Repository
         {
             return dbContext.CacheTtlCounterEntryRemovalBatch
                 .Where(d => d.Id == cacheTtlCounterEntryRemovalBatchId)
-                .Set(s => s.FinishedDate, DateTime.Now)
+                .Set(s => s.FinishedDate, DateTime.UtcNow)
                 .UpdateAsync(token);
         }
     }

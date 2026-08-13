@@ -6,9 +6,7 @@ parent: Case Management
 grand_parent: Configuration
 ---
 
-🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
-💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
-developer.
+🚀 Get to pre-production in weeks, not months, with private [training](https://www.jube.io/jube-training) direct from Jube's developer — real sovereignty, zero vendor lock-in.
 
 # Working Uploading and Recalling Files
 It is possible to upload files to a Case Key Value combination,  with these files being centrally stored in the database.
@@ -32,6 +30,8 @@ In the case upload tab there exists a file upload pane,  which will accept a dra
 In this example, click on the Select Files button, the Select Files dialogue box will appear:
 
 ![Image](FileUpload.png)
+
+![Image](LocationOfNewFile.png)
 
 Use the Select Files dialogue box to navigate to, and select a file, in this case an image:
 

@@ -11,11 +11,11 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using FluentMigrator;
-
 namespace Jube.Migrations.Baseline
 {
+    using System;
+    using FluentMigrator;
+
     [Migration(20220429124931)]
     public class AddEntityAnalysisModelHttpAdaptationTableIndex : Migration
     {
@@ -47,7 +47,7 @@ namespace Jube.Migrations.Baseline
                 EntityAnalysisModelId = 1,
                 Active = 0,
                 Name = "ExampleFraudScoreLocalEndpoint",
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 CreatedUser = "Administrator",
                 Version = 1,
                 ResponsePayload = 1,

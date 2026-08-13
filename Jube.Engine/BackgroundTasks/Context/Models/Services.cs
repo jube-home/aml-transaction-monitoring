@@ -13,10 +13,11 @@
 
 namespace Jube.Engine.BackgroundTasks.Context.Models
 {
-    using System.Collections.Generic;
+    using System.Collections.Concurrent;
     using System.Reflection;
     using Cache;
     using DynamicEnvironment;
+    using Jube.Engine.Models;
     using log4net;
     using Newtonsoft.Json.Serialization;
     using RabbitMQ.Client;
@@ -30,7 +31,8 @@ namespace Jube.Engine.BackgroundTasks.Context.Models
         public IConnection RabbitMqConnection { get; set; }
         public CacheService CacheService { get; set; }
         public DefaultContractResolver ContractResolver { get; set; }
-        public Dictionary<string, Assembly> HashCacheAssembly { get; } = new Dictionary<string, Assembly>();
+        public ConcurrentDictionary<string, Assembly> HashCacheAssembly { get; } = new ConcurrentDictionary<string, Assembly>();
+        public ConcurrentDictionary<string, HashCacheAssemblyPayload> HashCacheAssemblyMetadata { get; } = new ConcurrentDictionary<string, HashCacheAssemblyPayload>();
         public string ReportConnectionString { get; set; }
     }
 }

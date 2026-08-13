@@ -5,9 +5,7 @@ nav_order: 1
 parent: Concepts
 ---
 
-🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
-💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
-developer.
+🚀 Get to pre-production in weeks, not months, with private [training](https://www.jube.io/jube-training) direct from Jube's developer — real sovereignty, zero vendor lock-in.
 
 # Architecture
 
@@ -140,6 +138,26 @@ Notwithstanding a stateless architecture, the token contains a single claim type
 Name (http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name), which will contain only the username (e.g.
 Administrator).
 
+### Custom HTTP Response Headers
+
+Arbitrary HTTP response headers (for example security headers such as HSTS or a Content Security Policy) can be
+injected into every response by inserting rows directly into the `HttpResponseHeader` table (Header, Value columns).
+There is no administrative page for this - rows are read once into an in-memory dictionary at startup and applied to
+every response by middleware, so a change to the table requires a restart of the instance to take effect.
+
+Example headers are:
+
+````sql
+INSERT INTO public."HttpResponseHeader" ("Header", "Value")
+VALUES ('Strict-Transport-Security', 'max-age=31536000; includeSubDomains'),
+       ('X-Content-Type-Options', 'nosniff'),
+       ('X-Frame-Options', 'SAMEORIGIN'),
+       ('Referrer-Policy', 'no-referrer-when-downgrade'),
+       ('Content-Security-Policy',
+        'default-src ''self''; script-src ''self'' ''unsafe-inline'' ''unsafe-eval''; style-src ''self'' ''unsafe-inline''; img-src ''self'' data:'),
+       ('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+````
+
 To the extent that it is thought by the technical end user that Containerisation differs from lightweight Linux Virtual
 Machines, it is fully supported.
 
@@ -266,26 +284,26 @@ Several threads are instantiated by the engine as default, but can be disabled f
 Variables:
 
 ```text
-EnableSanctions=False
+EnableSanction=False
 EnableReprocessing=False
 ReprocessingThreads=1
 EnableExhaustiveTraining=False
 EnableCacheIndex=False
 EnableCasesAutomation=False
 EnableSearchKeyCache=False
-EnableTTLCounter=False
+EnableTtlCounter=False
 EnableNotification=False
 ```
 
 | Value                    | Description                                                                                                                                                                                                                                                                                                    |
 |--------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| EnableSanctions          | Responsible for loading and serving sanctions check requests on the instance (in both model processing and direct request via HTTP).                                                                                                                                                                           |
+| EnableSanction           | Responsible for loading and serving sanctions check requests on the instance (in both model processing and direct request via HTTP).                                                                                                                                                                           |
 | EnableReprocessing       | Responsible for reprocessing data from the archive though the models in a similar manner as real-time.  Useful when new model configuration has been put in place and data needs to be modified.  It is extremely intensive. Has provision for concurrency between instances and multiple ReprocessingThreads. |
 | ReprocessingThreads      | The number of threads allocated to reprocessing.                                                                                                                                                                                                                                                               |
 | EnableExhaustiveTraining | Responsible for training anomaly detection and neural network models.  A computationally expensive process and care should be taken to isolate from real-time processes for risk of degradation of real-time model invocation response time.                                                                   |
 | EnableCasesAutomation    | Responsible for case scheduling,  specifically the reopening and closing of cases on lapse of expiry date.  This routine has poor concurrency and it is suggested that there be only a single instance at this time.                                                                                           |
 | EnableSearchKeyCache     | Responsible for the background processing of Abstraction Rules designated as being cached (this is aggregations having been precomputed rather than being online in the real-time model invocation).  There may only be a single instance as there is no concurrency available.                                |
-| EnableTTLCounter         | Responsible for the background maintenance of TTLCounters. There may only be a single instance.                                                                                                                                                                                                                |
+| EnableTtlCounter         | Responsible for the background maintenance of TTLCounters. There may only be a single instance.                                                                                                                                                                                                                |
 | EnableNotification       | Responsible for the background dispatch of Notifications, either by connecting to RabbitMQ or maintaining a polling thread against a Notifications in memory concurrent queue.                                                                                                                                 |
 | CachePruneServer         | Responsible for the deletion of data from CachePayload and CachePayloadLatest entities.                                                                                                                                                                                                                        |
 | WaitCachePrune           | The time in milliseconds between the cache being pruned for expired payload and latest entries.                                                                                                                                                                                                                |

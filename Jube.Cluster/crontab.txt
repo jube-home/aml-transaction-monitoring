@@ -1,0 +1,20 @@
+# pgBackRest backup schedule — install with:  crontab crontab.txt
+# (or paste into `crontab -e` on the host that runs the backups)
+ 
+# PRODUCTION ONLY — uncomment after `sudo touch /mnt/pgbackrest/.on-nas`
+# while the NAS is properly mounted. Aborts any run where the repo path is
+# not actually the NAS (mount missing at boot, or stale bind).
+#NAS_MARKER=.on-nas
+ 
+# m  h    dom mon dow   command
+# Weekly full — Sunday 02:30
+30   2    *   *   0     /home/richard/jube-cluster/backup.sh full
+# Nightly differential — Monday–Saturday 02:30
+30   2    *   *   1-6   /home/richard/jube-cluster/backup.sh diff
+# Weekly deep verify (repo checksums) riding on Wednesday's diff — 04:00
+0    4    *   *   3     RUN_DEEP_VERIFY=y /home/richard/jube-cluster/backup.sh diff
+ 
+# Retention lives in pgbackrest.conf, not here:
+#   repo1-retention-full=2   → two weekly fulls ≈ 8–14 days of PITR
+#   raise to 4–5 if a client context needs ~30 days
+ 

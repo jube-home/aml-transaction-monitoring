@@ -153,58 +153,36 @@ namespace Jube.ResilientNpgsqlConnection
             await inner.PrepareAsync(ct).ConfigureAwait(false);
         }
 
-        private async Task EnsurePreparedAsync(CancellationToken ct)
-        {
-            if (inner.IsPrepared)
-            {
-                return;
-            }
-            await inner.PrepareAsync(ct).ConfigureAwait(false);
-        }
-
         public override async Task<int> ExecuteNonQueryAsync(CancellationToken ct)
         {
             if (inner.Transaction != null)
             {
-                await EnsurePreparedAsync(ct).ConfigureAwait(false);
                 return await inner.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             }
 
-            return await policy.ExecuteAsync(async _ =>
-            {
-                await EnsurePreparedAsync(ct).ConfigureAwait(false);
-                return await inner.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
-            }, new Context()).ConfigureAwait(false);
+            return await policy.ExecuteAsync(_ => inner.ExecuteNonQueryAsync(ct), new Context()).ConfigureAwait(false);
         }
 
         public override async Task<object?> ExecuteScalarAsync(CancellationToken ct)
         {
             if (inner.Transaction != null)
             {
-                await EnsurePreparedAsync(ct).ConfigureAwait(false);
                 return await inner.ExecuteScalarAsync(ct).ConfigureAwait(false);
             }
 
-            return await policy.ExecuteAsync(async _ =>
-            {
-                await EnsurePreparedAsync(ct).ConfigureAwait(false);
-                return await inner.ExecuteScalarAsync(ct).ConfigureAwait(false);
-            }, new Context()).ConfigureAwait(false);
+            return await policy.ExecuteAsync(_ => inner.ExecuteScalarAsync(ct), new Context()).ConfigureAwait(false);
         }
 
         protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken ct)
         {
             if (inner.Transaction != null)
             {
-                await EnsurePreparedAsync(ct).ConfigureAwait(false);
                 return await inner.ExecuteReaderAsync(behavior, ct).ConfigureAwait(false);
             }
 
             return await policy.ExecuteAsync(async _ =>
-            {
-                await EnsurePreparedAsync(ct).ConfigureAwait(false);
-                return (DbDataReader)await inner.ExecuteReaderAsync(behavior, ct).ConfigureAwait(false);
-            }, new Context()).ConfigureAwait(false);
+                    (DbDataReader)await inner.ExecuteReaderAsync(behavior, ct).ConfigureAwait(false), new Context())
+                .ConfigureAwait(false);
         }
 
         public override int ExecuteNonQuery()

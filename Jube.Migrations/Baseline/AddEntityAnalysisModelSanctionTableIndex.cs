@@ -11,11 +11,11 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using FluentMigrator;
-
 namespace Jube.Migrations.Baseline
 {
+    using System;
+    using FluentMigrator;
+
     [Migration(20220429124942)]
     public class AddEntityAnalysisModelSanctionTableIndex : Migration
     {
@@ -52,7 +52,7 @@ namespace Jube.Migrations.Baseline
                 MultipartStringDataName = "JoinedName",
                 Distance = 2,
                 Active = 1,
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 CreatedUser = "Administrator",
                 Version = 1,
                 ResponsePayload = 1,

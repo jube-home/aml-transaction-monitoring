@@ -26,7 +26,7 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ActivationRul
             }
 
             Interlocked.Increment(ref context.EntityAnalysisModel.Counters.ResponseElevationCount);
-            context.EntityAnalysisModel.ConcurrentQueues.BillingResponseElevationJournal.Enqueue(DateTime.Now);
+            context.EntityAnalysisModel.ConcurrentQueues.BillingResponseElevationJournal.Enqueue(DateTime.UtcNow);
 
             if (context.Log.IsInfoEnabled)
             {

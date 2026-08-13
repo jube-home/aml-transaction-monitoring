@@ -2,39 +2,39 @@
  *
  * This file is part of Jube™ software.
  *
- * Jube™ is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License 
+ * Jube™ is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License
  * as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
- * Jube™ is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty  
+ * Jube™ is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
 
- * You should have received a copy of the GNU Affero General Public License along with Jube™. If not, 
+ * You should have received a copy of the GNU Affero General Public License along with Jube™. If not,
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using Jube.App.Dto.Interfaces;
-
 namespace Jube.App.Dto
 {
+    using System;
+    using Interfaces;
+
     public class EntityAnalysisModelReprocessingRuleInstanceDto : IUpdated
     {
         public int StatusId { get; set; }
-        public DateTime StartedDate { get; set; }
+        public DateTimeOffset? StartedDate { get; set; }
         public int AvailableCount { get; set; }
         public int SampledCount { get; set; }
         public int MatchedCount { get; set; }
         public int ProcessedCount { get; set; }
-        public DateTime CompletedDate { get; set; }
+        public DateTimeOffset? CompletedDate { get; set; }
         public int ErrorCount { get; set; }
-        public DateTime ReferenceDate { get; set; }
+        public DateTimeOffset? ReferenceDate { get; set; }
         public int EntityAnalysisModelReprocessingRuleId { get; set; }
         public int Id { get; set; }
         public string CreatedUser { get; set; }
-        public DateTime CreatedDate { get; set; }
+        public DateTimeOffset? CreatedDate { get; set; }
         public string UpdatedUser { get; set; }
-        public DateTime UpdatedDate { get; set; }
+        public DateTimeOffset? UpdatedDate { get; set; }
         public int Version { get; set; }
         public string DeletedUser { get; set; }
-        public DateTime DeletedDate { get; set; }
+        public DateTimeOffset? DeletedDate { get; set; }
     }
 }

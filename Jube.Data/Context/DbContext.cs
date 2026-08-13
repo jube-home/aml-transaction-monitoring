@@ -27,6 +27,7 @@ namespace Jube.Data.Context
                 return GetTable<ActivationWatcher>();
             }
         }
+
         public ITable<EntityAnalysisModelTag> EntityAnalysisModelTag
         {
             get
@@ -34,6 +35,7 @@ namespace Jube.Data.Context
                 return GetTable<EntityAnalysisModelTag>();
             }
         }
+
         public ITable<CaseWorkflowFormEntryValue> CaseWorkflowFormEntryValue
         {
             get
@@ -41,6 +43,7 @@ namespace Jube.Data.Context
                 return GetTable<CaseWorkflowFormEntryValue>();
             }
         }
+
         public ITable<CaseWorkflowFormEntry> CaseWorkflowFormEntry
         {
             get
@@ -48,6 +51,7 @@ namespace Jube.Data.Context
                 return GetTable<CaseWorkflowFormEntry>();
             }
         }
+
         public ITable<CaseFile> CaseFile
         {
             get
@@ -55,6 +59,7 @@ namespace Jube.Data.Context
                 return GetTable<CaseFile>();
             }
         }
+
         public ITable<UserLogin> UserLogin
         {
             get
@@ -62,6 +67,7 @@ namespace Jube.Data.Context
                 return GetTable<UserLogin>();
             }
         }
+
         public ITable<CaseNote> CaseNote
         {
             get
@@ -69,6 +75,7 @@ namespace Jube.Data.Context
                 return GetTable<CaseNote>();
             }
         }
+
         public ITable<SessionCaseJournal> SessionCaseJournal
         {
             get
@@ -167,6 +174,7 @@ namespace Jube.Data.Context
                 return GetTable<ExhaustiveSearchInstance>();
             }
         }
+
         public ITable<UserRegistry> UserRegistry
         {
             get
@@ -174,6 +182,7 @@ namespace Jube.Data.Context
                 return GetTable<UserRegistry>();
             }
         }
+
         public ITable<Currency> Currency
         {
             get
@@ -318,11 +327,36 @@ namespace Jube.Data.Context
                 return GetTable<HttpProcessingCounter>();
             }
         }
+
         public ITable<Archive> Archive
         {
             get
             {
                 return GetTable<Archive>();
+            }
+        }
+
+        public ITable<ArchiveTag> ArchiveTag
+        {
+            get
+            {
+                return GetTable<ArchiveTag>();
+            }
+        }
+
+        public ITable<HttpResponseHeader> HttpHeader
+        {
+            get
+            {
+                return GetTable<HttpResponseHeader>();
+            }
+        }
+
+        public ITable<ArchiveTagVersion> ArchiveTagVersion
+        {
+            get
+            {
+                return GetTable<ArchiveTagVersion>();
             }
         }
 
@@ -357,6 +391,7 @@ namespace Jube.Data.Context
                 return GetTable<SanctionEntry>();
             }
         }
+
         public ITable<SanctionEntrySource> SanctionEntrySource
         {
             get
@@ -364,6 +399,47 @@ namespace Jube.Data.Context
                 return GetTable<SanctionEntrySource>();
             }
         }
+
+        public ITable<SanctionEntryImport> SanctionEntryImport
+        {
+            get
+            {
+                return GetTable<SanctionEntryImport>();
+            }
+        }
+
+        public ITable<SanctionEntryRejection> SanctionEntryRejection
+        {
+            get
+            {
+                return GetTable<SanctionEntryRejection>();
+            }
+        }
+
+        public ITable<EntityAnalysisModelSynchronisationError> EntityAnalysisModelSynchronisationError
+        {
+            get
+            {
+                return GetTable<EntityAnalysisModelSynchronisationError>();
+            }
+        }
+
+        public ITable<EntityAnalysisModelActivationRuleCounterHistory> EntityAnalysisModelActivationRuleCounterHistory
+        {
+            get
+            {
+                return GetTable<EntityAnalysisModelActivationRuleCounterHistory>();
+            }
+        }
+
+        public ITable<EntityAnalysisModelGatewayRuleCounterHistory> EntityAnalysisModelGatewayRuleCounterHistory
+        {
+            get
+            {
+                return GetTable<EntityAnalysisModelGatewayRuleCounterHistory>();
+            }
+        }
+
         public ITable<CaseWorkflow> CaseWorkflow
         {
             get
@@ -371,6 +447,7 @@ namespace Jube.Data.Context
                 return GetTable<CaseWorkflow>();
             }
         }
+
         public ITable<CaseEvent> CaseEvent
         {
             get
@@ -378,6 +455,7 @@ namespace Jube.Data.Context
                 return GetTable<CaseEvent>();
             }
         }
+
         public ITable<Case> Case
         {
             get
@@ -385,6 +463,7 @@ namespace Jube.Data.Context
                 return GetTable<Case>();
             }
         }
+
         public ITable<CaseWorkflowStatus> CaseWorkflowStatus
         {
             get
@@ -392,6 +471,7 @@ namespace Jube.Data.Context
                 return GetTable<CaseWorkflowStatus>();
             }
         }
+
         public ITable<CaseWorkflowXPath> CaseWorkflowXPath
         {
             get
@@ -399,6 +479,7 @@ namespace Jube.Data.Context
                 return GetTable<CaseWorkflowXPath>();
             }
         }
+
         public ITable<CaseWorkflowForm> CaseWorkflowForm
         {
             get
@@ -406,6 +487,7 @@ namespace Jube.Data.Context
                 return GetTable<CaseWorkflowForm>();
             }
         }
+
         public ITable<CaseWorkflowAction> CaseWorkflowAction
         {
             get
@@ -413,6 +495,7 @@ namespace Jube.Data.Context
                 return GetTable<CaseWorkflowAction>();
             }
         }
+
         public ITable<CaseWorkflowDisplay> CaseWorkflowDisplay
         {
             get
@@ -420,6 +503,7 @@ namespace Jube.Data.Context
                 return GetTable<CaseWorkflowDisplay>();
             }
         }
+
         public ITable<CaseWorkflowFilter> CaseWorkflowFilter
         {
             get
@@ -427,6 +511,7 @@ namespace Jube.Data.Context
                 return GetTable<CaseWorkflowFilter>();
             }
         }
+
         public ITable<CaseWorkflowMacro> CaseWorkflowMacro
         {
             get
@@ -434,6 +519,7 @@ namespace Jube.Data.Context
                 return GetTable<CaseWorkflowMacro>();
             }
         }
+
         public ITable<PermissionSpecification> PermissionSpecification
         {
             get
@@ -441,6 +527,7 @@ namespace Jube.Data.Context
                 return GetTable<PermissionSpecification>();
             }
         }
+
         public ITable<RoleRegistry> RoleRegistry
         {
             get
@@ -448,6 +535,7 @@ namespace Jube.Data.Context
                 return GetTable<RoleRegistry>();
             }
         }
+
         public ITable<RoleRegistryPermission> RoleRegistryPermission
         {
             get
@@ -455,6 +543,7 @@ namespace Jube.Data.Context
                 return GetTable<RoleRegistryPermission>();
             }
         }
+
         public ITable<UserInTenant> UserInTenant
         {
             get
@@ -462,6 +551,7 @@ namespace Jube.Data.Context
                 return GetTable<UserInTenant>();
             }
         }
+
         public ITable<UserInTenantSwitchLog> UserInTenantSwitchLog
         {
             get
@@ -469,6 +559,7 @@ namespace Jube.Data.Context
                 return GetTable<UserInTenantSwitchLog>();
             }
         }
+
         public ITable<EntityAnalysisModel> EntityAnalysisModel
         {
             get
@@ -652,11 +743,27 @@ namespace Jube.Data.Context
             }
         }
 
+        public ITable<EntityAnalysisModelSuppressionVersion> EntityAnalysisModelSuppressionVersion
+        {
+            get
+            {
+                return GetTable<EntityAnalysisModelSuppressionVersion>();
+            }
+        }
+
         public ITable<EntityAnalysisModelActivationRuleSuppression> EntityAnalysisModelActivationRuleSuppression
         {
             get
             {
                 return GetTable<EntityAnalysisModelActivationRuleSuppression>();
+            }
+        }
+
+        public ITable<EntityAnalysisModelActivationRuleSuppressionVersion> EntityAnalysisModelActivationRuleSuppressionVersion
+        {
+            get
+            {
+                return GetTable<EntityAnalysisModelActivationRuleSuppressionVersion>();
             }
         }
 
@@ -975,6 +1082,30 @@ namespace Jube.Data.Context
             }
         }
 
+        public ITable<HashCacheAssemblyInstance> HashCacheAssemblyInstance
+        {
+            get
+            {
+                return GetTable<HashCacheAssemblyInstance>();
+            }
+        }
+
+        public ITable<HashCacheAssemblyInstanceEntry> HashCacheAssemblyInstanceEntry
+        {
+            get
+            {
+                return GetTable<HashCacheAssemblyInstanceEntry>();
+            }
+        }
+
+        public ITable<HashCacheAssemblyInstanceJournal> HashCacheAssemblyInstanceJournal
+        {
+            get
+            {
+                return GetTable<HashCacheAssemblyInstanceJournal>();
+            }
+        }
+
         public ITable<CachePayloadRemovalBatch> CachePayloadRemovalBatch
         {
             get
@@ -1095,6 +1226,14 @@ namespace Jube.Data.Context
             }
         }
 
+        public ITable<EntityAnalysisModelRole> EntityAnalysisModelRole
+        {
+            get
+            {
+                return GetTable<EntityAnalysisModelRole>();
+            }
+        }
+
         public ITable<VisualisationRegistryRole> VisualisationRegistryRole
         {
             get
@@ -1124,6 +1263,22 @@ namespace Jube.Data.Context
             get
             {
                 return GetTable<CaseWorkflowFilterRole>();
+            }
+        }
+
+        public ITable<UserRegistryApiKey> UserRegistryApiKey
+        {
+            get
+            {
+                return GetTable<UserRegistryApiKey>();
+            }
+        }
+
+        public ITable<SanctionStopToken> SanctionStopToken
+        {
+            get
+            {
+                return GetTable<SanctionStopToken>();
             }
         }
     }

@@ -19,7 +19,9 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Models.Payload.EntityAnalysisMod
     using Data.Poco;
     using Dictionary;
     using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
     using TasksPerformance;
+    using Adaptation=HttpAdaptationProtocol.Adaptation;
 
     public class EntityAnalysisModelInstanceEntryPayload
     {
@@ -46,11 +48,11 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Models.Payload.EntityAnalysisMod
         [JsonProperty(Order = 21)] public PooledDictionary<string, double> Sanction { get; set; }
         [JsonProperty(Order = 22)] public PooledDictionary<string, double> Abstraction { get; set; }
         [JsonProperty(Order = 23)] public PooledDictionary<string, double> AbstractionCalculation { get; set; }
-        [JsonProperty(Order = 24)] public PooledDictionary<string, double> HttpAdaptation { get; set; }
+        [JsonProperty(Order = 24)] public PooledDictionary<string, Adaptation> HttpAdaptation { get; set; }
         [JsonProperty(Order = 25)] public PooledDictionary<string, double> ExhaustiveAdaptation { get; set; }
         [JsonProperty(Order = 26)] public PooledDictionary<string, EntityModelActivationRulePayload> Activation { get; set; }
         [JsonProperty(Order = 27)] public CreateCase CreateCase { get; set; }
-        [JsonProperty(Order = 28)] public PooledDictionary<string, double> Tag { get; set; }
+        [JsonProperty(Order = 28)] public string[] Tag { get; set; }
         [JsonProperty(Order = 30)] public InvokeTaskPerformance InvokeTaskPerformance { get; set; }
         [JsonIgnore] public byte[] ArchiveJson { get; set; }
         [JsonIgnore] public byte[] ResponseJson { get; set; }
@@ -58,5 +60,6 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Models.Payload.EntityAnalysisMod
         [JsonIgnore] public bool EnableRdbmsArchive { get; init; }
         [JsonIgnore] public int EntityAnalysisModelId { get; init; }
         [JsonIgnore] public int TenantRegistryId { get; init; }
+        [JsonIgnore] public JObject JObject { get; set; }
     }
 }

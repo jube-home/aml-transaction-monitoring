@@ -54,7 +54,7 @@ namespace Jube.Data.Query
                         new Dto
                         {
                             SynchronisationPending = y.ScheduleDate > tenants[y.TenantRegistryId.Value]
-                                                     && DateTime.Now > y.ScheduleDate,
+                                                     && DateTime.UtcNow > y.ScheduleDate,
                             TenantRegistryId = y.TenantRegistryId.Value
                         }
                 ).ToListAsync(token).ConfigureAwait(false);

@@ -13,11 +13,13 @@
 
 namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Models
 {
-    using System.Collections.Generic;
+    using System.Collections.Concurrent;
     using System.Reflection;
+    using Jube.Engine.Models;
 
     public class Caching
     {
-        public Dictionary<string, Assembly> HashCacheAssembly { get; set; } = new Dictionary<string, Assembly>();
+        public ConcurrentDictionary<string, Assembly> HashCacheAssembly { get; set; } = new ConcurrentDictionary<string, Assembly>();
+        public ConcurrentDictionary<string, HashCacheAssemblyPayload> HashCacheAssemblyMetadata { get; set; } = new ConcurrentDictionary<string, HashCacheAssemblyPayload>();
     }
 }

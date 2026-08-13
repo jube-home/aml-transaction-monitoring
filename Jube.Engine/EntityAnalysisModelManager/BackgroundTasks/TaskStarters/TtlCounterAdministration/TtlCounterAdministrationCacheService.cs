@@ -26,7 +26,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters.Tt
     {
         public async Task<DateTime?> CacheServiceGetReferenceDateAsync()
         {
-            var referenceDate = await entityAnalysisModel.Services.CacheService.CacheReferenceDate.GetReferenceDateAsync(entityAnalysisModel.Instance.TenantRegistryId, entityAnalysisModel.Instance.Guid).ConfigureAwait(false);
+            var referenceDate = await entityAnalysisModel.Services.CacheService.CacheReferenceDateRepository.GetReferenceDatePreferReplicaAsync(entityAnalysisModel.Instance.TenantRegistryId, entityAnalysisModel.Instance.Guid).ConfigureAwait(false);
             return referenceDate;
         }
 
@@ -56,14 +56,15 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters.Tt
             GetAllExpiredByTtlCounterAsync(
                 CacheTtlCounterEntryRepository cacheTtlCounterEntryRepository,
                 EntityAnalysisModelTtlCounter ttlCounter,
-                DateTime adjustedTtlCounterDate)
+                DateTime adjustedTtlCounterDate,
+                int limit)
         {
             List<ExpiredTtlCounterEntry> values = null;
             try
             {
-                values = await cacheTtlCounterEntryRepository.GetAllExpiredByTtlCounterAsync(
+                values = await cacheTtlCounterEntryRepository.GetAllExpiredByTtlCounterPreferReplicaAsync(
                     entityAnalysisModel.Instance.TenantRegistryId, entityAnalysisModel.Instance.Guid,
-                    ttlCounter.Guid, ttlCounter.TtlCounterDataName, adjustedTtlCounterDate).ConfigureAwait(false);
+                    ttlCounter.Guid, ttlCounter.TtlCounterDataName, adjustedTtlCounterDate, limit).ConfigureAwait(false);
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {

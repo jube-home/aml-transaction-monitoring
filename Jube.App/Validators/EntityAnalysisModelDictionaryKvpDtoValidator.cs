@@ -11,6 +11,7 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
+using System;
 using FluentValidation;
 using Jube.App.Dto;
 
@@ -20,8 +21,12 @@ namespace Jube.App.Validators
     {
         public EntityAnalysisModelsDictionaryKvpDtoValidator()
         {
-            RuleFor(p => p.KvpKey).NotEmpty();
-            RuleFor(p => p.KvpValue).NotEmpty();
+            RuleFor(p => p.KvpKey).NotEmpty().WithMessage("Please enter a key for this dictionary.");
+            RuleFor(p => p.KvpValue).NotEmpty().WithMessage("Please enter a value for this dictionary.");
+            RuleFor(p => p.DeleteExpiryDate)
+                .GreaterThan(_ => DateTimeOffset.UtcNow)
+                .When(p => p.DeleteExpiryDate.HasValue)
+                .WithMessage("Delete Expiry Date must be greater than the current date and time.");
         }
     }
 }

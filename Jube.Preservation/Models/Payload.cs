@@ -22,5 +22,6 @@ namespace Jube.Preservation.Models
         [Key(0)] public IEnumerable<EntityAnalysisModel>? EntityAnalysisModel { get; set; }
         [Key(1)] public IEnumerable<VisualisationRegistry>? VisualisationRegistry { get; set; }
         [Key(2)] public EntityPermission? EntityPermission { get; set; }
+        [Key(3)] public IEnumerable<RoleRegistry>? RoleRegistry { get; set; }
     }
 }

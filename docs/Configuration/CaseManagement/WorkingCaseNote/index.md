@@ -6,9 +6,7 @@ parent: Case Management
 grand_parent: Configuration
 ---
 
-🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
-💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
-developer.
+🚀 Get to pre-production in weeks, not months, with private [training](https://www.jube.io/jube-training) direct from Jube's developer — real sovereignty, zero vendor lock-in.
 
 # Working Case Note
 The ability to add notes to a case is intrinsic to the functioning of most case management tools, and crucial for audit.
@@ -55,7 +53,7 @@ In this example,  set the priority to High:
 
 Set the Action to the only available value in the drop down,  being the Cases Workflow Action set up in previously:
 
-![Image](SetMemoToHigh.png)
+![Image](SetMemoToAction.png)
 
 Click the Add Note button to commit the memo (cancel would abandon the template):
 

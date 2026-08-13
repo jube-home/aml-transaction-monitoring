@@ -12,6 +12,7 @@
  */
 
 var endpoint = "/api/EntityAnalysisModel";
+var childKeyName = "entityAnalysisModelGuid";
 var validationFail = "There is invalid data in the form. Please check fields and correct.";
 
 function getRecords() {
@@ -47,41 +48,47 @@ function loadTemplate(id) {
             $("#EntryXPath").val(data.entryXPath);
             $("#EntryName").val(data.entryName);
 
+            const $enableCache = $("#EnableCache");
             if (data.enableCache) {
-                $("#EnableCache").data("kendoSwitch").check(true);
+                $enableCache.data("kendoSwitch").check(true);
             } else {
-                $("#EnableCache").data("kendoSwitch").check(false);
+                $enableCache.data("kendoSwitch").check(false);
             }
 
+            const $enableTtlCounter = $("#EnableTtlCounter");
             if (data.enableTtlCounter) {
-                $("#EnableTtlCounter").data("kendoSwitch").check(true);
+                $enableTtlCounter.data("kendoSwitch").check(true);
             } else {
-                $("#EnableTtlCounter").data("kendoSwitch").check(false);
+                $enableTtlCounter.data("kendoSwitch").check(false);
             }
 
+            const $enableSanctionCache = $("#EnableSanctionCache");
             if (data.enableSanctionCache) {
-                $("#EnableSanctionCache").data("kendoSwitch").check(true);
+                $enableSanctionCache.data("kendoSwitch").check(true);
             } else {
-                $("#EnableSanctionCache").data("kendoSwitch").check(false);
+                $enableSanctionCache.data("kendoSwitch").check(false);
             }
 
+            const $enableResponseElevationLimit = $("#EnableResponseElevationLimit");
             if (data.enableResponseElevationLimit) {
-                $("#EnableResponseElevationLimit").data("kendoSwitch").check(true);
+                $enableResponseElevationLimit.data("kendoSwitch").check(true);
             } else {
-                $("#EnableResponseElevationLimit").data("kendoSwitch").check(false);
+                $enableResponseElevationLimit.data("kendoSwitch").check(false);
             }
             ExpandCollapseResponseElevationLimit();
 
+            const $enableRdbmsArchive = $("#EnableRdbmsArchive");
             if (data.enableRdbmsArchive) {
-                $("#EnableRdbmsArchive").data("kendoSwitch").check(true);
+                $enableRdbmsArchive.data("kendoSwitch").check(true);
             } else {
-                $("#EnableRdbmsArchive").data("kendoSwitch").check(false);
+                $enableRdbmsArchive.data("kendoSwitch").check(false);
             }
 
+            const $enableActivationWatcher = $("#EnableActivationWatcher");
             if (data.enableActivationWatcher) {
-                $("#EnableActivationWatcher").data("kendoSwitch").check(true);
+                $enableActivationWatcher.data("kendoSwitch").check(true);
             } else {
-                $("#EnableActivationWatcher").data("kendoSwitch").check(false);
+                $enableActivationWatcher.data("kendoSwitch").check(false);
             }
             ExpandCollapseActivationWatcherLimit();
 
@@ -132,18 +139,20 @@ function showHomePage() {
 }
 
 function ExpandCollapseResponseElevationLimit() {
+    const $responseElevationLimitTable = $("#ResponseElevationLimitTable");
     if ($('#EnableResponseElevationLimit').prop('checked')) {
-        $("#ResponseElevationLimitTable").show();
+        $responseElevationLimitTable.show();
     } else {
-        $("#ResponseElevationLimitTable").hide();
+        $responseElevationLimitTable.hide();
     }
 }
 
 function ExpandCollapseActivationWatcherLimit() {
+    const $activationWatcherLimitTable = $("#ActivationWatcherLimitTable");
     if ($('#EnableActivationWatcher').prop('checked')) {
-        $("#ActivationWatcherLimitTable").show();
+        $activationWatcherLimitTable.show();
     } else {
-        $("#ActivationWatcherLimitTable").hide();
+        $activationWatcherLimitTable.hide();
     }
 }
 

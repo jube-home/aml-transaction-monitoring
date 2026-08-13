@@ -11,11 +11,11 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using FluentMigrator;
-
 namespace Jube.Migrations.Baseline
 {
+    using System;
+    using FluentMigrator;
+
     [Migration(20220429124929)]
     public class AddEntityAnalysisModelDictionaryKvpTableIndex : Migration
     {
@@ -47,7 +47,7 @@ namespace Jube.Migrations.Baseline
                 KvpValue = 1000,
                 Version = 1,
                 CreatedUser = "Administrator",
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 Active = 1
             });
         }

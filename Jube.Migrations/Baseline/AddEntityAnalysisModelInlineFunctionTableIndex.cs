@@ -11,11 +11,11 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using FluentMigrator;
-
 namespace Jube.Migrations.Baseline
 {
+    using System;
+    using FluentMigrator;
+
     [Migration(20220429124932)]
     public class AddEntityAnalysisModelInlineFunctionTableIndex : Migration
     {
@@ -51,7 +51,7 @@ namespace Jube.Migrations.Baseline
                     FunctionScript = "Return Payload.BillingFirstName & \" \" & Payload.BillingLastName",
                     ReturnDataTypeId = 1,
                     Active = 1,
-                    CreatedDate = DateTime.Now,
+                    CreatedDate = DateTime.UtcNow,
                     CreatedUser = "Administrator",
                     Version = 1,
                     ResponsePayload = 1

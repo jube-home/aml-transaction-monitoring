@@ -14,10 +14,28 @@
 const endpoint = "/api/EntityAnalysisModelSanction";
 const parentKeyName = "entityAnalysisModelId";
 const validationFail = "There is invalid data in the form. Please check fields and correct.";
+const defaultMaxDistanceRatio = 0.3;
+const defaultMaxCoverageRatio = 2.0;
 
 const multipartStringDataName = $("#MultipartStringDataName").kendoDropDownList({
     dataTextField: "text",
     dataValueField: "value"
+});
+
+const aggregationTypeId = $("#AggregationTypeId").kendoDropDownList({
+    dataTextField: "text",
+    dataValueField: "value",
+    dataSource: [
+        {text: "Sum", value: "1"},
+        {text: "Average", value: "2"},
+        {text: "Count", value: "3"},
+        {text: "Max", value: "4"},
+        {text: "Min", value: "5"},
+        {text: "First", value: "6"},
+        {text: "Last", value: "7"},
+        {text: "Confidence", value: "8"}
+    ],
+    index: 4
 });
 
 const distance = $("#Distance").kendoSlider({
@@ -27,8 +45,27 @@ const distance = $("#Distance").kendoSlider({
     min: 0,
     max: 5,
     smallStep: 1,
-    largeStep: 1,
-    tickPlacement: "none"
+    largeStep: 1
+});
+
+const maxDistanceRatio = $("#MaxDistanceRatio").kendoSlider({
+    increaseButtonTitle: "Right",
+    decreaseButtonTitle: "Left",
+    value: defaultMaxDistanceRatio,
+    min: 0,
+    max: 1,
+    smallStep: 0.1,
+    largeStep: 0.1
+});
+
+const maxCoverageRatio = $("#MaxCoverageRatio").kendoSlider({
+    increaseButtonTitle: "Right",
+    decreaseButtonTitle: "Left",
+    value: defaultMaxCoverageRatio,
+    min: 0,
+    max: 5,
+    smallStep: 1,
+    largeStep: 1
 });
 
 const cacheValue = $("#CacheValue").kendoNumericTextBox({
@@ -53,7 +90,12 @@ $.get("/api/GetEntityAnalysisPotentialMultiPartStringNames" + "/" + parentKey,
                     multipartStringDataName.data("kendoDropDownList")
                         .value(data.multipartStringDataName);
 
+                    aggregationTypeId.data("kendoDropDownList")
+                        .value(data.aggregationTypeId);
+
                     distance.data("kendoSlider").value(data.distance);
+                    maxDistanceRatio.data("kendoSlider").value(data.maxDistanceRatio ?? defaultMaxDistanceRatio);
+                    maxCoverageRatio.data("kendoSlider").value(data.maxCoverageRatio ?? defaultMaxCoverageRatio);
 
                     $("input[name=CacheInterval][value=" + data.cacheInterval + "]")
                         .prop('checked', true);
@@ -70,8 +112,11 @@ function GetData() {
     return {
         multipartStringDataName: multipartStringDataName.data("kendoDropDownList").value(),
         distance: distance.data("kendoSlider").value(),
+        maxDistanceRatio: maxDistanceRatio.data("kendoSlider").value(),
+        maxCoverageRatio: maxCoverageRatio.data("kendoSlider").value(),
         cacheInterval: $('input[name=CacheInterval]:checked').val(),
-        cacheValue: cacheValue.val()
+        cacheValue: cacheValue.val(),
+        aggregationTypeId: aggregationTypeId.data("kendoDropDownList").value()
     };
 }
 

@@ -15,6 +15,12 @@ var endpoint = "/api/EntityAnalysisModelAdaptation";
 var parentKeyName = "entityAnalysisModelId";
 var validationFail = "There is invalid data in the form. Please check fields and correct.";
 
+var priority = $("#Priority").kendoNumericTextBox({
+    format: "n3",
+    decimals: 3,
+    step: 0.001
+});
+
 if (typeof id === "undefined") {
     ReadyNew();
 } else {
@@ -23,6 +29,7 @@ if (typeof id === "undefined") {
             parentKey = data[parentKeyName];
 
             $("#HttpEndpoint").val(data.httpEndpoint);
+            priority.data("kendoNumericTextBox").value(data.priority);
 
             ReadyExisting(data);
         });
@@ -39,7 +46,8 @@ $(function () {
 
 function GetData() {
     return {
-        httpEndpoint: $("#HttpEndpoint").val()
+        httpEndpoint: $("#HttpEndpoint").val(),
+        priority: priority.data("kendoNumericTextBox").value()
     };
 }
 

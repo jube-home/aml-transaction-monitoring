@@ -6,9 +6,7 @@ parent: Cache
 grand_parent: Concepts
 ---
 
-🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
-💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
-developer.
+🚀 Get to pre-production in weeks, not months, with private [training](https://www.jube.io/jube-training) direct from Jube's developer — real sovereignty, zero vendor lock-in.
 
 # Local Least Recently Used (LRU) Cache
 
@@ -54,10 +52,27 @@ it affords a better than proportional reduction in a Redis load.
 
 The local LRU cache is enabled by default for 1GB but is subject to the LocalCache environment variable.
 
-The LocalCacheFill environment variable determines if on Jube startup if the local cache should be filled from Redis
-with
-a hash scan, and is the default. In the event that fill is disabled, it will allow a faster startup, but at the expense 
+The LocalCacheFill environment variable determines if on Jube startup if the local cache should be filled from Redis,
+and is the default. In the event that fill is disabled, it will allow a faster startup, but at the expense 
 of increased pressure on Redis, and is henceforth discouraged.
+
+## Fill order and the LruJournal
+
+Rather than filling in an arbitrary order, startup fill walks the LruJournal Sorted Set (see
+[Redis Schema](../CacheSchema/index.html)) for each model, most-recently-used first, so the local cache is
+primed with the Payload data most likely to be needed again rather than whatever a scan happens to return first.
+Every live recall of a Journal key during transaction processing timestamps that key into its model's LruJournal, so
+the ordering reflects genuinely recent usage rather than insertion order.
+
+Because LruJournal only ever grows on read, two things keep it from growing unbounded and from priming the cache with
+data that is no longer relevant:
+
+* A dedicated background task prunes LruJournal entries older than LruJournalMaxAgeInterval/lruJournalMaxAgeValue
+  (for example, 1 h) on an interval set by WaitLruJournalPrune - see
+  [Environment Variables](../../EnvironmentVariables/index.html).
+* Startup fill itself also checks that same age threshold as it walks the journal, and stops warming further as soon
+  as it reaches an entry past the cutoff - so a slow or delayed prune cycle cannot cause stale entries to be used to
+  prime the cache.
 
 Given an arrangement of Jube in a clustered and highly available manner, it is incumbent to update all Jube
 instances local LRU caches. Subject to the RedisPublishSubscribeEvents environment variable, events are published on the

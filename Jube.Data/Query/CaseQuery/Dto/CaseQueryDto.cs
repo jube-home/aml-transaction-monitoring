@@ -11,24 +11,24 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Collections.Generic;
-
 namespace Jube.Data.Query.CaseQuery.Dto
 {
+    using System;
+    using System.Collections.Generic;
+
     public class CaseQueryDto
     {
         public int Id { get; set; }
         public Guid EntityAnalysisModelInstanceEntryGuid { get; set; }
-        public DateTime DiaryDate { get; set; }
+        public DateTimeOffset DiaryDate { get; set; }
         public Guid CaseWorkflowGuid { get; set; }
         public Guid CaseWorkflowStatusGuid { get; set; }
-        public DateTime CreatedDate { get; set; }
+        public DateTimeOffset CreatedDate { get; set; }
         public bool Locked { get; set; }
         public string LockedUser { get; set; }
-        public DateTime LockedDate { get; set; }
-        public int ClosedStatusId { get; set; }
-        public DateTime ClosedDate { get; set; }
+        public DateTimeOffset LockedDate { get; set; }
+        public byte ClosedStatusId { get; set; }
+        public DateTimeOffset ClosedDate { get; set; }
         public string ClosedUser { get; set; }
         public string CaseKey { get; set; }
         public bool Diary { get; set; }
@@ -36,7 +36,7 @@ namespace Jube.Data.Query.CaseQuery.Dto
         public int Rating { get; set; }
         public string CaseKeyValue { get; set; }
         public int LastClosedStatus { get; set; }
-        public DateTime ClosedStatusMigrationDate { get; set; }
+        public DateTimeOffset ClosedStatusMigrationDate { get; set; }
         public string ForeColor { get; set; }
         public string BackColor { get; set; }
         public string Json { get; set; }
@@ -46,5 +46,6 @@ namespace Jube.Data.Query.CaseQuery.Dto
         public List<GetCaseByIdActivationDto> Activation { get; set; }
         public bool EnableVisualisation { get; set; }
         public Guid VisualisationRegistryGuid { get; set; }
+        public int EntityAnalysisModelId { get; set; }
     }
 }

@@ -30,7 +30,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Models.Mode
         public string Name { get; set; }
         public Type InlineScriptType { get; set; }
         public MethodInfo PreProcessingMethodInfo { get; set; }
-        public Dictionary<string, EntityAnalysisModelInlineScriptPropertyAttribute> EntityAnalysisModelInlineScriptPropertyAttributes { get; } = [];
+        public Dictionary<string, EntityAnalysisModelInlineScriptPropertyAttribute.EntityAnalysisModelInlineScriptPropertyAttribute> EntityAnalysisModelInlineScriptPropertyAttributes { get; } = [];
         public List<EntityAnalysisModelInlineScriptEvent> EntityAnalysisModelInlineScriptEvents { get; set; } = [];
         // ReSharper disable once CollectionNeverUpdated.Global
         public List<DistinctSearchKey> GroupingKeys { get; } = [];

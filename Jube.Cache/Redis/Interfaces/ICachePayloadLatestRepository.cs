@@ -24,14 +24,15 @@ namespace Jube.Cache.Redis.Interfaces
         Task UpsertAsync(int tenantRegistryId, Guid entityAnalysisModelGuid, DictionaryNoBoxing<int> payload,
             DateTime referenceDate, Guid entityAnalysisModelInstanceEntryGuid, string entryKey, string entryKeyValue);
 
-        Task<List<string>> GetDistinctKeysAsync(int tenantRegistryId, Guid entityAnalysisModelGuid, string key,
+        Task<List<string>> GetDistinctKeysPreferReplicaAsync(int tenantRegistryId, Guid entityAnalysisModelGuid, string key,
             DateTime dateFrom,
             DateTime dateTo);
 
-        Task<List<string>> GetDistinctKeysAsync(int tenantRegistryId, Guid entityAnalysisModelGuid, string key,
+        Task<List<string>> GetDistinctKeysPreferReplicaAsync(int tenantRegistryId, Guid entityAnalysisModelGuid, string key,
             DateTime dateBefore);
 
-        Task<List<string>> GetDistinctKeysAsync(int tenantRegistryId, Guid entityAnalysisModelGuid, string key);
+        Task<List<string>> GetDistinctKeysPreferReplicaAsync(int tenantRegistryId,
+            Guid entityAnalysisModelGuid, string key);
 
         Task DeleteByReferenceDateAsync(int tenantRegistryId, Guid entityAnalysisModelGuid,
             DateTime referenceDate, DateTime thresholdReferenceDate, int limit,

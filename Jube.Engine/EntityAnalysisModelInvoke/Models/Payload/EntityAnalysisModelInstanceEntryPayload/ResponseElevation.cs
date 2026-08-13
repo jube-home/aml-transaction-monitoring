@@ -22,6 +22,6 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Models.Payload.EntityAnalysisMod
         public string ForeColor { get; set; }
         public string BackColor { get; set; }
         public string Content { get; set; }
-        public DateTime CreatedDate { get; init; } = DateTime.Now;
+        public DateTime CreatedDate { get; init; } = DateTime.UtcNow;
     }
 }

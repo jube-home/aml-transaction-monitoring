@@ -38,10 +38,15 @@ namespace Jube.Data.Repository
                 .Select(s => s.TenantRegistryId).FirstOrDefault();
         }
 
-        public RoleRegistryRepository(DbContext dbContext, TenantRegistry tenantRegistry)
+        public RoleRegistryRepository(DbContext dbContext, int tenantRegistryId)
         {
             this.dbContext = dbContext;
-            tenantRegistryId = tenantRegistry.Id;
+            this.tenantRegistryId = tenantRegistryId;
+        }
+
+        public Task<List<RoleRegistry>> GetAllTenantsAsync(CancellationToken token = default)
+        {
+            return dbContext.RoleRegistry.Where(w => w.Deleted == null || w.Deleted == 0).ToListAsync(token);
         }
 
         public Task<RoleRegistry> GetByNameAsync(string name, CancellationToken token = default)
@@ -71,7 +76,7 @@ namespace Jube.Data.Repository
             model.CreatedUser = userName;
             model.TenantRegistryId = tenantRegistryId;
             model.Version = 1;
-            model.CreatedDate = DateTime.Now;
+            model.CreatedDate = DateTime.UtcNow;
             model.Guid = model.Guid == Guid.Empty ? Guid.NewGuid() : model.Guid;
             model.Id = await dbContext.InsertWithInt32IdentityAsync(model, token: token);
             return model;
@@ -93,12 +98,15 @@ namespace Jube.Data.Repository
             model.Version = existing.Version + 1;
             model.Guid = existing.Guid;
             model.CreatedUser = userName;
-            model.CreatedDate = DateTime.Now;
+            model.CreatedDate = DateTime.UtcNow;
             model.TenantRegistryId = tenantRegistryId;
 
             await dbContext.UpdateAsync(model, token: token);
 
-            var mapper = new Mapper(new MapperConfiguration(cfg => { cfg.CreateMap<RoleRegistry, RoleRegistryVersion>(); }, NullLoggerFactory.Instance));
+            var mapper = new Mapper(new MapperConfiguration(cfg =>
+            {
+                cfg.CreateMap<RoleRegistry, RoleRegistryVersion>();
+            }, NullLoggerFactory.Instance));
 
             var audit = mapper.Map<RoleRegistryVersion>(existing);
             audit.RoleRegistryId = existing.Id;
@@ -114,12 +122,26 @@ namespace Jube.Data.Repository
                 .Where(d => d.Id == id
                             && d.TenantRegistryId == tenantRegistryId
                             && (d.Deleted == 0 || d.Deleted == null)
-                            && (d.Locked == 0 || d.Locked == null)).DeleteAsync(token);
+                            && (d.Locked == 0 || d.Locked == null))
+                .Set(s => s.Deleted, Convert.ToByte(1))
+                .Set(s => s.DeletedDate, DateTime.UtcNow)
+                .UpdateAsync(token);
 
             if (records == 0)
             {
                 throw new KeyNotFoundException();
             }
+        }
+
+        public Task DeleteByTenantRegistryIdOutsideOfInstanceAsync(int tenantRegistryIdOutsideOfInstance, int importId, CancellationToken token = default)
+        {
+            return dbContext.RoleRegistry
+                .Where(d => d.TenantRegistryId == tenantRegistryIdOutsideOfInstance
+                            && (d.Deleted == 0 || d.Deleted == null))
+                .Set(s => s.ImportId, importId)
+                .Set(s => s.Deleted, Convert.ToByte(1))
+                .Set(s => s.DeletedDate, DateTime.UtcNow)
+                .UpdateAsync(token);
         }
     }
 }

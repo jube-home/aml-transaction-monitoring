@@ -51,7 +51,7 @@ namespace Jube.Data.Repository
                 .OrderByDescending(s => s.Id).Take(limit).ToListAsync(token);
         }
 
-        public async Task<IEnumerable<ActivationWatcher>> GetByDateRangeAscendingAsync(DateTime dateFrom, DateTime dateTo, int limit, CancellationToken token = default)
+        public async Task<IEnumerable<ActivationWatcher>> GetByDateRangeAscendingAsync(DateTime? dateFrom, DateTime? dateTo, int limit, CancellationToken token = default)
         {
             return await dbContext.ActivationWatcher
                 .Where(w => w.CreatedDate > dateFrom && w.CreatedDate <= dateTo

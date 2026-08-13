@@ -20,102 +20,77 @@ namespace Jube.Data.SyntaxTree
     using Microsoft.CodeAnalysis.CSharp.Syntax;
     using Microsoft.CodeAnalysis.VisualBasic;
     using Microsoft.CodeAnalysis.VisualBasic.Syntax;
+    using GenericNameSyntax=Microsoft.CodeAnalysis.VisualBasic.Syntax.GenericNameSyntax;
     using LanguageVersion=Microsoft.CodeAnalysis.CSharp.LanguageVersion;
+    using NullableTypeSyntax=Microsoft.CodeAnalysis.CSharp.Syntax.NullableTypeSyntax;
 
     public static class SyntaxTreeHelpers
     {
-        public static List<string> GetPublicPropertiesForSearchKey(string code, bool cSharp = false)
+        public static Dictionary<string, SyntaxTreeProperty> GetPublicProperties(string code, bool cSharp = false)
         {
-            var value = new List<string>();
+            var value = new Dictionary<string, SyntaxTreeProperty>(StringComparer.OrdinalIgnoreCase);
 
             if (cSharp)
             {
-                var parseOptions = new CSharpParseOptions(LanguageVersion.Latest);
-                var tree = CSharpSyntaxTree.ParseText(code, parseOptions);
+                var tree = CSharpSyntaxTree.ParseText(code, new CSharpParseOptions(LanguageVersion.Latest));
 
                 foreach (var @class in tree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>())
                 {
-                    value.AddRange(@class.Members
-                        .OfType<PropertyDeclarationSyntax>()
-                        .Where(prop =>
-                            prop.Modifiers.Any(m => m.Text == "public") &&
-                            prop.AttributeLists
-                                .SelectMany(a => a.Attributes)
-                                .Any(attr => attr?.Name.ToString() == "SearchKey")
-                        )
-                        .Select(prop => prop.Identifier.Text));
-                }
-            }
-            else
-            {
-                var parseOptions = new VisualBasicParseOptions(Microsoft.CodeAnalysis.VisualBasic.LanguageVersion.VisualBasic16);
-                var tree = VisualBasicSyntaxTree.ParseText(code, parseOptions);
-
-                foreach (var @class in tree.GetRoot().DescendantNodes().OfType<ClassBlockSyntax>())
-                {
-                    value.AddRange(@class.Members.OfType<PropertyStatementSyntax>()
-                        .Where(prop =>
-                            prop.Modifiers.Any(m => m.Text == "public") &&
-                            prop.AttributeLists
-                                .SelectMany(a => a.Attributes)
-                                .Any(attr => attr?.Name.ToString() == "SearchKey")
-                        )
-                        .Select(prop => prop.Identifier.Text));
-                }
-            }
-
-            return value;
-        }
-
-        public static Dictionary<string, int> GetPublicProperties(string code, bool cSharp = false)
-        {
-            var value = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-
-            if (cSharp)
-            {
-                var parseOptions = new CSharpParseOptions(LanguageVersion.Latest);
-                var tree = CSharpSyntaxTree.ParseText(code, parseOptions);
-
-                foreach (var @class in tree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>())
-                {
-                    var results = @class.Members.OfType<PropertyDeclarationSyntax>()
-                        .Select(prop => (prop, modifiers: String.Join(" ", prop.Modifiers.Select(m => m.Text))))
-                        .Where(t => t.modifiers.Contains("public"))
-                        .Select(t => (t, dataTypeId: t.prop.Type.ToString().ToLower() switch
-                        {
-                            "string" => 1,
-                            "int" or "int32" => 2,
-                            "double" => 3,
-                            "datetime" => 4,
-                            "bool" or "boolean" => 5,
-                            _ => 1
-                        }))
-                        .Select(t => (Name: t.t.prop.Identifier.Text, TypeId: t.dataTypeId));
-
-                    foreach (var item in results)
+                    foreach (var prop in @class.Members.OfType<PropertyDeclarationSyntax>())
                     {
-                        value[item.Name] = item.TypeId;
+                        if (prop.Modifiers.All(m => m.Text != "public"))
+                        {
+                            continue;
+                        }
+
+                        var typeSyntax = prop.Type is NullableTypeSyntax nullable
+                            ? nullable.ElementType
+                            : prop.Type;
+
+                        value[prop.Identifier.Text] = new SyntaxTreeProperty
+                        {
+                            DataTypeId = typeSyntax.ToString().ToLower() switch
+                            {
+                                "string" => 1,
+                                "int" or "int32" => 2,
+                                "double" => 3,
+                                "datetime" => 4,
+                                "bool" or "boolean" => 5,
+                                _ => 1
+                            },
+                            SearchKey = prop.AttributeLists
+                                .SelectMany(a => a.Attributes)
+                                .Any(attr => attr?.Name.ToString() == "SearchKey")
+                        };
                     }
                 }
             }
             else
             {
-                var parseOptions = new VisualBasicParseOptions(Microsoft.CodeAnalysis.VisualBasic.LanguageVersion.VisualBasic16);
-                var tree = VisualBasicSyntaxTree.ParseText(code, parseOptions);
+                var tree = VisualBasicSyntaxTree.ParseText(code,
+                    new VisualBasicParseOptions(Microsoft.CodeAnalysis.VisualBasic.LanguageVersion.VisualBasic16));
 
                 foreach (var @class in tree.GetRoot().DescendantNodes().OfType<ClassBlockSyntax>())
                 {
-                    var results = @class.Members.OfType<PropertyStatementSyntax>()
-                        .Select(prop => new
+                    foreach (var prop in @class.Members.OfType<PropertyStatementSyntax>())
+                    {
+                        if (prop.Modifiers.All(m => m.Text != "Public"))
                         {
-                            prop,
-                            modifiers = String.Join(" ", prop.Modifiers.Select(m => m.Text))
-                        })
-                        .Where(t => t.modifiers.Contains("Public"))
-                        .Select(t => new
+                            continue;
+                        }
+
+                        var rawType = prop.AsClause?.Type();
+                        var typeSyntax = rawType switch
                         {
-                            t,
-                            dataTypeId = t.prop.AsClause?.Type()?.ToString().ToLower() switch
+                            Microsoft.CodeAnalysis.VisualBasic.Syntax.NullableTypeSyntax nullable => nullable.ElementType,
+                            GenericNameSyntax { Identifier.Text: "Nullable" } generic
+                                => generic.TypeArgumentList.Arguments.FirstOrDefault() ?? rawType,
+                            _ => rawType
+                        };
+
+                        value[prop.Identifier.Text] = new SyntaxTreeProperty
+                        {
+                            DataTypeId = typeSyntax?.ToString().ToLower() switch
                             {
                                 "string" => 1,
                                 "integer" => 2,
@@ -123,13 +98,11 @@ namespace Jube.Data.SyntaxTree
                                 "datetime" => 4,
                                 "boolean" => 5,
                                 _ => 1
-                            }
-                        })
-                        .Select(t => (Name: t.t.prop.Identifier.Text, TypeId: t.dataTypeId));
-
-                    foreach (var item in results)
-                    {
-                        value[item.Name] = item.TypeId;
+                            },
+                            SearchKey = prop.AttributeLists
+                                .SelectMany(a => a.Attributes)
+                                .Any(attr => attr?.Name.ToString() == "SearchKey")
+                        };
                     }
                 }
             }

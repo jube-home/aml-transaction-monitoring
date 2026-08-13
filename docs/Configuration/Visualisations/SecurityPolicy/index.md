@@ -1,10 +1,12 @@
 ---
 layout: default
-title: Security Policy
-nav_order: 9 
+title: Visualisations Security Policy
+nav_order: 9
 parent: Visualisations
 grand_parent: Configuration
 ---
+
+🚀 Get to pre-production in weeks, not months, with private [training](https://www.jube.io/jube-training) direct from Jube's developer — real sovereignty, zero vendor lock-in.
 
 # Role Assignment Overview
 

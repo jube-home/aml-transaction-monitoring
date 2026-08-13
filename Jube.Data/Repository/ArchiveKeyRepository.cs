@@ -33,7 +33,7 @@ namespace Jube.Data.Repository
                     x.Key == d.Key &&
                     x.EntityAnalysisModelInstanceEntryGuid == d.EntityAnalysisModelInstanceEntryGuid))
                 .Set(x => x.Deleted, (byte)1)
-                .Set(x => x.DeletedDate, DateTime.Now)
+                .Set(x => x.DeletedDate, DateTime.UtcNow)
                 .Set(x => x.EntityAnalysisModelsReprocessingRuleInstanceId, entityAnalysisModelsReprocessingRuleInstanceId)
                 .UpdateAsync();
         }

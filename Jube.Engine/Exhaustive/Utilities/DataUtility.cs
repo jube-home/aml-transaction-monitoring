@@ -24,7 +24,9 @@ namespace Jube.Engine.Exhaustive.Utilities
     using Data.Reporting;
     using Data.Repository;
     using log4net;
+    using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
+    using QueryBuilder;
 
     public static class Extraction
     {
@@ -35,12 +37,13 @@ namespace Jube.Engine.Exhaustive.Utilities
             Dictionary<int, Variable> variables,
             bool mockData,
             ILog log,
+            bool parserAssertSelectOnly,
             string reportConnectionString = null,
             CancellationToken token = default)
         {
             var dataList = new List<double[]>();
             var outputsList = new List<double>();
-            using var postgres = new Postgres(reportConnectionString ?? dbContext.ConnectionString, log);
+            using var postgres = new Postgres(reportConnectionString ?? dbContext.Connection.ConnectionString, log, parserAssertSelectOnly);
 
             foreach (var json in
                      await postgres.ExecuteReturnOnlyJsonFromArchiveSampleAsync(entityAnalysisModelId, filterSql,
@@ -101,16 +104,20 @@ namespace Jube.Engine.Exhaustive.Utilities
         public static async Task<Tuple<Dictionary<int, Variable>, double[][]>> GetSampleDataAsync(DbContext dbContext,
             int tenantRegistryId,
             int entityAnalysisModelId,
-            string filterSql,
+            string filterJson,
             string filterTokens,
             bool mockData,
             ILog log,
+            bool parserAssertSelectOnly,
             string reportConnectionString = null,
             CancellationToken token = default)
         {
-            using var postgres = new Postgres(reportConnectionString ?? dbContext.ConnectionString, log);
+            var filterJsonRule = JsonConvert.DeserializeObject<Rule>(filterJson);
+            var filterRule = await ParserJsonToSqlEntityAnalysisModel.CreateAsync(filterJsonRule, dbContext, tenantRegistryId, entityAnalysisModelId, token).ConfigureAwait(false);
+
+            using var postgres = new Postgres(reportConnectionString ?? dbContext.Connection.ConnectionString, log, parserAssertSelectOnly);
             var jsonList = await postgres.ExecuteReturnOnlyJsonFromArchiveSampleAsync(entityAnalysisModelId,
-                "NOT (" + filterSql + ")",
+                "NOT (" + filterRule.Sql + ")",
                 filterTokens, 10000, mockData, token).ConfigureAwait(false);
 
             return await ProcessJsonAsync(dbContext, tenantRegistryId, entityAnalysisModelId, mockData, jsonList, token).ConfigureAwait(false);

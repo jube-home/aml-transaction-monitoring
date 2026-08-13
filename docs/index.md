@@ -6,9 +6,7 @@ nav_order: 1
 
 ![Image](logo.png)
 
-🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
-💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
-developer.
+🚀 Get to pre-production in weeks, not months, with private [training](https://www.jube.io/jube-training) direct from Jube's developer — real sovereignty, zero vendor lock-in.
 
 # Introduction
 
@@ -23,13 +21,20 @@ A Docker Compose file is available—it is docker-compose.yml in the root direct
 an installation of Jube, provided Docker is already
 installed. Via Docker Compose. Jube can be up and running in just a few minutes:
 
+This base install is for evaluation and development only - it is **not** intended for production use. It runs a
+single node with secrets passed as plain shell Environment Variables and Postgres connected as superuser.
+Production deployments should instead follow the
+[Deploying with Jube Cluster](GettingStarted/DeployingWithJubeCluster/index.md) documentation, which covers a
+load-balanced, highly available, clustered deployment with robust secret management.
+
 ```shell
 git clone https://github.com/jube-home/aml-fraud-transaction-monitoring
 cd aml-fraud-transaction-monitoring
 export DockerComposePostgresPassword='SuperSecretPasswordToChangeForPg'
-export DockerComposeRabbitMQPassword='SuperSecretPasswordToChangeForAmqp'
 export DockerComposeJWTKey='IMPORTANT:_ChangeThisKey_~%pvif3KRo!3Mkm1oMC50TvAPi%{mUt<9sBm>DPjGZyfYYWssseVrNUqLQE}mz{L_UsingThisKeyIsDangerous'
+export DockerComposeApiHmacKey='IMPORTANT:_ChangeThisKey_~%pvif3KRo!3Mkm1oMC50TvAPi%{mUt<9sBm>DPjGZyfYYWssseVrNUqLQE}mz{L_UsingThisKeyIsDangerous'
 export DockerComposePasswordHashingKey='IMPORTANT:_ChangeThisKey_~%pvif3KRo!3Mkm1oMC50TvAPi%{mUt<9sBm>DPjGZyfYYWssseVrNUqLQE}mz{L_UsingThisKeyIsDangerous'
+export DockerComposeElementSymmetricEncryptionKey='IMPORTANT:_ChangeThisKey_~%pvif3KRo!3Mkm1oMC50TvAPi%{mUt<9sBm>DPjGZyfYYWssseVrNUqLQE}mz{L_UsingThisKeyIsDangerous'
 docker compose up -d
 ```
 

@@ -106,9 +106,9 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
 
                                 foreach (var publicProperty in SyntaxTreeHelpers.GetPublicProperties(inlineScript.InlineScriptCode, inlineScript.LanguageId == 2))
                                 {
-                                    shadowEntityAnalysisModelInlineScriptProperties.TryAdd(publicProperty.Key, publicProperty.Value);
+                                    shadowEntityAnalysisModelInlineScriptProperties.TryAdd(publicProperty.Key, publicProperty.Value.DataTypeId);
 
-                                    var databaseType = publicProperty.Value switch
+                                    var databaseType = publicProperty.Value.DataTypeId switch
                                     {
                                         2 => "::int",
                                         3 => "::float8",
@@ -118,7 +118,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                                         7 => "::float8",
                                         _ => ""
                                     };
-                                    
+
                                     value.References.ArchivePayloadSqlSelect +=
                                         $",(a.\"Json\" -> 'payload' ->> '{publicProperty.Key}'){databaseType} AS \"{publicProperty.Key}\"";
                                 }
@@ -199,6 +199,10 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 context.Services.Log.Error($"SyncEntityAnalysisModelInlineScriptsAsync: has produced an error {ex}");
+
+                await new EntityAnalysisModelSynchronisationErrorRepository(context.Services.DbContext)
+                    .InsertAsync(EntityAnalysisModelSynchronisationErrorRepository.EntityAnalysisModelSynchronisationErrorStepEnum.InlineScripts, ex.ToString(),
+                        context.Services.CancellationToken).ConfigureAwait(false);
             }
 
             return context;

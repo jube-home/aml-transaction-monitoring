@@ -152,6 +152,84 @@ namespace Jube.Data.Query
                     getModelFieldByParserTypeIdDtoList.AddRange(publicPropertyDeclarations);
                 }
 
+                var entityAnalysisModelInlineFunctionRepository =
+                    new EntityAnalysisModelInlineFunctionRepository(dbContext, tenantRegistryId);
+
+                var entityAnalysisModelInlineFunctions = await entityAnalysisModelInlineFunctionRepository
+                    .GetByEntityAnalysisModelIdOrderByNameAsync(entityAnalysisModelId, token).ConfigureAwait(false);
+
+                foreach (var entityAnalysisModelInlineFunction in entityAnalysisModelInlineFunctions)
+                {
+                    var getModelFieldByParserTypeIdDto = new Dto
+                    {
+                        Name = $"Payload.{entityAnalysisModelInlineFunction.Name}",
+                        Value = $"Payload.{entityAnalysisModelInlineFunction.Name}",
+                        ValueJsonPath = $"payload.{entityAnalysisModelInlineFunction.Name}",
+                        Group = "Payload",
+                        ProcessingTypeId = 1
+                    };
+
+                    switch (entityAnalysisModelInlineFunction.ReturnDataTypeId)
+                    {
+                        case 1:
+                            getModelFieldByParserTypeIdDto.ValueSqlPath
+                                = $"(\"Json\"-> 'payload' ->> '{entityAnalysisModelInlineFunction.Name}')";
+                            getModelFieldByParserTypeIdDto.JQueryBuilderDataType = "string";
+                            getModelFieldByParserTypeIdDto.DataTypeId = 1;
+
+                            break;
+                        case 2:
+                            getModelFieldByParserTypeIdDto.ValueSqlPath
+                                = $"(\"Json\"-> 'payload' ->> '{entityAnalysisModelInlineFunction.Name}')::int";
+                            getModelFieldByParserTypeIdDto.JQueryBuilderDataType = "integer";
+                            getModelFieldByParserTypeIdDto.DataTypeId = 2;
+
+                            break;
+                        case 3:
+                            getModelFieldByParserTypeIdDto.ValueSqlPath
+                                = $"(\"Json\"-> 'payload' ->> '{entityAnalysisModelInlineFunction.Name}')::double precision";
+                            getModelFieldByParserTypeIdDto.JQueryBuilderDataType = "double";
+                            getModelFieldByParserTypeIdDto.DataTypeId = 3;
+
+                            break;
+                        case 4:
+                            getModelFieldByParserTypeIdDto.ValueSqlPath
+                                = $"(\"Json\"-> 'payload' ->> '{entityAnalysisModelInlineFunction.Name}')::timestamp";
+                            getModelFieldByParserTypeIdDto.DataTypeId = 4;
+                            getModelFieldByParserTypeIdDto.JQueryBuilderDataType = "datetime";
+
+                            break;
+                        case 5:
+                            getModelFieldByParserTypeIdDto.ValueSqlPath
+                                = $"(\"Json\"-> 'payload' ->> '{entityAnalysisModelInlineFunction.Name}')::boolean";
+                            getModelFieldByParserTypeIdDto.DataTypeId = 5;
+                            getModelFieldByParserTypeIdDto.JQueryBuilderDataType = "boolean";
+
+                            break;
+                        case 6:
+                            getModelFieldByParserTypeIdDto.ValueSqlPath
+                                = $"(\"Json\"-> 'payload' ->> '{entityAnalysisModelInlineFunction.Name}')::double precision";
+                            getModelFieldByParserTypeIdDto.DataTypeId = 6;
+                            getModelFieldByParserTypeIdDto.JQueryBuilderDataType = "double";
+
+                            break;
+                        case 7:
+                            getModelFieldByParserTypeIdDto.ValueSqlPath
+                                = $"(\"Json\"-> 'payload' ->> '{entityAnalysisModelInlineFunction.Name}')::double precision";
+                            getModelFieldByParserTypeIdDto.DataTypeId = 7;
+                            getModelFieldByParserTypeIdDto.JQueryBuilderDataType = "double";
+
+                            break;
+                    }
+
+                    if (entityAnalysisModelInlineFunction.ReturnDataTypeId != null)
+                    {
+                        getModelFieldByParserTypeIdDto.DataTypeId = entityAnalysisModelInlineFunction.ReturnDataTypeId.Value;
+                    }
+
+                    getModelFieldByParserTypeIdDtoList.Add(getModelFieldByParserTypeIdDto);
+                }
+
                 var entityAnalysisModelDictionaryRepository =
                     new EntityAnalysisModelDictionaryRepository(dbContext, tenantRegistryId);
 
@@ -295,42 +373,45 @@ namespace Jube.Data.Query
                 );
             }
 
-            var entityAnalysisModelActivationRuleRepository =
-                new EntityAnalysisModelActivationRuleRepository(dbContext, tenantRegistryId);
+            if (reporting || parserTypeId >= 5)
+            {
+                var entityAnalysisModelActivationRuleRepository =
+                    new EntityAnalysisModelActivationRuleRepository(dbContext, tenantRegistryId);
 
-            getModelFieldByParserTypeIdDtoList.AddRange((await entityAnalysisModelActivationRuleRepository
-                .GetByEntityAnalysisModelIdOrderByNameDescAsync(entityAnalysisModelId, token)).Select(s =>
-                new Dto
-                {
-                    Name = $"Activation.{s.Name}",
-                    Value = $"Activation.{s.Name}",
-                    ValueJsonPath = $"activation.{s.Name}",
-                    ValueSqlPath = $"(\"Json\"-> 'activation' ->> '{s.Name}')::boolean",
-                    DataTypeId = 5,
-                    JQueryBuilderDataType = "boolean",
-                    Group = "Activation"
-                }));
-
-            var entityAnalysisModelTagRepository =
-                new EntityAnalysisModelTagRepository(dbContext, tenantRegistryId);
-
-            var entityAnalysisModelTags = await entityAnalysisModelTagRepository
-                .GetByEntityAnalysisModelIdOrderByNameAsync(entityAnalysisModelId, token).ConfigureAwait(false);
-
-            getModelFieldByParserTypeIdDtoList.AddRange(entityAnalysisModelTags.Select(s =>
-                new Dto
-                {
-                    Name = $"Tag.{s.Name}",
-                    Value = $"Tag.{s.Name}",
-                    ValueJsonPath = $"tag.{s.Name}",
-                    ValueSqlPath = $"(\"Json\"-> 'tag' ->> '{s.Name}')::double precision",
-                    DataTypeId = 7,
-                    JQueryBuilderDataType = "double",
-                    Group = "Tag"
-                }));
+                getModelFieldByParserTypeIdDtoList.AddRange((await entityAnalysisModelActivationRuleRepository
+                    .GetByEntityAnalysisModelIdOrderByNameDescAsync(entityAnalysisModelId, token)).Select(s =>
+                    new Dto
+                    {
+                        Name = $"Activation.{s.Name}",
+                        Value = $"Activation.{s.Name}",
+                        ValueJsonPath = $"activation.{s.Name}",
+                        ValueSqlPath = $"(\"Json\"-> 'activation' ->> '{s.Name}')::boolean",
+                        DataTypeId = 5,
+                        JQueryBuilderDataType = "boolean",
+                        Group = "Activation"
+                    }));
+            }
 
             if (reporting)
             {
+                var entityAnalysisModelTagRepository =
+                    new EntityAnalysisModelTagRepository(dbContext, tenantRegistryId);
+
+                var entityAnalysisModelTags = await entityAnalysisModelTagRepository
+                    .GetByEntityAnalysisModelIdOrderByNameAsync(entityAnalysisModelId, token).ConfigureAwait(false);
+
+                getModelFieldByParserTypeIdDtoList.AddRange(entityAnalysisModelTags.Select(s =>
+                    new Dto
+                    {
+                        Name = $"Tag.{s.Name}",
+                        Value = $"Tag.{s.Name}",
+                        ValueJsonPath = $"tag.{s.Name}",
+                        ValueSqlPath = $"(case when (\"Json\"-> 'tag') @> '\"{s.Name}\"'::jsonb then 'True' else 'False' end)",
+                        DataTypeId = 7,
+                        JQueryBuilderDataType = "boolean",
+                        Group = "Tag"
+                    }));
+
                 return getModelFieldByParserTypeIdDtoList;
             }
 
@@ -352,7 +433,7 @@ namespace Jube.Data.Query
                     ValueSqlPath = $"(\"Json\"-> 'list' ->> '{s.Name}')"
                 }));
 
-            return getModelFieldByParserTypeIdDtoList;
+            return getModelFieldByParserTypeIdDtoList.OrderBy(o => o.Name);
         }
 
         private static List<Dto> GetPublicPropertyDeclarationSyntax(string code, bool cSharp = false)
@@ -370,7 +451,7 @@ namespace Jube.Data.Query
                     ProcessingTypeId = 1
                 };
 
-                switch (kvp.Value)
+                switch (kvp.Value.DataTypeId)
                 {
                     case 1:
                         getModelFieldByParserTypeIdDto.ValueSqlPath

@@ -17,44 +17,40 @@ namespace Jube.App.Code.WatcherDispatch
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
-    using Data.Context;
-    using Data.Repository;
+    using Cache;
     using DynamicEnvironment;
     using log4net;
     using Microsoft.AspNetCore.SignalR;
-    using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
-    using Newtonsoft.Json.Serialization;
-    using Npgsql;
     using RabbitMQ.Client;
     using RabbitMQ.Client.Events;
     using signalr;
+    using StackExchange.Redis;
     using TaskCancellation;
 
     public class Relay
     {
         private IModel channel;
+        private ConnectionMultiplexer connectionMultiplexer;
         public Task ConnectToAmqpForActivationWatcherStreamingTask;
-        public Task ConnectToDatabaseForActivationWatcherStreamingTask;
+        public Task ConnectToSignalRForActivationWatcherStreamingTask;
         private EventingBasicConsumer consumer;
-        private DefaultContractResolver contractResolver;
         private DynamicEnvironment dynamicEnvironment;
         private ILog log;
         private IConnection rabbitMqConnection;
         public bool Ready;
-        public Task StreamingActivationWatcherFromDatabaseTableTask;
         private ITaskCoordinator taskCoordinator;
         private IHubContext<WatcherHub> watcherHub;
 
         public Task StartAsync(IHubContext<WatcherHub> watcherHubContext,
             DynamicEnvironment dynamicEnvironmentContext, ILog logContext, IConnection rabbitMqConnectionContext,
-            DefaultContractResolver contractResolverContext, TaskCoordinator taskCoordinatorContext)
+            TaskCoordinator taskCoordinatorContext, CacheService cacheService)
         {
             watcherHub = watcherHubContext;
             log = logContext;
             dynamicEnvironment = dynamicEnvironmentContext;
-            contractResolver = contractResolverContext;
             taskCoordinator = taskCoordinatorContext;
+            connectionMultiplexer = cacheService.ConnectionMultiplexer;
 
             if (dynamicEnvironment.AppSettings("AMQP").Equals("True", StringComparison.OrdinalIgnoreCase))
             {
@@ -73,15 +69,7 @@ namespace Jube.App.Code.WatcherDispatch
                 if (dynamicEnvironment.AppSettings("StreamingActivationWatcher")
                     .Equals("True", StringComparison.OrdinalIgnoreCase))
                 {
-                    ConnectToDatabaseForActivationWatcherStreamingTask = taskCoordinator.RunAsync("ConnectToDatabaseForActivationWatcherStreamingTask", ConnectToDatabaseForActivationWatcherStreamingAsync);
-                }
-                else
-                {
-                    if (dynamicEnvironment.AppSettings("ActivationWatcherAllowPersist")
-                        .Equals("True", StringComparison.OrdinalIgnoreCase))
-                    {
-                        StreamingActivationWatcherFromDatabaseTableTask = taskCoordinator.RunAsync("StreamingActivationWatcherFromDatabaseTableTask", StreamingActivationWatcherFromDatabaseTableAsync);
-                    }
+                    ConnectToSignalRForActivationWatcherStreamingTask = taskCoordinator.RunAsync("ConnectToRedisForActivationWatcherStreamingTask", ConnectToRedisForActivationWatcherStreamingAsync);
                 }
             }
 
@@ -90,7 +78,7 @@ namespace Jube.App.Code.WatcherDispatch
             return Task.CompletedTask;
         }
 
-        private async Task EventHandlerDatabaseAsync(string payload, CancellationToken cancellationToken = default)
+        private async Task EventHandlerRedisAsync(string tenantRegistryId, string payload, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -98,9 +86,6 @@ namespace Jube.App.Code.WatcherDispatch
                 {
                     log.Info("Activation Relay: String representation of body received is " + payload + " .");
                 }
-
-                var json = JObject.Parse(payload);
-                var tenantRegistryId = (json.SelectToken("tenantRegistryId") ?? 0).Value<string>();
 
                 await watcherHub.Clients.Group("Tenant_" + tenantRegistryId)
                     .SendAsync("ReceiveMessage", "RealTime", payload, cancellationToken).ConfigureAwait(false);
@@ -139,61 +124,20 @@ namespace Jube.App.Code.WatcherDispatch
             }
         }
 
-        private async Task ConnectToDatabaseForActivationWatcherStreamingAsync(CancellationToken token = default)
+        private Task ConnectToRedisForActivationWatcherStreamingAsync(CancellationToken token = default)
         {
-            var connection = new NpgsqlConnection(dynamicEnvironment.AppSettings("ConnectionString"));
-            try
+            var subscriber = connectionMultiplexer.GetSubscriber();
+            var redisChannel = RedisChannel.Pattern("ActivationWatcher*");
+            token.Register(() => subscriber.Unsubscribe(redisChannel));
+
+ #pragma warning disable VSTHRD101
+ #pragma warning disable AsyncFixer03
+            return subscriber.SubscribeAsync(redisChannel, async (channel, value) =>
             {
-                await connection.OpenAsync(token).ConfigureAwait(false);
-
-                connection.Notification += (sender, e) =>
-                {
-                    if (token.IsCancellationRequested)
-                    {
-                        return;
-                    }
-
-                    _ = Task.Run(async () =>
-                    {
-                        try
-                        {
-                            await EventHandlerDatabaseAsync(e.Payload, token).ConfigureAwait(false);
-                        }
-                        catch (OperationCanceledException)
-                        {
-                            // Ignore
-                        }
-                        catch (Exception ex)
-                        {
-                            log.Error($"Error processing notification: {ex}");
-                        }
-                    }, token);
-                };
-
-
-                var cmd = new NpgsqlCommand("LISTEN activation", connection);
-                await using (cmd.ConfigureAwait(false))
-                {
-                    await cmd.ExecuteNonQueryAsync(token).ConfigureAwait(false);
-                }
-
-                while (true)
-                {
-                    await connection.WaitAsync(token).ConfigureAwait(false);
-                }
-            }
-            catch (OperationCanceledException ex)
-            {
-                log.Info($"Graceful Cancellation ConnectToDatabaseForActivationWatcherStreamingAsync: has produced an error {ex}");
-            }
-            catch (Exception ex)
-            {
-                log.Error($"ConnectToDatabaseForActivationWatcherStreamingAsync: has produced an error {ex}");
-            }
-            finally
-            {
-                await connection.CloseAsync().ConfigureAwait(false);
-            }
+                await EventHandlerRedisAsync(channel.ToString().Split(':')[1], value, token);
+            });
+ #pragma warning restore AsyncFixer03
+ #pragma warning restore VSTHRD101
         }
 
         private Task ConnectToAmqpForActivationWatcherStreamingAsync(CancellationToken token = default)
@@ -254,64 +198,6 @@ namespace Jube.App.Code.WatcherDispatch
             }
 
             return Task.CompletedTask;
-        }
-
-        private async Task StreamingActivationWatcherFromDatabaseTableAsync(CancellationToken token = default)
-        {
-            if (log.IsInfoEnabled)
-            {
-                log.Info(
-                    $"Data Connection DbContext: Is about to attempt construction of database context with {dynamicEnvironment.AppSettings("ConnectionString")}.");
-            }
-
-            var dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"), log);
-
-            if (log.IsInfoEnabled)
-            {
-                log.Info("Data Connection DbContext: Database context has been constructed.  Returning database context.");
-            }
-
-            var activationWatcherRepository = new ActivationWatcherRepository(dbContext);
-
-            var lastActivationWatcher = await activationWatcherRepository.GetLastAsync(token);
-            var lastActivationWatcherId = 0;
-
-            if (lastActivationWatcher != null)
-            {
-                lastActivationWatcherId = lastActivationWatcher.Id;
-            }
-
-            while (!token.IsCancellationRequested)
-            {
-                try
-                {
-                    foreach (var activationWatcher in await activationWatcherRepository.GetAllSinceIdAsync(lastActivationWatcherId,
-                                 100, token))
-                    {
-                        lastActivationWatcherId = activationWatcher.Id;
-
-                        var stringRepresentationOfObj = JsonConvert.SerializeObject(activationWatcher,
-                            new JsonSerializerSettings
-                            {
-                                ContractResolver = contractResolver
-                            });
-
-                        await watcherHub.Clients.Group("Tenant_" + 1)
-                            .SendAsync("ReceiveMessage", "RealTime", stringRepresentationOfObj, token).ConfigureAwait(false);
-                    }
-
-                    await Task.Delay(Int32.Parse(dynamicEnvironment.AppSettings("WaitPollFromActivationWatcherTable")), token).ConfigureAwait(false);
-                }
-                catch (OperationCanceledException ex)
-                {
-                    log.Info($"Graceful Cancellation StreamingActivationWatcherFromDatabaseTableAsync: has produced an error {ex}");
-                }
-                catch (Exception ex)
-                {
-                    log.Error($"StreamingActivationWatcherFromDatabaseTableAsync: has produced an error {ex}");
-                    break;
-                }
-            }
         }
     }
 }

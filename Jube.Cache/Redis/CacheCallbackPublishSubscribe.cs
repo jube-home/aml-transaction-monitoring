@@ -31,17 +31,17 @@ namespace Jube.Cache.Redis
         private readonly ConnectionMultiplexer connectionMultiplexer;
         private readonly string localCacheInstanceGuidString;
         private readonly ILog log;
-        private readonly ResilientRedisDatabase redisDatabase;
+        private readonly IHybridResilientRedisDatabase resilientRedisResilientRedisDatabase;
 
         public CacheCallbackPublishSubscribe(ConnectionMultiplexer connectionMultiplexer,
-            ResilientRedisDatabase redisDatabase,
+            IHybridResilientRedisDatabase resilientRedisResilientRedisDatabase,
             ConcurrentDictionary<Guid, TaskCompletionSource<Callback.Callback>> callbacks,
             int callbackTimeout,
             ILog log,
             TaskCoordinator taskCoordinator)
         {
             this.connectionMultiplexer = connectionMultiplexer;
-            this.redisDatabase = redisDatabase;
+            this.resilientRedisResilientRedisDatabase = resilientRedisResilientRedisDatabase;
             Callbacks = callbacks;
             this.log = log;
             this.callbackTimeout = callbackTimeout;
@@ -63,7 +63,7 @@ namespace Jube.Cache.Redis
                         log.Debug("Callback Timeout Management: Starting to inspect pending callbacks.");
                     }
 
-                    var threshold = DateTime.Now.AddMilliseconds(-callbackTimeout);
+                    var threshold = DateTime.UtcNow.AddMilliseconds(-callbackTimeout);
 
                     if (log.IsDebugEnabled)
                     {
@@ -137,7 +137,7 @@ namespace Jube.Cache.Redis
 
             var callback = new Callback.Callback
             {
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 Payload = value
             };
 
@@ -231,7 +231,7 @@ namespace Jube.Cache.Redis
             {
                 AddToDictionary(json, entityAnalysisModelInstanceEntryGuid);
 
-                await redisDatabase.PublishAsync(
+                await resilientRedisResilientRedisDatabase.PublishAsync(
                     RedisChannel.Pattern($"CallbackSet:{Dns.GetHostName()}:{localCacheInstanceGuidString}:{entityAnalysisModelInstanceEntryGuid:N}"),
                     json);
             }
@@ -247,7 +247,7 @@ namespace Jube.Cache.Redis
             {
                 Callbacks.TryRemove(entityAnalysisModelInstanceEntryGuid, out _);
 
-                await redisDatabase.PublishAsync(
+                await resilientRedisResilientRedisDatabase.PublishAsync(
                     RedisChannel.Pattern($"CallbackRemove:{Dns.GetHostName()}:{localCacheInstanceGuidString}")
                     , new RedisValue(entityAnalysisModelInstanceEntryGuid.ToString("N")));
             }

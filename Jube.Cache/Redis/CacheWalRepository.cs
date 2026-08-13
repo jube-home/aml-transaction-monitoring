@@ -19,9 +19,8 @@ namespace Jube.Cache.Redis
     using StackExchange.Redis;
 
     public class CacheWalRepository(
-        ResilientRedisDatabase redisDatabase,
-        ILog log,
-        CommandFlags commandFlag = CommandFlags.FireAndForget) : ICacheWalRepository
+        IHybridResilientRedisDatabase resilientRedisResilientRedisDatabase,
+        ILog log) : ICacheWalRepository
     {
         public async Task InsertAsync(int tenantRegistryId, Guid entityAnalysisModelGuid, Guid entityAnalysisModelInstanceEntryGuid, string node, byte[] bytes)
         {
@@ -29,7 +28,7 @@ namespace Jube.Cache.Redis
             {
                 var redisKey = $"Wal:{tenantRegistryId}:{entityAnalysisModelGuid:N}:{node}";
                 var redisHSetKey = $"{entityAnalysisModelInstanceEntryGuid:N}";
-                await redisDatabase.HashSetAsync(redisKey, redisHSetKey, bytes, When.Always, commandFlag).ConfigureAwait(false);
+                await resilientRedisResilientRedisDatabase.HashSetAsync(redisKey, redisHSetKey, bytes).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -42,9 +41,9 @@ namespace Jube.Cache.Redis
             try
             {
                 var redisKey = $"Wal:{tenantRegistryId}:{entityAnalysisModelGuid:N}:{node}";
-                await redisDatabase.HashDeleteAsync(redisKey,
+                await resilientRedisResilientRedisDatabase.HashDeleteAsync(redisKey,
                     entityAnalysisModelInstanceEntryGuids.Select(x => (RedisValue)x.ToString("N"))
-                        .ToArray(), commandFlag).ConfigureAwait(false);
+                        .ToArray()).ConfigureAwait(false);
             }
             catch (Exception ex)
             {

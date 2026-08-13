@@ -16,9 +16,9 @@ var parentKeyName = "entityAnalysisModelId";
 var validationFail = "There is invalid data in the form. Please check fields and correct.";
 
 var priority = $("#Priority").kendoNumericTextBox({
-    format: "n1",
-    decimals: 1,
-    step: 0.1
+    format: "n3",
+    decimals: 3,
+    step: 0.001
 });
 
 var gatewaySample = $("#GatewaySample").kendoSlider({
@@ -38,10 +38,11 @@ var maxResponseElevation = $("#MaxResponseElevation").kendoNumericTextBox({
     step: 1
 });
 
+var resetButton = $("#Reset").kendoButton().hide();
+
 if (typeof id === "undefined") {
     initBuilderCoder(2, GetSelectedParentID());
     ReadyNew();
-    OverrideSetTable();
 } else {
     $.get(endpoint + "/" + id,
         function (data) {
@@ -64,9 +65,9 @@ if (typeof id === "undefined") {
 
             $("#Counters").html(`${data.activationCounter} / ${data.evaluationCounter} (${percent}%)`);
             $("#LastCounters").html(new Date(data.activationCounterDate));
-            
+            resetButton.show();
+
             ReadyExisting(data);
-            OverrideSetTable();
         });
 }
 
@@ -123,6 +124,25 @@ $(function () {
                 Update(endpoint, GetData(), "id", parentKeyName);
             } else {
                 $("#ErrorMessage").html(validationFail);
+            }
+        });
+});
+
+$(function () {
+    resetButton
+        .click(function () {
+            if (confirm('Are you sure you want to reset the counters?')) {
+                $.ajax({
+                    url: endpoint + "/" + id + "/Reset",
+                    type: "POST",
+                    success: function () {
+                        $("#Counters").html("0 / 0 (0%)");
+                        $("#LastCounters").html("");
+                    },
+                    error: function () {
+                        $("#ErrorMessage").html(processingFailed);
+                    }
+                });
             }
         });
 });

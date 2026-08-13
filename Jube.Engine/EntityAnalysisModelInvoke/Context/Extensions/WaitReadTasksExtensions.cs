@@ -39,9 +39,6 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions
                     case TaskType.SanctionsAsync:
                         context.EntityAnalysisModelInstanceEntryPayload.InvokeTaskPerformance.ComputeTimes.ReadTasksPerformance.SanctionsAsync = new TaskPerformance(pendingReadTasksResult.ThreadMemory, pendingReadTasksResult.ComputeTime);
                         break;
-                    case TaskType.DictionaryKvPsAsync:
-                        context.EntityAnalysisModelInstanceEntryPayload.InvokeTaskPerformance.ComputeTimes.ReadTasksPerformance.DictionaryKvPsAsync = new TaskPerformance(pendingReadTasksResult.ThreadMemory, pendingReadTasksResult.ComputeTime);
-                        break;
                     case TaskType.TtlCountersAsync:
                         context.EntityAnalysisModelInstanceEntryPayload.InvokeTaskPerformance.ComputeTimes.ReadTasksPerformance.TtlCountersAsync = new TaskPerformance(pendingReadTasksResult.ThreadMemory, pendingReadTasksResult.ComputeTime);
                         break;

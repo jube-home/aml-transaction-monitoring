@@ -16,12 +16,10 @@ namespace Jube.Cache.Redis
     using Interfaces;
     using log4net;
     using ResilientRedisConnection;
-    using StackExchange.Redis;
 
     public class CacheTtlCounterRepository(
-        ResilientRedisDatabase redisDatabase,
-        ILog log,
-        CommandFlags commandFlag = CommandFlags.FireAndForget) : ICacheTtlCounterRepository
+        IHybridResilientRedisDatabase resilientRedisResilientRedisDatabase,
+        ILog log) : ICacheTtlCounterRepository
     {
         public async Task<double> DecrementTtlCounterCacheAsync(int tenantRegistryId, Guid entityAnalysisModelGuid,
             Guid entityAnalysisModelTtlCounterGuid,
@@ -33,14 +31,14 @@ namespace Jube.Cache.Redis
                     $"TtlCounter:{tenantRegistryId}:{entityAnalysisModelGuid:N}:{entityAnalysisModelTtlCounterGuid:N}:{dataName}";
                 var redisHSetKey = $"{dataValue}";
 
-                var value = await redisDatabase.HashDecrementAsync(redisKey, redisHSetKey, decrement).ConfigureAwait(false);
+                var value = await resilientRedisResilientRedisDatabase.HashDecrementAsync(redisKey, redisHSetKey, decrement).ConfigureAwait(false);
 
                 if (value > 0)
                 {
                     return value;
                 }
 
-                await redisDatabase.HashDeleteAsync(redisKey, redisHSetKey);
+                await resilientRedisResilientRedisDatabase.HashDeleteAsync(redisKey, redisHSetKey);
                 return 0;
             }
             catch (Exception ex)
@@ -59,7 +57,7 @@ namespace Jube.Cache.Redis
                 var redisKey =
                     $"TtlCounter:{tenantRegistryId}:{entityAnalysisModelGuid:N}:{entityAnalysisModelTtlCounterGuid:N}:{dataName}";
                 var redisHSetKey = $"{dataValue}";
-                return (double)await redisDatabase.HashGetAsync(redisKey, redisHSetKey).ConfigureAwait(false);
+                return (double)await resilientRedisResilientRedisDatabase.HashGetAsync(redisKey, redisHSetKey).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -79,8 +77,7 @@ namespace Jube.Cache.Redis
                     $"TtlCounter:{tenantRegistryId}:{entityAnalysisModelGuid:N}:{entityAnalysisModelTtlCounterGuid:N}:{dataName}";
                 var redisHSetKey = $"{dataValue}";
 
-                await redisDatabase.HashIncrementAsync(redisKey, redisHSetKey, increment,
-                    commandFlag).ConfigureAwait(false);
+                await resilientRedisResilientRedisDatabase.HashIncrementAsync(redisKey, redisHSetKey, increment).ConfigureAwait(false);
             }
             catch (Exception ex)
             {

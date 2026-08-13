@@ -14,6 +14,7 @@
 namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters.AbstractionRuleCaching
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Threading;
     using Dictionary;
@@ -63,7 +64,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters.Ab
                                 $"Abstraction Rule Caching: For model {entityAnalysisModel.Instance.Id} and grouping key {distinctSearchKey.SearchKey} should next run on {dateThreshold}.");
                         }
 
-                        if (DateTime.Now > dateThreshold)
+                        if (DateTime.UtcNow > dateThreshold)
                         {
                             ready = true;
 
@@ -150,7 +151,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters.Ab
         }
 
         public static double GetAggregateValue(EntityAnalysisModel entityAnalysisModel, DistinctSearchKey distinctSearchKey, string groupingValue,
-            Dictionary<int, List<DictionaryNoBoxing<string>>> abstractionRuleMatches,
+            ConcurrentDictionary<int, List<DictionaryNoBoxing<string>>> abstractionRuleMatches,
             KeyValuePair<int, List<DictionaryNoBoxing<string>>> abstractionRuleMatch,
             EntityAnalysisModelAbstractionRule abstractionRule,
             EntityAnalysisModelInstanceEntryPayload entityAnalysisModelInstanceEntryPayload)

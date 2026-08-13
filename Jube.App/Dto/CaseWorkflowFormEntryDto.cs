@@ -20,7 +20,7 @@ namespace Jube.App.Dto
     {
         public int Id { get; set; }
         public Dictionary<string, object> Payload { get; set; }
-        public DateTime CreatedDate { get; set; }
+        public DateTimeOffset? CreatedDate { get; set; }
         public string CreatedUser { get; set; }
         public string CaseKey { get; set; }
         public int CaseId { get; set; }

@@ -6,9 +6,7 @@ parent: Models
 grand_parent: Configuration
 ---
 
-🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
-💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
-developer.
+🚀 Get to pre-production in weeks, not months, with private [training](https://www.jube.io/jube-training) direct from Jube's developer — real sovereignty, zero vendor lock-in.
 
 # Tokens
 
@@ -22,6 +20,47 @@ To ensure that malicious code cannot be been injected, an integrity check on the
 performed before compile on creation and in the background during model synchronisation. In the event that the code does
 not pass an integrity check, it would be bypassed, with ERROR level being written to the logs.
 
+## Compile Diagnostics
+
+Activation Rules, Gateway Rules, Abstraction Rules, Abstraction Calculations, Inline Functions and Inline Scripts
+each carry `Compiled` (boolean) and `CompileError` (text) columns on their own table, updated on every compile
+attempt - both on save and during background model synchronisation. There is no administrative page surfacing
+these columns; a failed compile is only visible by querying the relevant table directly, for example:
+
+```sql
+select "Id", "Name", "Compiled", "CompileError"
+from "EntityAnalysisModelActivationRule"
+where "Compiled" = 0
+```
+
+Failures not tied to a specific rule row (general synchronisation errors) are instead recorded to the
+`EntityAnalysisModelSynchronisationError` table (`SynchronisationStepId`, `ErrorMessage`, `CreatedDate`), also only
+queryable directly.
+
+## Compiled Assembly Cache Observability
+
+Compiled rule assemblies (the .NET binaries produced by reflection-compiling rule scripts) are held in an in-memory
+cache, keyed by a hash of the script text, so that an unchanged rule is never recompiled. This cache has no eviction
+of its own, so a background task snapshots it periodically (`WaitHashCacheAssemblyObservability`, default 60000ms -
+see [Environment Variables](../../../Concepts/EnvironmentVariables/index.html)) to three tables, so growth over time
+can be observed:
+
+* `HashCacheAssemblyInstance` - one row per running instance (identified by hostname and a Guid generated at
+  startup), holding the instance's current entry Count and total Bytes.
+* `HashCacheAssemblyInstanceJournal` - a time-series history, one row per snapshot per instance, of Count and Bytes -
+  this is what shows growth (or a leak) over time rather than only the current total.
+* `HashCacheAssemblyInstanceEntry` - one row per distinct compiled script (by ScriptHash, upserted so a restart does
+  not rewrite the row for an already-known hash), storing the compiled size, the original rule Code, and the raw
+  compiled Binary (PE bytes) - the Binary can be decompiled to audit exactly what was compiled and is running for a
+  given script hash.
+
+There is no administrative page for any of this - it is intended to be queried directly, for example:
+
+```sql
+select "Instance", "Count", "Bytes", "UpdatedDate"
+from "HashCacheAssemblyInstance"
+```
+
 All tokens inside a rule must be registered in the RuleScriptToken table in the database:
 
 ```sql
@@ -34,7 +73,13 @@ statements and object names from model invocation. The following tokens are hard
 
 {"Return","If","Then","End If","False","True","Payload","Abstraction","Activation","Select","Case","End Select","
 Contains","Sanction","KVP","List","TTLCounter","String","Double","Integer","DateTime","CType","Boolean","Data","
-Calculation","Not"}
+Calculation","Not","HttpAdaptation"}
+
+`HttpAdaptation` carries the full HTTP Adaptation Protocol response, not a bare score - see the
+[HTTP Adaptation Protocol](../HTTPAdaptationProtocol/index.html) page. A rule authored as
+`HttpAdaptation.Example` is compiled through to `HTTPAdaptation("Example")`; the `Adaptation` object
+returned implicitly converts to the underlying score wherever a numeric context expects one, so no
+`.Value` suffix is generated or required.
 
 The parse function takes a string containing a VB .Net code fragment and performs several steps to parse for integrity.
 For the purposes of this example, the following rule will be parsed for integrity:

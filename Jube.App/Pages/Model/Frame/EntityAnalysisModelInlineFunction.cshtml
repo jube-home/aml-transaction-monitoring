@@ -62,6 +62,30 @@
                     </select>
                 </td>
             </tr>
+            <tr id="EncryptionRow">
+                <td>
+                    <label for="EncryptionId" class="k-checkbox-label">Encryption</label>
+                </td>
+                <td>
+                    <ul id="EncryptionId" class="fieldlist">
+                        <li>
+                            <input type="radio" class="k-radio" name="EncryptionId"
+                                   id="EncryptionNone" checked="checked" value="0"/>
+                            <label class="k-radio-label" for="EncryptionNone">None</label>
+                        </li>
+                        <li>
+                            <input type="radio" class="k-radio" name="EncryptionId"
+                                   id="EncryptionDeterministic" value="1"/>
+                            <label class="k-radio-label" for="EncryptionDeterministic">Deterministic</label>
+                        </li>
+                        <li>
+                            <input type="radio" class="k-radio" name="EncryptionId"
+                                   id="EncryptionRandom" value="2"/>
+                            <label class="k-radio-label" for="EncryptionRandom">Random</label>
+                        </li>
+                    </ul>
+                </td>
+            </tr>
             <tr>
                 <td><label for="rule">Coder</label></td>
                 <td>

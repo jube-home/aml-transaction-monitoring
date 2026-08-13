@@ -18,10 +18,10 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ActivationRul
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
-    using Data.Messaging;
     using Data.Poco;
     using Newtonsoft.Json;
     using RabbitMQ.Client;
+    using StackExchange.Redis;
     using EntityAnalysisModelActivationRule=EntityAnalysisModelManager.EntityAnalysisModel.Models.Models.EntityAnalysisModelActivationRule;
 
     public static class ActivationRuleActivationWatcherExtensions
@@ -64,7 +64,7 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ActivationRul
                     ResponseElevationContent = evaluateActivationRule.ResponseElevationContent,
                     ActivationRuleSummary = evaluateActivationRule.Name,
                     TenantRegistryId = context.EntityAnalysisModel.Instance.TenantRegistryId,
-                    CreatedDate = DateTime.Now,
+                    CreatedDate = DateTime.UtcNow,
                     Latitude = GetLatitude(context),
                     Longitude = GetLongitude(context),
                     Key = "",
@@ -130,10 +130,7 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ActivationRul
                 if (context.Environment.AppSettings("StreamingActivationWatcher")
                     .Equals("True", StringComparison.OrdinalIgnoreCase))
                 {
-                    var messaging = new Messaging(context.Environment.AppSettings("ConnectionString"), context.Log);
-
-                    await messaging.SendActivationAsync(bodyBytes);
-
+                    await context.EntityAnalysisModel.Services.CacheService.ResilientRedisResilientRedisDatabase.PublishAsync($"ActivationWatcher:{context.EntityAnalysisModel.Instance.TenantRegistryId}", bodyBytes, CommandFlags.FireAndForget);
                     Interlocked.Increment(ref context.EntityAnalysisModel.Counters.ActivationWatcherCount);
 
                     if (context.Log.IsInfoEnabled)
