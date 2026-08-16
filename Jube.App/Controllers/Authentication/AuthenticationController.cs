@@ -261,6 +261,13 @@ namespace Jube.App.Controllers.Authentication
                 return Unauthorized();
             }
 
+            var authenticatedUserName = User.Identity?.Name ?? model.UserName;
+            
+            if (String.IsNullOrEmpty(authenticatedUserName))
+            {
+                return Unauthorized();
+            }
+
             if (dynamicEnvironment.AppSettings("EnableMultifactorAuthentication").Equals("True", StringComparison.OrdinalIgnoreCase))
             {
                 if (String.IsNullOrEmpty(model.Mfa))
@@ -268,17 +275,15 @@ namespace Jube.App.Controllers.Authentication
                     return StatusCode(202);
                 }
 
-                if (model.UserName != null)
+                var mfaResult = await VerifyMfaAsync(authenticatedUserName, model.Mfa, token);
+                
+                if (!mfaResult.IsSuccessful)
                 {
-                    var mfaResult = await VerifyMfaAsync(model.UserName, model.Mfa, token);
-                    if (!mfaResult.IsSuccessful)
-                    {
-                        return Unauthorized();
-                    }
+                    return Unauthorized();
                 }
             }
 
-            var authenticationDto = AuthenticationCookieIssuer.IssueAuthenticationCookies(Response, dynamicEnvironment, model.UserName);
+            var authenticationDto = AuthenticationCookieIssuer.IssueAuthenticationCookies(Response, dynamicEnvironment, authenticatedUserName);
             return Ok(authenticationDto);
         }
 
