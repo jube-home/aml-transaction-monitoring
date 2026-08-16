@@ -16,6 +16,7 @@ namespace Jube.LoadTest
     using System.Collections.Concurrent;
     using System.Diagnostics;
     using System.Net;
+    using System.Security.Cryptography;
     using System.Text;
     using System.Threading.Channels;
 
@@ -112,7 +113,7 @@ namespace Jube.LoadTest
             {
                 while (await timer.WaitForNextTickAsync(durationCts.Token))
                 {
-                    var accountId = keyGenerator?.Next() ?? random.NextInt64(1, settings.KeyPoolSize + 1);
+                    var accountId = keyGenerator?.Next() ?? RandomNumberGenerator.GetInt64(1, settings.KeyPoolSize + 1);
                     var ip = $"{random.Next(1, 255)}.{random.Next(0, 255)}.{random.Next(0, 255)}.{random.Next(1, 255)}";
 
                     var deviceIdBytes = new byte[8];
