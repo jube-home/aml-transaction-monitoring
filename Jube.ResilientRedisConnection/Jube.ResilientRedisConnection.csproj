@@ -9,8 +9,8 @@
 
     <ItemGroup>
         <PackageReference Include="StackExchange.Redis" Version="2.11.8"/>
-        <PackageReference Include="log4net" Version="2.0.14" />
-        <PackageReference Include="Polly" Version="8.4.2" />
+        <PackageReference Include="log4net" Version="3.3.1"/>
+        <PackageReference Include="Polly" Version="8.6.6"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -20,6 +20,10 @@
         <Reference Include="Polly">
             <HintPath>..\..\..\.nuget\packages\polly\8.6.5\lib\net6.0\Polly.dll</HintPath>
         </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Jube.ResilientNpgsql\Jube.ResilientNpgsql.csproj"/>
     </ItemGroup>
 
 </Project>

@@ -1,14 +1,12 @@
 ---
 layout: default
 title: AMQP Queue Ingestion and Exchange Publishing
-nav_order: 2
+nav_order: 3
 parent: API
 grand_parent: Concepts
 ---
 
-🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
-💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
-developer.
+🚀 Get to pre-production in weeks, not months, with private [training](https://www.jube.io/jube-training) direct from Jube's developer — real sovereignty, zero vendor lock-in.
 
 # AMQP Queue Ingestion and Exchange Publishing
 

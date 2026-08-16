@@ -11,11 +11,11 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using FluentMigrator;
-
 namespace Jube.Migrations.Baseline
 {
+    using System;
+    using FluentMigrator;
+
     [Migration(20220429124913)]
     public class AddCaseWorkflowMacroTableIndex : Migration
     {
@@ -57,7 +57,7 @@ namespace Jube.Migrations.Baseline
                 Name = "ExampleMacro",
                 Active = 1,
                 Version = 1,
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 Javascript = "alert('Example Macro Javascript Eval.');",
                 ImageLocation = "calculator.png"
             });

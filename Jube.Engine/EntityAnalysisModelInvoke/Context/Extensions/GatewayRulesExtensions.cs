@@ -112,7 +112,7 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions
         {
             Interlocked.Increment(ref context.EntityAnalysisModel.Counters.ModelInvokeGatewayCounter);
             Interlocked.Increment(ref gatewayRule.ActivationCounter);
-            gatewayRule.ActivationCounterDate = DateTime.Now;
+            gatewayRule.ActivationCounterDate = DateTime.UtcNow;
         }
     }
 }

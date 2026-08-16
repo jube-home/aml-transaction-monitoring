@@ -158,7 +158,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                                         $"Entity Start: Model {key} and Enable Live Forever {entityAnalysisModelTtlCounter.Id} set Enable Sum as {entityAnalysisModelTtlCounter.EnableSum}.");
                                 }
                             }
-                            
+
                             if (record.TtlCounterDataValue == null)
                             {
                                 if (context.Services.Log.IsDebugEnabled)
@@ -365,6 +365,10 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 context.Services.Log.Error($"SyncEntityAnalysisModelTtlCountersAsync: has produced an error {ex}");
+
+                await new EntityAnalysisModelSynchronisationErrorRepository(context.Services.DbContext)
+                    .InsertAsync(EntityAnalysisModelSynchronisationErrorRepository.EntityAnalysisModelSynchronisationErrorStepEnum.TtlCounters, ex.ToString(),
+                        context.Services.CancellationToken).ConfigureAwait(false);
             }
 
             return context;

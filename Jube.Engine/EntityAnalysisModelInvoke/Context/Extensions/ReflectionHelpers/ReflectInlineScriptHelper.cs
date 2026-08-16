@@ -48,11 +48,25 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ReflectionHel
 
                     var value = prop.Value.GetValueDelegate(instance);
 
-                    if (prop.Value.PropertyType != typeof(string)
-                        && prop.Value.PropertyType != typeof(int)
-                        && prop.Value.PropertyType != typeof(bool)
-                        && prop.Value.PropertyType != typeof(DateTime)
-                        && prop.Value.PropertyType != typeof(double))
+                    if (value == null)
+                    {
+                        continue;
+                    }
+
+                    var underlyingType = Nullable.GetUnderlyingType(prop.Value.PropertyType);
+                    var isNullable = underlyingType != null;
+                    var effectiveType = underlyingType ?? prop.Value.PropertyType;
+
+                    if (isNullable && value == null)
+                    {
+                        continue;
+                    }
+
+                    if (effectiveType != typeof(string)
+                        && effectiveType != typeof(int)
+                        && effectiveType != typeof(bool)
+                        && effectiveType != typeof(DateTime)
+                        && effectiveType != typeof(double))
                     {
                         continue;
                     }
@@ -61,6 +75,7 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ReflectionHel
                     {
                         case string s:
                             context.EntityAnalysisModelInstanceEntryPayload.Payload.TryAdd(prop.Key, s);
+                            context.EntityAnalysisModel.ResolveDictionaryValueForField(context.EntityAnalysisModelInstanceEntryPayload, context.Log, prop.Key);
 
                             if (prop.Value.ReportTable)
                             {

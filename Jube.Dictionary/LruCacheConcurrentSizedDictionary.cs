@@ -20,6 +20,7 @@ namespace Jube.Dictionary
 
     public class LruCacheConcurrentSizedDictionary<TKey, TValue> : ISized, IDictionary<TKey, TValue>, ILruCacheConcurrentSizedDictionary<TKey, TValue> where TKey : notnull
     {
+        private const int QueueBacklogSlack = 10_000;
         private readonly ConcurrentDictionary<TKey, CacheEntry> dict = new ConcurrentDictionary<TKey, CacheEntry>();
         private readonly long evictionThreshold;
         private readonly ConcurrentQueue<TKey> lruQueue = new ConcurrentQueue<TKey>();
@@ -197,7 +198,7 @@ namespace Jube.Dictionary
                 {
                     throw new KeyNotFoundException();
                 }
-                UpdateLru(key);
+                entry.Accessed = true;
                 return entry.Value;
             }
             set
@@ -224,6 +225,7 @@ namespace Jube.Dictionary
 
             // ReSharper disable once RedundantAssignment
             entry = null;//This is important to make sure the GC identifies it.
+            EvictIfNeeded();
 
             return true;
         }
@@ -232,7 +234,7 @@ namespace Jube.Dictionary
         {
             if (dict.TryGetValue(key, out var entry))
             {
-                UpdateLru(key);
+                entry.Accessed = true;
                 value = entry.Value;
                 return true;
             }
@@ -295,44 +297,62 @@ namespace Jube.Dictionary
             Interlocked.Exchange(ref removeBytes, 0);
         }
 
-        private void UpdateLru(TKey key)
-        {
-            lruQueue.Enqueue(key);
-        }
-
         private void AddOrUpdate(TKey key, TValue value)
         {
             var newSize = EstimateSize(value);
 
-            dict.AddOrUpdate(key,
-                k =>
+            CacheEntry? addedEntry = null;
+            CacheEntry? updatedEntry = null;
+            var updateDelta = 0L;
+
+            var winningEntry = dict.AddOrUpdate(key,
+                _ =>
                 {
-                    lruQueue.Enqueue(k);
-                    Interlocked.Add(ref totalSize, newSize);
-                    Interlocked.Increment(ref request);
-                    Interlocked.Add(ref requestBytes, newSize);
-                    Interlocked.Increment(ref add);
-                    Interlocked.Add(ref addBytes, newSize);
-                    EvictIfNeeded();
-                    return new CacheEntry(value, newSize);
+                    addedEntry = new CacheEntry(value, newSize);
+                    return addedEntry;
                 },
-                (k, existing) =>
+                (_, existing) =>
                 {
-                    var delta = newSize - existing.Size;
-                    Interlocked.Add(ref totalSize, delta);
-                    Interlocked.Increment(ref request);
-                    Interlocked.Add(ref requestBytes, delta);
-                    Interlocked.Increment(ref update);
-                    Interlocked.Add(ref updateBytes, delta);
-                    lruQueue.Enqueue(k);
-                    EvictIfNeeded();
-                    return new CacheEntry(value, newSize);
+                    updateDelta = newSize - existing.Size;
+                    updatedEntry = new CacheEntry(value, newSize)
+                    {
+                        Accessed = true
+                    };
+                    return updatedEntry;
                 });
+
+            if (ReferenceEquals(winningEntry, addedEntry))
+            {
+                lruQueue.Enqueue(key);
+                Interlocked.Add(ref totalSize, newSize);
+                Interlocked.Increment(ref request);
+                Interlocked.Add(ref requestBytes, newSize);
+                Interlocked.Increment(ref add);
+                Interlocked.Add(ref addBytes, newSize);
+            }
+            else if (ReferenceEquals(winningEntry, updatedEntry))
+            {
+                Interlocked.Add(ref totalSize, updateDelta);
+                Interlocked.Increment(ref request);
+                Interlocked.Add(ref requestBytes, updateDelta);
+                Interlocked.Increment(ref update);
+                Interlocked.Add(ref updateBytes, updateDelta);
+            }
+
+            EvictIfNeeded();
         }
 
         private void EvictIfNeeded()
         {
-            if (!IsFull || isEvicting)
+            if (isEvicting)
+            {
+                return;
+            }
+
+            var isFull = IsFull;
+            var isQueueBacklogged = IsQueueBacklogged();
+
+            if (!isFull && !isQueueBacklogged)
             {
                 return;
             }
@@ -340,7 +360,15 @@ namespace Jube.Dictionary
             isEvicting = true;
             try
             {
-                EvictItems(evictionThreshold);
+                if (isFull)
+                {
+                    EvictItems(evictionThreshold);
+                }
+
+                if (isQueueBacklogged)
+                {
+                    CompactStaleQueueEntries();
+                }
             }
             finally
             {
@@ -348,22 +376,53 @@ namespace Jube.Dictionary
             }
         }
 
+        private bool IsQueueBacklogged()
+        {
+            return lruQueue.Count > dict.Count + QueueBacklogSlack;
+        }
+
         private void EvictItems(long targetSize)
         {
             while (TotalSize > targetSize && lruQueue.TryDequeue(out var key))
             {
-                if (!dict.TryRemove(key, out var entry))
+                if (!dict.TryGetValue(key, out var entry))
                 {
                     continue;
                 }
+
+                if (entry.Accessed)
+                {
+                    entry.Accessed = false;
+                    lruQueue.Enqueue(key);
+                    continue;
+                }
+
+                if (!dict.TryRemove(key, out entry))
+                {
+                    continue;
+                }
+
                 Interlocked.Increment(ref evictionCount);
                 Interlocked.Add(ref evictionBytes, entry.Size);
                 Interlocked.Add(ref totalSize, -entry.Size);
             }
         }
 
+        private void CompactStaleQueueEntries()
+        {
+            var sweepLimit = lruQueue.Count;
+            for (var i = 0; i < sweepLimit && lruQueue.TryDequeue(out var key); i++)
+            {
+                if (dict.ContainsKey(key))
+                {
+                    lruQueue.Enqueue(key);
+                }
+            }
+        }
+
         private class CacheEntry(TValue value, long size)
         {
+            public volatile bool Accessed;
             public TValue Value { get; } = value;
             public long Size { get; } = size;
         }

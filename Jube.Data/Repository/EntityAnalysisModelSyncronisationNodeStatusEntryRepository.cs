@@ -33,14 +33,14 @@ namespace Jube.Data.Repository
 
             if (existing == null)
             {
-                model.SynchronisedDate = DateTime.Now;
-                model.HeartbeatDate = DateTime.Now;
+                model.SynchronisedDate = DateTime.UtcNow;
+                model.HeartbeatDate = DateTime.UtcNow;
                 model.Id = await dbContext.InsertWithInt32IdentityAsync(model, token: token).ConfigureAwait(false);
             }
             else
             {
-                existing.SynchronisedDate = DateTime.Now;
-                existing.HeartbeatDate = DateTime.Now;
+                existing.SynchronisedDate = DateTime.UtcNow;
+                existing.HeartbeatDate = DateTime.UtcNow;
                 await dbContext.UpdateAsync(existing, token: token).ConfigureAwait(false);
             }
         }
@@ -56,13 +56,13 @@ namespace Jube.Data.Repository
 
             if (existing == null)
             {
-                model.SynchronisedDate = DateTime.Now;
-                model.HeartbeatDate = DateTime.Now;
+                model.SynchronisedDate = DateTime.UtcNow;
+                model.HeartbeatDate = DateTime.UtcNow;
                 model.Id = await dbContext.InsertWithInt32IdentityAsync(model, token: token).ConfigureAwait(false);
             }
             else
             {
-                existing.HeartbeatDate = DateTime.Now;
+                existing.HeartbeatDate = DateTime.UtcNow;
                 await dbContext.UpdateAsync(existing, token: token).ConfigureAwait(false);
             }
         }

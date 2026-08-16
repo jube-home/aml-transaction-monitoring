@@ -20,12 +20,13 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Models
 
     public class Collections
     {
+        public List<string> Users = [];
         public List<EntityAnalysisModelAbstractionRule> ModelAbstractionRules { get; set; } = [];
         public List<EntityAnalysisModelTtlCounter> ModelTtlCounters { get; set; } = [];
         public List<EntityAnalysisModelSanction> EntityAnalysisModelSanctions { get; set; } = [];
         public List<EntityAnalysisModelActivationRule> ModelActivationRules { get; set; } = [];
         public List<EntityModelGatewayRule> ModelGatewayRules { get; set; } = [];
-        public Dictionary<int, EntityAnalysisModelHttpAdaptation> EntityAnalysisModelAdaptations { get; set; } = new Dictionary<int, EntityAnalysisModelHttpAdaptation>();
+        public List<EntityAnalysisModelHttpAdaptation> EntityAnalysisModelAdaptations { get; set; } = [];
         public List<ExhaustiveSearchInstance> ExhaustiveModels { get; set; } = [];
         public List<EntityAnalysisModelRequestXPath> EntityAnalysisModelRequestXPaths { get; set; } = [];
         public List<EntityAnalysisModelAbstractionCalculation> EntityAnalysisModelAbstractionCalculations { get; set; } = [];
@@ -33,5 +34,6 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Models
         public List<EntityAnalysisModelInlineScript> EntityAnalysisModelInlineScripts { get; set; } = [];
         public List<EntityAnalysisModelTag> EntityAnalysisModelTags { get; set; } = [];
         public Dictionary<string, DistinctSearchKey> DistinctSearchKeys { get; set; } = new Dictionary<string, DistinctSearchKey>();
+        public Dictionary<int, string> ParseIndexCache { get; set; }
     }
 }

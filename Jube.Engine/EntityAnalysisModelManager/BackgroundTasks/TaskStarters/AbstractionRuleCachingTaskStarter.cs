@@ -34,7 +34,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters
                                  from modelEntityKvp in context.EntityAnalysisModels.ActiveEntityAnalysisModels
                                  where modelEntityKvp.Value.Started
                                  where AddSearchKeyCacheServerTime(modelEntityKvp.Value.Cache.LastModelSearchKeyCacheWritten) <
-                                       DateTime.Now
+                                       DateTime.UtcNow
                                  select modelEntityKvp)
                         {
                             context.Services.TaskCoordinator.CancellationToken.ThrowIfCancellationRequested();
@@ -48,7 +48,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters
                                 }
 
                                 var dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(
-                                        context.Services.DynamicEnvironment.AppSettings("ConnectionString"), context.Services.Log);
+                                    context.Services.DynamicEnvironment.AppSettings("ConnectionString"), context.Services.Log);
                                 try
                                 {
                                     var query =

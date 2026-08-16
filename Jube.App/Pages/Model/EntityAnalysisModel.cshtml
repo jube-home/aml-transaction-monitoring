@@ -18,6 +18,7 @@
 
 @section Scripts
 {
+    <script src="/js/RoleAllocation/RoleAllocation.js"></script>
     <script src="/js/Model/EntityAnalysisModel.js"></script>
 }
 
@@ -215,10 +216,11 @@
                                                    for="MaxResponseElevationIntervalHour">Hours</label>
                                         </li>
                                         <li>
-                                            <input type="radio" class="k-radio" id="MaxResponseElevationIntervalDay"
-                                                   name="MaxResponseElevationInterval" value="d"/>
+                                            <input type="radio" class="k-radio" name="MaxResponseElevationInterval"
+                                                   id="MaxResponseElevationIntervalDay"
+                                                   value="d"/>
                                             <label class="k-radio-label"
-                                                   for="MaxResponseElevationIntervalDay">Days</label>
+                                                   for="MaxResponseElevationInterval">Days</label>
                                         </li>
                                     </ul>
                                 </td>
@@ -281,10 +283,11 @@
                                                    for="MaxResponseElevationIntervalHour">Hours</label>
                                         </li>
                                         <li>
-                                            <input type="radio" class="k-radio" id="MaxActivationWatcherIntervalDay"
-                                                   name="MaxActivationWatcherIntervalDay" value="d"/>
+                                            <input type="radio" class="k-radio" name="MaxActivationWatcherInterval"
+                                                   id="MaxActivationWatcherIntervalDay"
+                                                   value="d"/>
                                             <label class="k-radio-label"
-                                                   for="MaxActivationWatcherIntervalDay">Days</label>
+                                                   for="MaxActivationWatcherInterval">Days</label>
                                         </li>
                                     </ul>
                                 </td>
@@ -355,5 +358,6 @@
             <button type="button" id="Update" class="ButtonDefault">Update</button>
             <button type="button" id="Delete" class="ButtonDefault">Delete</button>
         </div>
+        <div id="RoleManager"></div>
     </div>
 </div>

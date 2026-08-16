@@ -18,7 +18,6 @@ namespace Jube.TaskCancellation.TaskHelper
     public enum TaskType
     {
         SanctionsAsync = 1,
-        DictionaryKvPsAsync = 2,
         TtlCountersAsync = 3,
         AbstractionRulesWithSearchKeysAsync = 4,
         CachePayloadLatestUpsertAsync = 5,
@@ -49,7 +48,9 @@ namespace Jube.TaskCancellation.TaskHelper
         ProcessTtlCounterDeprecation = 30,
         BulkInsertTtlCounterEntryRemovalBatchResponseTime = 31,
         BulkInsertCachePayloadLatestRemovalBatchEntry = 32,
-        SortedSetLruJournalRemove = 33
+        SortedSetLruJournalRemove = 33,
+        BulkTtlCounterIdempotencyRemovalBatchEntry = 34,
+        UpsertReferenceDateAsync = 35
     }
 
     public static class TaskHelper

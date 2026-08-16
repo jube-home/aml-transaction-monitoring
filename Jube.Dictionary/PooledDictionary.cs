@@ -229,6 +229,12 @@ namespace Jube.Dictionary
             GC.SuppressFinalize(this);
         }
 
+        public TValue GetValueOrThrow(TKey key)
+        {
+            var index = FindIndex(key);
+            return index < 0 ? throw new KeyNotFoundException($"The given key '{key}' was not present in the dictionary.") : values[index];
+        }
+
         public bool TryAdd(TKey key, TValue value)
         {
             if (key == null)
@@ -268,6 +274,11 @@ namespace Jube.Dictionary
             if (key == null)
             {
                 throw new ArgumentNullException(nameof(key));
+            }
+
+            if (capacity == 0)
+            {
+                return -1;
             }
 
             var hash = key.GetHashCode() & 0x7FFFFFFF;

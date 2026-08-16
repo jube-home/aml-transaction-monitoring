@@ -19,12 +19,10 @@ namespace Jube.Cache.Redis
     using Models;
     using ResilientRedisConnection;
     using Serialization;
-    using StackExchange.Redis;
 
     public class CacheSanctionRepository(
-        ResilientRedisDatabase redisDatabase,
-        ILog log,
-        CommandFlags commandFlag = CommandFlags.FireAndForget) : ICacheSanctionRepository
+        IHybridResilientRedisDatabase resilientRedisResilientRedisDatabase,
+        ILog log) : ICacheSanctionRepository
     {
         public async Task<CacheSanction> GetByMultiPartStringDistanceThresholdAsync(int tenantRegistryId,
             Guid entityAnalysisModelGuid, string multiPartString,
@@ -35,7 +33,7 @@ namespace Jube.Cache.Redis
                 var redisKey = $"Sanction:{tenantRegistryId}:{entityAnalysisModelGuid:N}";
                 var redisHSetKey = $"{multiPartString}:{distanceThreshold}";
 
-                var hashValue = await redisDatabase.HashGetAsync(redisKey, redisHSetKey).ConfigureAwait(false);
+                var hashValue = await resilientRedisResilientRedisDatabase.HashGetAsync(redisKey, redisHSetKey).ConfigureAwait(false);
 
                 if (!hashValue.HasValue)
                 {
@@ -72,14 +70,13 @@ namespace Jube.Cache.Redis
                 var sanction = new Sanction
                 {
                     Value = value,
-                    CreatedDate = DateTime.Now
+                    CreatedDate = DateTime.UtcNow
                 };
 
                 var ms = new MemoryStream();
                 await MessagePackSerializer.SerializeAsync(ms, sanction,
                     MessagePackSerializerOptionsHelper.StandardMessagePackSerializerWithCompressionOptions(false)).ConfigureAwait(false);
-                await redisDatabase.HashSetAsync(redisKey, redisHSetKey, ms.ToArray(),
-                    When.Always, commandFlag).ConfigureAwait(false);
+                await resilientRedisResilientRedisDatabase.HashSetAsync(redisKey, redisHSetKey, ms.ToArray()).ConfigureAwait(false);
             }
             catch (Exception ex)
             {

@@ -1,0 +1,67 @@
+@* Copyright (C) 2022-present Jube Holdings Limited
+ *
+ * This file is part of Jube™ software.
+ *
+ * Jube™ is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License 
+ * as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ * Jube™ is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty  
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+
+ * You should have received a copy of the GNU Affero General Public License along with Jube™. If not, 
+ * see <https://www.gnu.org/licenses/>.
+ *@
+@page
+@model EntityAnalysisModelSample
+@{
+    Layout = "Shared/_Layout";
+}
+
+<script src="/js/Model/EntityAnalysisModelSample.js"></script>
+
+<form id="Form" class="k-form">
+    <body>
+    <div class="fCStyle">
+        <table id="TemplateTable" class="tTStyle">
+            <tr>
+                <td>
+                    <label for="EntityAnalysisModel">Model</label>
+                </td>
+                <td>
+                    <select id="EntityAnalysisModel">
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="DateFrom">Date From</label>
+                </td>
+                <td>
+                    <input type="text" id="DateFrom"/>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="DateTo">Date to</label>
+                </td>
+                <td>
+                    <input type="text" id="DateTo"/>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="Sample">Sample</label>
+                </td>
+                <td>
+                    <input type="text" id="Sample"/>
+                </td>
+            </tr>
+        </table>
+        <div class="footerStyle">
+            <div class="bottomPaddedGeneral">
+                <div id="ErrorMessage" class="errorMessage"></div>
+                <button type="button" id="Download" class="ButtonDefault">Download</button>
+            </div>
+        </div>
+    </div>
+    </body>
+</form>

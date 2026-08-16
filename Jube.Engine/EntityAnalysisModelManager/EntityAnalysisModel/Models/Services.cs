@@ -13,6 +13,7 @@
 
 namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Models
 {
+    using Cryptography;
     using DynamicEnvironment;
     using Jube.Cache;
     using log4net;
@@ -24,5 +25,6 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Models
         public ILog Log { get; set; }
         public DynamicEnvironment JubeEnvironment { get; set; }
         public IModel RabbitMqChannel { get; set; }
+        public AesEncryption AesEncryption { get; set; }
     }
 }

@@ -14,14 +14,10 @@
 namespace Jube.Engine.BackgroundTasks.TaskStarters
 {
     using System;
-    using System.IO;
-    using System.Text;
     using System.Threading.Tasks;
     using Context;
     using Data.Context;
     using Data.Repository;
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Linq;
 
     public class TaggingStarter(Context context)
     {
@@ -33,12 +29,6 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
                     context.Services.DynamicEnvironment.AppSettings("ConnectionString"), context.Services.Log);
 
                 var repository = new ArchiveRepository(dbContext);
-
-                var serializer = new JsonSerializer
-                {
-                    NullValueHandling = NullValueHandling.Ignore,
-                    ContractResolver = context.Services.ContractResolver
-                };
 
                 if (context.Services.Log.IsDebugEnabled)
                 {
@@ -59,60 +49,25 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
                         {
                             if (context.Services.Log.IsInfoEnabled)
                             {
-                                context.Services.Log.Info($"Tagging: Found {tag.EntityAnalysisModelInstanceEntryGuid} with Name {tag.Name} and Value {tag.Value}. Fetching record.");
+                                context.Services.Log.Info($"Tagging: Found {tag.EntityAnalysisModelInstanceEntryGuid} with Tags {tag.Tag}. Fetching record.");
                             }
 
                             var archive = await repository
-                                .GetByEntityAnalysisModelInstanceEntryGuidAndEntityAnalysisModelIdAsync(
-                                    tag.EntityAnalysisModelInstanceEntryGuid, tag.EntityAnalysisModelId, context.Services.TaskCoordinator.CancellationToken).ConfigureAwait(false);
+                                .UpdateTagsByEntityAnalysisModelInstanceEntryGuidAsync(
+                                    tag.EntityAnalysisModelInstanceEntryGuid,
+                                    tag.Tag,
+                                    context.Services.TaskCoordinator.CancellationToken).ConfigureAwait(false);
 
-                            if (archive != null)
-                            {
-                                var jObject = JObject.Parse(archive.Json);
+                            var caseRepository = new CaseRepository(dbContext);
+                            await caseRepository.UpdateArchiveJsonAsync(tag.EntityAnalysisModelInstanceEntryGuid, archive.Json, context.Services.TaskCoordinator.CancellationToken);
 
-                                if (jObject.TryGetValue("tag", out var jToken))
-                                {
-                                    jToken[tag.Name] = tag.Value;
+                            var archiveTagRepository = new ArchiveTagRepository(dbContext, tag.UserName);
+                            await archiveTagRepository.MergeTagsAsync(tag.EntityAnalysisModelInstanceEntryGuid, tag.Tag, context.Services.TaskCoordinator.CancellationToken);
 
-                                    if (context.Services.Log.IsInfoEnabled)
-                                    {
-                                        context.Services.Log.Info($"Tagging: Added tag {tag.Name}={tag.Value} to record {archive.Id}. Updating json.");
-                                    }
-
-                                    var stream = new MemoryStream();
-                                    var streamWriter = new StreamWriter(stream, Encoding.UTF8, leaveOpen: true);
-                                    await using (streamWriter.ConfigureAwait(false))
-                                    {
-                                        var jsonWriter = new JsonTextWriter(streamWriter);
-                                        await using (jsonWriter.ConfigureAwait(false))
-                                        {
-                                            serializer.Serialize(jsonWriter, jObject);
-                                            await jsonWriter.FlushAsync(context.Services.TaskCoordinator.CancellationToken).ConfigureAwait(false);
-                                            await streamWriter.FlushAsync(context.Services.TaskCoordinator.CancellationToken).ConfigureAwait(false);
-                                        }
-                                    }
-
-                                    stream.Seek(0, SeekOrigin.Begin);
-                                    archive.Json = Encoding.UTF8.GetString(stream.ToArray());
-                                    await repository.UpdateAsync(archive, context.Services.TaskCoordinator.CancellationToken).ConfigureAwait(false);
-
-                                    if (context.Services.Log.IsInfoEnabled)
-                                    {
-                                        context.Services.Log.Info($"Tagging: Updated json for record {archive.Id}.");
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                if (context.Services.Log.IsInfoEnabled)
-                                {
-                                    context.Services.Log.Info($"Tagging: No record found for {tag.EntityAnalysisModelInstanceEntryGuid} and model {tag.EntityAnalysisModelId}.");
-                                }
-                            }
                         }
                         catch (Exception ex) when (ex is not OperationCanceledException)
                         {
-                            context.Services.Log.Error($"Tagging: Error updating {tag.EntityAnalysisModelInstanceEntryGuid} for model {tag.EntityAnalysisModelId}: {ex}");
+                            context.Services.Log.Error($"Tagging: Error updating {tag.EntityAnalysisModelInstanceEntryGuid} with {ex}");
                         }
                     }
                     else

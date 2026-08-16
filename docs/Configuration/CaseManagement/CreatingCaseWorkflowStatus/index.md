@@ -6,9 +6,7 @@ parent: Case Management
 grand_parent: Configuration
 ---
 
-🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
-💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
-developer.
+🚀 Get to pre-production in weeks, not months, with private [training](https://www.jube.io/jube-training) direct from Jube's developer — real sovereignty, zero vendor lock-in.
 
 # Cases Workflow Status
 When a case is created,  it can be allocated a status, which is helpful for filtering.  Furthermore,  when a case is being worked, changing the status allows for the sub allocation of the record (for example to a money laundering officer for review).  Statuses are separate from the closed status (i.e. Open,  Closed etc).
@@ -21,7 +19,7 @@ A common example for case status use is to escalate cases through a hierarchy in
 
 To begin the addition of Cases Workflow Status,  navigate to Administration >> Models >> Cases Workflows >> Cases Workflow Status:
 
-![Image](CasesWorkflowsStatusTopOfTree.png)
+![Image](TopOfTreeForCasesWorkflows.png)
 
 Cases Workflows Status is a child of Cases Workflows, itself a Child of Models.  It follows that the tree to administer models and cases workflows is now of three levels deep.
 
@@ -36,6 +34,8 @@ Exposing the newly created Cases Workflow, which can be used to create new child
 Click on the Case Workflow entry to begin the process of adding Case Workflow Status:
 
 ![Image](CasesWorkflowsStatusTopOfTree.png)
+
+![Image](TemplateAddForCasesStatusWorkflow.png)
 
 The parameters are as follows:
 

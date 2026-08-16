@@ -6,9 +6,7 @@ parent: Case Management
 grand_parent: Configuration
 ---
 
-🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
-💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
-developer.
+🚀 Get to pre-production in weeks, not months, with private [training](https://www.jube.io/jube-training) direct from Jube's developer — real sovereignty, zero vendor lock-in.
 
 # Creating Automation
 
@@ -91,6 +89,8 @@ Navigate to a case:
 Notice the Case Status Bar, specifically the Status:
 
 ![Image](LocationOfCaseStatusInCase.png)
+
+![Image](CaseStatusReadyToBeChangedForHTTPEndpoint.png)
 
 Change Case Status to the newly created status:
 

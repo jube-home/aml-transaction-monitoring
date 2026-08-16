@@ -20,7 +20,6 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Models.Payload.EntityAnalysisMod
         public int InlineScript { get; set; }
         public int Gateway { get; set; }
         public long SanctionsAsync { get; set; }
-        public long DictionaryKvPsAsync { get; set; }
         public long TtlCountersAsync { get; set; }
         public long AbstractionRulesWithSearchKeysAsync { get; set; }
         public ReadTasksPerformance ReadTasksPerformance { get; set; }

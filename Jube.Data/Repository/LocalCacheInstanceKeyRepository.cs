@@ -24,7 +24,7 @@ namespace Jube.Data.Repository
     {
         public async Task<LocalCacheInstanceKey> InsertAsync(LocalCacheInstanceKey model, CancellationToken token = default)
         {
-            model.CreatedDate = DateTime.Now;
+            model.CreatedDate = DateTime.UtcNow;
             model.Id = await dbContext.InsertWithInt32IdentityAsync(model, token: token);
 
             return model;

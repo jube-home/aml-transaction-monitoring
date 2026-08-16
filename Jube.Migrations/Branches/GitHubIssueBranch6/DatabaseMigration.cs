@@ -1,8 +1,8 @@
-using System;
-using FluentMigrator;
-
 namespace Jube.Migrations.Branches.GitHubIssueBranch6
 {
+    using System;
+    using FluentMigrator;
+
     [Migration(20250405191700)]
     public class DatabaseMigration : Migration
     {
@@ -93,13 +93,17 @@ namespace Jube.Migrations.Branches.GitHubIssueBranch6
 
         private void CreateCountersPermissionAndSubscribeToDefaultAdministrator()
         {
-            Insert.IntoTable("PermissionSpecification").Row(new { Id = 39, Name = "View Performance Counters" });
+            Insert.IntoTable("PermissionSpecification").Row(new
+            {
+                Id = 39,
+                Name = "View Performance Counters"
+            });
             Insert.IntoTable("RoleRegistryPermission").Row(new
             {
                 RoleRegistryId = 1,
                 PermissionSpecificationId = 39,
                 Active = 1,
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 CreatedUser = "Administrator",
                 Version = 1,
                 Guid = Guid.NewGuid()
@@ -108,13 +112,17 @@ namespace Jube.Migrations.Branches.GitHubIssueBranch6
 
         private void CreatePreservationPermissionAndSubscribeToDefaultAdministrator()
         {
-            Insert.IntoTable("PermissionSpecification").Row(new { Id = 38, Name = "Allow Preservation Import and Export" });
+            Insert.IntoTable("PermissionSpecification").Row(new
+            {
+                Id = 38,
+                Name = "Allow Preservation Import and Export"
+            });
             Insert.IntoTable("RoleRegistryPermission").Row(new
             {
                 RoleRegistryId = 1,
                 PermissionSpecificationId = 38,
                 Active = 1,
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 CreatedUser = "Administrator",
                 Version = 1,
                 Guid = Guid.NewGuid()

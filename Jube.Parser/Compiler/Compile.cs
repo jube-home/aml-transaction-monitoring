@@ -36,8 +36,18 @@ namespace Jube.Parser.Compiler
 
         public bool Success;
         public Assembly CompiledAssembly { get; set; }
+        public long CompiledAssemblyBytes { get; private set; }
+        public byte[] CompiledAssemblyBinary { get; private set; }
         // ReSharper disable once MemberCanBePrivate.Global
         public IEnumerable<Diagnostic> Errors { get; set; }
+
+        public string ErrorsSummary
+        {
+            get
+            {
+                return Errors == null ? null : String.Join(Environment.NewLine, Errors.Select(e => e.GetMessage()));
+            }
+        }
 
         public void CompileCode(string code, ILog log, string[] refs, Language language)
         {
@@ -108,6 +118,9 @@ namespace Jube.Parser.Compiler
         private void HandleCompile(ILog log, Stream peStream)
         {
             peStream.Position = 0;
+            CompiledAssemblyBytes = peStream.Length;
+            CompiledAssemblyBinary = ((MemoryStream)peStream).ToArray();
+
             if (log.IsInfoEnabled)
             {
                 log.Info("Roslyn Compilation in VB.net: Is about to load the assembly from a stream of " +
@@ -137,7 +150,7 @@ namespace Jube.Parser.Compiler
         {
             var parseOptions = VisualBasicParseOptions.Default.WithLanguageVersion(LanguageVersion.Latest);
             var compileOptions = new VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary,
-                optimizationLevel: OptimizationLevel.Release, embedVbCoreRuntime: true);
+                optimizationLevel: OptimizationLevel.Release, embedVbCoreRuntime: true, optionStrict: OptionStrict.On);
 
             var references = MetadataReferences(log, refs);
 

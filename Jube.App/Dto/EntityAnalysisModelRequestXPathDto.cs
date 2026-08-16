@@ -11,11 +11,11 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using Jube.App.Dto.Interfaces;
-
 namespace Jube.App.Dto
 {
+    using System;
+    using Interfaces;
+
     public class EntityAnalysisModelRequestXPathDto : IUpdated
     {
         public int EntityAnalysisModelId { get; set; }
@@ -40,18 +40,18 @@ namespace Jube.App.Dto
         public bool HashEntryKeyComposite { get; set; }
         public bool SearchKeyCacheSample { get; set; }
         public int SearchKeyCacheFetchLimit { get; set; }
-        public double Priority { get; set; }
         public bool EnableSuppression { get; set; }
         public bool ReportTable { get; set; }
         public string DefaultValue { get; set; }
+        public bool Cache { get; set; }
+        public int EncryptionId { get; set; }
         public int Id { get; set; }
-        public DateTime CreatedDate { get; set; }
+        public DateTimeOffset? CreatedDate { get; set; }
         public string UpdatedUser { get; set; }
-        public DateTime UpdatedDate { get; set; }
+        public DateTimeOffset? UpdatedDate { get; set; }
         public string CreatedUser { get; set; }
         public int Version { get; set; }
         public string DeletedUser { get; set; }
-        public DateTime DeletedDate { get; set; }
-        public bool Cache { get; set; }
+        public DateTimeOffset? DeletedDate { get; set; }
     }
 }

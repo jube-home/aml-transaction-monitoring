@@ -34,6 +34,7 @@
             name: "RoleManager",
             baseEndpoint: "/api/CaseWorkflowStatusRole",
             parentKeyField: "caseWorkflowStatusGuid",
+            guid: null,
             width: 700,
             height: 350,
             availableTitle: "Available Roles",
@@ -135,7 +136,7 @@
                 method: "GET",
                 success: function (allRoles) {
                     $.ajax({
-                        url: options.baseEndpoint + "/By" + options.parentKeyField + "/" + guid,
+                        url: options.baseEndpoint + "/By" + options.parentKeyField + "/" + options.guid,
                         method: "GET",
                         success: function (assignedRoles) {
                             that._populateLists(allRoles, assignedRoles);
@@ -153,8 +154,7 @@
         },
 
         _populateLists: function (allRoles, assignedRoles) {
-            var that = this, options = that.options;
-
+            var that = this
             var assignedGuidSet = new Set();
             var guidToAssignmentId = new Map();
 
@@ -198,7 +198,8 @@
         },
 
         _moveToAssigned: function () {
-            var that = this, options = that.options, selected = that.availableListBox.select();
+            var that = this;
+            var selected = that.availableListBox.select();
             if (!selected || selected.length === 0) return;
 
             selected.each(function () {
@@ -220,7 +221,8 @@
         },
 
         _moveToAvailable: function () {
-            var that = this, options = that.options, selected = that.assignedListBox.select();
+            var that = this;
+            var selected = that.assignedListBox.select();
             if (!selected || selected.length === 0) return;
 
             selected.each(function () {
@@ -246,7 +248,7 @@
         },
 
         _trackChange: function (dataItem, action) {
-            var that = this, options = that.options;
+            var that = this;
             var guid = dataItem["guid"];
             var assignmentId = dataItem["id"];
             var wasOriginallyAssigned = that._originalAssignedIds.indexOf(guid) >= 0;
@@ -281,7 +283,7 @@
 
             that._pendingChanges.toAssign.forEach(function (roleGuid) {
                 var data = {
-                    [options.parentKeyField]: guid,
+                    [options.parentKeyField]: options.guid,
                     RoleRegistryGuid: roleGuid
                 };
 
@@ -291,35 +293,11 @@
                     contentType: "application/json",
                     data: JSON.stringify(data)
                 }));
-
-                that._pendingChanges.toUnassign.forEach(function (assignmentId) {
-                    promises.push($.ajax({
-                        url: options.baseEndpoint + "/" + encodeURIComponent(assignmentId),
-                        method: "DELETE",
-                        contentType: "application/json"
-                    }));
-                });
-
-                $.when.apply($, promises).done(function () {
-                    that._originalAssignedIds = [];
-
-                    that.assignedListBox.dataSource.data().forEach(function (item) {
-                        that._originalAssignedIds.push(item["guid"]);
-                    });
-
-                    that._pendingChanges = {toAssign: [], toUnassign: []};
-                    that._updateButtonStates();
-                    that.trigger("save", {success: true});
-                }).fail(function (xhr, status, error) {
-                    console.error("Error saving changes:", error);
-                    alert("Error saving changes. Please try again.");
-                    that.trigger("save", {success: false, error: error});
-                });
             });
 
-            that._pendingChanges.toUnassign.forEach(function (id) {
+            that._pendingChanges.toUnassign.forEach(function (assignmentId) {
                 promises.push($.ajax({
-                    url: options.baseEndpoint + "/" + id,
+                    url: options.baseEndpoint + "/" + encodeURIComponent(assignmentId),
                     method: "DELETE",
                     contentType: "application/json"
                 }));
@@ -327,18 +305,14 @@
 
             $.when.apply($, promises).done(function () {
                 that._originalAssignedIds = [];
+
                 that.assignedListBox.dataSource.data().forEach(function (item) {
                     that._originalAssignedIds.push(item["guid"]);
                 });
 
-                that._pendingChanges = {
-                    toAssign: [],
-                    toUnassign: []
-                };
-
+                that._pendingChanges = {toAssign: [], toUnassign: []};
                 that._updateButtonStates();
                 that.trigger("save", {success: true});
-
             }).fail(function (xhr, status, error) {
                 console.error("Error saving changes:", error);
                 alert("Error saving changes. Please try again.");

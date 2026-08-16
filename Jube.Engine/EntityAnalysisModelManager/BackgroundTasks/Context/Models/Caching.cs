@@ -13,13 +13,16 @@
 
 namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.Context.Models
 {
-    using System.Collections.Generic;
+    using System.Collections.Concurrent;
     using System.Reflection;
-    using Sanctions.Models;
+    using Jube.Engine.Models;
+    using SanctionEntry=Sanctions.Models.SanctionEntry;
 
     public class Caching
     {
-        public Dictionary<int, SanctionEntry> SanctionsEntries { get; set; } = new Dictionary<int, SanctionEntry>();
-        public Dictionary<string, Assembly> HashCacheAssembly { get; set; } = new Dictionary<string, Assembly>();
+        public ConcurrentDictionary<int, SanctionEntry> SanctionsEntries { get; set; } = new ConcurrentDictionary<int, SanctionEntry>();
+        public ConcurrentDictionary<string, byte> SanctionsStopTokens { get; set; } = new ConcurrentDictionary<string, byte>();
+        public ConcurrentDictionary<string, Assembly> HashCacheAssembly { get; set; } = new ConcurrentDictionary<string, Assembly>();
+        public ConcurrentDictionary<string, HashCacheAssemblyPayload> HashCacheAssemblyMetadata { get; set; } = new ConcurrentDictionary<string, HashCacheAssemblyPayload>();
     }
 }

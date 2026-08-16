@@ -11,11 +11,11 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using FluentMigrator;
-
 namespace Jube.Migrations.Baseline
 {
+    using System;
+    using FluentMigrator;
+
     [Migration(20220429124950)]
     public class AddEntityAnalysisModelDictionaryTableIndex : Migration
     {
@@ -46,7 +46,7 @@ namespace Jube.Migrations.Baseline
                 EntityAnalysisModelId = 1,
                 Name = "VolumeThresholdByAccountId",
                 Active = 1,
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 CreatedUser = "Administrator",
                 ResponsePayload = 1,
                 DataName = "AccountId",

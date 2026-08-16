@@ -38,7 +38,7 @@ namespace Jube.App.Validators
 
             RuleFor(p => p.Email).NotEmpty();
             RuleFor(p => p.Active).NotNull();
-            RuleFor(p => p.RoleRegistryId).GreaterThanOrEqualTo(0);
+            RuleFor(p => p.RoleRegistryGuid).NotEmpty();
         }
     }
 }

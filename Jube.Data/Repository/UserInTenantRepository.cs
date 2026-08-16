@@ -44,7 +44,7 @@ namespace Jube.Data.Repository
             {
                 existing.TenantRegistryId = tenantRegistryId;
                 existing.SwitchedUser = userName;
-                existing.SwitchedDate = DateTime.Now;
+                existing.SwitchedDate = DateTime.UtcNow;
 
                 await dbContext.UpdateAsync(existing, token: token);
 
@@ -64,7 +64,7 @@ namespace Jube.Data.Repository
                 {
                     TenantRegistryId = tenantRegistryId,
                     SwitchedUser = userName,
-                    SwitchedDate = DateTime.Now
+                    SwitchedDate = DateTime.UtcNow
                 }, token: token);
             }
         }

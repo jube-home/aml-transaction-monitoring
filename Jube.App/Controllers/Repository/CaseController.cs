@@ -25,9 +25,13 @@ namespace Jube.App.Controllers.Repository
     using Code;
     using Data.Context;
     using Data.Poco;
+    using Data.Query;
     using Data.Repository;
     using Dto;
+    using Dto.Mapping;
     using DynamicEnvironment;
+    using Engine.BackgroundTasks.TaskStarters.Case;
+    using Engine.EntityAnalysisModelInvoke.Models.CaseManagement;
     using Engine.EntityAnalysisModelInvoke.Models.Payload.EntityAnalysisModelInstanceEntryPayload;
     using Engine.EntityAnalysisModelInvoke.Models.Payload.EntityAnalysisModelInstanceEntryPayload.Extensions;
     using Engine.Helpers;
@@ -57,6 +61,7 @@ namespace Jube.App.Controllers.Repository
         private readonly CaseEventRepository repositoryCaseEvent;
         private readonly string userName;
         private readonly IValidator<CaseDto> validator;
+        private readonly IValidator<CreateCaseDto> createCaseValidator;
 
         public CaseController(ILog log, DynamicEnvironment dynamicEnvironment
             , IHttpContextAccessor httpContextAccessor, JsonSerializationHelper jsonSerializationHelper)
@@ -74,12 +79,15 @@ namespace Jube.App.Controllers.Repository
             {
                 cfg.CreateMap<Case, CaseDto>();
                 cfg.CreateMap<CaseDto, Case>();
+                cfg.CreateMap<DateTime?, DateTimeOffset?>().ConvertUsing<NullableDateTimeToDateTimeOffsetConverter>();
+                cfg.CreateMap<DateTime, DateTimeOffset>().ConvertUsing(src => new DateTimeOffset(DateTime.SpecifyKind(src, DateTimeKind.Utc)));
             }, NullLoggerFactory.Instance);
 
             mapper = new Mapper(config);
             repositoryCase = new CaseRepository(dbContext, userName);
             repositoryCaseEvent = new CaseEventRepository(dbContext, userName);
             validator = new CaseDtoValidator();
+            createCaseValidator = new CreateCaseValidator();
             this.dynamicEnvironment = dynamicEnvironment;
             this.jsonSerializationHelper = jsonSerializationHelper;
         }
@@ -171,6 +179,96 @@ namespace Jube.App.Controllers.Repository
             }
         }
 
+        [HttpPost("CreateFromCaseKeyValue")]
+        [ProducesResponseType(typeof(CaseDto), (int)HttpStatusCode.OK)]
+        [ProducesResponseType(typeof(ValidationResult), (int)HttpStatusCode.BadRequest)]
+        public async Task<ActionResult<CaseDto>> CreateFromCaseKeyValueAsync([FromBody] CreateCaseDto model, CancellationToken token = default)
+        {
+            try
+            {
+                if (!permissionValidation.Validate(new[]
+                    {
+                        1
+                    }))
+                {
+                    return Forbid();
+                }
+
+                var results = await createCaseValidator.ValidateAsync(model, token);
+                if (!results.IsValid)
+                {
+                    return BadRequest(results);
+                }
+
+                var tenantRegistryId = new UserInTenantRepository(dbContext, userName)
+                    .GetCurrentTenantRegistry()?.TenantRegistryId ?? 0;
+
+                var caseWorkflowRepository = new CaseWorkflowRepository(dbContext, userName);
+                var caseWorkflow = await caseWorkflowRepository.GetByGuidActiveOnlyWithRoleAsync(model.CaseWorkflowGuid, token);
+                if (caseWorkflow == null)
+                {
+                    return NotFound();
+                }
+
+                var existingCase = await new GetExistingCasePriorityQuery(dbContext)
+                    .ExecuteAsync(model.CaseWorkflowGuid, model.CaseKey, model.CaseKeyValue, token);
+
+                if (existingCase != null)
+                {
+                    return Conflict("A case already exists for this Case Key/Value combination.");
+                }
+
+                var caseWorkflowStatusRepository = new CaseWorkflowStatusRepository(dbContext, userName);
+                var caseWorkflowStatuses = await caseWorkflowStatusRepository.GetByCasesWorkflowGuidActiveOnlyAsync(model.CaseWorkflowGuid, token);
+                var caseWorkflowStatus = caseWorkflowStatuses.FirstOrDefault(f => f.Guid == model.CaseWorkflowStatusGuid);
+                if (caseWorkflowStatus == null)
+                {
+                    return Forbid();
+                }
+
+                var archive = await new GetLastArchiveJsonByEntityAnalysisModelIdAndCaseKeyValueQuery(dbContext)
+                    .ExecuteAsync(caseWorkflow.EntityAnalysisModelId!.Value, model.CaseKey, model.CaseKeyValue, token);
+
+                if (archive == null)
+                {
+                    return NotFound("No transaction found for this Case Key/Value combination.");
+                }
+
+                var createCase = new CreateCase
+                {
+                    TenantRegistryId = tenantRegistryId,
+                    EntityAnalysisModelInstanceEntryGuid = archive.Value.EntityAnalysisModelInstanceEntryGuid,
+                    CaseWorkflowGuid = model.CaseWorkflowGuid,
+                    CaseWorkflowStatusGuid = model.CaseWorkflowStatusGuid,
+                    CaseKey = model.CaseKey,
+                    CaseKeyValue = model.CaseKeyValue,
+                    SuspendBypass = false,
+                    SuspendBypassDate = DateTime.UtcNow,
+                    Json = archive.Value.Json
+                };
+
+                await CaseProcessing.CreateAsync(dynamicEnvironment, createCase, log, jsonSerializationHelper, token: token);
+
+                var existing = await new GetExistingCasePriorityQuery(dbContext)
+                    .ExecuteAsync(model.CaseWorkflowGuid, model.CaseKey, model.CaseKeyValue, token);
+
+                if (existing == null)
+                {
+                    log.Error(
+                        $"Case Creation: manual case creation did not produce a case for Case Workflow {model.CaseWorkflowGuid}, Case Key {model.CaseKey}, Case Key Value {model.CaseKeyValue}.");
+
+                    return StatusCode(500);
+                }
+
+                return Ok(mapper.Map<CaseDto>(await repositoryCase.GetByIdActiveOnlyAsync(existing.CaseId, token)));
+            }
+            catch (Exception e)
+            {
+                log.Error(e);
+                return StatusCode(500);
+            }
+        }
+
         [HttpPut]
         [ProducesResponseType(typeof(CaseDto), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ValidationResult), (int)HttpStatusCode.BadRequest)]
@@ -203,7 +301,7 @@ namespace Jube.App.Controllers.Repository
                     {
                         case 3:
                             existing.ClosedUser = userName;
-                            existing.ClosedDate = DateTime.Now;
+                            existing.ClosedDate = DateTime.UtcNow;
 
                             caseEvents.Add(new CaseEvent
                                 {
@@ -211,7 +309,7 @@ namespace Jube.App.Controllers.Repository
                                     CaseId = existing.Id,
                                     CaseKey = existing.CaseKey,
                                     CaseKeyValue = existing.CaseKeyValue,
-                                    After = model.ClosedDate.ToString(CultureInfo.InvariantCulture),
+                                    After = model.ClosedDate?.ToString("o", CultureInfo.InvariantCulture),
                                     CreatedDate = existing.ClosedDate,
                                     CreatedUser = userName
                                 }
@@ -225,8 +323,8 @@ namespace Jube.App.Controllers.Repository
                                     CaseKey = existing.CaseKey,
                                     CaseKeyValue = existing.CaseKeyValue,
                                     Before = existing.ClosedDate.ToString(),
-                                    After = model.ClosedDate.ToString(CultureInfo.InvariantCulture),
-                                    CreatedDate = DateTime.Now,
+                                    After = model.ClosedDate?.ToString("o", CultureInfo.InvariantCulture),
+                                    CreatedDate = DateTime.UtcNow,
                                     CreatedUser = userName
                                 }
                             );
@@ -239,8 +337,8 @@ namespace Jube.App.Controllers.Repository
                                     CaseKey = existing.CaseKey,
                                     CaseKeyValue = existing.CaseKeyValue,
                                     Before = existing.ClosedDate.ToString(),
-                                    After = model.ClosedDate.ToString(CultureInfo.InvariantCulture),
-                                    CreatedDate = DateTime.Now,
+                                    After = model.ClosedDate?.ToString("o", CultureInfo.InvariantCulture),
+                                    CreatedDate = DateTime.UtcNow,
                                     CreatedUser = userName
                                 }
                             );
@@ -259,8 +357,8 @@ namespace Jube.App.Controllers.Repository
                                     CaseKey = existing.CaseKey,
                                     CaseKeyValue = existing.CaseKeyValue,
                                     Before = existing.ClosedDate.ToString(),
-                                    After = model.ClosedDate.ToString(CultureInfo.InvariantCulture),
-                                    CreatedDate = DateTime.Now,
+                                    After = model.ClosedDate?.ToString("o", CultureInfo.InvariantCulture),
+                                    CreatedDate = DateTime.UtcNow,
                                     CreatedUser = userName
                                 }
                             );
@@ -273,8 +371,8 @@ namespace Jube.App.Controllers.Repository
                                     CaseKey = existing.CaseKey,
                                     CaseKeyValue = existing.CaseKeyValue,
                                     Before = existing.ClosedDate.ToString(),
-                                    After = model.ClosedDate.ToString(CultureInfo.InvariantCulture),
-                                    CreatedDate = DateTime.Now,
+                                    After = model.ClosedDate?.ToString("o", CultureInfo.InvariantCulture),
+                                    CreatedDate = DateTime.UtcNow,
                                     CreatedUser = userName
                                 }
                             );
@@ -294,7 +392,7 @@ namespace Jube.App.Controllers.Repository
                             CaseKeyValue = existing.CaseKeyValue,
                             Before = existing.LockedUser,
                             After = model.LockedUser,
-                            CreatedDate = DateTime.Now,
+                            CreatedDate = DateTime.UtcNow,
                             CreatedUser = userName
                         }
                     );
@@ -312,12 +410,12 @@ namespace Jube.App.Controllers.Repository
                                 CaseId = existing.Id,
                                 CaseKey = existing.CaseKey,
                                 CaseKeyValue = existing.CaseKeyValue,
-                                CreatedDate = DateTime.Now,
+                                CreatedDate = DateTime.UtcNow,
                                 CreatedUser = userName
                             }
                         );
 
-                        existing.LockedDate = DateTime.Now;
+                        existing.LockedDate = DateTime.UtcNow;
                         existing.LockedUser = userName;
                     }
                     else
@@ -337,14 +435,14 @@ namespace Jube.App.Controllers.Repository
                             CaseKey = existing.CaseKey,
                             CaseKeyValue = existing.LockedUser,
                             Before = existing.DiaryDate.ToString(),
-                            After = model.DiaryDate.ToString(CultureInfo.InvariantCulture),
-                            CreatedDate = DateTime.Now,
+                            After = model.DiaryDate?.ToString("o", CultureInfo.InvariantCulture),
+                            CreatedDate = DateTime.UtcNow,
                             CreatedUser = userName
                         }
                     );
                 }
 
-                existing.DiaryDate = model.DiaryDate;
+                existing.DiaryDate = model.DiaryDate?.UtcDateTime;
 
                 if (existing.Diary is 0 or null)
                 {
@@ -356,7 +454,7 @@ namespace Jube.App.Controllers.Repository
                                 CaseId = existing.Id,
                                 CaseKey = existing.CaseKey,
                                 CaseKeyValue = existing.LockedUser,
-                                CreatedDate = DateTime.Now,
+                                CreatedDate = DateTime.UtcNow,
                                 CreatedUser = userName
                             }
                         );
@@ -386,7 +484,7 @@ namespace Jube.App.Controllers.Repository
                             CaseKeyValue = existing.LockedUser,
                             Before = existing.CaseWorkflowStatusGuid.ToString(),
                             After = model.CaseWorkflowStatusGuid.ToString(),
-                            CreatedDate = DateTime.Now,
+                            CreatedDate = DateTime.UtcNow,
                             CreatedUser = userName
                         }
                     );
@@ -440,7 +538,7 @@ namespace Jube.App.Controllers.Repository
                             CaseKeyValue = existing.LockedUser,
                             Before = existing.Rating.ToString(),
                             After = model.Rating.ToString(),
-                            CreatedDate = DateTime.Now,
+                            CreatedDate = DateTime.UtcNow,
                             CreatedUser = userName
                         }
                     );

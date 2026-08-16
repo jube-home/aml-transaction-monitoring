@@ -144,7 +144,7 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ActivationRul
             {
                 context.EntityAnalysisModel.ConcurrentQueues.ResponseElevationEntries.Enqueue(new ResponseElevation
                 {
-                    CreatedDate = DateTime.Now,
+                    CreatedDate = DateTime.UtcNow,
                     Value = context.EntityAnalysisModelInstanceEntryPayload.ResponseElevation.Value
                 });
 

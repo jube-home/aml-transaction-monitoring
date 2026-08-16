@@ -105,7 +105,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters
                 if (entityAnalysisModel.ConcurrentQueues.PersistToDatabaseAsync.TryDequeue(out var payload))
                 {
                     found = true;
-                    buffer.LastMessage = DateTime.Now;
+                    buffer.LastMessage = DateTime.UtcNow;
 
                     try
                     {
@@ -122,7 +122,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters
                     }
                 }
 
-                var flushDueToTimeout = buffer.LastMessage.AddSeconds(10) <= DateTime.Now;
+                var flushDueToTimeout = buffer.LastMessage.AddSeconds(10) <= DateTime.UtcNow;
                 var flushDueToThreshold = buffer.Archive.Count > Int32.Parse(context.Services.DynamicEnvironment.AppSettings("BulkCopyThreshold"));
                 var flushDueToBufferHavingValues = buffer.Archive.Count > 0 || buffer.ArchiveKeys.Count > 0;
 

@@ -13,6 +13,7 @@
 
 namespace Jube.Data.Query.CaseQuery
 {
+    using System;
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
@@ -52,29 +53,29 @@ namespace Jube.Data.Query.CaseQuery
                           .Where(r => r.CaseWorkflowGuid == i.Guid
                                       && (r.Deleted == 0 || r.Deleted == null))
                           .Any(r => dbContext.RoleRegistry
-                              .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                              .Where(rr => rr.Guid == r.RoleRegistryGuid && (rr.Deleted == 0 || rr.Deleted == null))
                               .Any(rr => dbContext.UserRegistry
-                                  .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                                  .Any(u => u.RoleRegistryGuid == rr.Guid && u.Name == userName)))
                       && dbContext.CaseWorkflowStatusRole
                           .Where(r => r.CaseWorkflowStatusGuid == s.Guid
                                       && (r.Deleted == 0 || r.Deleted == null))
                           .Any(r => dbContext.RoleRegistry
-                              .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                              .Where(rr => rr.Guid == r.RoleRegistryGuid && (rr.Deleted == 0 || rr.Deleted == null))
                               .Any(rr => dbContext.UserRegistry
-                                  .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                                  .Any(u => u.RoleRegistryGuid == rr.Guid && u.Name == userName)))
                 select new CaseQueryDto
                 {
                     Id = c.Id,
                     EntityAnalysisModelInstanceEntryGuid = c.EntityAnalysisModelInstanceEntryGuid,
-                    DiaryDate = c.DiaryDate.GetValueOrDefault(),
+                    DiaryDate = DateTime.SpecifyKind(c.DiaryDate.GetValueOrDefault(), DateTimeKind.Utc),
                     CaseWorkflowGuid = c.CaseWorkflowGuid,
                     CaseWorkflowStatusGuid = s.Guid,
-                    CreatedDate = c.CreatedDate.GetValueOrDefault(),
+                    CreatedDate = DateTime.SpecifyKind(c.CreatedDate.GetValueOrDefault(), DateTimeKind.Utc),
                     Locked = c.Locked.GetValueOrDefault() == 1,
                     LockedUser = c.LockedUser ?? "",
-                    LockedDate = c.LockedDate.GetValueOrDefault(),
+                    LockedDate = DateTime.SpecifyKind(c.LockedDate.GetValueOrDefault(), DateTimeKind.Utc),
                     ClosedStatusId = c.ClosedStatusId.GetValueOrDefault(),
-                    ClosedDate = c.ClosedDate.GetValueOrDefault(),
+                    ClosedDate = DateTime.SpecifyKind(c.ClosedDate.GetValueOrDefault(), DateTimeKind.Utc),
                     ClosedUser = c.ClosedUser ?? "",
                     CaseKey = c.CaseKey,
                     Diary = c.Diary.GetValueOrDefault() == 1,
@@ -82,12 +83,13 @@ namespace Jube.Data.Query.CaseQuery
                     Rating = c.Rating.GetValueOrDefault(),
                     CaseKeyValue = c.CaseKeyValue,
                     LastClosedStatus = c.LastClosedStatus.GetValueOrDefault(),
-                    ClosedStatusMigrationDate = c.ClosedStatusMigrationDate.GetValueOrDefault(),
+                    ClosedStatusMigrationDate = DateTime.SpecifyKind(c.ClosedStatusMigrationDate.GetValueOrDefault(), DateTimeKind.Utc),
                     ForeColor = s.ForeColor,
                     BackColor = s.BackColor,
                     Json = c.Json,
                     VisualisationRegistryGuid = i.VisualisationRegistryGuid,
-                    EnableVisualisation = i.EnableVisualisation.GetValueOrDefault() == 1
+                    EnableVisualisation = i.EnableVisualisation.GetValueOrDefault() == 1,
+                    EntityAnalysisModelId = c.CaseWorkflow.EntityAnalysisModel.Id
                 };
 
             var getCaseByIdDto = await query.FirstOrDefaultAsync(token);

@@ -6,9 +6,7 @@ parent: Visualisations
 grand_parent: Configuration
 ---
 
-🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
-💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
-developer.
+🚀 Get to pre-production in weeks, not months, with private [training](https://www.jube.io/jube-training) direct from Jube's developer — real sovereignty, zero vendor lock-in.
 
 # Generate Map in Visualisation Datasource
 Similar to charts Visualisations are achieved via embedding configuration Javascript for the Kendo Charting toolset. The Kendo Map toolset provides a rich set of mapping functions that can be used to alternatively present data that would otherwise be in grid form.

@@ -11,4 +11,34 @@
  * see <https://www.gnu.org/licenses/>.
  *@
 @page
-@model Jube.App.Pages.Account.LogoutModel
+@model LogoutModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Logout - Jube.App</title>
+    <link rel="stylesheet" href="/styles/bootstrap.min.css"/>
+    <link rel="stylesheet" href="/styles/site.css"/>
+    <link rel="stylesheet" href="/styles/jube.css"/>
+</head>
+<body>
+<header>
+    <img alt="Jube" src="/images/logo-sad.png" style="width: 200px; padding-top: 3px;"/>
+</header>
+<main role="main">
+    <br/>
+    <div class="topPaddedGeneral bottomPaddedGeneral">
+        <p class="text-justify">
+            Jooby is sad you are leaving. Come back soon.
+        </p>
+        <p class="topPaddedGeneral">
+            <a href="/account/login">Login.</a>
+        </p>
+    </div>
+</main>
+</body>
+</html>

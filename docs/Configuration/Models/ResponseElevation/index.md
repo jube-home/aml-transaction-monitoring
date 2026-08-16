@@ -6,9 +6,7 @@ parent: Models
 grand_parent: Configuration
 ---
 
-🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
-💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
-developer.
+🚀 Get to pre-production in weeks, not months, with private [training](https://www.jube.io/jube-training) direct from Jube's developer — real sovereignty, zero vendor lock-in.
 
 # Activation Rules with Response Elevation
 Response elevation - commonly inferred as a decline code - is a consequence of the activation rule match.  The Response Elevation has several other properties which can direct action, with the values being returned in the response payload also.

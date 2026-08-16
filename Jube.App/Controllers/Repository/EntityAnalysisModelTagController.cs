@@ -24,6 +24,7 @@ namespace Jube.App.Controllers.Repository
     using Data.Poco;
     using Data.Repository;
     using Dto;
+    using Dto.Mapping;
     using DynamicEnvironment;
     using FluentValidation;
     using FluentValidation.Results;
@@ -63,6 +64,8 @@ namespace Jube.App.Controllers.Repository
             {
                 cfg.CreateMap<EntityAnalysisModelTagDto, EntityAnalysisModelTag>();
                 cfg.CreateMap<EntityAnalysisModelTag, EntityAnalysisModelTagDto>();
+                cfg.CreateMap<DateTime?, DateTimeOffset?>().ConvertUsing<NullableDateTimeToDateTimeOffsetConverter>();
+                cfg.CreateMap<DateTime, DateTimeOffset>().ConvertUsing(src => new DateTimeOffset(DateTime.SpecifyKind(src, DateTimeKind.Utc)));
             }, NullLoggerFactory.Instance);
 
             mapper = new Mapper(config);
@@ -117,7 +120,7 @@ namespace Jube.App.Controllers.Repository
                 }
 
                 return Ok(mapper.Map<List<EntityAnalysisModelTagDto>>(
-                    await repository.GetByEntityAnalysisModelIdOrderByIdAsync(entityAnalysisModelId, token).ConfigureAwait(false)));
+                    await repository.GetByEntityAnalysisModelIdOrderByNameActiveOnlyAsync(entityAnalysisModelId, token).ConfigureAwait(false)));
             }
             catch (Exception e)
             {

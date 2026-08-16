@@ -4,12 +4,24 @@
     container_name: "postgres"
     environment:
       POSTGRES_PASSWORD: $DockerComposePostgresPassword
+    command: >
+      postgres
+      -c shared_buffers=384MB
+      -c work_mem=1MB
+      -c maintenance_work_mem=64MB
+      -c max_connections=150
+      -c effective_cache_size=768MB
+      -c wal_buffers=8MB
+      -c max_wal_size=256MB
+      -c min_wal_size=64MB
+      -c temp_file_limit=512MB
     volumes:
       - postgres:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     networks:
       - default
+
   redis:
     image: "redis/redis-stack:latest"
     container_name: "redis"
@@ -21,10 +33,11 @@
     networks:
       - default
     environment:
-      REDIS_ARGS: --appendonly yes
-  jube.webapi:
+      REDIS_ARGS: --appendonly yes --io-threads 4 --io-threads-do-reads yes --maxmemory 18gb --maxmemory-policy noeviction
+
+  jube:
     image: jube.app
-    container_name: "jube.webapi"
+    container_name: "jube"
     depends_on:
       postgres:
         condition: service_started
@@ -37,21 +50,30 @@
       - ASPNETCORE_URLS=http://0.0.0.0:5001
       - ConnectionString=Host=postgres;Port=5432;Database=postgres;Username=postgres;Password=$DockerComposePostgresPassword;Pooling=true;Minimum Pool Size=0;Maximum Pool Size=100;
       - ReportConnectionString=Host=postgres;Port=5432;Database=postgres;Username=postgres;Password=$DockerComposePostgresPassword;Pooling=true;Minimum Pool Size=0;Maximum Pool Size=100;
-      - EnableSandbox=False
+      - EnableSandbox=True
       - JWTKey=$DockerComposeJWTKey
+      - ApiHmacKey=$DockerComposeApiHmacKey
+      - JempFileLegacyEncryptionFallback=True
       - RedisConnectionString=redis
-      - EnableExhaustiveTraining=False
+      - EnableExhaustiveTraining=True
       - Landlord=True
-      - EnableReprocessing=False
-      - EnableSanctionLoader=False
-      - CachePruneServer=False
-      - EnableTtlCounter=False
-      - EnableSearchKeyCache=False
-      - EnableCasesAutomation=False
+      - EnableReprocessing=True
+      - EnableSanctionLoader=True
+      - CachePruneServer=True
+      - EnableTtlCounter=True
+      - EnableSearchKeyCache=True
+      - EnableCasesAutomation=True
+      - StreamingActivationWatcher=True
+      - EnableCallback=True
+      - EnablePublicInvokeController=True
       - PasswordHashingKey=$DockerComposePasswordHashingKey
       - EnableMigration=True
       - Log4NetLogLevel=ERROR
-      - DOTNET_GC_SERVER=1
+      - ElementSymmetricEncryptionKey=$DockerComposeElementSymmetricEncryptionKey
+      - LocalCache=True
+      - DOTNET_gcServer=1
+      - DOTNET_gcConcurrent=1
+      - DOTNET_GCConserveMemory=4
       - DOTNET_GCDynamicAdaptationMode=1
     ports:
       - "5001:5001"
@@ -60,43 +82,7 @@
     build:
       context: .
       dockerfile: Jube.App/Dockerfile
-  jube.jobs:
-    image: jube.app
-    container_name: "jube.jobs"
-    depends_on:
-      postgres:
-        condition: service_started
-      redis:
-        condition: service_started
-    links:
-      - redis
-      - postgres
-    environment:
-      - ASPNETCORE_URLS=http://0.0.0.0:5001
-      - ConnectionString=Host=postgres;Port=5432;Database=postgres;Username=postgres;Password=$DockerComposePostgresPassword;Pooling=true;Minimum Pool Size=0;Maximum Pool Size=100;
-      - ReportConnectionString=Host=postgres;Port=5432;Database=postgres;Username=postgres;Password=$DockerComposePostgresPassword;Pooling=true;Minimum Pool Size=0;Maximum Pool Size=100;
-      - RedisConnectionString=redis
-      - JWTKey=$DockerComposeJWTKey
-      - EnableExhaustiveTraining=True
-      - EnableReprocessing=True
-      - EnableSanctionLoader=True
-      - CachePruneServer=True
-      - EnableTtlCounter=True
-      - EnableSearchKeyCache=True
-      - EnableCasesAutomation=True
-      - StreamingActivationWatcher=False
-      - EnableCallback=True
-      - EnablePublicInvokeController=True
-      - PasswordHashingKey=$DockerComposePasswordHashingKey
-      - EnableMigration=False
-      - Log4NetLogLevel=ERROR
-      - DOTNET_GC_SERVER=1
-      - DOTNET_GCDynamicAdaptationMode=1
-    networks:
-      - default
-    build:
-      context: .
-      dockerfile: Jube.App/Dockerfile
+
 networks:
   default:
     driver: bridge

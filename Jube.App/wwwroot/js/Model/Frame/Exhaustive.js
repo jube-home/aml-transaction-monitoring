@@ -665,12 +665,14 @@ function LoadModelSummery(data, force) {
     if (data.score > LastScore || force) {
         LastScore = data.score;
 
+        const $kpi = $('#KPI');
+        const $tabstrip = $('#tabstrip');
         if (data.statusId < 14) {
-            $('#KPI').hide();
-            $('#tabstrip').hide();
+            $kpi.hide();
+            $tabstrip.hide();
         } else {
-            $('#KPI').show();
-            $('#tabstrip').show();
+            $kpi.show();
+            $tabstrip.show();
             $("#RightChart").kendoChart({
                 title: {
                     text: "Predicted vs. Actual"
@@ -974,24 +976,27 @@ if (typeof id === "undefined") {
                 filterJson: JSON.parse(data.filterJson)
             };
 
+            const $anomaly = $("#Anomaly");
             if (data.anomaly) {
-                $("#Anomaly").data("kendoSwitch").check(true);
+                $anomaly.data("kendoSwitch").check(true);
             } else {
-                $("#Anomaly").data("kendoSwitch").check(false);
+                $anomaly.data("kendoSwitch").check(false);
             }
 
             anomalyProbability.data("kendoSlider").value(data.anomalyProbability)
 
+            const $filter = $("#Filter");
             if (data.filter) {
-                $("#Filter").data("kendoSwitch").check(true);
+                $filter.data("kendoSwitch").check(true);
             } else {
-                $("#Filter").data("kendoSwitch").check(false);
+                $filter.data("kendoSwitch").check(false);
             }
 
+            const $reportTable = $("#ReportTable");
             if (data.reportTable) {
-                $("#ReportTable").data("kendoSwitch").check(true);
+                $reportTable.data("kendoSwitch").check(true);
             } else {
-                $("#ReportTable").data("kendoSwitch").check(false);
+                $reportTable.data("kendoSwitch").check(false);
             }
 
             ExpandCollapseAnomaly();
@@ -1006,18 +1011,20 @@ if (typeof id === "undefined") {
 }
 
 function ExpandCollapseAnomaly() {
+    const $anomalyTable = $("#AnomalyTable");
     if ($('#Anomaly').prop('checked')) {
-        $('#AnomalyTable').show();
+        $anomalyTable.show();
     } else {
-        $('#AnomalyTable').hide();
+        $anomalyTable.hide();
     }
 }
 
 function ExpandCollapseFilter() {
+    const $filterTable = $("#FilterTable");
     if ($('#Filter').prop('checked')) {
-        $('#FilterTable').show();
+        $filterTable.show();
     } else {
-        $('#FilterTable').hide();
+        $filterTable.hide();
     }
 }
 

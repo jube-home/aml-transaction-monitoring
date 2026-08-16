@@ -11,11 +11,11 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using Jube.App.Dto.Interfaces;
-
 namespace Jube.App.Dto
 {
+    using System;
+    using Interfaces;
+
     public class EntityAnalysisModelTtlCounterDto : IUpdated
     {
         public int EntityAnalysisModelId { get; set; }
@@ -30,16 +30,16 @@ namespace Jube.App.Dto
         public bool OnlineAggregation { get; set; }
         public string TtlCounterDataName { get; set; }
         public bool EnableLiveForever { get; set; }
-        public int Id { get; set; }
-        public DateTime CreatedDate { get; set; }
-        public string UpdatedUser { get; set; }
-        public DateTime UpdatedDate { get; set; }
-        public string CreatedUser { get; set; }
-        public int Version { get; set; }
-        public string DeletedUser { get; set; }
-        public DateTime DeletedDate { get; set; }
         public bool EnableSum { get; set; }
         public string ResolutionInterval { get; set; }
         public string TtlCounterDataValue { get; set; }
+        public int Id { get; set; }
+        public DateTimeOffset? CreatedDate { get; set; }
+        public string UpdatedUser { get; set; }
+        public DateTimeOffset? UpdatedDate { get; set; }
+        public string CreatedUser { get; set; }
+        public int Version { get; set; }
+        public string DeletedUser { get; set; }
+        public DateTimeOffset? DeletedDate { get; set; }
     }
 }

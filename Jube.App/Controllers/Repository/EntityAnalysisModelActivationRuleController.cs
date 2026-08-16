@@ -24,6 +24,7 @@ namespace Jube.App.Controllers.Repository
     using Data.Poco;
     using Data.Repository;
     using Dto;
+    using Dto.Mapping;
     using DynamicEnvironment;
     using FluentValidation;
     using FluentValidation.Results;
@@ -63,6 +64,8 @@ namespace Jube.App.Controllers.Repository
             {
                 cfg.CreateMap<EntityAnalysisModelActivationRuleDto, EntityAnalysisModelActivationRule>();
                 cfg.CreateMap<EntityAnalysisModelActivationRule, EntityAnalysisModelActivationRuleDto>();
+                cfg.CreateMap<DateTime?, DateTimeOffset?>().ConvertUsing<NullableDateTimeToDateTimeOffsetConverter>();
+                cfg.CreateMap<DateTime, DateTimeOffset>().ConvertUsing(src => new DateTimeOffset(DateTime.SpecifyKind(src, DateTimeKind.Utc)));
             }, NullLoggerFactory.Instance);
 
             mapper = new Mapper(config);
@@ -165,6 +168,16 @@ namespace Jube.App.Controllers.Repository
                     return Forbid();
                 }
 
+                var approveByReviewPermission = permissionValidation.Validate(new[]
+                {
+                    41
+                });
+
+                if (model.ReviewStatusId == 4 && !approveByReviewPermission)
+                {
+                    return BadRequestNoApprovedByReview();
+                }
+
                 var results = await validator.ValidateAsync(model, token);
                 if (results.IsValid)
                 {
@@ -194,6 +207,16 @@ namespace Jube.App.Controllers.Repository
                     }))
                 {
                     return Forbid();
+                }
+
+                var approveByReviewPermission = permissionValidation.Validate(new[]
+                {
+                    41
+                });
+
+                if (model.ReviewStatusId == 4 && !approveByReviewPermission)
+                {
+                    return BadRequestNoApprovedByReview();
                 }
 
                 var results = await validator.ValidateAsync(model, token);
@@ -241,6 +264,48 @@ namespace Jube.App.Controllers.Repository
                 log.Error(e);
                 return StatusCode(500);
             }
+        }
+
+        [HttpPost("{id:int}/Reset")]
+        public async Task<ActionResult> ResetCounterAsync(int id, CancellationToken token = default)
+        {
+            try
+            {
+                if (!permissionValidation.Validate(new[]
+                    {
+                        17
+                    }))
+                {
+                    return Forbid();
+                }
+
+                await repository.ResetCounterAsync(id, token);
+                return Ok();
+            }
+            catch (KeyNotFoundException)
+            {
+                return StatusCode(204);
+            }
+            catch (Exception e)
+            {
+                log.Error(e);
+                return StatusCode(500);
+            }
+        }
+
+        private BadRequestObjectResult BadRequestNoApprovedByReview()
+        {
+            return BadRequest(new
+            {
+                errors = new[]
+                {
+                    new
+                    {
+                        errorMessage = "Can't update to Approved by Review without permission.",
+                        propertyName = "Permission"
+                    }
+                }
+            });
         }
     }
 }

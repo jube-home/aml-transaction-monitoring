@@ -75,6 +75,15 @@ namespace Jube.Data.Repository
                 .OrderBy(o => o.Id).ToListAsync(token).ConfigureAwait(false);
         }
 
+        public async Task<IEnumerable<EntityAnalysisModelInlineFunction>> GetByEntityAnalysisModelIdOrderByNameAsync(int entityAnalysisModelId, CancellationToken token = default)
+        {
+            return await dbContext.EntityAnalysisModelInlineFunction
+                .Where(w => (w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                            && w.EntityAnalysisModelId == entityAnalysisModelId &&
+                            (w.Deleted == 0 || w.Deleted == null))
+                .OrderBy(o => o.Name).ToListAsync(token).ConfigureAwait(false);
+        }
+
         public Task<EntityAnalysisModelInlineFunction> GetByIdAsync(int id, CancellationToken token = default)
         {
             return dbContext.EntityAnalysisModelInlineFunction.FirstOrDefaultAsync(w =>
@@ -86,7 +95,7 @@ namespace Jube.Data.Repository
         {
             model.CreatedUser = userName ?? model.CreatedUser;
             model.Guid = model.Guid == Guid.Empty ? Guid.NewGuid() : model.Guid;
-            model.CreatedDate = DateTime.Now;
+            model.CreatedDate = DateTime.UtcNow;
             model.Version = 1;
             model.Id = await dbContext.InsertWithInt32IdentityAsync(model, token: token);
             return model;
@@ -108,7 +117,7 @@ namespace Jube.Data.Repository
             model.Version = existing.Version + 1;
             model.Guid = existing.Guid;
             model.CreatedUser = userName;
-            model.CreatedDate = DateTime.Now;
+            model.CreatedDate = DateTime.UtcNow;
 
             await dbContext.UpdateAsync(model, token: token);
 
@@ -133,7 +142,7 @@ namespace Jube.Data.Repository
                             && (d.Locked == 0 || d.Locked == null)
                             && (d.Deleted == 0 || d.Deleted == null))
                 .Set(s => s.Deleted, Convert.ToByte(1))
-                .Set(s => s.DeletedDate, DateTime.Now)
+                .Set(s => s.DeletedDate, DateTime.UtcNow)
                 .Set(s => s.DeletedUser, userName)
                 .UpdateAsync(token);
 
@@ -143,6 +152,16 @@ namespace Jube.Data.Repository
             }
         }
 
+        public Task UpdateCompileStatusAsync(int id, bool compiled, string compileError, CancellationToken token = default)
+        {
+            return dbContext.EntityAnalysisModelInlineFunction
+                .Where(d => (d.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                            && d.Id == id)
+                .Set(s => s.Compiled, Convert.ToByte(compiled ? 1 : 0))
+                .Set(s => s.CompileError, compileError)
+                .UpdateAsync(token);
+        }
+
         public Task DeleteByTenantRegistryIdOutsideOfInstanceAsync(int tenantRegistryIdOutsideOfInstance, int importId, CancellationToken token = default)
         {
             return dbContext.EntityAnalysisModelInlineFunction
@@ -150,7 +169,7 @@ namespace Jube.Data.Repository
                             && (d.Deleted == 0 || d.Deleted == null))
                 .Set(s => s.ImportId, importId)
                 .Set(s => s.Deleted, Convert.ToByte(1))
-                .Set(s => s.DeletedDate, DateTime.Now)
+                .Set(s => s.DeletedDate, DateTime.UtcNow)
                 .UpdateAsync(token);
         }
     }

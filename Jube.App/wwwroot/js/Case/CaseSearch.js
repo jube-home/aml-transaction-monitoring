@@ -19,6 +19,7 @@ var currentCaseSessionGuid;
 var dateFields = [];
 var caseId;
 var jsonChangedFromFilterDefault;
+var currentCreateCaseWorkflowGuid;
 
 function OnChange(e) {
     var grid = e.sender;
@@ -31,24 +32,27 @@ function OnChange(e) {
 }
 
 function GenerateGrid(gridData) {
-    var model = GenerateModel(gridData[0]);
-    var columns = GenerateColumns(gridData[0]);
+    const schema = gridData.schema;
+    const rows = gridData.rows;
+
+    var model = GenerateModel(schema);
+    var columns = GenerateColumns(schema);
+
+    dateFields = Object.entries(schema)
+        .filter(([, type]) => type === "date")
+        .map(([name]) => name);
 
     if (dateFields.length > 0) {
-        var parseFunction = function (response) {
-            for (var i = 0; i < response.length; i++) {
-                for (var fieldIndex = 0; fieldIndex < dateFields.length; fieldIndex++) {
-                    var record = response[i];
-                    record[dateFields[fieldIndex]] = kendo.parseDate(record[dateFields[fieldIndex]]);
-                }
+        for (var i = 0; i < rows.length; i++) {
+            for (var f = 0; f < dateFields.length; f++) {
+                rows[i][dateFields[f]] = kendo.parseDate(rows[i][dateFields[f]]);
             }
-            return response;
-        };
+        }
     }
 
     $("#grid").kendoGrid({
         dataSource: {
-            data: gridData,
+            data: rows,
             schema: {
                 model: model
             }
@@ -73,82 +77,47 @@ function FormatColumnName(data) {
     return data;
 }
 
-function GenerateColumns(gridData) {
+function GenerateColumns(schema) {
     var columns = [];
-    for (var property in gridData) {
-        if (Object.prototype.hasOwnProperty.call(gridData, property)) {
-            var column = {};
-            column["width"] = "400px;";
-            column["field"] = property;
-            column["title"] = FormatColumnName(property);
-            if (property === 'ForeColor' || property === 'BackColor') {
-                column["hidden"] = true;
-            }
-            columns.push(column);
+
+    for (const [property] of Object.entries(schema)) {
+        var column = {};
+        column["width"] = "400px";
+        column["field"] = property;
+        column["title"] = FormatColumnName(property);
+        if (property === 'ForeColor' || property === 'BackColor') {
+            column["hidden"] = true;
         }
+        columns.push(column);
     }
+
     return columns;
 }
 
-function GenerateModel(gridData) {
+function GenerateModel(schema) {
     var model = {};
     model.id = "Id";
     var fields = {};
-    for (var property in gridData) {
-        if (Object.prototype.hasOwnProperty.call(gridData, property)) {
-            var propType = typeof gridData[property];
 
-            if (propType === "number") {
-                fields[property] = {
-                    type: "number",
-                    validation: {
-                        required: true
-                    }
-                };
-            } else if (propType === "boolean") {
-                fields[property] = {
-                    type: "boolean",
-                    validation: {
-                        required: true
-                    }
-                };
-            } else if (propType === "string") {
-                var parsedDate = kendo.parseDate(gridData[property]);
-                if (parsedDate) {
-                    fields[property] = {
-                        type: "date",
-                        validation: {
-                            required: true
-                        }
-                    };
-                    dateFields.push(property);
-                } else {
-                    fields[property] = {
-                        validation: {
-                            required: true
-                        }
-                    };
-                }
-            } else {
-                fields[property] = {
-                    validation: {
-                        required: true
-                    }
-                };
+    for (const [name, type] of Object.entries(schema)) {
+        fields[name] = {
+            type: type,
+            validation: {
+                required: true
             }
-
-        }
+        };
     }
-    model.fields = fields;
 
+    model.fields = fields;
     return model;
 }
 
 function DestroyGrid() {
-    var grid = $('#grid').data('kendoGrid');
+    var $grid = $('#grid');
+    var grid = $grid.data('kendoGrid');
     if (typeof grid !== "undefined") {
         grid.destroy();
-        $("#grid").empty();
+        $grid.empty();
     }
 }
 
@@ -187,6 +156,10 @@ function OnSelect(e) {
 
     if (typeof item.parentNode() !== "undefined") {
         if (typeof item.caseWorkflowId !== "undefined") {
+            var parentWorkflow = item.parentNode();
+            var grandparentModel = parentWorkflow.parentNode();
+            PopulateCreateCasePanel(parentWorkflow.guid, typeof grandparentModel !== "undefined" ? grandparentModel.guid : null);
+
             $.get("../api/CaseWorkflowFilter/ByGuid/" + item.guid,
                 function (data) {
                     if (typeof data !== "undefined") {
@@ -206,6 +179,8 @@ function OnSelect(e) {
                     }
                 });
         } else {
+            PopulateCreateCasePanel(item.guid, item.parentNode().guid);
+
             $.get("../api/SessionCaseSearchCompiledSql/ByLast/",
                 function (data) {
                     if (!data.notFound) {
@@ -229,8 +204,73 @@ function OnSelect(e) {
                 });
         }
     } else {
+        PopulateCreateCasePanel(null, null);
         return false;
     }
+}
+
+function PopulateCreateCasePanel(caseWorkflowGuid, entityAnalysisModelGuid) {
+    currentCreateCaseWorkflowGuid = caseWorkflowGuid;
+
+    const statusDropDownList = $("#CreateCaseWorkflowStatusGuid").data("kendoDropDownList");
+    const keyDropDownList = $("#CreateCaseKey").data("kendoDropDownList");
+
+    statusDropDownList.dataSource.data([]);
+    statusDropDownList.text("");
+    statusDropDownList.value("");
+
+    keyDropDownList.dataSource.data([]);
+    keyDropDownList.text("");
+    keyDropDownList.value("");
+
+    $("#CreateCaseKeyValue").val("");
+    $("#CreateCaseErrorMessage").hide().empty();
+    UpdateCreateCaseButtonState();
+
+    const $createCase = $("#CreateCase");
+    if (!caseWorkflowGuid || !entityAnalysisModelGuid) {
+        $createCase.hide();
+        return;
+    }
+
+    $createCase.show();
+
+    $.get("../api/CaseWorkflowStatus/ByCasesWorkflowGuidActiveOnly/" + caseWorkflowGuid,
+        function (data) {
+            // Bind in a single assignment, in the exact order the controller returns
+            // (Priority order), so the first entry is the highest priority status.
+            statusDropDownList.dataSource.data($.map(data,
+                function (value) {
+                    return {
+                        "value": value.guid,
+                        "text": value.name
+                    };
+                }));
+
+            if (data.length > 0) {
+                statusDropDownList.select(0);
+            }
+        });
+
+    $.get("../api/GetEntityAnalysisPotentialMultiPartStringNames/" + entityAnalysisModelGuid,
+        function (data) {
+            // Bind in a single assignment, in the exact (alphabetical) order the
+            // controller returns.
+            keyDropDownList.dataSource.data($.map(data,
+                function (value) {
+                    return {
+                        "value": value,
+                        "text": value
+                    };
+                }));
+        });
+}
+
+function UpdateCreateCaseButtonState() {
+    const caseKey = $("#CreateCaseKey").data("kendoDropDownList").value();
+    const caseKeyValue = $("#CreateCaseKeyValue").val();
+
+    $("#CreateCaseButton").data("kendoButton").enable(!!caseKey && !!caseKeyValue);
 }
 
 function ShowButtons() {
@@ -392,10 +432,16 @@ $(document).ready(function () {
                         var caseWorkflowItem = tree.dataItem(e.node);
                         if (caseWorkflowItem.guid === currentCaseWorkflowGuid
                             && (typeof currentCaseWorkflowFilterGuid === "undefined"
+                                || currentCaseWorkflowFilterGuid == null
                                 || currentCaseWorkflowFilterGuid === "00000000-0000-0000-0000-000000000000")) {
                             tree.findByUid(caseWorkflowItem.uid);
                             let selectItem = tree.findByUid(caseWorkflowItem.uid);
                             tree.select(selectItem);
+
+                            var entityAnalysisModelGuidForCreateCase = typeof caseWorkflowItem.parentNode() !== "undefined"
+                                ? caseWorkflowItem.parentNode().guid
+                                : null;
+                            PopulateCreateCasePanel(caseWorkflowItem.guid, entityAnalysisModelGuidForCreateCase);
 
                             jsonChangedFromFilterDefault = true;
                         } else {
@@ -409,6 +455,11 @@ $(document).ready(function () {
                                         let selectItem = tree.findByUid(caseWorkflowFilterItem.uid);
                                         tree.select(selectItem);
 
+                                        let entityAnalysisModelGuidForFilterCreateCase = typeof caseWorkflowItem.parentNode() !== "undefined"
+                                            ? caseWorkflowItem.parentNode().guid
+                                            : null;
+                                        PopulateCreateCasePanel(caseWorkflowItem.guid, entityAnalysisModelGuidForFilterCreateCase);
+
                                         jsonChangedFromFilterDefault = false;
                                     }
                                 }
@@ -419,6 +470,71 @@ $(document).ready(function () {
             });
         }
     );
+});
+
+$(document).ready(function () {
+    $("#CreateCaseWorkflowStatusGuid").kendoDropDownList({
+        dataTextField: "text",
+        dataValueField: "value"
+    });
+
+    $("#CreateCaseKey").kendoDropDownList({
+        dataTextField: "text",
+        dataValueField: "value",
+        change: UpdateCreateCaseButtonState
+    });
+
+    const $createCaseButton = $("#CreateCaseButton");
+    $createCaseButton.kendoButton();
+
+    $("#CreateCaseKeyValue").on("input", UpdateCreateCaseButtonState);
+
+    PopulateCreateCasePanel(null, null);
+
+    $createCaseButton.click(function () {
+        $("#CreateCaseErrorMessage").hide().empty();
+
+        const data = {
+            caseWorkflowGuid: currentCreateCaseWorkflowGuid,
+            caseWorkflowStatusGuid: $("#CreateCaseWorkflowStatusGuid").data("kendoDropDownList").value(),
+            caseKey: $("#CreateCaseKey").data("kendoDropDownList").value(),
+            caseKeyValue: $("#CreateCaseKeyValue").val()
+        };
+
+        $.ajax({
+            url: "../api/Case/CreateFromCaseKeyValue",
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            data: JSON.stringify(data),
+            error: function (jqXHR) {
+                let message = "Processing failed.  Please contact Support to check logs for the source of the error.";
+
+                if (jqXHR.status === 403) {
+                    message = "You do not have permission to create a case for the selected Case Workflow Status.";
+                } else if ((jqXHR.status === 404 || jqXHR.status === 400 || jqXHR.status === 409) && jqXHR.responseText) {
+                    const responseObject = jQuery.parseJSON(jqXHR.responseText);
+
+                    if (responseObject && responseObject.errors) {
+                        const messages = [];
+                        for (let key in responseObject.errors) {
+                            messages.push(responseObject.errors[key].errorMessage);
+                        }
+                        message = messages.join("<br/>");
+                    } else if (typeof responseObject === "string") {
+                        message = responseObject;
+                    }
+                } else if (jqXHR.status === 404) {
+                    message = "The selected Case Workflow could not be found.";
+                }
+
+                $("#CreateCaseErrorMessage").html(message).show();
+            },
+            success: function (data) {
+                window.location.href = "/Case/Case?CaseId=" + data.id;
+            }
+        });
+    });
 });
 
 //# sourceURL=CaseSearch.js

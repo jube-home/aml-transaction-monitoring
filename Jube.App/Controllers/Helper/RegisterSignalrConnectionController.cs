@@ -13,12 +13,12 @@
 
 namespace Jube.App.Controllers.Helper
 {
-    using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
     using Code;
     using Code.signalr;
     using Data.Context;
+    using Data.Repository;
     using DynamicEnvironment;
     using log4net;
     using Microsoft.AspNetCore.Authorization;
@@ -48,8 +48,8 @@ namespace Jube.App.Controllers.Helper
             dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"), log);
             permissionValidation = new PermissionValidation(dbContext, userName, log);
 
-            tenantRegistryId = dbContext.UserInTenant.Where(w => w.User == userName)
-                .Select(s => s.TenantRegistryId).FirstOrDefault();
+            tenantRegistryId = new UserInTenantRepository(dbContext, userName)
+                .GetCurrentTenantRegistry()?.TenantRegistryId ?? 0;
             this.watcherHub = watcherHub;
         }
 

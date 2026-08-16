@@ -26,12 +26,14 @@ var abstractionRight = $("#AbstractionRight").kendoDropDownList({
 });
 
 function setCalculationType() {
+    const $advanced = $("#Advanced");
+    const $basic = $("#Basic");
     if ($("input[name='AbstractionCalculationTypeId']:checked").val() === '5') {
-        $("#Advanced").show();
-        $("#Basic").hide();
+        $advanced.show();
+        $basic.hide();
     } else {
-        $("#Advanced").hide();
-        $("#Basic").show();
+        $advanced.hide();
+        $basic.show();
     }
 }
 

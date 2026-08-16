@@ -28,5 +28,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.Context.Models
         public Task AbstractionRuleCachingTask { get; set; }
         public Task TtlCounterAdministrationTask { get; set; }
         public Task CachePruneAsyncTask { get; set; }
+        public Task LruJournalPruneAsyncTask { get; set; }
+        public Task HashCacheAssemblyObservabilityTask { get; set; }
     }
 }

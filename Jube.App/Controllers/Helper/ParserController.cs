@@ -93,6 +93,8 @@ namespace Jube.App.Controllers.Helper
 
                 var entityAnalysisModelInlineScriptProperties = await EntityAnalysisModelInlineScriptPropertiesAsync(parseRuleRequestDto.EntityAnalysisModelId, token).ConfigureAwait(false);
 
+                var entityAnalysisModelInlineFunctionPropertiesAsync = await EntityAnalysisModelInlineFunctionPropertiesAsync(parseRuleRequestDto.EntityAnalysisModelId, token).ConfigureAwait(false);
+
                 var entityAnalysisModelsLists
                     = await EntityAnalysisModelListsAsync(parseRuleRequestDto.EntityAnalysisModelId, token).ConfigureAwait(false);
 
@@ -132,13 +134,12 @@ namespace Jube.App.Controllers.Helper
                         = await EntityAnalysisModelExhaustiveAdaptationsAsync(parseRuleRequestDto.EntityAnalysisModelId, token).ConfigureAwait(false);
                 }
 
-                if (parseRuleRequestDto.RuleParseType > 5)
+                if (parseRuleRequestDto.RuleParseType >= 5)
                 {
                     entityAnalysisModelsActivationRules = await EntityAnalysisModelActivationRulesAsync(parseRuleRequestDto.EntityAnalysisModelId, token).ConfigureAwait(false);
                 }
 
-                var parser = new Parser(log,
-                    tokens
+                var parser = new Parser(log, tokens
                 )
                 {
                     EntityAnalysisModelRequestXPaths = entityAnalysisModelRequestXPaths,
@@ -151,7 +152,8 @@ namespace Jube.App.Controllers.Helper
                     EntityAnalysisModelsDictionaries = entityAnalysisModelsDictionaries,
                     EntityAnalysisModelsHttpAdaptations = entityAnalysisModelsHttpAdaptations,
                     EntityAnalysisModelsExhaustiveAdaptations = entityAnalysisModelsExhaustiveAdaptations,
-                    EntityAnalysisModelsActivationRules = entityAnalysisModelsActivationRules
+                    EntityAnalysisModelsActivationRules = entityAnalysisModelsActivationRules,
+                    EntityAnalysisModelsInlineFunctions = entityAnalysisModelInlineFunctionPropertiesAsync
                 };
 
                 var errorSpans = new List<ErrorSpan>();
@@ -194,7 +196,7 @@ namespace Jube.App.Controllers.Helper
                     {
                         var refs = new[]
                         {
-                            Path.Combine(strPathFramework, "mscorlib.dll"), Path.Combine(strPathFramework, "System.dll"), Path.Combine(strPathFramework, "Microsoft.VisualBasic.dll"), Path.Combine(strPathFramework, "System.Xml.dll"), Path.Combine(strPathBinary, "log4net.dll"), Path.Combine(strPathBinary, "Jube.Dictionary.dll"), Path.Combine(strPathFramework, "System.Collections.dll")
+                            Path.Combine(strPathFramework, "mscorlib.dll"), Path.Combine(strPathFramework, "System.dll"), Path.Combine(strPathFramework, "Microsoft.VisualBasic.dll"), Path.Combine(strPathFramework, "System.Xml.dll"), Path.Combine(strPathBinary, "log4net.dll"), Path.Combine(strPathBinary, "Jube.Dictionary.dll"), Path.Combine(strPathFramework, "System.Collections.dll"), Path.Combine(strPathBinary, "Jube.HttpAdaptationProtocol.dll")
                         };
 
                         var compile = new Compile();
@@ -270,10 +272,31 @@ namespace Jube.App.Controllers.Helper
                 var entityAnalysisInlineScript = await entityAnalysisInlineScriptRepository.GetByIdAsync(entityAnalysisModelInlineScript.EntityAnalysisInlineScriptId.Value, token);
                 foreach (var publicProperty in SyntaxTreeHelpers.GetPublicProperties(entityAnalysisInlineScript.Code, entityAnalysisInlineScript.LanguageId == 2))
                 {
-                    value.Add(publicProperty.Key, publicProperty.Value);
+                    value.Add(publicProperty.Key, publicProperty.Value.DataTypeId);
                 }
             }
             return value;
+        }
+
+        private async Task<Dictionary<string, int>> EntityAnalysisModelInlineFunctionPropertiesAsync(int entityAnalysisModelId, CancellationToken token = default)
+        {
+            var values = new Dictionary<string, int>();
+            var entityAnalysisModelInlineFunctionRepository = new EntityAnalysisModelInlineFunctionRepository(dbContext, userName);
+            var entityAnalysisModelInlineFunctions = await entityAnalysisModelInlineFunctionRepository.GetByEntityAnalysisModelIdOrderByIdAsync(entityAnalysisModelId, token).ConfigureAwait(false);
+
+            foreach (var entityAnalysisModelInlineFunction in entityAnalysisModelInlineFunctions)
+            {
+                if (values.ContainsKey(entityAnalysisModelInlineFunction.Name))
+                {
+                    continue;
+                }
+
+                if (entityAnalysisModelInlineFunction.ReturnDataTypeId != null)
+                {
+                    values.Add(entityAnalysisModelInlineFunction.Name, entityAnalysisModelInlineFunction.ReturnDataTypeId.Value);
+                }
+            }
+            return values;
         }
 
         private async Task<List<string>> EntityAnalysisModelsHttpAdaptationsAsync(int entityAnalysisModelId, CancellationToken token = default)

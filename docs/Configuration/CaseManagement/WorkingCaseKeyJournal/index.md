@@ -6,9 +6,7 @@ parent: Case Management
 grand_parent: Configuration
 ---
 
-🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
-💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
-developer.
+🚀 Get to pre-production in weeks, not months, with private [training](https://www.jube.io/jube-training) direct from Jube's developer — real sovereignty, zero vendor lock-in.
 
 # Working Case Key Journal
 The case record maintains a copy of the event \ transaction that caused the case to be created.  To underwrite and perform analysis on a case it is generally important to have a wider picture of the transaction or event history for the Case Key Value combination having caused case record creation.
@@ -40,7 +38,7 @@ Change the Activations check box from False:
 
 To True:
 
-![Image](LocationOfActivationsSwitch.png)
+![Image](TrueActivationsSwitchCaseKeyJournal.png)
 
 Click the Refresh button:
 
@@ -190,3 +188,27 @@ It can be seen that a file has been downloaded by the browser.  Simply click to 
 It can be seen that a fair reflection of the case key journal has been transposed to Excel.  Paging will be ignored and the full data will be exported.
 
 The Excel export does not currently support the export of conditional formatting.
+
+## Tagging Records in the Case Key Journal
+
+Each row in the Case Key Journal grid has a Tags column, rendered as a multi-select control, allowing one or more of
+the Tags configured for the model (see [Tags](../../Models/Tags/index.html)) to be applied directly to that
+transaction record without leaving the case.
+
+Selecting or removing a Tag saves automatically a short moment after the change (there is no separate Save button for
+this column); if the save fails, the selection reverts and an error is shown.
+
+Only Tags already created for the model on the Tags page are selectable here - if the Tag you need is not in the
+list, it must first be created on the Tags page, which is subject to the model's Tag synchronisation running before
+it becomes available for use here.
+
+Because the same underlying transaction record can be reached both directly (via the Case Key Journal, or the
+`api/Invoke/EntityAnalysisModelInstanceEntryGuid` endpoint for tagging retrospectively from an external system) and
+indirectly (as the copy of the record stored against a Case), tagging a record from the Case Key Journal also updates
+the copy of that record's JSON stored on any Case it is already associated with, so both views stay consistent
+rather than only the Archive table row being updated.
+
+The retrospective tagging API for external systems is `PUT api/Invoke/Archive/Tag` (distinct from the UI's
+`PUT api/Archive/tag` shown above - the Invoke-prefixed route is reachable without interactive login, subject to
+the EnablePublicInvokeController Environment Variable, for systems that want to feed an outcome, such as a
+confirmed-fraud disposition, back into Jube programmatically).

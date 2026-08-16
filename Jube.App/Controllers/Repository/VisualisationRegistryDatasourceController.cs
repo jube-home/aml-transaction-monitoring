@@ -25,6 +25,7 @@ namespace Jube.App.Controllers.Repository
     using Data.Repository;
     using Data.Validation;
     using Dto;
+    using Dto.Mapping;
     using DynamicEnvironment;
     using FluentValidation;
     using FluentValidation.Results;
@@ -41,6 +42,7 @@ namespace Jube.App.Controllers.Repository
     public class VisualisationRegistryDatasourceController : Controller
     {
         private readonly DbContext dbContext;
+        private readonly DynamicEnvironment dynamicEnvironment;
         private readonly ILog log;
         private readonly IMapper mapper;
         private readonly PermissionValidation permissionValidation;
@@ -64,11 +66,14 @@ namespace Jube.App.Controllers.Repository
             {
                 cfg.CreateMap<VisualisationRegistryDatasourceDto, VisualisationRegistryDatasource>();
                 cfg.CreateMap<VisualisationRegistryDatasource, VisualisationRegistryDatasourceDto>();
+                cfg.CreateMap<DateTime?, DateTimeOffset?>().ConvertUsing<NullableDateTimeToDateTimeOffsetConverter>();
+                cfg.CreateMap<DateTime, DateTimeOffset>().ConvertUsing(src => new DateTimeOffset(DateTime.SpecifyKind(src, DateTimeKind.Utc)));
             }, NullLoggerFactory.Instance);
 
             mapper = new Mapper(config);
             repository = new VisualisationRegistryDatasourceRepository(dbContext, userName);
             validator = new VisualisationRegistryDatasourceValidator(repository);
+            this.dynamicEnvironment = dynamicEnvironment;
         }
 
         protected override void Dispose(bool disposing)
@@ -197,8 +202,8 @@ namespace Jube.App.Controllers.Repository
                 }
 
                 var visualisationRegistryDatasource =
-                    await repository.InsertWithValidationAsync(mapper.Map<VisualisationRegistryDatasource>(model), log, token);
-
+                    await repository.InsertWithValidationAsync(mapper.Map<VisualisationRegistryDatasource>(model), log, dynamicEnvironment.AppSettings("ReportConnectionString") ?? dbContext.Connection.ConnectionString,
+                        dynamicEnvironment.AppSettings("ParserAssertSelectOnly").Equals("True", StringComparison.OrdinalIgnoreCase), token);
 
                 return Ok(visualisationRegistryDatasource);
             }
@@ -240,7 +245,8 @@ namespace Jube.App.Controllers.Repository
                 var results = await validator.ValidateAsync(model, token);
                 if (results.IsValid)
                 {
-                    return Ok(await repository.UpdateWithValidationAsync(mapper.Map<VisualisationRegistryDatasource>(model), log, token));
+                    return Ok(await repository.UpdateWithValidationAsync(mapper.Map<VisualisationRegistryDatasource>(model), log, dynamicEnvironment.AppSettings("ReportConnectionString") ?? dbContext.Connection.ConnectionString,
+                        dynamicEnvironment.AppSettings("ParserAssertSelectOnly").Equals("True", StringComparison.OrdinalIgnoreCase), token));
                 }
 
                 return BadRequest(results);

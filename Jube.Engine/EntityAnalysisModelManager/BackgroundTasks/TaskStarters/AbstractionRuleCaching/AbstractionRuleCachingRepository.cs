@@ -37,7 +37,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters.Ab
                 {
                     EntityAnalysisModelSearchKeyCalculationInstanceId = entityAnalysisModelsSearchKeyCalculationInstanceId,
                     SearchKeyValue = groupingValue,
-                    CreatedDate = DateTime.Now
+                    CreatedDate = DateTime.UtcNow
                 };
 
                 model = await repository.InsertAsync(model, token).ConfigureAwait(false);
@@ -81,7 +81,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters.Ab
                     SearchKey = distinctSearchKey.SearchKey,
                     EntityAnalysisModelGuid = entityAnalysisModel.Instance.Guid,
                     DistinctFetchToDate = toDate,
-                    CreatedDate = DateTime.Now
+                    CreatedDate = DateTime.UtcNow
                 };
 
                 await repository.InsertAsync(model, token).ConfigureAwait(false);
@@ -158,7 +158,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters.Ab
                     SearchValue = groupingValue,
                     Value = abstractionValue,
                     EntityAnalysisModelAbstractionRuleId = abstractionRule.Id,
-                    CreatedDate = DateTime.Now
+                    CreatedDate = DateTime.UtcNow
                 };
 
                 await repository.InsertAsync(model, token).ConfigureAwait(false);

@@ -11,11 +11,11 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using FluentMigrator;
-
 namespace Jube.Migrations.Baseline
 {
+    using System;
+    using FluentMigrator;
+
     [Migration(20220429124948)]
     public class AddEntityAnalysisModelSynchronisationScheduleTable : Migration
     {
@@ -31,8 +31,8 @@ namespace Jube.Migrations.Baseline
             Insert.IntoTable("EntityAnalysisModelSynchronisationSchedule").Row(
                 new
                 {
-                    CreatedDate = DateTime.Now,
-                    ScheduleDate = DateTime.Now,
+                    CreatedDate = DateTime.UtcNow,
+                    ScheduleDate = DateTime.UtcNow,
                     TenantRegistryId = 1,
                     CreatedUser = "Administrator"
                 });

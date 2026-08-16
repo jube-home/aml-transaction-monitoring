@@ -40,9 +40,12 @@ function GetSchedule() {
 }
 
 $(document).ready(function () {
-    $("#ScheduleSynchronisation").kendoButton();
-    $("#SynchroniseNow").kendoButton();
-    $("#Refresh").kendoButton();
+    const $scheduleSynchronisation = $("#ScheduleSynchronisation");
+    const $synchroniseNow = $("#SynchroniseNow");
+    const $refresh = $("#Refresh");
+    $scheduleSynchronisation.kendoButton();
+    $synchroniseNow.kendoButton();
+    $refresh.kendoButton();
 
     GetSchedule();
 
@@ -70,16 +73,13 @@ $(document).ready(function () {
         }
     });
 
-    $('#ScheduleSynchronisation').click(function () {
-        const datetimepicker = $("#datetimepicker").data("kendoDateTimePicker");
-        const dateFromFormat = kendo.toString(datetimepicker.value(), "s");
-
+    $scheduleSynchronisation.click(function () {
         $.ajax({
             url: "/api/EntityAnalysisModelSynchronisationSchedule",
             type: "POST",
             contentType: "application/json; charset=utf-8",
             dataType: "json",
-            data: JSON.stringify({ScheduleDate: dateFromFormat}),
+            data: JSON.stringify({ScheduleDate: new Date().toISOString()}),
             success: function (data) {
                 const echoDate = new Date(data.scheduleDate);
                 $("#datetimepicker").data("kendoDateTimePicker").value(echoDate);
@@ -88,7 +88,7 @@ $(document).ready(function () {
         });
     });
 
-    $('#SynchroniseNow').click(function () {
+    $synchroniseNow.click(function () {
         $.ajax({
             url: "/api/EntityAnalysisModelSynchronisationSchedule",
             type: "POST",
@@ -102,7 +102,7 @@ $(document).ready(function () {
         });
     });
 
-    $('#Refresh').click(function () {
+    $refresh.click(function () {
         Refresh();
     });
 

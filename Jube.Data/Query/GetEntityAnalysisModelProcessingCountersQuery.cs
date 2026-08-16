@@ -26,8 +26,8 @@ namespace Jube.Data.Query
         public async Task<IEnumerable<Dto>> ExecuteAsync(int limit, CancellationToken token = default)
         {
             var query = await dbContext.EntityAnalysisModelProcessingCounter
-                .Take(limit)
                 .OrderByDescending(o => o.Id)
+                .Take(limit)
                 .Select(s => new Dto
                 {
                     Name = s.EntityAnalysisModel.Name,

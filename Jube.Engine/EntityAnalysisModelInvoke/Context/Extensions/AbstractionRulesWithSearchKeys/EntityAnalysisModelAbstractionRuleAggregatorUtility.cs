@@ -14,7 +14,9 @@
 namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.AbstractionRulesWithSearchKeys
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.Linq;
     using Accord.Statistics;
     using Dictionary;
@@ -26,7 +28,7 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.AbstractionRu
     public static class EntityAnalysisModelAbstractionRuleAggregatorUtility
     {
         public static double Aggregate(EntityAnalysisModelInstanceEntryPayload payload,
-            Dictionary<int, List<DictionaryNoBoxing<string>>> abstractionRuleMatches,
+            ConcurrentDictionary<int, List<DictionaryNoBoxing<string>>> abstractionRuleMatches,
             EntityAnalysisModelAbstractionRule abstractionRule, ILog log)
         {
             double abstractionValue = 0;
@@ -229,9 +231,13 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.AbstractionRu
 
                                     var lastElement = cacheDocumentsList[^1];
 
+                                    DateTime sinceTestDate;
                                     if (lastElement.TryGetValue(abstractionRule.SearchFunctionKey, out var testDateValue) &&
-                                        DateTime.TryParse(testDateValue.ToString(), out var sinceTestDate))
+                                        DateTimeOffset.TryParse(testDateValue.ToString(), CultureInfo.InvariantCulture,
+                                            DateTimeStyles.AssumeUniversal, out var dto))
                                     {
+                                        sinceTestDate = dto.UtcDateTime;
+
                                         if (log.IsDebugEnabled)
                                         {
                                             log.Debug(

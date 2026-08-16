@@ -209,16 +209,16 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ActivationRul
                     }
 
                     context.ProcessResponseElevation(evaluateActivationRule, ref responseElevationHighWaterMark, suppressed);
-                    context.ActivationRuleNotification(evaluateActivationRule, suppressed, rabbitMqChannel);
+                    await context.ActivationRuleNotificationAsync(evaluateActivationRule, suppressed, rabbitMqChannel, cacheService);
 
                     context.ActivationRuleCountsAndArchiveHighWatermark(evaluateActivationRule, suppressed, ref activationRuleCount,
                         ref prevailingActivationRuleId, ref prevailingActivationRuleName);
 
                     await context.ActivationRuleActivationWatcherAsync(evaluateActivationRule, suppressed, rabbitMqChannel);
 
-                    createCase ??= context.ActivationRuleCreateCaseObject(evaluateActivationRule, suppressed);
+                    createCase ??= await context.ActivationRuleCreateCaseObjectAsync(evaluateActivationRule, suppressed, cacheService);
 
-                    context.ActivationRuleTtlCounter(evaluateActivationRule, availableModels, cacheService);
+                    await context.ActivationRuleTtlCounterAsync(evaluateActivationRule, availableModels, cacheService);
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
@@ -229,12 +229,12 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ActivationRul
 
             return (activationRuleCount, createCase, prevailingActivationRuleId);
         }
-        
+
         private static void UpdateActivationCounter(EntityAnalysisModelActivationRule evaluateActivationRule)
         {
 
             Interlocked.Increment(ref evaluateActivationRule.ActivationCounter);
-            evaluateActivationRule.ActivationCounterDate = DateTime.Now;
+            evaluateActivationRule.ActivationCounterDate = DateTime.UtcNow;
         }
 
         private static void UpdateEvaluationCount(EntityAnalysisModelActivationRule evaluateActivationRule)

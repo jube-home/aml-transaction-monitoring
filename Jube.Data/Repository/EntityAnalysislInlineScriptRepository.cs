@@ -15,6 +15,7 @@ namespace Jube.Data.Repository
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
     using Context;
@@ -35,9 +36,18 @@ namespace Jube.Data.Repository
 
         public async Task<EntityAnalysisInlineScript> InsertAsync(EntityAnalysisInlineScript model, CancellationToken token = default)
         {
-            model.CreatedDate = DateTime.Now;
+            model.CreatedDate = DateTime.UtcNow;
             model.Id = await dbContext.InsertWithInt32IdentityAsync(model, token: token);
             return model;
+        }
+
+        public Task UpdateCompileStatusAsync(int id, bool compiled, string compileError, CancellationToken token = default)
+        {
+            return dbContext.EntityAnalysisInlineScript
+                .Where(d => d.Id == id)
+                .Set(s => s.Compiled, Convert.ToByte(compiled ? 1 : 0))
+                .Set(s => s.CompileError, compileError)
+                .UpdateAsync(token);
         }
     }
 }

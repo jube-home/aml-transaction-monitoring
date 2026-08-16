@@ -21,45 +21,57 @@ namespace Jube.Cache.Redis
     using StackExchange.Redis;
 
     public class CacheTtlCounterEntryRepository(
-        ResilientRedisDatabase redisDatabase,
-        ILog log,
-        CommandFlags commandFlag = CommandFlags.FireAndForget) : ICacheTtlCounterEntryRepository
+        IHybridResilientRedisDatabase resilientRedisResilientRedisDatabase,
+        ILog log) : ICacheTtlCounterEntryRepository
     {
         public async Task<List<ExpiredTtlCounterEntry>>
-            GetAllExpiredByTtlCounterAsync(int tenantRegistryId, Guid entityAnalysisModelGuid,
-                Guid entityAnalysisModelTtlCounterGuid, string dataName, DateTime referenceDate)
+            GetAllExpiredByTtlCounterPreferReplicaAsync(int tenantRegistryId, Guid entityAnalysisModelGuid,
+                Guid entityAnalysisModelTtlCounterGuid, string dataName, DateTime referenceDate, int limit)
         {
             var expired = new List<ExpiredTtlCounterEntry>();
             try
             {
-                var redisKeyTtlCounter =
-                    $"TtlCounter:{tenantRegistryId}:{entityAnalysisModelGuid:N}:{entityAnalysisModelTtlCounterGuid:N}:{dataName}";
+                var referenceDateTimestamp = referenceDate.ToUnixTimeMilliSeconds();
+                var redisKeyExpiryIndex = ExpiryIndexKey(tenantRegistryId, entityAnalysisModelGuid, entityAnalysisModelTtlCounterGuid, dataName);
 
-                await foreach (var dataValue in redisDatabase.HashScanAsync(redisKeyTtlCounter))
+                var expiredMembers = await resilientRedisResilientRedisDatabase.SortedSetRangeByScoreWithScoresAsync(
+                    redisKeyExpiryIndex,
+                    Int64.MinValue,
+                    referenceDateTimestamp,
+                    Exclude.Stop,
+                    skip: 0,
+                    take: limit,
+                    flags: CommandFlags.PreferReplica
+                ).ConfigureAwait(false);
+
+                foreach (var expiredMember in expiredMembers)
                 {
+                    var parts = ((string)expiredMember.Element)?.Split(':', 2);
+                    if (parts == null || parts.Length != 2 || !Int64.TryParse(parts[0], out var entryTimestamp))
+                    {
+                        continue;
+                    }
+
+                    var dataValue = parts[1];
+
                     var redisKeyTtlCounterEntry = $"TtlCounterEntry:{tenantRegistryId}" +
                                                   $":{entityAnalysisModelGuid:N}:{entityAnalysisModelTtlCounterGuid:N}" +
-                                                  $":{dataName}:{dataValue.Name}";
+                                                  $":{dataName}:{dataValue}";
 
-                    await foreach (var keyTtlCounterEntry in redisDatabase.HashScanAsync(redisKeyTtlCounterEntry))
+                    var value = await resilientRedisResilientRedisDatabase.HashGetAsync(redisKeyTtlCounterEntry, $"{entryTimestamp}",
+                        CommandFlags.PreferReplica).ConfigureAwait(false);
+
+                    if (!value.HasValue)
                     {
-                        var referenceDateTimestamp = Int64.Parse(keyTtlCounterEntry.Name).FromUnixTimeMilliSeconds();
-                        if (referenceDateTimestamp >= referenceDate)
-                        {
-                            continue;
-                        }
-
-                        if (keyTtlCounterEntry.Value.HasValue)
-                        {
-                            expired.Add(new ExpiredTtlCounterEntry
-                            {
-                                Value = (double)keyTtlCounterEntry.Value,
-                                DataName = dataValue.Name,
-                                DataValue = dataValue.Value,
-                                ReferenceDate = referenceDateTimestamp
-                            });
-                        }
+                        continue;
                     }
+
+                    expired.Add(new ExpiredTtlCounterEntry
+                    {
+                        Value = (double)value,
+                        DataName = dataValue,
+                        ReferenceDate = entryTimestamp.FromUnixTimeMilliSeconds()
+                    });
                 }
             }
             catch (Exception ex)
@@ -70,38 +82,36 @@ namespace Jube.Cache.Redis
             return expired;
         }
 
-        public async Task<double> GetAggregationAsync(int tenantRegistryId,
+        public async Task<double> GetAggregationPreferReplicaAsync(int tenantRegistryId,
             Guid entityAnalysisModelGuid, Guid entityAnalysisModelTtlCounterGuid,
             string dataName, string dataValue,
             DateTime referenceDateFrom, DateTime referenceDateTo)
         {
             try
             {
+                var referenceDateFromTimestamp = referenceDateFrom.ToUnixTimeMilliSeconds();
+                var referenceDateToTimestamp = referenceDateTo.ToUnixTimeMilliSeconds();
+
+                var redisKey =
+                    $"TtlCounterEntry:{tenantRegistryId}:{entityAnalysisModelGuid:N}" +
+                    $":{entityAnalysisModelTtlCounterGuid:N}:{dataName}:{dataValue}";
+
+                var sum = 0d;
+                await foreach (var hashEntry in resilientRedisResilientRedisDatabase.HashScanAsync(redisKey, flags: CommandFlags.PreferReplica))
+                {
+                    var timestamp = (long)hashEntry.Name;
+                    if (timestamp >= referenceDateFromTimestamp && timestamp <= referenceDateToTimestamp)
+                    {
+                        sum += (double)hashEntry.Value;
+                    }
+                }
+                return sum;
             }
             catch (Exception ex)
             {
                 log.Error($"Cache Redis: Has created an exception as {ex}.");
+                return 0d;
             }
-
-            var referenceDateFromTimestamp = referenceDateFrom.ToUnixTimeMilliSeconds();
-            var referenceDateToTimestamp = referenceDateTo.ToUnixTimeMilliSeconds();
-
-            var redisKey =
-                $"TtlCounterEntry:{tenantRegistryId}:{entityAnalysisModelGuid:N}" +
-                $":{entityAnalysisModelTtlCounterGuid:N}:{dataName}:{dataValue}";
-
-            var sum = 0d;
-            await foreach (var hashEntry in redisDatabase.HashScanAsync(redisKey))
-            {
-                var timestamp = (int)hashEntry.Name;
-                if (timestamp >= referenceDateFromTimestamp && timestamp <= referenceDateToTimestamp)
-                {
-                    sum += (double)hashEntry.Value;
-                }
-            }
-
-            return sum;
-
         }
 
         public async Task UpsertAsync(int tenantRegistryId, Guid entityAnalysisModelGuid, string dataName, string dataValue,
@@ -109,11 +119,19 @@ namespace Jube.Cache.Redis
         {
             try
             {
+                var referenceDateTimestamp = referenceDate.ToUnixTimeMilliSeconds();
+
                 var redisKey =
                     $"TtlCounterEntry:{tenantRegistryId}:{entityAnalysisModelGuid:N}:{entityAnalysisModelTtlCounterGuid:N}:{dataName}:{dataValue}";
-                var redisHSetKey = $"{referenceDate.ToUnixTimeMilliSeconds()}";
+                var redisHSetKey = $"{referenceDateTimestamp}";
 
-                await redisDatabase.HashIncrementAsync(redisKey, redisHSetKey, increment, commandFlag).ConfigureAwait(false);
+                var redisKeyExpiryIndex = ExpiryIndexKey(tenantRegistryId, entityAnalysisModelGuid, entityAnalysisModelTtlCounterGuid, dataName);
+                var expiryIndexMember = $"{referenceDateTimestamp}:{dataValue}";
+
+                await Task.WhenAll(
+                    resilientRedisResilientRedisDatabase.HashIncrementAsync(redisKey, redisHSetKey, increment),
+                    resilientRedisResilientRedisDatabase.SortedSetAddAsync(redisKeyExpiryIndex, expiryIndexMember, referenceDateTimestamp)
+                ).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -128,17 +146,30 @@ namespace Jube.Cache.Redis
         {
             try
             {
+                var referenceDateTimestamp = referenceDate.ToUnixTimeMilliSeconds();
+
                 var redisKey =
                     $"TtlCounterEntry:{tenantRegistryId}:{entityAnalysisModelGuid:N}:{entityAnalysisModelTtlCounterGuid:N}:{dataName}:{dataValue}";
-                var redisHSetKey = $"{referenceDate.ToUnixTimeMilliSeconds()}";
+                var redisHSetKey = $"{referenceDateTimestamp}";
 
-                await redisDatabase.HashDeleteAsync(redisKey, redisHSetKey,
-                    commandFlag).ConfigureAwait(false);
+                var redisKeyExpiryIndex = ExpiryIndexKey(tenantRegistryId, entityAnalysisModelGuid, entityAnalysisModelTtlCounterGuid, dataName);
+                var expiryIndexMember = $"{referenceDateTimestamp}:{dataValue}";
+
+                await Task.WhenAll(
+                    resilientRedisResilientRedisDatabase.HashDeleteAsync(redisKey, redisHSetKey),
+                    resilientRedisResilientRedisDatabase.SortedSetRemoveAsync(redisKeyExpiryIndex, expiryIndexMember)
+                ).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
                 log.Error($"Cache Redis: Has created an exception as {ex}.");
             }
+        }
+
+        private static string ExpiryIndexKey(int tenantRegistryId, Guid entityAnalysisModelGuid,
+            Guid entityAnalysisModelTtlCounterGuid, string dataName)
+        {
+            return $"TtlCounterEntryExpiry:{tenantRegistryId}:{entityAnalysisModelGuid:N}:{entityAnalysisModelTtlCounterGuid:N}:{dataName}";
         }
     }
 }

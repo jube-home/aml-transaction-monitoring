@@ -29,7 +29,7 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Models.Payload.EntityAnalysisMod
                 ["Dictionary"] = key => entityAnalysisModelInstanceEntryPayload.Dictionary.TryGetValue(key, out var v) ? v.ToString(CultureInfo.InvariantCulture) : null,
                 ["TtlCounter"] = key => entityAnalysisModelInstanceEntryPayload.TtlCounter.TryGetValue(key, out var v) ? v.ToString(CultureInfo.InvariantCulture) : null,
                 ["Sanction"] = key => entityAnalysisModelInstanceEntryPayload.Sanction.TryGetValue(key, out var v) ? v.ToString(CultureInfo.InvariantCulture) : null,
-                ["HttpAdaptation"] = key => entityAnalysisModelInstanceEntryPayload.HttpAdaptation.TryGetValue(key, out var v) ? v.ToString(CultureInfo.InvariantCulture) : null,
+                ["HttpAdaptation"] = key => entityAnalysisModelInstanceEntryPayload.HttpAdaptation.TryGetValue(key, out var v) ? v.Value?.ToString(CultureInfo.InvariantCulture) : null,
                 ["ExhaustiveAdaptation"] = key => entityAnalysisModelInstanceEntryPayload.ExhaustiveAdaptation.TryGetValue(key, out var v) ? v.ToString(CultureInfo.InvariantCulture) : null,
                 ["Activation"] = key => entityAnalysisModelInstanceEntryPayload.Activation.ContainsKey(key) ? "true" : "false"
             };

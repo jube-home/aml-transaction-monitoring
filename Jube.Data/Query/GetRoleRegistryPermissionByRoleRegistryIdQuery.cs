@@ -13,6 +13,7 @@
 
 namespace Jube.Data.Query
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading;
@@ -20,12 +21,12 @@ namespace Jube.Data.Query
     using Context;
     using LinqToDB;
 
-    public class GetRoleRegistryPermissionByRoleRegistryIdQuery
+    public class GetRoleRegistryPermissionByRoleRegistryGuidQuery
     {
         private readonly DbContext dbContext;
         private readonly int tenantRegistryId;
 
-        public GetRoleRegistryPermissionByRoleRegistryIdQuery(DbContext dbContext, string userName)
+        public GetRoleRegistryPermissionByRoleRegistryGuidQuery(DbContext dbContext, string userName)
         {
             this.dbContext = dbContext;
             tenantRegistryId = this.dbContext.UserInTenant.Where(w => w.User == userName)
@@ -43,7 +44,7 @@ namespace Jube.Data.Query
                     Name = s.PermissionSpecification.Name,
                     Id = s.Id,
                     Active = s.Active == 1,
-                    RoleRegistryId = s.RoleRegistryId.Value
+                    RoleRegistryGuid = s.RoleRegistry.Guid
                 }).ToListAsync(token);
         }
 
@@ -52,7 +53,7 @@ namespace Jube.Data.Query
             public string Name { get; set; }
             public int Id { get; set; }
             public bool Active { get; set; }
-            public int RoleRegistryId { get; set; }
+            public Guid RoleRegistryGuid { get; set; }
         }
     }
 }

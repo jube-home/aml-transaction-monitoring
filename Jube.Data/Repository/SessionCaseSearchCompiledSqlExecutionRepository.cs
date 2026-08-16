@@ -25,7 +25,7 @@ namespace Jube.Data.Repository
         public async Task<SessionCaseSearchCompiledSqlExecution> InsertAsync(SessionCaseSearchCompiledSqlExecution model, CancellationToken token = default)
         {
             model.CreatedUser = userName;
-            model.CreatedDate = DateTime.Now;
+            model.CreatedDate = DateTime.UtcNow;
 
             model.Id = await dbContext.InsertWithInt32IdentityAsync(model, token: token);
 

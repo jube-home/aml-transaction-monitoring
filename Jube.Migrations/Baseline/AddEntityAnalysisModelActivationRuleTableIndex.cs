@@ -11,11 +11,11 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using FluentMigrator;
-
 namespace Jube.Migrations.Baseline
 {
+    using System;
+    using FluentMigrator;
+
     [Migration(20220429124926)]
     public class AddEntityAnalysisModelActivationRuleTableIndex : Migration
     {
@@ -90,7 +90,7 @@ namespace Jube.Migrations.Baseline
                 Active = 1,
                 Version = 1,
                 CreatedUser = "Administrator",
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 EnableTtlCounter = 1,
                 EntityAnalysisModelTtlCounterId = 1,
                 EntityAnalysisModelIdTtlCounter = 1,
@@ -126,7 +126,7 @@ namespace Jube.Migrations.Baseline
                 Active = 1,
                 Version = 1,
                 CreatedUser = "Administrator",
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 EnableTtlCounter = 0,
                 EntityAnalysisModelTtlCounterId = 1,
                 EntityAnalysisModelIdTtlCounter = 1,
@@ -168,7 +168,7 @@ namespace Jube.Migrations.Baseline
                 Active = 1,
                 Version = 1,
                 CreatedUser = "Administrator",
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 EnableTtlCounter = 0,
                 EntityAnalysisModelTtlCounterId = 1,
                 EntityAnalysisModelIdTtlCounter = 1,
@@ -209,7 +209,7 @@ namespace Jube.Migrations.Baseline
                 Active = 1,
                 Version = 1,
                 CreatedUser = "Administrator",
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 EnableTtlCounter = 0,
                 EntityAnalysisModelTtlCounterId = 1,
                 EntityAnalysisModelIdTtlCounter = 1,
@@ -249,7 +249,7 @@ namespace Jube.Migrations.Baseline
                 Active = 1,
                 Version = 1,
                 CreatedUser = "Administrator",
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 EnableTtlCounter = 0,
                 EntityAnalysisModelTtlCounterId = 1,
                 EntityAnalysisModelIdTtlCounter = 1,

@@ -115,7 +115,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters.Ar
                     ActivationRuleCount = payload.EntityAnalysisModelActivationRuleCount,
                     EntryKeyValue = payload.EntityInstanceEntryId,
                     ReferenceDate = payload.ReferenceDate,
-                    CreatedDate = DateTime.Now,
+                    CreatedDate = DateTime.UtcNow,
                     Version = 1
                 };
 

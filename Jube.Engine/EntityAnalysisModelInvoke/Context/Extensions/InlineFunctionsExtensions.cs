@@ -15,6 +15,7 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions
 {
     using System;
     using System.Diagnostics;
+    using Cryptography;
     using Data.Poco;
     using ReflectionHelpers;
     using EntityAnalysisModelInlineFunction=EntityAnalysisModelManager.EntityAnalysisModel.Models.Models.EntityAnalysisModelInlineFunction;
@@ -95,7 +96,22 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions
 
         private static void PopulateAllValues(Context context, EntityAnalysisModelInlineFunction inlineFunction, object output)
         {
-            PopulateCachePayloadDocumentStore(context, inlineFunction, output);
+            if (inlineFunction.ReturnDataTypeId == 1 && output != null)
+            {
+                output = inlineFunction.EncryptionId switch
+                {
+                    1 => context.EntityAnalysisModel.Services.AesEncryption.Encrypt(output.ToString() ?? "", IvMode.Deterministic),
+                    2 => context.EntityAnalysisModel.Services.AesEncryption.Encrypt(output.ToString() ?? "", IvMode.Random),
+                    _ => output
+                };
+            }
+
+            var writtenToPayload = PopulateCachePayloadDocumentStore(context, inlineFunction, output);
+
+            if (inlineFunction.ReturnDataTypeId == 1 && writtenToPayload)
+            {
+                context.EntityAnalysisModel.ResolveDictionaryValueForField(context.EntityAnalysisModelInstanceEntryPayload, context.Log, inlineFunction.Name);
+            }
 
             if (inlineFunction.ReportTable)
             {
@@ -167,7 +183,7 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions
                     {
                         ProcessingTypeId = 3,
                         Key = inlineFunction.Name,
-                        KeyValueDate = Convert.ToDateTime(output),
+                        KeyValueDate = DateTime.SpecifyKind(Convert.ToDateTime(output), DateTimeKind.Utc),
                         EntityAnalysisModelInstanceEntryGuid =
                             context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid
                     });
@@ -199,7 +215,7 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions
             }
         }
 
-        private static void PopulateCachePayloadDocumentStore(Context context, EntityAnalysisModelInlineFunction inlineFunction, object output)
+        private static bool PopulateCachePayloadDocumentStore(Context context, EntityAnalysisModelInlineFunction inlineFunction, object output)
         {
 
             if (!context.EntityAnalysisModelInstanceEntryPayload.Payload.ContainsKey(inlineFunction.Name))
@@ -237,7 +253,9 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions
 
                         break;
                     case 4:
-                        context.EntityAnalysisModelInstanceEntryPayload.Payload.TryAdd(inlineFunction.Name, Convert.ToDateTime(output));
+                        context.EntityAnalysisModelInstanceEntryPayload.Payload.TryAdd(
+                            inlineFunction.Name,
+                            DateTime.SpecifyKind(Convert.ToDateTime(output), DateTimeKind.Utc));
 
                         if (context.Log.IsInfoEnabled)
                         {
@@ -257,15 +275,17 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions
 
                         break;
                 }
+
+                return true;
             }
-            else
+
+            if (context.Log.IsInfoEnabled)
             {
-                if (context.Log.IsInfoEnabled)
-                {
-                    context.Log.Info(
-                        $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel} is has invoked inline function {inlineFunction.Id} but has not added to payload as name {inlineFunction.Name} already exists.");
-                }
+                context.Log.Info(
+                    $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel} is has invoked inline function {inlineFunction.Id} but has not added to payload as name {inlineFunction.Name} already exists.");
             }
+
+            return false;
         }
     }
 }

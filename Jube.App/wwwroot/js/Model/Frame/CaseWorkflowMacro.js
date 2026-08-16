@@ -107,18 +107,20 @@ $.getScript('/js/ace/ace.js', function () {
 });
 
 function SetEnableHttpEndpoint() {
+    const $httpEndpointTable = $("#HttpEndpointTable");
     if ($('#EnableHttpEndpoint').prop('checked')) {
-        $('#HttpEndpointTable').show();
+        $httpEndpointTable.show();
     } else {
-        $('#HttpEndpointTable').hide();
+        $httpEndpointTable.hide();
     }
 }
 
 function SetEnableNotification() {
+    const $notificationTable = $("#NotificationTable");
     if ($('#EnableNotification').prop('checked')) {
-        $('#NotificationTable').show();
+        $notificationTable.show();
     } else {
-        $('#NotificationTable').hide();
+        $notificationTable.hide();
     }
 }
 

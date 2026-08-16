@@ -16,11 +16,14 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Linq;
     using System.Text;
+    using System.Threading;
     using System.Threading.Tasks;
     using Data.Repository;
     using Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Models.Models;
     using Jube.Engine.EntityAnalysisModelManager.Helpers;
+    using Jube.Engine.Models;
     using Parser;
     using Parser.Compiler;
 
@@ -45,10 +48,10 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                     if (context.Services.Log.IsDebugEnabled)
                     {
                         context.Services.Log.Debug(
-                            $"Entity Start: Executing EntityAnalysisModelGatewayRuleRepository.GetByEntityAnalysisModelId for entity model key of {key}.");
+                            $"Entity Start: Executing EntityAnalysisModelGatewayRuleRepository.GetByEntityAnalysisModelIdOrderByPriorityAsync for entity model key of {key}.");
                     }
 
-                    var records = await repository.GetByEntityAnalysisModelIdOrderByIdAsync(key, context.Services.CancellationToken).ConfigureAwait(false);
+                    var records = await repository.GetByEntityAnalysisModelIdOrderByPriorityAsync(key, context.Services.CancellationToken).ConfigureAwait(false);
 
                     var shadowEntityModelGatewayRule = new List<EntityModelGatewayRule>();
                     foreach (var record in records)
@@ -164,6 +167,27 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                                 }
                             }
 
+                            if (record.Priority.HasValue)
+                            {
+                                modelGatewayRule.Priority = record.Priority.Value;
+
+                                if (context.Services.Log.IsDebugEnabled)
+                                {
+                                    context.Services.Log.Debug(
+                                        $"Entity Start: Entity Model {key} and Gateway Rule {modelGatewayRule.EntityAnalysisModelGatewayRuleId} set Model Priority value set as {modelGatewayRule.Priority}.");
+                                }
+                            }
+                            else
+                            {
+                                modelGatewayRule.Priority = 0;
+
+                                if (context.Services.Log.IsDebugEnabled)
+                                {
+                                    context.Services.Log.Debug(
+                                        $"Entity Start: Entity Model {key} and Gateway Rule {modelGatewayRule.EntityAnalysisModelGatewayRuleId} set DEFAULT Model Priority value set as {modelGatewayRule.Priority}.");
+                                }
+                            }
+
                             context.Services.CancellationToken.ThrowIfCancellationRequested();
 
                             var hasRuleScript = false;
@@ -271,6 +295,9 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
 
                                 shadowEntityModelGatewayRule.Add(modelGatewayRule);
 
+                                await repository.UpdateCompileStatusAsync(record.Id, true, null,
+                                    context.Services.CancellationToken).ConfigureAwait(false);
+
                                 if (context.Services.Log.IsDebugEnabled)
                                 {
                                     context.Services.Log.Debug(
@@ -314,7 +341,12 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                                         (EntityModelGatewayRule.Match)Delegate.CreateDelegate(
                                             typeof(EntityModelGatewayRule.Match), methodInfo);
                                     shadowEntityModelGatewayRule.Add(modelGatewayRule);
-                                    context.Caching.HashCacheAssembly.Add(gatewayRuleScriptHash, compile.CompiledAssembly);
+                                    context.Caching.HashCacheAssembly.TryAdd(gatewayRuleScriptHash, compile.CompiledAssembly);
+                                    context.Caching.HashCacheAssemblyMetadata.TryAdd(gatewayRuleScriptHash,
+                                        new HashCacheAssemblyPayload(compile.CompiledAssemblyBytes, compile.CompiledAssemblyBinary, gatewayRuleScript.ToString()));
+
+                                    await repository.UpdateCompileStatusAsync(record.Id, true, null,
+                                        context.Services.CancellationToken).ConfigureAwait(false);
 
                                     if (context.Services.Log.IsDebugEnabled)
                                     {
@@ -324,6 +356,9 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                                 }
                                 else
                                 {
+                                    await repository.UpdateCompileStatusAsync(record.Id, false, compile.ErrorsSummary,
+                                        context.Services.CancellationToken).ConfigureAwait(false);
+
                                     if (context.Services.Log.IsDebugEnabled)
                                     {
                                         context.Services.Log.Debug(
@@ -336,6 +371,9 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                         {
                             context.Services.Log.Error(
                                 $"Entity Start: Activation Rule ID {record.Id} returned for model {key} has created an error as {ex}.");
+
+                            await repository.UpdateCompileStatusAsync(record.Id, false, ex.Message,
+                                context.Services.CancellationToken).ConfigureAwait(false);
                         }
                     }
 
@@ -343,6 +381,23 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                     {
                         context.Services.Log.Debug(
                             $"Entity Start: {key} is being finished,  proceeding to update gateway rules and close off the cursor.");
+                    }
+
+                    var previousGatewayRulesById = value.Collections.ModelGatewayRules
+                        .ToDictionary(r => r.EntityAnalysisModelGatewayRuleId);
+                    foreach (var newGatewayRule in shadowEntityModelGatewayRule)
+                    {
+                        if (!previousGatewayRulesById.TryGetValue(newGatewayRule.EntityAnalysisModelGatewayRuleId,
+                                out var previousGatewayRule))
+                        {
+                            continue;
+                        }
+
+                        newGatewayRule.EvaluationCounter =
+                            Interlocked.Exchange(ref previousGatewayRule.EvaluationCounter, 0);
+                        newGatewayRule.ActivationCounter =
+                            Interlocked.Exchange(ref previousGatewayRule.ActivationCounter, 0);
+                        newGatewayRule.ActivationCounterDate = previousGatewayRule.ActivationCounterDate;
                     }
 
                     value.Collections.ModelGatewayRules = shadowEntityModelGatewayRule;
@@ -361,6 +416,10 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 context.Services.Log.Error($"SyncEntityAnalysisModelGatewayRulesAsync: has produced an error {ex}");
+
+                await new EntityAnalysisModelSynchronisationErrorRepository(context.Services.DbContext)
+                    .InsertAsync(EntityAnalysisModelSynchronisationErrorRepository.EntityAnalysisModelSynchronisationErrorStepEnum.GatewayRules, ex.ToString(),
+                        context.Services.CancellationToken).ConfigureAwait(false);
             }
 
             return context;

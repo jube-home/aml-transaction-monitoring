@@ -54,7 +54,8 @@ namespace Jube.App.Controllers.Query
 
             dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"), log);
             permissionValidation = new PermissionValidation(dbContext, userName, log);
-            query = new GetCaseBySessionCaseSearchCompileQuery(dbContext, userName, log, dynamicEnvironment.AppSettings("ReportConnectionString") ?? dbContext.ConnectionString);
+            query = new GetCaseBySessionCaseSearchCompileQuery(dbContext, userName, log, dynamicEnvironment.AppSettings("ParserAssertSelectOnly").Equals("True", StringComparison.OrdinalIgnoreCase),
+                dynamicEnvironment.AppSettings("ReportConnectionString") ?? dbContext.Connection.ConnectionString);
             caseEventRepository = new CaseEventRepository(dbContext, userName);
             caseRepository = new CaseRepository(dbContext, userName);
         }

@@ -52,6 +52,7 @@ namespace Jube.App.Validators
                 .Must(m => reprocessingIntervalTypes.Contains(m));
 
             RuleFor(p => p.ReprocessingValue).GreaterThanOrEqualTo(0);
+            RuleFor(p => p.Priority).GreaterThanOrEqualTo(0);
             RuleFor(p => p.BuilderRuleScript).NotNull();
             RuleFor(p => p.CoderRuleScript).NotNull();
             RuleFor(p => p.RuleScriptTypeId).NotEmpty();

@@ -46,7 +46,7 @@ namespace Jube.Data.Query
                                 && w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
                                 && (w.Deleted == 0 || w.Deleted == null)
                                 && w.ReturnDataTypeId == 1)
-                    .Select(s => s.Name)).ToListAsync(token);
+                    .Select(s => s.Name)).OrderBy(s => s).ToListAsync(token);
         }
 
         public async Task<IEnumerable<string>> ExecuteAsync(int entityAnalysisModelId, CancellationToken token = default)
@@ -62,7 +62,7 @@ namespace Jube.Data.Query
                                 && w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
                                 && (w.Deleted == 0 || w.Deleted == null)
                                 && w.ReturnDataTypeId == 1)
-                    .Select(s => s.Name)).ToListAsync(token);
+                    .Select(s => s.Name)).OrderBy(s => s).ToListAsync(token);
         }
     }
 }

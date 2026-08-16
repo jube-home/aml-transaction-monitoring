@@ -141,14 +141,15 @@ namespace Jube.Engine.EntityAnalysisModelInvoke
                 }
 
                 context.ExecuteInlineFunctions();
+
                 await context.ExecuteInlineScriptsAsync();
+
                 context.ExecuteGatewayRules();
 
                 if (context.EntityAnalysisModelInstanceEntryPayload.MatchedGatewayRule)
                 {
                     context.ExecuteCacheDbStorage(context.EntityAnalysisModel.Services.CacheService, context.EntityAnalysisModel.Collections.DistinctSearchKeys);
                     context.PendingReadTasks.Add(TaskHelper.MeasureTaskTimeAndMemoryAllocatedAsync(TaskType.SanctionsAsync, async () => await context.ExecuteSanctionsAsync().ConfigureAwait(false)));
-                    context.PendingReadTasks.Add(TaskHelper.MeasureTaskTimeAndMemoryAllocatedAsync(TaskType.DictionaryKvPsAsync, async () => await context.ExecuteDictionaryKvPsAsync().ConfigureAwait(false)));
                     context.PendingReadTasks.Add(TaskHelper.MeasureTaskTimeAndMemoryAllocatedAsync(TaskType.TtlCountersAsync, async () => await context.ExecuteTtlCountersAsync().ConfigureAwait(false)));
                     context.PendingReadTasks.Add(TaskHelper.MeasureTaskTimeAndMemoryAllocatedAsync(TaskType.AbstractionRulesWithSearchKeysAsync, async () => await context.ExecuteAbstractionRulesWithSearchKeysAsync().ConfigureAwait(false)));
 
@@ -166,7 +167,7 @@ namespace Jube.Engine.EntityAnalysisModelInvoke
                 await context.WaitWriteTasksAsync().ConfigureAwait(false);
                 await context.WriteResponseJsonAndQueueAsynchronousResponseMessageAsync().ConfigureAwait(false);
                 await context.ActivationRuleBuildArchivePayloadAsync().ConfigureAwait(false);
-                
+
                 Interlocked.Add(ref context.EntityAnalysisModel.Counters.ModelTotalResponseTime, (int)(context.Stopwatch.ElapsedTicks * 1000000 / Stopwatch.Frequency));
 
                 if (context.Log.IsInfoEnabled)

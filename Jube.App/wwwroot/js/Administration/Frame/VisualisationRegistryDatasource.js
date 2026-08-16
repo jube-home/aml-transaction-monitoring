@@ -40,9 +40,9 @@ var includeDisplay = $("#IncludeDisplay").kendoSwitch({
 });
 
 var priority = $("#Priority").kendoNumericTextBox({
-    format: "n1",
-    decimals: 1,
-    step: 0.1
+    format: "n3",
+    decimals: 3,
+    step: 0.001
 });
 
 function changeVisualisationType() {

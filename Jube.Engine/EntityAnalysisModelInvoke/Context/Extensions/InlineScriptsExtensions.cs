@@ -33,6 +33,15 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions
             await IterateAndProcessAsync(context);
             StorePerformanceFromStopwatch(context);
 
+            context.EntityAnalysisModelInstanceEntryPayload.JObject = null;
+
+            if (context.Log.IsInfoEnabled)
+            {
+                context.Log.Info(
+                    $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} " +
+                    $"Payload JObject has been set to null in context to free up for GC.  Payload JObject is no longer available as it may only be used in [ResponsePayload] attribute decoration.");
+            }
+
             return context;
         }
 
@@ -54,10 +63,16 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions
             {
                 try
                 {
+                    if (context.Log.IsDebugEnabled)
+                    {
+                        context.Log.Debug(
+                            $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} is going to invoke {inlineScript.InlineScriptCode}.");
+                    }
+
                     if (context.Log.IsInfoEnabled)
                     {
                         context.Log.Info(
-                            $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} is going to invoke {inlineScript.InlineScriptCode}.");
+                            $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} is going to invoke.");
                     }
 
                     await ReflectInlineScriptHelper.ExecuteAsync(inlineScript, context);
@@ -65,7 +80,7 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions
                     if (context.Log.IsInfoEnabled)
                     {
                         context.Log.Info(
-                            $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} has invoked {inlineScript.InlineScriptCode}.");
+                            $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} has invoked.");
                     }
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)

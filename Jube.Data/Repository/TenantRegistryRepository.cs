@@ -55,7 +55,7 @@ namespace Jube.Data.Repository
         {
             model.CreatedUser = userName;
             model.Version = 1;
-            model.CreatedDate = DateTime.Now;
+            model.CreatedDate = DateTime.UtcNow;
             model.Id = await dbContext.InsertWithInt32IdentityAsync(model, token: token);
             return model;
         }
@@ -74,13 +74,16 @@ namespace Jube.Data.Repository
             }
 
             model.CreatedUser = userName;
-            model.CreatedDate = DateTime.Now;
+            model.CreatedDate = DateTime.UtcNow;
             model.Version = existing.Version + 1;
             model.CreatedUser = userName;
 
             await dbContext.UpdateAsync(model, token: token);
 
-            var mapper = new Mapper(new MapperConfiguration(cfg => { cfg.CreateMap<TenantRegistry, TenantRegistryVersion>(); }, NullLoggerFactory.Instance));
+            var mapper = new Mapper(new MapperConfiguration(cfg =>
+            {
+                cfg.CreateMap<TenantRegistry, TenantRegistryVersion>();
+            }, NullLoggerFactory.Instance));
 
             var audit = mapper.Map<TenantRegistryVersion>(existing);
             audit.TenantRegistryId = existing.Id;
@@ -97,7 +100,7 @@ namespace Jube.Data.Repository
                             && (d.Locked == 0 || d.Locked == null)
                             && (d.Deleted == 0 || d.Deleted == null))
                 .Set(s => s.Deleted, Convert.ToByte(1))
-                .Set(s => s.DeletedDate, DateTime.Now)
+                .Set(s => s.DeletedDate, DateTime.UtcNow)
                 .Set(s => s.DeletedUser, userName)
                 .UpdateAsync(token);
 

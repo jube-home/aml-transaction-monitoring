@@ -11,21 +11,21 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-
 namespace Jube.App.Dto
 {
+    using System;
+
     public class CaseDto
     {
         public int Id { get; set; }
-        public DateTime DiaryDate { get; set; }
+        public DateTimeOffset? DiaryDate { get; set; }
         public Guid CaseWorkflowStatusGuid { get; set; }
-        public DateTime CreatedDate { get; set; }
+        public DateTimeOffset? CreatedDate { get; set; }
         public bool Locked { get; set; }
         public string LockedUser { get; set; }
-        public DateTime LockedDate { get; set; }
+        public DateTimeOffset? LockedDate { get; set; }
         public byte ClosedStatusId { get; set; }
-        public DateTime ClosedDate { get; set; }
+        public DateTimeOffset? ClosedDate { get; set; }
         public string ClosedUser { get; set; }
         public string CaseKey { get; set; }
         public bool Diary { get; set; }

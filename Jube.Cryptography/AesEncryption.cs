@@ -15,93 +15,65 @@ namespace Jube.Cryptography
 {
     using System.Security.Cryptography;
     using System.Text;
-    using Exceptions;
+
+    public enum IvMode
+    {
+        Random,
+        Deterministic
+    }
 
     public class AesEncryption
     {
-        private readonly byte[] iv;
+        private readonly IvMode ivMode;
         private readonly byte[] key;
-        private readonly byte[] salt;
 
-        public AesEncryption(string password, string salt)
+        public AesEncryption(string key, IvMode ivMode = IvMode.Random)
         {
-            using var keyDerivationFunction =
-                new Rfc2898DeriveBytes(password, Encoding.UTF8.GetBytes(salt), 100_000, HashAlgorithmName.SHA256);
-            key = keyDerivationFunction.GetBytes(32);// 256-bit key
-            iv = keyDerivationFunction.GetBytes(16); // 128-bit IV
-            this.salt = Encoding.UTF8.GetBytes(salt);
+            using var kdf = new Rfc2898DeriveBytes(key, Encoding.UTF8.GetBytes(key), 100_000, HashAlgorithmName.SHA256);
+            this.key = kdf.GetBytes(32);
+            this.ivMode = ivMode;
         }
 
-        public byte[] Encrypt(byte[] data)
+        public string Encrypt(string plainText)
         {
-            try
-            {
-                var hmac = ComputeHmac(data);
-
-                using var aes = Aes.Create();
-                aes.Key = key;
-                aes.IV = iv;
-                aes.Mode = CipherMode.CBC;
-                aes.Padding = PaddingMode.PKCS7;
-
-                using var ms = new MemoryStream();
-                ms.Write(hmac);
-
-                using var cs = new CryptoStream(ms, aes.CreateEncryptor(), CryptoStreamMode.Write);
-                cs.Write(data, 0, data.Length);
-                cs.FlushFinalBlock();
-
-                return ms.ToArray();
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidEncryptionException(ex.Message);
-            }
+            return Encrypt(plainText, ivMode);
         }
 
-        public byte[] Decrypt(byte[] encryptedData)
+        public string Encrypt(string plainText, IvMode encryptIvMode)
         {
-            try
+            using var aes = Aes.Create();
+            aes.Key = key;
+
+            if (encryptIvMode == IvMode.Deterministic)
             {
-                var hmac = ComputeHmac(encryptedData[..32]);
-                var clippedEncryptedData = encryptedData[32..];
-
-                using var aes = Aes.Create();
-                aes.Key = key;
-                aes.IV = iv;
-                aes.Mode = CipherMode.CBC;
-                aes.Padding = PaddingMode.PKCS7;
-
-                using var ms = new MemoryStream();
-                using var cs = new CryptoStream(ms, aes.CreateDecryptor(), CryptoStreamMode.Write);
-                cs.Write(clippedEncryptedData, 0, clippedEncryptedData.Length);
-                cs.FlushFinalBlock();
-
-                var decryptedData = ms.ToArray();
-
-                if (!VerifyHmac(ComputeHmac(decryptedData), hmac))
-                {
-                    throw new InvalidHmacException();
-                }
-
-                return ms.ToArray();
+                aes.IV = SHA256.HashData(Encoding.UTF8.GetBytes(plainText))[..16];
             }
-            catch (Exception ex)
+
+            using var ms = new MemoryStream();
+            ms.Write(aes.IV);
+
+            using (var cs = new CryptoStream(ms, aes.CreateEncryptor(), CryptoStreamMode.Write))
+            using (var sw = new StreamWriter(cs))
             {
-                throw new InvalidDecryptionException(ex.Message);
+                sw.Write(plainText);
             }
+
+            return Convert.ToBase64String(ms.ToArray());
         }
 
-        private byte[] ComputeHmac(byte[] data)
+        public string Decrypt(string base64CipherText)
         {
-            using var hmac = new HMACSHA256(salt);
-            return hmac.ComputeHash(data);
-        }
+            var buffer = Convert.FromBase64String(base64CipherText);
 
-        private bool VerifyHmac(byte[] data, byte[] expectedHmac)
-        {
-            var actualHmac = ComputeHmac(data);
-            return CryptographicOperations.FixedTimeEquals(actualHmac, expectedHmac);
+            using var aes = Aes.Create();
+            aes.Key = key;
+            aes.IV = buffer[..16];
+
+            using var ms = new MemoryStream(buffer, 16, buffer.Length - 16);
+            using var cs = new CryptoStream(ms, aes.CreateDecryptor(), CryptoStreamMode.Read);
+            using var sr = new StreamReader(cs);
+
+            return sr.ReadToEnd();
         }
     }
 }

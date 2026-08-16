@@ -11,6 +11,7 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
+using System;
 using FluentValidation;
 using Jube.App.Dto;
 
@@ -20,8 +21,12 @@ namespace Jube.App.Validators
     {
         public EntityAnalysisModelsListValueDtoValidator()
         {
-            RuleFor(p => p.ListValue).NotEmpty();
+            RuleFor(p => p.ListValue).NotEmpty().WithMessage("Please enter a value for this list.");
             RuleFor(p => p.EntityAnalysisModelListId).GreaterThan(0);
+            RuleFor(p => p.DeleteExpiryDate)
+                .GreaterThan(_ => DateTimeOffset.UtcNow)
+                .When(p => p.DeleteExpiryDate.HasValue)
+                .WithMessage("Delete Expiry Date must be greater than the current date and time.");
         }
     }
 }

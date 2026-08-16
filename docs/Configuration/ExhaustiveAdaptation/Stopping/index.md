@@ -6,9 +6,8 @@ parent: Exhaustive Adaptation
 grand_parent: Configuration
 ---
 
-🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
-💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
-developer.
+🚀 Get to pre-production in weeks, not months, with private [training](https://www.jube.io/jube-training) direct from
+Jube's developer — real sovereignty, zero vendor lock-in.
 
 Exhaustive model training can take a very long time, and it is computationally expensive. To stop an Exhaustive training
 instance identify the Stop button:
@@ -25,11 +24,12 @@ the same status is checked to see if it is in a Stopping state. In the event tha
 state is finalised to Stop instead, and the Exhaustive training thread gracefully returned uncompleted. It is worth
 noting
 that the task in hand will be completed and the thread is not interrupted or aborted, hence it can still be a moderately
-time-consuming process to reach a consistent stopping point.  On the Exhaustive model training being stoped:
+time-consuming process to reach a consistent stopping point. The thread is immediately available for the next Exhaustive
+training instance.
 
-![img_2.png](img_2.png)
+Once the stopping point has been reached, the status is finalised to Stopped:
 
-The thread is immediately available for the next Exhaustive training instance.
+![Stopped.png](Stopped.png)
 
 
 

@@ -31,5 +31,6 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Models.Mode
         public string FunctionScript { get; set; }
         public Match FunctionCalculationCompileDelegate { get; set; }
         public Assembly FunctionCalculationCompile { get; set; }
+        public int EncryptionId { get; set; }
     }
 }

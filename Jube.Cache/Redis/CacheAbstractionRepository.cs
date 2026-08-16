@@ -20,9 +20,8 @@ namespace Jube.Cache.Redis
     using StackExchange.Redis;
 
     public class CacheAbstractionRepository(
-        ResilientRedisDatabase redisDatabase,
-        ILog log,
-        CommandFlags commandFlag = CommandFlags.FireAndForget) : ICacheAbstractionRepository
+        IHybridResilientRedisDatabase resilientRedisResilientRedisDatabase,
+        ILog log) : ICacheAbstractionRepository
     {
         public async Task DeleteAsync(int tenantRegistryId, Guid entityAnalysisModelGuid, string searchKey,
             string searchValue,
@@ -33,7 +32,7 @@ namespace Jube.Cache.Redis
                 var redisKey = $"Abstraction:{tenantRegistryId}:{entityAnalysisModelGuid:N}:{searchKey}:{searchValue}";
                 var redisHSetKey = $"{name}";
 
-                await redisDatabase.HashDeleteAsync(redisKey, redisHSetKey, commandFlag).ConfigureAwait(false);
+                await resilientRedisResilientRedisDatabase.HashDeleteAsync(redisKey, redisHSetKey).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -51,8 +50,7 @@ namespace Jube.Cache.Redis
                 var redisKey = $"Abstraction:{tenantRegistryId}:{entityAnalysisModelGuid:N}:{searchKey}:{searchValue}";
                 var redisHSetKey = $"{name}";
 
-                await redisDatabase.HashSetAsync(redisKey, redisHSetKey, value,
-                    When.Always, commandFlag).ConfigureAwait(false);
+                await resilientRedisResilientRedisDatabase.HashSetAsync(redisKey, redisHSetKey, value).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -60,7 +58,7 @@ namespace Jube.Cache.Redis
             }
         }
 
-        public async Task<double?> GetAsync(int tenantRegistryId, Guid entityAnalysisModelGuid,
+        public async Task<double?> GetPreferReplicaAsync(int tenantRegistryId, Guid entityAnalysisModelGuid,
             string name, string searchKey,
             string searchValue)
         {
@@ -68,7 +66,7 @@ namespace Jube.Cache.Redis
             {
                 var redisKey = $"Abstraction:{tenantRegistryId}:{entityAnalysisModelGuid:N}:{searchKey}:{searchValue}";
                 var redisHSetKey = $"{name}";
-                var redisValue = await redisDatabase.HashGetAsync(redisKey, redisHSetKey).ConfigureAwait(false);
+                var redisValue = await resilientRedisResilientRedisDatabase.HashGetAsync(redisKey, redisHSetKey, CommandFlags.PreferReplica).ConfigureAwait(false);
 
                 if (!redisValue.HasValue)
                 {
@@ -104,7 +102,7 @@ namespace Jube.Cache.Redis
                     var redisHSetKey =
                         $"{entityAnalysisModelIdAbstractionRuleNameSearchKeySearchValueRequest.AbstractionRuleName}";
 
-                    var redisValue = await redisDatabase.HashGetAsync(redisKey, redisHSetKey).ConfigureAwait(false);
+                    var redisValue = await resilientRedisResilientRedisDatabase.HashGetAsync(redisKey, redisHSetKey).ConfigureAwait(false);
 
                     value.TryAdd(entityAnalysisModelIdAbstractionRuleNameSearchKeySearchValueRequest.AbstractionRuleName,
                         redisValue.HasValue ? (double)redisValue : 0);

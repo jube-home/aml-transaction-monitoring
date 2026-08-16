@@ -190,6 +190,69 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                                 }
                             }
 
+                            if (!record.AggregationTypeId.HasValue)
+                            {
+                                entityAnalysisModelSanctions.AggregationTypeId = 2;
+
+                                if (context.Services.Log.IsDebugEnabled)
+                                {
+                                    context.Services.Log.Debug(
+                                        $"Entity Start: Model {key} and Sanctions {entityAnalysisModelSanctions.EntityAnalysisModelSanctionsId} set DEFAULT AggregationTypeId as {entityAnalysisModelSanctions.AggregationTypeId}.");
+                                }
+                            }
+                            else
+                            {
+                                entityAnalysisModelSanctions.AggregationTypeId = record.AggregationTypeId.Value;
+
+                                if (context.Services.Log.IsDebugEnabled)
+                                {
+                                    context.Services.Log.Debug(
+                                        $"Entity Start: Model {key} and Sanctions {entityAnalysisModelSanctions.EntityAnalysisModelSanctionsId} set AggregationTypeId as {entityAnalysisModelSanctions.AggregationTypeId}.");
+                                }
+                            }
+
+                            if (!record.MaxDistanceRatio.HasValue)
+                            {
+                                entityAnalysisModelSanctions.MaxDistanceRatio = 0.3;
+
+                                if (context.Services.Log.IsDebugEnabled)
+                                {
+                                    context.Services.Log.Debug(
+                                        $"Entity Start: Model {key} and Sanctions {entityAnalysisModelSanctions.EntityAnalysisModelSanctionsId} set DEFAULT MaxDistanceRatio as {entityAnalysisModelSanctions.MaxDistanceRatio}.");
+                                }
+                            }
+                            else
+                            {
+                                entityAnalysisModelSanctions.MaxDistanceRatio = record.MaxDistanceRatio.Value;
+
+                                if (context.Services.Log.IsDebugEnabled)
+                                {
+                                    context.Services.Log.Debug(
+                                        $"Entity Start: Model {key} and Sanctions {entityAnalysisModelSanctions.EntityAnalysisModelSanctionsId} set MaxDistanceRatio as {entityAnalysisModelSanctions.MaxDistanceRatio}.");
+                                }
+                            }
+
+                            if (!record.MaxCoverageRatio.HasValue)
+                            {
+                                entityAnalysisModelSanctions.MaxCoverageRatio = 2;
+
+                                if (context.Services.Log.IsDebugEnabled)
+                                {
+                                    context.Services.Log.Debug(
+                                        $"Entity Start: Model {key} and Sanctions {entityAnalysisModelSanctions.EntityAnalysisModelSanctionsId} set DEFAULT AggregationTypeId as {entityAnalysisModelSanctions.MaxCoverageRatio}.");
+                                }
+                            }
+                            else
+                            {
+                                entityAnalysisModelSanctions.MaxCoverageRatio = record.MaxCoverageRatio.Value;
+
+                                if (context.Services.Log.IsDebugEnabled)
+                                {
+                                    context.Services.Log.Debug(
+                                        $"Entity Start: Model {key} and Sanctions {entityAnalysisModelSanctions.EntityAnalysisModelSanctionsId} set AggregationTypeId as {entityAnalysisModelSanctions.MaxCoverageRatio}.");
+                                }
+                            }
+
                             if (record.CacheInterval == null)
                             {
                                 entityAnalysisModelSanctions.CacheInterval = 'd';
@@ -264,6 +327,10 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 context.Services.Log.Error($"SyncEntityAnalysisModelSanctionsAsync: has produced an error {ex}");
+
+                await new EntityAnalysisModelSynchronisationErrorRepository(context.Services.DbContext)
+                    .InsertAsync(EntityAnalysisModelSynchronisationErrorRepository.EntityAnalysisModelSynchronisationErrorStepEnum.Sanctions, ex.ToString(),
+                        context.Services.CancellationToken).ConfigureAwait(false);
             }
 
             return context;

@@ -11,11 +11,11 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using FluentMigrator;
-
 namespace Jube.Migrations.Baseline
 {
+    using System;
+    using FluentMigrator;
+
     [Migration(20220429125027)]
     public class AddVisualisationRegistryTable : Migration
     {
@@ -44,7 +44,7 @@ namespace Jube.Migrations.Baseline
             {
                 Name = "ExampleVisualisation",
                 CreatedUser = "Administrator",
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 Active = 1,
                 ShowInDirectory = 1,
                 TenantRegistryId = 1,
@@ -58,7 +58,7 @@ namespace Jube.Migrations.Baseline
             {
                 Name = "ExampleEmbeddedVisualisation",
                 CreatedUser = "Administrator",
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 Active = 1,
                 ShowInDirectory = 0,
                 TenantRegistryId = 1,

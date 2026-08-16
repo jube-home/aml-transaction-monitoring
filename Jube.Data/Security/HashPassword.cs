@@ -14,30 +14,44 @@
 namespace Jube.Data.Security
 {
     using System;
+    using System.Security.Cryptography;
     using System.Text;
     using Dictionary.Extensions;
-    using Isopoh.Cryptography.Argon2;
 
     public static class HashPassword
     {
-        public static string GenerateHash(string password, string key = null)
+        public static string Sha256(string input)
         {
-            return key != null && key.IsNullOrEmpty() ? Argon2.Hash(password) : Argon2.Hash(password, key);
+            var bytes = Encoding.UTF8.GetBytes(input);
+            var hash = SHA256.HashData(bytes);
+            return Convert.ToHexString(hash).ToLowerInvariant();
+        }
+
+        public static string Argon2(string password, string key = null)
+        {
+            return key != null && key.IsNullOrEmpty() ? Isopoh.Cryptography.Argon2.Argon2.Hash(password) : Isopoh.Cryptography.Argon2.Argon2.Hash(password, key);
         }
 
         public static bool Verify(string passwordHash, string password, string key = null)
         {
-            return key != null && (key.IsNullOrEmpty() ? Argon2.Verify(passwordHash, password) : Argon2.Verify(passwordHash, password, key));
+            return key != null && (key.IsNullOrEmpty() ? Isopoh.Cryptography.Argon2.Argon2.Verify(passwordHash, password) : Isopoh.Cryptography.Argon2.Argon2.Verify(passwordHash, password, key));
         }
 
-        public static string CreatePasswordInClear(int length)
+        public static string CreateSecurePassword(int length)
         {
             const string valid = "!@#$%^&*()abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
             var res = new StringBuilder();
-            var rnd = new Random();
-            while (0 < length--)
+
+            using (var rng = RandomNumberGenerator.Create())
             {
-                res.Append(valid[rnd.Next(valid.Length)]);
+                var uintBuffer = new byte[4];
+                while (length-- > 0)
+                {
+                    rng.GetBytes(uintBuffer);
+                    var num = BitConverter.ToUInt32(uintBuffer, 0);
+
+                    res.Append(valid[(int)(num % (uint)valid.Length)]);
+                }
             }
 
             return res.ToString();

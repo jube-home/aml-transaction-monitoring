@@ -37,7 +37,7 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
                     {
                         foreach (var (key, value) in
                                  from modelEntityKvp in context.Tasks.EntityAnalysisModelManager.Context.EntityAnalysisModels.ActiveEntityAnalysisModels
-                                 where modelEntityKvp.Value.Counters.LastCountersChecked.AddMilliseconds(1000) < DateTime.Now
+                                 where modelEntityKvp.Value.Counters.LastCountersChecked.AddMilliseconds(1000) < DateTime.UtcNow
                                  select modelEntityKvp)
                         {
                             ClearResponseElevationCounters(value, context.Services.TaskCoordinator.CancellationToken);
@@ -104,7 +104,7 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
                         value.Counters.MaxResponseElevationValue,
                         entry.CreatedDate);
 
-                    if (DateTime.Now <= expiry)
+                    if (DateTime.UtcNow <= expiry)
                     {
                         if (context.Services.Log.IsDebugEnabled)
                         {
@@ -160,7 +160,7 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
                         value.Counters.MaxResponseElevationValue,
                         responseElevationDate);
 
-                    if (DateTime.Now >= expiry)
+                    if (DateTime.UtcNow >= expiry)
                     {
                         if (context.Services.Log.IsDebugEnabled)
                         {
@@ -173,7 +173,7 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
                     {
                         continue;
                     }
-                    
+
                     Interlocked.Decrement(ref value.Counters.ResponseElevationCount);
 
                     if (context.Services.Log.IsDebugEnabled)
@@ -217,7 +217,7 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
                     var expiry = DateAndTime.DateAdd(value.Counters.MaxActivationWatcherInterval.ToString(),
                         value.Counters.MaxActivationWatcherValue, activationWatcherDate);
 
-                    if (DateTime.Now <= expiry)
+                    if (DateTime.UtcNow <= expiry)
                     {
                         if (context.Services.Log.IsDebugEnabled)
                         {
@@ -250,7 +250,7 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
         {
             try
             {
-                if (value.Counters.LastCountersWritten.AddSeconds(60) < DateTime.Now)
+                if (value.Counters.LastCountersWritten.AddSeconds(60) < DateTime.UtcNow)
                 {
                     if (context.Services.Log.IsDebugEnabled)
                     {
@@ -275,7 +275,7 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
                             Archive = value.ConcurrentQueues.PersistToDatabaseAsync.Count,
                             EntityAnalysisModelGuid = value.Instance.Guid,
                             ActivationWatcher = value.ConcurrentQueues.PersistToDatabaseAsync.Count,
-                            CreatedDate = DateTime.Now,
+                            CreatedDate = DateTime.UtcNow,
                             Instance = Dns.GetHostName()
                         };
 
@@ -310,7 +310,7 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
                         }
                     }
 
-                    value.Counters.LastCountersWritten = DateTime.Now;
+                    value.Counters.LastCountersWritten = DateTime.UtcNow;
 
                     if (context.Services.Log.IsDebugEnabled)
                     {
@@ -337,7 +337,7 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
         {
             try
             {
-                if (value.Counters.LastModelInvokeCountersWritten.AddSeconds(60) < DateTime.Now)
+                if (value.Counters.LastModelInvokeCountersWritten.AddSeconds(60) < DateTime.UtcNow)
                 {
                     if (context.Services.Log.IsDebugEnabled)
                     {
@@ -345,7 +345,7 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
                     }
 
                     var dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(
-                            context.Services.DynamicEnvironment.AppSettings("ConnectionString"), context.Services.Log);
+                        context.Services.DynamicEnvironment.AppSettings("ConnectionString"), context.Services.Log);
                     try
                     {
                         var repository = new EntityAnalysisModelProcessingCounterRepository(dbContext);
@@ -366,7 +366,7 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
                             ModelTotalResponseTime = value.Counters.ModelTotalResponseTime,
                             ActivationWatcher = value.Counters.ActivationWatcherCount,
                             EntityAnalysisModelGuid = value.Instance.Guid,
-                            CreatedDate = DateTime.Now,
+                            CreatedDate = DateTime.UtcNow,
                             Instance = Dns.GetHostName()
                         };
 
@@ -415,7 +415,7 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
                             $"Counter Management: Model {key} has reset all model counters.");
                     }
 
-                    value.Counters.LastModelInvokeCountersWritten = DateTime.Now;
+                    value.Counters.LastModelInvokeCountersWritten = DateTime.UtcNow;
 
                     if (context.Services.Log.IsDebugEnabled)
                     {
@@ -432,7 +432,7 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
                     }
                 }
 
-                value.Counters.LastCountersChecked = DateTime.Now;
+                value.Counters.LastCountersChecked = DateTime.UtcNow;
 
                 if (context.Services.Log.IsDebugEnabled)
                 {
@@ -450,7 +450,7 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
         {
             try
             {
-                if (context.Counters.LastHttpCountersWritten.AddSeconds(60) < DateTime.Now)
+                if (context.Counters.LastHttpCountersWritten.AddSeconds(60) < DateTime.UtcNow)
                 {
                     if (context.Services.Log.IsDebugEnabled)
                     {
@@ -481,7 +481,7 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
                             Sanction = context.Counters.HttpCounterSanction,
                             Callback = context.Counters.HttpCounterCallback,
                             Exhaustive = context.Counters.HttpCounterExhaustive,
-                            CreatedDate = DateTime.Now
+                            CreatedDate = DateTime.UtcNow
                         };
 
                         if (context.Services.Log.IsDebugEnabled)
@@ -495,7 +495,7 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
 
                         await repository.InsertAsync(model, token).ConfigureAwait(false);
 
-                        context.Counters.LastHttpCountersWritten = DateTime.Now;
+                        context.Counters.LastHttpCountersWritten = DateTime.UtcNow;
 
                         if (context.Services.Log.IsDebugEnabled)
                         {
@@ -559,7 +559,7 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
         {
             try
             {
-                if (context.Counters.LastBalanceCountersWritten.AddSeconds(60) >= DateTime.Now)
+                if (context.Counters.LastBalanceCountersWritten.AddSeconds(60) >= DateTime.UtcNow)
                 {
                     return;
                 }
@@ -570,7 +570,7 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
                 }
 
                 var dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(
-                        context.Services.DynamicEnvironment.AppSettings("ConnectionString"), context.Services.Log);
+                    context.Services.DynamicEnvironment.AppSettings("ConnectionString"), context.Services.Log);
                 try
                 {
                     var repository = new EntityAnalysisAsynchronousQueueBalanceRepository(dbContext);
@@ -588,7 +588,7 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
                         CaseCreation = context.ConcurrentQueues.PendingCases.Count,
                         Tagging = context.ConcurrentQueues.PendingTagging.Count,
                         Notification = context.ConcurrentQueues.PendingNotifications.Count,
-                        CreatedDate = DateTime.Now,
+                        CreatedDate = DateTime.UtcNow,
                         Instance = Dns.GetHostName()
                     };
 
@@ -600,7 +600,7 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters
 
                     await repository.InsertAsync(model, token).ConfigureAwait(false);
 
-                    context.Counters.LastBalanceCountersWritten = DateTime.Now;
+                    context.Counters.LastBalanceCountersWritten = DateTime.UtcNow;
 
                     if (context.Services.Log.IsDebugEnabled)
                     {

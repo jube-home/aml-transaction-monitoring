@@ -54,7 +54,7 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters.Case
                     CaseKeyValue = createCase.CaseKeyValue,
                     Locked = 0,
                     Rating = 0,
-                    CreatedDate = DateTime.Now
+                    CreatedDate = DateTime.UtcNow
                 };
 
                 if (createCase.SuspendBypass)
@@ -68,7 +68,7 @@ namespace Jube.Engine.BackgroundTasks.TaskStarters.Case
                     model.Diary = 0;
                     model.DiaryDate = createCase.SuspendBypassDate;
                     model.ClosedStatusId = 0;
-                    model.DiaryDate = DateTime.Now;
+                    model.DiaryDate = DateTime.UtcNow;
                 }
 
                 model.Json = createCase.Json;

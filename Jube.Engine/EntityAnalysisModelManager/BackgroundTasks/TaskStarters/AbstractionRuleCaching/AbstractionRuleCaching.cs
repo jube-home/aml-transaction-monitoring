@@ -14,6 +14,7 @@
 namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters.AbstractionRuleCaching
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
@@ -25,6 +26,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters.Ab
     using EntityAnalysisModelInvoke.Context.Extensions.ReflectionHelpers;
     using EntityAnalysisModelInvoke.Models.Payload.EntityAnalysisModelInstanceEntryPayload;
     using EntityAnalysisModelInvoke.Models.Payload.EntityAnalysisModelInstanceEntryPayload.TasksPerformance;
+    using HttpAdaptationProtocol;
     using Microsoft.VisualBasic;
 
     public static class AbstractionRuleCaching
@@ -65,7 +67,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters.Ab
                         continue;
                     }
 
-                    var toDate = DateTime.Now;
+                    var toDate = DateTime.UtcNow;
                     var entityAnalysisModelsSearchKeyCalculationInstanceId =
                         await abstractionRuleCachingRepository.InsertEntityAnalysisModelsSearchKeyCalculationInstancesAsync(value, toDate, token).ConfigureAwait(false);
 
@@ -115,12 +117,12 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters.Ab
                             {
                                 Abstraction = new PooledDictionary<string, double>(entityAnalysisModel.Collections.ModelAbstractionRules.Count),
                                 Activation = new PooledDictionary<string, EntityModelActivationRulePayload>(entityAnalysisModel.Collections.ModelActivationRules.Count),
-                                Tag = new PooledDictionary<string, double>(entityAnalysisModel.Collections.EntityAnalysisModelTags.Count),
+                                Tag = [],
                                 Dictionary = new PooledDictionary<string, double>(entityAnalysisModel.Dependencies.KvpDictionaries.Count),
                                 TtlCounter = new PooledDictionary<string, double>(entityAnalysisModel.Collections.ModelTtlCounters.Count),
                                 Sanction = new PooledDictionary<string, double>(entityAnalysisModel.Collections.EntityAnalysisModelSanctions.Count),
                                 AbstractionCalculation = new PooledDictionary<string, double>(entityAnalysisModel.Collections.EntityAnalysisModelAbstractionCalculations.Count),
-                                HttpAdaptation = new PooledDictionary<string, double>(entityAnalysisModel.Collections.EntityAnalysisModelAdaptations.Count),
+                                HttpAdaptation = new PooledDictionary<string, Adaptation>(entityAnalysisModel.Collections.EntityAnalysisModelAdaptations.Count),
                                 ExhaustiveAdaptation = new PooledDictionary<string, double>(entityAnalysisModel.Collections.ExhaustiveModels.Count),
                                 InvokeTaskPerformance = new InvokeTaskPerformance
                                 {
@@ -128,7 +130,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters.Ab
                                 }
                             };
 
-                            var abstractionRuleMatches = new Dictionary<int, List<DictionaryNoBoxing<string>>>();
+                            var abstractionRuleMatches = new ConcurrentDictionary<int, List<DictionaryNoBoxing<string>>>();
 
                             if (entityAnalysisModel.Services.Log.IsInfoEnabled)
                             {
@@ -229,7 +231,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters.Ab
                         entityAnalysisModelsSearchKeyCalculationInstanceId, token).ConfigureAwait(false);
                 }
 
-                entityAnalysisModel.Cache.LastModelSearchKeyCacheWritten = DateTime.Now;
+                entityAnalysisModel.Cache.LastModelSearchKeyCacheWritten = DateTime.UtcNow;
 
                 if (entityAnalysisModel.Services.Log.IsInfoEnabled)
                 {
@@ -249,12 +251,12 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters.Ab
             }
         }
 
-        private static Task<Dictionary<int, List<DictionaryNoBoxing<string>>>> ProcessAllAbstractionRulesAsync(EntityAnalysisModel entityAnalysisModel,
+        private static Task<ConcurrentDictionary<int, List<DictionaryNoBoxing<string>>>> ProcessAllAbstractionRulesAsync(EntityAnalysisModel entityAnalysisModel,
             DistinctSearchKey distinctSearchKey,
             List<DictionaryNoBoxing<string>> documents,
-            Dictionary<int, List<DictionaryNoBoxing<string>>> abstractionRuleMatches, CancellationToken token = default)
+            ConcurrentDictionary<int, List<DictionaryNoBoxing<string>>> abstractionRuleMatches, CancellationToken token = default)
         {
-            Dictionary<int, List<DictionaryNoBoxing<string>>> values = null;
+            ConcurrentDictionary<int, List<DictionaryNoBoxing<string>>> values = null;
             try
             {
                 var logicHashMatches = new Dictionary<string, List<DictionaryNoBoxing<string>>>();
@@ -316,7 +318,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters.Ab
 
                         var historyThresholdDate =
                             DateAndTime.DateAdd(evaluateAbstractionRule.AbstractionRuleAggregationFunctionIntervalType,
-                                evaluateAbstractionRule.AbstractionHistoryIntervalValue * -1, DateTime.Now);
+                                evaluateAbstractionRule.AbstractionHistoryIntervalValue * -1, DateTime.UtcNow);
 
                         if (entityAnalysisModel.Services.Log.IsInfoEnabled)
                         {
@@ -326,9 +328,9 @@ namespace Jube.Engine.EntityAnalysisModelManager.BackgroundTasks.TaskStarters.Ab
 
                         var finalMatches = matches.FindAll(x =>
                             x["CreatedDate"].AsDateTime() >= historyThresholdDate &&
-                            x["CreatedDate"].AsDateTime() <= DateTime.Now);
+                            x["CreatedDate"].AsDateTime() <= DateTime.UtcNow);
 
-                        abstractionRuleMatches.Add(evaluateAbstractionRule.Id, []);
+                        abstractionRuleMatches.TryAdd(evaluateAbstractionRule.Id, []);
                         abstractionRuleMatches[evaluateAbstractionRule.Id] = finalMatches;
 
                         if (entityAnalysisModel.Services.Log.IsInfoEnabled)

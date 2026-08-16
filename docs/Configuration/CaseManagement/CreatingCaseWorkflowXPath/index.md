@@ -6,9 +6,7 @@ parent: Case Management
 grand_parent: Configuration
 ---
 
-🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
-💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
-developer.
+🚀 Get to pre-production in weeks, not months, with private [training](https://www.jube.io/jube-training) direct from Jube's developer — real sovereignty, zero vendor lock-in.
 
 # Case Workflow XPath
 Navigate to a case by Skim or Fetch:
@@ -105,6 +103,8 @@ Navigate to Models >> Cases Workflows >> Cases Workflow XPath,  navigating the t
 Note the white background and blue foreground,  and the Bold Line Match switch toggled to true.
 
 Alter the Bold Line Fore Colour and Back Colour as desired (in this example a Red foreground and light green background):
+
+![Image](ChangeColourOfBoldLineMatchedForTxnId.png)
 
 ![Image](UpdatedColourForTxnIdBoldLineMatch.png)
 
@@ -241,6 +241,8 @@ Scroll down to update a version of the Cases Workflow XPath:
 ![Image](UpdatedResponseCodeForDrill.png)
 
 The response code has been the same throughout the posting of financial transaction messages,  a value of 0 (commonly taken to be approved). Changing the response code, repeat the HTTP POST to endpoint [https://localhost:5001/api/invoke/EntityAnalysisModel/90c425fd-101a-420b-91d1-cb7a24a969cc](https://localhost:5001/api/invoke/EntityAnalysisModel/90c425fd-101a-420b-91d1-cb7a24a969cc) for response as follows
+
+![Image](ResponseCodeDeclineInRequestJson.png)
 
 ![Image](ChangedResponseCodeToDeclineInRequestPayload.png)
 

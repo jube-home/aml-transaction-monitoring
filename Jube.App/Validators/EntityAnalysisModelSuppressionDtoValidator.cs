@@ -11,6 +11,7 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
+using System;
 using FluentValidation;
 using Jube.App.Dto;
 
@@ -23,6 +24,10 @@ namespace Jube.App.Validators
             RuleFor(p => p.SuppressionKey).NotEmpty();
             RuleFor(p => p.SuppressionKeyValue).NotEmpty();
             RuleFor(p => p.EntityAnalysisModelGuid).NotEmpty();
+            RuleFor(p => p.DeleteExpiryDate)
+                .GreaterThan(_ => DateTimeOffset.UtcNow)
+                .When(p => p.DeleteExpiryDate.HasValue)
+                .WithMessage("Delete Expiry Date must be greater than the current date and time.");
         }
     }
 }

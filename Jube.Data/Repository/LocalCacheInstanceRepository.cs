@@ -25,7 +25,7 @@ namespace Jube.Data.Repository
     {
         public async Task<LocalCacheInstance> InsertAsync(LocalCacheInstance model, CancellationToken token = default)
         {
-            model.CreatedDate = DateTime.Now;
+            model.CreatedDate = DateTime.UtcNow;
             model.Id = await dbContext.InsertWithInt32IdentityAsync(model, token: token);
 
             return model;
@@ -39,7 +39,7 @@ namespace Jube.Data.Repository
                 .Set(s => s.Bytes, bytes)
                 .Set(s => s.HeapSizeBytes, heapSizeBytes)
                 .Set(s => s.TotalCommittedBytes, totalCommittedBytes)
-                .Set(s => s.UpdatedDate, DateTime.Now)
+                .Set(s => s.UpdatedDate, DateTime.UtcNow)
                 .UpdateAsync(token);
         }
 
@@ -47,7 +47,7 @@ namespace Jube.Data.Repository
         {
             return dbContext.LocalCacheInstance
                 .Where(d => d.Id == id)
-                .Set(s => s.FillStartedDate, DateTime.Now)
+                .Set(s => s.FillStartedDate, DateTime.UtcNow)
                 .Set(s => s.Fill, (byte)1)
                 .UpdateAsync(token);
         }
@@ -56,13 +56,13 @@ namespace Jube.Data.Repository
         {
             return dbContext.LocalCacheInstance
                 .Where(d => d.Id == id)
-                .Set(s => s.FillEndedDate, DateTime.Now)
+                .Set(s => s.FillEndedDate, DateTime.UtcNow)
                 .Set(s => s.Filled, (byte)1)
                 .Set(s => s.FillBytes, s => bytes)
                 .Set(s => s.FillCount, s => count)
                 .Set(s => s.HeapSizeBytes, heapSizeBytes)
                 .Set(s => s.TotalCommittedBytes, totalCommittedBytes)
-                .Set(s => s.UpdatedDate, DateTime.Now)
+                .Set(s => s.UpdatedDate, DateTime.UtcNow)
                 .UpdateAsync(token);
         }
 
@@ -70,7 +70,7 @@ namespace Jube.Data.Repository
         {
             return dbContext.LocalCacheInstance
                 .Where(d => d.Id == id)
-                .Set(s => s.FillEndedDate, DateTime.Now)
+                .Set(s => s.FillEndedDate, DateTime.UtcNow)
                 .Set(s => s.Filled, (byte)0)
                 .Set(s => s.FillBytes, s => fillBytes)
                 .Set(s => s.FillCount, s => fillCount)
@@ -78,7 +78,7 @@ namespace Jube.Data.Repository
                 .Set(s => s.Bytes, bytes)
                 .Set(s => s.HeapSizeBytes, heapSizeBytes)
                 .Set(s => s.TotalCommittedBytes, totalCommittedBytes)
-                .Set(s => s.UpdatedDate, DateTime.Now)
+                .Set(s => s.UpdatedDate, DateTime.UtcNow)
                 .UpdateAsync(token);
         }
 
@@ -88,12 +88,12 @@ namespace Jube.Data.Repository
                 .Where(d => d.Id == id)
                 .Set(s => s.FillBytes, s => fillBytes)
                 .Set(s => s.FillCount, s => fillCount)
-                .Set(s => s.UpdatedDate, DateTime.Now)
+                .Set(s => s.UpdatedDate, DateTime.UtcNow)
                 .Set(s => s.Count, count)
                 .Set(s => s.Bytes, bytes)
                 .Set(s => s.HeapSizeBytes, heapSizeBytes)
                 .Set(s => s.TotalCommittedBytes, totalCommittedBytes)
-                .Set(s => s.UpdatedDate, DateTime.Now)
+                .Set(s => s.UpdatedDate, DateTime.UtcNow)
                 .UpdateAsync(token);
         }
     }

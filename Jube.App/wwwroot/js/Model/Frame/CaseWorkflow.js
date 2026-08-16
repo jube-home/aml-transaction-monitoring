@@ -102,10 +102,11 @@ $(function () {
 });
 
 function SetEnableVisualisation() {
+    const $enableVisualisationTable = $("#EnableVisualisationTable");
     if ($('#EnableVisualisation').prop('checked')) {
-        $('#EnableVisualisationTable').show();
+        $enableVisualisationTable.show();
     } else {
-        $('#EnableVisualisationTable').hide();
+        $enableVisualisationTable.hide();
     }
 }
 

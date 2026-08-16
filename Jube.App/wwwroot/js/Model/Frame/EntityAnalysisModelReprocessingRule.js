@@ -39,6 +39,12 @@ var reprocessingValue = $("#ReprocessingValue").kendoNumericTextBox({
     decimals: 0
 });
 
+var priority = $("#Priority").kendoNumericTextBox({
+    format: "n3",
+    decimals: 3,
+    step: 0.001
+});
+
 var reprocessingSample = $("#ReprocessingSample").kendoSlider({
     increaseButtonTitle: "Right",
     decreaseButtonTitle: "Left",
@@ -191,6 +197,8 @@ if (typeof id === "undefined") {
 
             reprocessingValue.data("kendoNumericTextBox").value(data.reprocessingValue);
 
+            priority.data("kendoNumericTextBox").value(data.priority);
+
             $("input[name=ReprocessingInterval][value=" +
                 data.reprocessingInterval +
                 "]").prop('checked', true);
@@ -225,7 +233,8 @@ function GetData() {
         json: builderCoder.ruleJsonBuilder,
         reprocessingSample: reprocessingSample.data("kendoSlider").value(),
         reprocessingValue: reprocessingValue.val(),
-        reprocessingInterval: $('input[name=ReprocessingInterval]:checked').val()
+        reprocessingInterval: $('input[name=ReprocessingInterval]:checked').val(),
+        priority: priority.val()
     };
 }
 

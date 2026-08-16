@@ -128,7 +128,7 @@ namespace Jube.App.Controllers.Helper
 
         [HttpGet]
         [Route("UserRegistry")]
-        public async Task<ActionResult<List<RoleRegistryTreeChildDto>>> GetUserRegistryAsync(int id, CancellationToken token = default)
+        public async Task<ActionResult<List<RoleRegistryTreeChildDto>>> GetUserRegistryAsync(Guid guid, CancellationToken token = default)
         {
             try
             {
@@ -141,13 +141,13 @@ namespace Jube.App.Controllers.Helper
                 }
 
                 var repository = new UserRegistryRepository(dbContext, userName);
-                return Ok((await repository.GetByRoleRegistryIdAsync(id, token))
+                return Ok((await repository.GetByRoleRegistryGuidAsync(guid, token))
                     .Select(entry => new RoleRegistryTreeChildDto
                     {
                         Color = entry.Active == 1 ? "green" : "red",
                         Key = entry.Id,
                         Name = entry.Name,
-                        RoleRegistryId = entry.RoleRegistryId
+                        RoleRegistryGuid = entry.RoleRegistryGuid
                     }).ToList());
             }
             catch (Exception e)
@@ -171,8 +171,7 @@ namespace Jube.App.Controllers.Helper
                     return Forbid();
                 }
 
-                var getRoleRegistryPermissionByRoleRegistryId =
-                    new GetRoleRegistryPermissionByRoleRegistryIdQuery(dbContext, userName);
+                var getRoleRegistryPermissionByRoleRegistryId = new GetRoleRegistryPermissionByRoleRegistryGuidQuery(dbContext, userName);
 
                 return (await getRoleRegistryPermissionByRoleRegistryId.ExecuteAsync(id, token)).Select(s
                     => new RoleRegistryTreeChildDto
@@ -180,7 +179,7 @@ namespace Jube.App.Controllers.Helper
                         Key = s.Id,
                         Name = s.Name,
                         Color = s.Active ? "green" : "red",
-                        RoleRegistryId = s.RoleRegistryId
+                        RoleRegistryGuid = s.RoleRegistryGuid
                     }).ToList();
             }
             catch (Exception e)

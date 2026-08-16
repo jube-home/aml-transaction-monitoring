@@ -1,14 +1,12 @@
 ---
 layout: default
 title: Navigating Case Record
-nav_order: 4
+nav_order: 26
 parent: Case Management
 grand_parent: Configuration
 ---
 
-🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
-💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
-developer.
+🚀 Get to pre-production in weeks, not months, with private [training](https://www.jube.io/jube-training) direct from Jube's developer — real sovereignty, zero vendor lock-in.
 
 # Navigating Case Record
 Having created a case record and having it available for review,  the case record must be expanded upon for the purposes of working.
@@ -53,6 +51,8 @@ Locked cases do not automatically unlock, thus had a filter explicitly excluded 
 
 An alternative method of retrieving cases is the individual selection.  To individually select a case,  directly click on the row in the cases grid for selection:
 
+![Image](WhereToClickForFetch.png)
+
 Upon clicking on the row,the Fetch button will be exposed, along with a text description of the selected Case Id:
 
 ![Image](FetchButtonLocationAndSelection.png)
@@ -64,3 +64,29 @@ Click the Fetch button to navigate the selected case id to the case page:
 Notice the absence of the Next button.  On Fetch a case is not locked automatically, unlike Skim.  In this example,  the case is only locked having originally been skimmed:
 
 ![Image](MissingNextButton.png)
+
+# Manually Creating a Case
+
+Ordinarily a Case is only ever raised automatically, by an Activation Rule with Create Case enabled reacting to a
+live transaction. There is also a Create Case panel on the Cases search page, for raising a Case by hand against a
+Case Key/Value combination without waiting for (or re-triggering) a live transaction - for example, to open a case
+against an entity flagged by a source outside of a model invocation.
+
+Selecting a Case Workflow node in the search tree (not the tree's root) exposes the panel:
+
+![Image.png](CreateCase.png)
+
+* Case Workflow Status and Case Key are both populated from the Case Workflow selected in the tree; Case Workflow
+  Status defaults to the first entry. Case Key Value is free text - the value to match against.
+* The Create Case button is enabled only once both Case Key and Case Key Value have a value.
+* On creation, the most recent Archived transaction matching the chosen Case Key/Value is located and its payload is
+  used as the new Case's Json - manual creation does not require the transaction to be live in memory, only that it
+  has previously been processed and archived. If no matching transaction is found, creation is rejected with an
+  error above the panel.
+* If a Case is already open for the same Case Workflow, Case Key and Case Key Value, creation is rejected with an
+  error above the panel rather than merging into the existing Case, unlike the automated path's priority-based
+  merge behaviour.
+* A manually created Case is always Open - it is never subject to Suspend Bypass sampling, since that only applies
+  to automated rule evaluation against a live model invocation.
+* Creating a Case this way requires the same Case read/write permission as working an existing Case; no additional
+  permission is needed.

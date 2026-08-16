@@ -80,35 +80,40 @@ fields.dataSource.data([]);
 fields.text("");
 fields.value("");
 
+
 function SetEnableHttpEndpoint() {
+    const $httpEndpointTable = $("#HttpEndpointTable");
     if ($('#EnableHttpEndpoint').prop('checked')) {
-        $('#HttpEndpointTable').show();
+        $httpEndpointTable.show();
     } else {
-        $('#HttpEndpointTable').hide();
+        $httpEndpointTable.hide();
     }
 }
 
 function SetEnableNotification() {
+    const $notificationTable = $("#NotificationTable");
     if ($('#EnableNotification').prop('checked')) {
-        $('#NotificationTable').show();
+        $notificationTable.show();
     } else {
-        $('#NotificationTable').hide();
+        $notificationTable.hide();
     }
 }
 
 function SetConditionalRegularExpressionFormatting() {
+    const $conditionalRegularExpressionFormattingTable = $("#ConditionalRegularExpressionFormattingTable");
     if ($('#ConditionalRegularExpressionFormatting').prop('checked')) {
-        $('#ConditionalRegularExpressionFormattingTable').show();
+        $conditionalRegularExpressionFormattingTable.show();
     } else {
-        $('#ConditionalRegularExpressionFormattingTable').hide();
+        $conditionalRegularExpressionFormattingTable.hide();
     }
 }
 
 function SetBoldLineMatched() {
+    const $boldLineMatchedTable = $("#BoldLineMatchedTable");
     if ($('#BoldLineMatched').prop('checked')) {
-        $('#BoldLineMatchedTable').show();
+        $boldLineMatchedTable.show();
     } else {
-        $('#BoldLineMatchedTable').hide();
+        $boldLineMatchedTable.hide();
     }
 }
 

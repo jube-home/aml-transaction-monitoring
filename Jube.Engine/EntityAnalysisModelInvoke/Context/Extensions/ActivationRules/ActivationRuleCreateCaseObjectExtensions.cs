@@ -14,18 +14,45 @@
 namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ActivationRules
 {
     using System;
+    using System.Threading.Tasks;
+    using Cache;
     using EntityAnalysisModelManager.EntityAnalysisModel.Models.Models;
     using Models.CaseManagement;
 
     public static class ActivationRuleCreateCaseObjectExtensions
     {
-        public static CreateCase ActivationRuleCreateCaseObject(this Context context,
+        public static async Task<CreateCase> ActivationRuleCreateCaseObjectAsync(this Context context,
             EntityAnalysisModelActivationRule evaluateActivationRule,
-            bool suppressed)
+            bool suppressed, CacheService cacheService)
         {
             if (!evaluateActivationRule.EnableCaseWorkflow || suppressed)
             {
                 return null;
+            }
+
+            if (context.Environment.AppSettings("ActivationRuleIdempotency").Equals("True", StringComparison.OrdinalIgnoreCase))
+            {
+                if (!await cacheService.CacheActivationCaseIdempotencyRepository.CheckAndClaimIdempotencyAsync(context.EntityAnalysisModel.Instance.TenantRegistryId,
+                        context.EntityAnalysisModel.Instance.Guid,
+                        context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid,
+                        evaluateActivationRule.Guid))
+                {
+                    if (context.Log.IsInfoEnabled)
+                    {
+                        context.Log.Info(
+                            $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid}, model {context.EntityAnalysisModel.Instance.Id} and activation rule guid {evaluateActivationRule.Guid} has failed case idempotency check.");
+                    }
+
+                    return null;
+                }
+            }
+            else
+            {
+                if (context.Log.IsInfoEnabled)
+                {
+                    context.Log.Info(
+                        $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid}, model {context.EntityAnalysisModel.Instance.Id} and activation rule guid {evaluateActivationRule.Guid} won't be checked for ActivationRuleIdempotency.");
+                }
             }
 
             var createCase = new CreateCase
@@ -49,7 +76,7 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ActivationRul
                 {
                     case 'n':
                         createCase.SuspendBypassDate =
-                            DateTime.Now.AddMinutes(evaluateActivationRule.BypassSuspendValue);
+                            DateTime.UtcNow.AddMinutes(evaluateActivationRule.BypassSuspendValue);
 
                         if (context.Log.IsInfoEnabled)
                         {
@@ -60,7 +87,7 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ActivationRul
                         break;
                     case 'h':
                         createCase.SuspendBypassDate =
-                            DateTime.Now.AddHours(evaluateActivationRule.BypassSuspendValue);
+                            DateTime.UtcNow.AddHours(evaluateActivationRule.BypassSuspendValue);
 
                         if (context.Log.IsInfoEnabled)
                         {
@@ -71,7 +98,7 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ActivationRul
                         break;
                     case 'd':
                         createCase.SuspendBypassDate =
-                            DateTime.Now.AddDays(evaluateActivationRule.BypassSuspendValue);
+                            DateTime.UtcNow.AddDays(evaluateActivationRule.BypassSuspendValue);
 
                         if (context.Log.IsInfoEnabled)
                         {
@@ -82,7 +109,7 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ActivationRul
                         break;
                     case 'm':
                         createCase.SuspendBypassDate =
-                            DateTime.Now.AddMonths(evaluateActivationRule.BypassSuspendValue);
+                            DateTime.UtcNow.AddMonths(evaluateActivationRule.BypassSuspendValue);
 
                         if (context.Log.IsInfoEnabled)
                         {
@@ -103,7 +130,7 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ActivationRul
                         $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and case key is {evaluateActivationRule.CaseKey} has been selected for open.");
                 }
 
-                createCase.SuspendBypassDate = DateTime.Now;
+                createCase.SuspendBypassDate = DateTime.UtcNow;
             }
 
             if (context.Log.IsInfoEnabled)

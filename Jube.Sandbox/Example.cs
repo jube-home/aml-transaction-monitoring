@@ -1,3 +1,16 @@
+/* Copyright (C) 2022-present Jube Holdings Limited.
+ *
+ * This file is part of Jube™ software.
+ *
+ * Jube™ is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License
+ * as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+ * Jube™ is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+
+ * You should have received a copy of the GNU Affero General Public License along with Jube™. If not,
+ * see <https://www.gnu.org/licenses/>.
+ */
+
 // ReSharper disable RedundantUsingDirective
 // ReSharper disable CheckNamespace
 
@@ -20,6 +33,7 @@ using Jube.Engine.Interfaces;
 public class Example : IInlineScript//Class entry point is available in table configuration.
 {
     //Attributes overlap with the same options available in Request XPath
+    [CacheIndex(Id = 1001)]
     [ReportTable]    //ReportTable is evaluated on recall.
     [ResponsePayload]//ResponsePayload is evaluated in model synchronization and used in model response preparation.
     [Latitude]       //Latitude is evaluated in model synchronization and is used during model activation watcher dispatch.
@@ -33,10 +47,10 @@ public class Example : IInlineScript//Class entry point is available in table co
         SearchKeyCacheSample = true,
         SearchKeyCacheFetchLimit = 100,
         SearchKeyCacheTtlInterval = "h",
-        SearchKeyCacheTtlValue = 1)]                     //SearchKey ensures that this is exposed in for aggregation in both the background engine.
-    public string UserAgent { get; set; } = string.Empty;//Public properties are available for processing, being analogous,  when taken together with attributes, to a Request XPath entry
-    
-    [ActivationRuleOverrideEvent(Guid="bc81ff60-3254-4f1a-9003-ecae5e114142", Priority = 1)]
+        SearchKeyCacheTtlValue = 1)]                      //SearchKey ensures that this is exposed in for aggregation in both the background engine.
+    public string? UserAgent { get; set; } = String.Empty;//Public properties are available for processing, being analogous,  when taken together with attributes, to a Request XPath entry
+
+    [ActivationRuleOverrideEvent(Guid = "bc81ff60-3254-4f1a-9003-ecae5e114142", Priority = 1)]
     [PayloadEvent]
     public async Task<bool> ExecuteAsync(Context context)//Method entry point.  The Context object gives access to all resources that would otherwise be available during invocation.
     {
@@ -56,6 +70,6 @@ public class Example : IInlineScript//Class entry point is available in table co
 
         UserAgent = userAgent;
 
-        return true; //Behavior depends upon the event,  but in all cases properties will only be extracted to payload on return true;
+        return true;//Behavior depends upon the event,  but in all cases properties will only be extracted to payload on return true;
     }
 }

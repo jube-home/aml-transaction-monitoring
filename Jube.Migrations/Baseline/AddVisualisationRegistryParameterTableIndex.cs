@@ -11,11 +11,11 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using FluentMigrator;
-
 namespace Jube.Migrations.Baseline
 {
+    using System;
+    using FluentMigrator;
+
     [Migration(20220429125026)]
     public class AddVisualisationRegistryParameterTableIndex : Migration
     {
@@ -48,7 +48,7 @@ namespace Jube.Migrations.Baseline
                 VisualisationRegistryId = 1,
                 Name = "Percentage Contribution Greater Than",
                 Active = 1,
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 CreatedUser = "Administrator",
                 Version = 1,
                 DataTypeId = 3,
@@ -61,7 +61,7 @@ namespace Jube.Migrations.Baseline
                 VisualisationRegistryId = 1,
                 Name = "Frequency Greater Than",
                 Active = 1,
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 CreatedUser = "Administrator",
                 Version = 1,
                 DataTypeId = 2,
@@ -74,7 +74,7 @@ namespace Jube.Migrations.Baseline
                 VisualisationRegistryId = 2,
                 Name = "AccountId",
                 Active = 1,
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 CreatedUser = "Administrator",
                 Version = 1,
                 DataTypeId = 1,

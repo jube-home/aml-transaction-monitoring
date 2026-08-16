@@ -11,11 +11,11 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using FluentMigrator;
-
 namespace Jube.Migrations.Baseline
 {
+    using System;
+    using FluentMigrator;
+
     [Migration(20220429125012)]
     public class AddRoleRegistryPermissionTableIndex : Migration
     {
@@ -48,7 +48,7 @@ namespace Jube.Migrations.Baseline
                     RoleRegistryId = 1,
                     PermissionSpecificationId = i,
                     Active = 1,
-                    CreatedDate = DateTime.Now,
+                    CreatedDate = DateTime.UtcNow,
                     CreatedUser = "Administrator",
                     Version = 1
                 };

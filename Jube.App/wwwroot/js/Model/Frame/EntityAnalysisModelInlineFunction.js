@@ -17,16 +17,31 @@ var validationFail = "There is invalid data in the form. Please check fields and
 
 var returnDataTypeId = $("#ReturnDataTypeId").kendoDropDownList({
     dataTextField: "text",
-    dataValueField: "value"
+    dataValueField: "value",
+    change: setEncryptionVisibility
 });
+
+function setEncryptionVisibility() {
+    const $encryptionRow = $("#EncryptionRow");
+    if (returnDataTypeId.data("kendoDropDownList").value() === "1") {
+        $encryptionRow.show();
+    } else {
+        $encryptionRow.hide();
+    }
+}
 
 if (typeof id === "undefined") {
     initBuilderCoder(1, GetSelectedParentID());
     ReadyNew();
+    setEncryptionVisibility();
 } else {
     $.get(endpoint + "/" + id,
         function (data) {
             returnDataTypeId.data("kendoDropDownList").value(data.returnDataTypeId);
+
+            $("input[name=EncryptionId][value=" +
+                data.encryptionId +
+                "]").prop('checked', true);
 
             const builderCoderData = {
                 ruleTextCoder: data.functionScript,
@@ -35,6 +50,7 @@ if (typeof id === "undefined") {
 
             initBuilderCoder(1, GetSelectedParentID(), builderCoderData);
             ReadyExisting(data);
+            setEncryptionVisibility();
         });
 }
 
@@ -53,7 +69,8 @@ function GetData() {
         responsePayload: $("#ResponsePayload").prop("checked"),
         functionScript: builderCoder.ruleTextCoder,
         returnDataTypeId: returnDataTypeId.data("kendoDropDownList").value(),
-        name: $("#Name").val()
+        name: $("#Name").val(),
+        encryptionId: $('input[name=EncryptionId]:checked').val()
     };
 }
 

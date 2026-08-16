@@ -15,6 +15,7 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Extraction.Helpers
 {
     using System;
     using Dictionary;
+    using HttpAdaptationProtocol;
     using Models.Payload.EntityAnalysisModelInstanceEntryPayload;
     using Models.Payload.EntityAnalysisModelInstanceEntryPayload.TasksPerformance;
     using EntityAnalysisModel=EntityAnalysisModelManager.EntityAnalysisModel.EntityAnalysisModel;
@@ -33,19 +34,19 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Extraction.Helpers
                 EntityAnalysisModelGuid = model.Instance.Guid,
                 Abstraction = new PooledDictionary<string, double>(model.Collections.ModelAbstractionRules.Count),
                 Activation = new PooledDictionary<string, EntityModelActivationRulePayload>(),
-                Tag = new PooledDictionary<string, double>(model.Collections.EntityAnalysisModelTags.Count),
+                Tag = [],
                 Dictionary = new PooledDictionary<string, double>(model.Dependencies.KvpDictionaries.Count),
                 TtlCounter = new PooledDictionary<string, double>(model.Collections.ModelTtlCounters.Count),
                 Sanction = new PooledDictionary<string, double>(model.Collections.EntityAnalysisModelSanctions.Count),
                 AbstractionCalculation =
                     new PooledDictionary<string, double>(model.Collections.EntityAnalysisModelAbstractionCalculations.Count),
-                HttpAdaptation = new PooledDictionary<string, double>(model.Collections.EntityAnalysisModelAdaptations.Count),
+                HttpAdaptation = new PooledDictionary<string, Adaptation>(model.Collections.EntityAnalysisModelAdaptations.Count),
                 ExhaustiveAdaptation = new PooledDictionary<string, double>(model.Collections.ExhaustiveModels.Count),
                 InvokeTaskPerformance = new InvokeTaskPerformance
                 {
                     ComputeTimes = new InvokeTasksPerformance()
                 },
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 ArchiveKeys = []
             };
         }

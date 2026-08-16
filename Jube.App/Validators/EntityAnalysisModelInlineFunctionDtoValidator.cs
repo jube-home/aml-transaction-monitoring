@@ -54,6 +54,15 @@ namespace Jube.App.Validators
             RuleFor(p => p.FunctionScript).NotEmpty();
             RuleFor(p => p.ReportTable).NotNull();
             RuleFor(p => p.ResponsePayload).NotNull();
+
+            var encryptionTypes = new List<int>
+            {
+                0,
+                1,
+                2
+            };
+
+            RuleFor(p => p.EncryptionId).Must(m => encryptionTypes.Contains(m));
         }
     }
 }

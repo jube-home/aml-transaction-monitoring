@@ -36,7 +36,9 @@ namespace Jube.Engine.EntityAnalysisModelManager
             Caching =
             {
                 HashCacheAssembly = context.Services.HashCacheAssembly,
-                SanctionsEntries = context.Sanctions.SanctionsEntries
+                HashCacheAssemblyMetadata = context.Services.HashCacheAssemblyMetadata,
+                SanctionsEntries = context.Sanctions.SanctionsEntries,
+                SanctionsStopTokens = context.Sanctions.SanctionsStopTokens
             },
             EntityAnalysisModels =
             {
@@ -61,6 +63,15 @@ namespace Jube.Engine.EntityAnalysisModelManager
             StartTtlCounterServer();
             StartReprocessing();
             StartCachePrune();
+            StartLruJournalPrune();
+            StartHashCacheAssemblyObservability();
+        }
+
+        private void StartHashCacheAssemblyObservability()
+        {
+            var hashCacheAssemblyObservabilityTaskStarter = new HashCacheAssemblyObservabilityTaskStarter(Context);
+            Context.Tasks.HashCacheAssemblyObservabilityTask = Context.Services.TaskCoordinator.RunAsync(
+                "HashCacheAssemblyObservabilityTask", _ => hashCacheAssemblyObservabilityTaskStarter.StartAsync());
         }
 
         private void StartCachePrune()
@@ -72,6 +83,12 @@ namespace Jube.Engine.EntityAnalysisModelManager
 
             var cachePruneTaskStarter = new CachePruneTaskStarter(Context);
             Context.Tasks.CachePruneAsyncTask = Context.Services.TaskCoordinator.RunAsync("CachePruneTask", _ => cachePruneTaskStarter.StartAsync());
+        }
+
+        private void StartLruJournalPrune()
+        {
+            var lruPruneTaskStarter = new LruJournalPruneTaskStarter(Context);
+            Context.Tasks.LruJournalPruneAsyncTask = Context.Services.TaskCoordinator.RunAsync("LruJournalPruneTask", _ => lruPruneTaskStarter.StartAsync());
         }
 
         private void StartReprocessing()

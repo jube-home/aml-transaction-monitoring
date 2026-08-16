@@ -70,7 +70,7 @@ namespace Jube.Data.Repository
         {
             model.CreatedUser = userName ?? model.CreatedUser;
             model.Guid = model.Guid == Guid.Empty ? Guid.NewGuid() : model.Guid;
-            model.CreatedDate = DateTime.Now;
+            model.CreatedDate = DateTime.UtcNow;
             model.Version = 1;
             model.Id = await dbContext.InsertWithInt32IdentityAsync(model, token: token);
             return model;
@@ -83,7 +83,7 @@ namespace Jube.Data.Repository
                             && d.Id == id
                             && (d.Deleted == 0 || d.Deleted == null))
                 .Set(s => s.Deleted, Convert.ToByte(1))
-                .Set(s => s.DeletedDate, DateTime.Now)
+                .Set(s => s.DeletedDate, DateTime.UtcNow)
                 .Set(s => s.DeletedUser, userName)
                 .UpdateAsync(token);
 
@@ -101,7 +101,7 @@ namespace Jube.Data.Repository
                     && (d.Deleted == 0 || d.Deleted == null))
                 .Set(s => s.ImportId, importId)
                 .Set(s => s.Deleted, Convert.ToByte(1))
-                .Set(s => s.DeletedDate, DateTime.Now)
+                .Set(s => s.DeletedDate, DateTime.UtcNow)
                 .UpdateAsync(token);
         }
     }

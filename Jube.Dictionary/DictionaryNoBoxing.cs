@@ -68,25 +68,40 @@ namespace Jube.Dictionary
         public int Count { get; private set; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryAdd(TKey key, string? value) => TryAddInternal(key, new InternalValue(value));
+        public bool TryAdd(TKey key, string? value)
+        {
+            return TryAddInternal(key, new InternalValue(value));
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryAdd(TKey key, double value) => TryAddInternal(key, new InternalValue(value));
+        public bool TryAdd(TKey key, double value)
+        {
+            return TryAddInternal(key, new InternalValue(value));
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryAdd(TKey key, bool value) => TryAddInternal(key, new InternalValue(value));
+        public bool TryAdd(TKey key, bool value)
+        {
+            return TryAddInternal(key, new InternalValue(value));
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryAdd(TKey key, DateTime value) => TryAddInternal(key, new InternalValue(value));
+        public bool TryAdd(TKey key, DateTime value)
+        {
+            return TryAddInternal(key, new InternalValue(value));
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryAdd(TKey key, int value) => TryAddInternal(key, new InternalValue(value));
+        public bool TryAdd(TKey key, int value)
+        {
+            return TryAddInternal(key, new InternalValue(value));
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryAdd(TKey key, Guid value) => TryAddInternal(key, new InternalValue(value));
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool ContainsKey(TKey key) => IndexOfKey(key) >= 0;
+        public bool ContainsKey(TKey key)
+        {
+            return IndexOfKey(key) >= 0;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Remove(TKey key)
@@ -102,7 +117,7 @@ namespace Jube.Dictionary
             Array.Copy(keys, idx + 1, keys, idx, Count - idx - 1);
             Array.Copy(values, idx + 1, values, idx, Count - idx - 1);
 
-            keys[Count - 1] = default!;
+            keys[Count - 1] = default(TKey)!;
             Count--;
             return true;
         }
@@ -117,7 +132,7 @@ namespace Jube.Dictionary
                 return true;
             }
 
-            value = default;
+            value = default(InternalValue);
             return false;
         }
 
@@ -131,31 +146,10 @@ namespace Jube.Dictionary
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Add(TKey key, InternalValue value) => AddInternal(key, value);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Add(TKey key, string? value) => AddInternal(key, new InternalValue(value));
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Add(TKey key, double value) => AddInternal(key, new InternalValue(value));
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Add(TKey key, bool value) => AddInternal(key, new InternalValue(value));
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Add(TKey key, DateTime value) => AddInternal(key, new InternalValue(value));
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Add(TKey key, int value) => AddInternal(key, new InternalValue(value));
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public long EstimatedSizeBytes() => estimatedSizeBytes;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Enumerator GetEnumerator() => new Enumerator(keys, values, Count);
-
-        IEnumerator<KeyValuePair<TKey, InternalValue>> IEnumerable<KeyValuePair<TKey, InternalValue>>.GetEnumerator() => GetEnumerator();
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        public Enumerator GetEnumerator()
+        {
+            return new Enumerator(keys, values, Count);
+        }
 
         public void Dispose()
         {
@@ -167,6 +161,108 @@ namespace Jube.Dictionary
 #pragma warning restore CS8625
             Count = 0;
             GC.SuppressFinalize(this);
+        }
+
+        IEnumerator<KeyValuePair<TKey, InternalValue>> IEnumerable<KeyValuePair<TKey, InternalValue>>.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public long EstimatedSizeBytes()
+        {
+            return estimatedSizeBytes;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void AddUnchecked(TKey key, InternalValue value)
+        {
+            if (Count >= keys.Length)
+            {
+                Resize(keys.Length * 2);
+            }
+
+            keys[Count] = key;
+            values[Count] = value;
+            Count++;
+
+            estimatedSizeBytes += EstimateKeySize(key) + EstimateValueSize(in value);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void AddUnchecked(TKey key, string? value)
+        {
+            AddUnchecked(key, new InternalValue(value));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void AddUnchecked(TKey key, double value)
+        {
+            AddUnchecked(key, new InternalValue(value));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void AddUnchecked(TKey key, bool value)
+        {
+            AddUnchecked(key, new InternalValue(value));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void AddUnchecked(TKey key, DateTime value)
+        {
+            AddUnchecked(key, new InternalValue(value));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void AddUnchecked(TKey key, int value)
+        {
+            AddUnchecked(key, new InternalValue(value));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryAdd(TKey key, Guid value)
+        {
+            return TryAddInternal(key, new InternalValue(value));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Add(TKey key, InternalValue value)
+        {
+            AddInternal(key, value);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Add(TKey key, string? value)
+        {
+            AddInternal(key, new InternalValue(value));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Add(TKey key, double value)
+        {
+            AddInternal(key, new InternalValue(value));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Add(TKey key, bool value)
+        {
+            AddInternal(key, new InternalValue(value));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Add(TKey key, DateTime value)
+        {
+            AddInternal(key, new InternalValue(value));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Add(TKey key, int value)
+        {
+            AddInternal(key, new InternalValue(value));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -205,8 +301,8 @@ namespace Jube.Dictionary
             {
                 Resize(keys.Length * 2);
             }
-            
-            keys[Count] = key is string s ? (TKey)(object)string.Intern(s) : key;
+
+            keys[Count] = key;
             values[Count] = value;
             Count++;
 
@@ -226,7 +322,7 @@ namespace Jube.Dictionary
                 Resize(keys.Length * 2);
             }
 
-            keys[Count] = key is string s ? (TKey)(object)string.Intern(s) : key;
+            keys[Count] = key is string s ? (TKey)(object)String.Intern(s) : key;
             values[Count] = value;
             Count++;
 
@@ -244,7 +340,7 @@ namespace Jube.Dictionary
                 long => sizeof(long),
                 double => sizeof(double),
                 Guid => 16,
-                _ => 0// unknown/reference type – extend as needed
+                _ => 0
             };
         }
 
@@ -262,7 +358,10 @@ namespace Jube.Dictionary
             };
         }
 
-        ~DictionaryNoBoxing() => Dispose();
+        ~DictionaryNoBoxing()
+        {
+            Dispose();
+        }
 
         public struct Enumerator : IEnumerator<KeyValuePair<TKey, InternalValue>>
         {
@@ -293,9 +392,18 @@ namespace Jube.Dictionary
                 }
             }
 
-            object IEnumerator.Current => Current;
+            object IEnumerator.Current
+            {
+                get
+                {
+                    return Current;
+                }
+            }
 
-            public void Reset() => index = -1;
+            public void Reset()
+            {
+                index = -1;
+            }
 
             public void Dispose() {}
         }

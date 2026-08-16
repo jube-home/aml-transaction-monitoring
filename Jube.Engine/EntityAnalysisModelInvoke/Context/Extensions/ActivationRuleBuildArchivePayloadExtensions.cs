@@ -21,7 +21,7 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions
     {
         public static async Task<Context> ActivationRuleBuildArchivePayloadAsync(this Context context)
         {
-            context.EntityAnalysisModelInstanceEntryPayload.ArchiveEnqueueDate = DateTime.Now;
+            context.EntityAnalysisModelInstanceEntryPayload.ArchiveEnqueueDate = DateTime.UtcNow;
 
             if (context.Log.IsInfoEnabled)
             {

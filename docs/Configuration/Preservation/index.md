@@ -1,13 +1,11 @@
 ---
 layout: default
 title: Preservation
-nav_order: 7
+nav_order: 9
 parent: Configuration
 ---
 
-🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
-💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
-developer.
+🚀 Get to pre-production in weeks, not months, with private [training](https://www.jube.io/jube-training) direct from Jube's developer — real sovereignty, zero vendor lock-in.
 
 # Introduction
 
@@ -48,6 +46,11 @@ Visualisation Registry (reports configuration) data, and all data rolling up to 
 selectively
 exported, but is adjacent configuration not otherwise subordinate to Entity Analysis Model definition data.
 
+Roles and Role Permissions can also be selectively exported, and are likewise adjacent configuration not otherwise
+subordinate to Entity Analysis Model definition data. Users themselves, and the allocation of Users to Tenants, are
+never exported or imported; see Role Import and Orphaned Users below for the consequence of this for existing Users
+when Roles are imported.
+
 # Production Data
 
 Production data is not exported and the Preservation functionality is not intended as a replacement for database or
@@ -71,9 +74,7 @@ cache backup procedures. Production data includes, but is not limited to:
     * Asynchronous Queue Balances.
     * Entity Analysis Model Asynchronous Queue Balances.
     * Entity Analysis Model Processing.
-* Roles.
 * Users.
-* Role Permissions.
 * Tenant Registry.
 * Tenant Registry User Allocations.
 * Sanctions.
@@ -102,6 +103,7 @@ The Preservation screen comprises the following:
 | Include Lists          | True                               | A flag to indicate that the Lists and List Values data should be included in either the Import or the Export.                             |
 | Include Dictionaries   | True                               | A flag to indicate that the Dictionaries and Dictionary Values data should be included in either the Import or the Export.                |
 | Include Visualisations | True                               | A flag to indicate that the Visualisation data should be included in either the Import or the Export.                                     |
+| Include Roles          | True                                | A flag to indicate that Role and Role Permission data should be included in either the Import or the Export. See Role Import and Orphaned Users below. |
 
 The values set out in the above table are passed to actions as follows. There are three actions available:
 
@@ -235,6 +237,37 @@ The import process follows the following steps, assuming deserialisation has tak
 A transaction cannot be commited unless all inserts have occured without error. Given that data is only updated in a
 transaction, it is not possible to have a partial import, nor lose existing data as deletes happen in the same
 transaction, and any exception, anywhere, brings about a transaction rollback.
+
+# Role Import and Orphaned Users
+
+When Include Roles is enabled, every existing Role and Role Permission belonging to the tenant is logically deleted
+and replaced wholesale by the Roles contained in the imported file, in the same manner as other entities described
+above.
+
+Users are never included in an export or import (see Production Data above), and a User's allocation to a Role is
+by the Role's GUID, not its database identity. If the .jemp file did not originate from the same environment, the
+Roles it contains will carry different GUIDs to the Roles they replace. Any User whose Role GUID does not match one
+of the newly imported Roles becomes orphaned: they no longer resolve to any Role, and since permission and login
+checks join through the Role, an orphaned User is functionally unable to use the system at all.
+
+There is no way to automatically determine which imported Role an orphaned User should be reallocated to, since
+that mapping does not exist anywhere in the imported file, so this cannot be resolved automatically as a data
+migration concern. Instead, as the final step of every import, all Users in the tenant are checked for orphaning as
+a consequence of the import. If any are found, a single Role named "Orphaned Preservation Import" is created and
+granted every permission in Permission Specification, and every orphaned User in the tenant, not only the User who
+performed the import, is reallocated to it. This is performed inside the same transaction as the rest of the
+import, so it either succeeds alongside the import or rolls back with it.
+
+With one exception, every User reallocated to the "Orphaned Preservation Import" role is also deactivated
+(Active = 0), since a User silently gaining full permissions is not a safe default to leave standing. The exception
+is the User performing the import: they are reallocated to the same temporary role but left active, so the import
+does not lock out the person who just performed it.
+
+This guarantees that the importing User is never locked out of the tenant after an import from a foreign
+environment, but it is a deliberately broad, temporary measure for everybody else. Following such an import, an
+administrator should review the membership of the "Orphaned Preservation Import" role via Administration >>>
+Security >>> Roles, reallocate each User to the appropriate Role for their function, reactivate them, and then
+remove the temporary role.
 
 # Compression Scheme
 

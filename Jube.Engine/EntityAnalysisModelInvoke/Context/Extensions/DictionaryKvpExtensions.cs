@@ -14,118 +14,122 @@
 namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions
 {
     using System;
-    using System.Diagnostics;
-    using System.Threading.Tasks;
     using EntityAnalysisModelManager.EntityAnalysisModel.Models.Models;
+    using log4net;
+    using Models.Payload.EntityAnalysisModelInstanceEntryPayload;
+    using EntityAnalysisModel=EntityAnalysisModelManager.EntityAnalysisModel.EntityAnalysisModel;
 
     public static class DictionaryKvpExtensions
     {
-        public static Task<Context> ExecuteDictionaryKvPsAsync(this Context context)
+        public static void ResolveDictionaryValueForField(
+            this EntityAnalysisModel entityAnalysisModel,
+            EntityAnalysisModelInstanceEntryPayload entityAnalysisModelInstanceEntryPayload,
+            ILog log,
+            string fieldName)
         {
-            if (context.Log.IsInfoEnabled)
+            foreach (var (i, kvpDictionary) in entityAnalysisModel.Dependencies.KvpDictionaries)
             {
-                context.Log.Info(
-                    $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} Will now look for KVP Dictionary Values.");
-            }
+                if (!String.Equals(kvpDictionary.DataName, fieldName, StringComparison.Ordinal))
+                {
+                    continue;
+                }
 
-            IterateAndProcess(context);
-            StorePerformanceFromStopwatch(context);
-
-            return Task.FromResult(context);
-        }
-        private static void StorePerformanceFromStopwatch(Context context)
-        {
-
-            context.EntityAnalysisModelInstanceEntryPayload.InvokeTaskPerformance.ComputeTimes.DictionaryKvPsAsync = (int)(context.Stopwatch.ElapsedTicks * 1000000 / Stopwatch.Frequency);
-
-            if (context.Log.IsInfoEnabled)
-            {
-                context.Log.Info(
-                    $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} has finished looking for Dictionary KVP values.");
-            }
-        }
-
-        private static void IterateAndProcess(Context context)
-        {
-            foreach (var (i, kvpDictionary) in context.EntityAnalysisModel.Dependencies.KvpDictionaries)
-            {
                 try
                 {
-                    if (context.Log.IsInfoEnabled)
+                    if (entityAnalysisModelInstanceEntryPayload.Dictionary.ContainsKey(kvpDictionary.Name))
                     {
-                        context.Log.Info(
-                            $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} is evaluating dictionary kvp key of {i}.");
+                        if (log.IsInfoEnabled)
+                        {
+                            log.Info(
+                                $"Entity Invoke: GUID {entityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {entityAnalysisModel.Instance.Id} is skipping dictionary kvp key of {i} as {kvpDictionary.Name} has already been resolved.");
+                        }
+
+                        continue;
                     }
 
-                    var value = LookupFromTheLocalCacheOfDictionaryKeyValuePairs(context, kvpDictionary, i);
-                    AddToResponsesIfNotAdded(context, kvpDictionary, value, i);
+                    if (log.IsInfoEnabled)
+                    {
+                        log.Info(
+                            $"Entity Invoke: GUID {entityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {entityAnalysisModel.Instance.Id} is evaluating dictionary kvp key of {i} for field {fieldName}.");
+                    }
+
+                    var value = LookupFromTheLocalCacheOfDictionaryKeyValuePairs(entityAnalysisModel, entityAnalysisModelInstanceEntryPayload, log, kvpDictionary, i);
+                    AddToResponsesIfNotAdded(entityAnalysisModel, entityAnalysisModelInstanceEntryPayload, log, kvpDictionary, value, i);
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
-                    if (context.Log.IsInfoEnabled)
+                    if (log.IsInfoEnabled)
                     {
-                        context.Log.Info(
-                            $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} has caused an error in Dictionary KVP as {ex}.");
+                        log.Info(
+                            $"Entity Invoke: GUID {entityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {entityAnalysisModel.Instance.Id} has caused an error in Dictionary KVP as {ex}.");
                     }
                 }
             }
         }
 
-        private static void AddToResponsesIfNotAdded(Context context, EntityAnalysisModelDictionary kvpDictionary, double value, int i)
+        private static void AddToResponsesIfNotAdded(
+            EntityAnalysisModel entityAnalysisModel,
+            EntityAnalysisModelInstanceEntryPayload entityAnalysisModelInstanceEntryPayload,
+            ILog log,
+            EntityAnalysisModelDictionary kvpDictionary, double value, int i)
         {
-            if (context.EntityAnalysisModelInstanceEntryPayload.Dictionary.TryAdd(kvpDictionary.Name, value))
+            if (entityAnalysisModelInstanceEntryPayload.Dictionary.TryAdd(kvpDictionary.Name, value))
             {
-                if (context.Log.IsInfoEnabled)
+                if (log.IsInfoEnabled)
                 {
-                    context.Log.Info(
-                        $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} is evaluating dictionary kvp key of {i} has added the name of {kvpDictionary.Name} and value of {value} for processing.");
+                    log.Info(
+                        $"Entity Invoke: GUID {entityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {entityAnalysisModel.Instance.Id} is evaluating dictionary kvp key of {i} has added the name of {kvpDictionary.Name} and value of {value} for processing.");
                 }
             }
             else
             {
-                if (context.Log.IsInfoEnabled)
+                if (log.IsInfoEnabled)
                 {
-                    context.Log.Info(
-                        $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} is evaluating dictionary kvp key of {i} has already added the name of {kvpDictionary.Name}.");
+                    log.Info(
+                        $"Entity Invoke: GUID {entityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {entityAnalysisModel.Instance.Id} is evaluating dictionary kvp key of {i} has already added the name of {kvpDictionary.Name}.");
                 }
             }
         }
 
-        private static double LookupFromTheLocalCacheOfDictionaryKeyValuePairs(Context context, EntityAnalysisModelDictionary kvpDictionary, int i)
+        private static double LookupFromTheLocalCacheOfDictionaryKeyValuePairs(
+            EntityAnalysisModel entityAnalysisModel,
+            EntityAnalysisModelInstanceEntryPayload entityAnalysisModelInstanceEntryPayload,
+            ILog log,
+            EntityAnalysisModelDictionary kvpDictionary, int i)
         {
             double value;
-            if (context.EntityAnalysisModelInstanceEntryPayload.Payload.TryGetValue(kvpDictionary.DataName, out var valueCache))
+            if (entityAnalysisModelInstanceEntryPayload.Payload.TryGetValue(kvpDictionary.DataName, out var valueCache))
             {
-                if (context.Log.IsInfoEnabled)
+                if (log.IsInfoEnabled)
                 {
-                    context.Log.Info(
-                        $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} is evaluating dictionary kvp key of {i} has been found in the data payload.");
+                    log.Info(
+                        $"Entity Invoke: GUID {entityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {entityAnalysisModel.Instance.Id} is evaluating dictionary kvp key of {i} has been found in the data payload.");
                 }
 
                 var key = valueCache.AsString();
 
-                if (context.Log.IsInfoEnabled)
+                if (log.IsInfoEnabled)
                 {
-                    context.Log.Info(
-                        $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} is evaluating dictionary kvp key of {i} has been found in the data payload and has returned a value of {key}, which will be used for the lookup.");
+                    log.Info(
+                        $"Entity Invoke: GUID {entityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {entityAnalysisModel.Instance.Id} is evaluating dictionary kvp key of {i} has been found in the data payload and has returned a value of {key}, which will be used for the lookup.");
                 }
 
                 if (kvpDictionary.KvPs.TryGetValue(key, out var p))
                 {
                     value = p;
 
-                    if (context.Log.IsInfoEnabled)
+                    if (log.IsInfoEnabled)
                     {
-                        context.Log.Info(
-                            $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} is evaluating dictionary kvp key of {i} has been found in the data payload and has returned a value of {key}, found a lookup value.  The dictionary value has been set to {value}.");
+                        log.Info(
+                            $"Entity Invoke: GUID {entityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {entityAnalysisModel.Instance.Id} is evaluating dictionary kvp key of {i} has been found in the data payload and has returned a value of {key}, found a lookup value.  The dictionary value has been set to {value}.");
                     }
                 }
                 else
                 {
-                    if (context.Log.IsInfoEnabled)
+                    if (log.IsInfoEnabled)
                     {
-                        context.Log.Info(
-                            $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} is evaluating dictionary kvp key of {i} has been found in the data payload and has returned a value of {key}, does not contain a lookup value.  The dictionary value has been set to zero.");
+                        log.Info(
+                            $"Entity Invoke: GUID {entityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {entityAnalysisModel.Instance.Id} is evaluating dictionary kvp key of {i} has been found in the data payload and has returned a value of {key}, does not contain a lookup value.  The dictionary value has been set to zero.");
                     }
 
                     value = 0;
@@ -133,10 +137,10 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions
             }
             else
             {
-                if (context.Log.IsInfoEnabled)
+                if (log.IsInfoEnabled)
                 {
-                    context.Log.Info(
-                        $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} is evaluating dictionary kvp key of {i} but the payload does not have such a value,  so have set the value to zero.");
+                    log.Info(
+                        $"Entity Invoke: GUID {entityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {entityAnalysisModel.Instance.Id} is evaluating dictionary kvp key of {i} but the payload does not have such a value,  so have set the value to zero.");
                 }
 
                 value = 0;

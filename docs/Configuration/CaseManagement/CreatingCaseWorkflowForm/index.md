@@ -6,9 +6,7 @@ parent: Case Management
 grand_parent: Configuration
 ---
 
-🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
-💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
-developer.
+🚀 Get to pre-production in weeks, not months, with private [training](https://www.jube.io/jube-training) direct from Jube's developer — real sovereignty, zero vendor lock-in.
 
 # Case Workflow Form
 There are several ways to capture outcome in case management,  such as:
@@ -109,7 +107,7 @@ Navigate to the Case Detail Views tab:
 
 Locate the Case Forms Journal tab in the Case Detail Views tab:
 
-![Image](LocationOfCaseDetailTab.png)
+![Image](LocationOfCaseFormsJournalTab.png)
 
 Upon clicking the Case Form Journal tab,  it can be observed that an instance of a Case Form Submission has been recorded, where the form results are brought back rolling up to the Case Key and Case Key Value (and not CaseId):
 

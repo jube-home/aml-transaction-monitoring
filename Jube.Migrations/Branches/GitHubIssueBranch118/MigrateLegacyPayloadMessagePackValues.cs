@@ -16,12 +16,12 @@ namespace Jube.Migrations.Branches.GitHubIssueBranch118
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using FluentMigrator;
     using Cache;
-    using Jube.Cache.Redis.Serialization.DictionaryNoBoxing.MessagePack;
+    using Cache.Redis.Serialization.DictionaryNoBoxing.MessagePack;
     using Data.Extension;
     using Dictionary;
     using DynamicEnvironment;
+    using FluentMigrator;
     using log4net;
     using MessagePack;
     using MessagePack.Resolvers;
@@ -126,11 +126,11 @@ namespace Jube.Migrations.Branches.GitHubIssueBranch118
             var compression = useCompression ? MessagePackCompression.Lz4BlockArray : MessagePackCompression.None;
 
             var oldMessagePackSerializerOptions = MessagePackSerializerOptions.Standard
-                .WithResolver(CompositeResolver.Create(new EnvelopeDictionaryNoBoxingMessagePackFormatter<string>()))
+                .WithResolver(CompositeResolver.Create(new EnvelopeDictionaryNoBoxingStringMessagePackFormatter()))
                 .WithCompression(compression);
 
             var newMessagePackSerializerOptions = MessagePackSerializerOptions.Standard
-                .WithResolver(CompositeResolver.Create(new EnvelopeDictionaryNoBoxingMessagePackFormatter<int>()))
+                .WithResolver(CompositeResolver.Create(new EnvelopeDictionaryNoBoxingIntMessagePackFormatter()))
                 .WithCompression(compression);
 
             var entityAnalysisModels = GetEntityAnalysisModels();
@@ -144,7 +144,7 @@ namespace Jube.Migrations.Branches.GitHubIssueBranch118
                     var batch = new List<HashEntry>(batchSize);
                     var splits = key.ToString().Split(":");
 
-                    foreach (var entry in cacheService.RedisDatabase.HashScan(key, pageSize: 500))
+                    foreach (var entry in cacheService.ResilientRedisResilientRedisDatabase.HashScan(key, pageSize: 500))
                     {
                         if (!entry.Value.HasValue)
                         {
@@ -158,7 +158,7 @@ namespace Jube.Migrations.Branches.GitHubIssueBranch118
                                 continue;
                             }
 
-                            if (entityAnalysisModel.tenantRegistryId != int.Parse(splits[1]))
+                            if (entityAnalysisModel.tenantRegistryId != Int32.Parse(splits[1]))
                             {
                                 continue;
                             }
@@ -181,7 +181,7 @@ namespace Jube.Migrations.Branches.GitHubIssueBranch118
 
                             if (batch.Count >= batchSize)
                             {
-                                cacheService.RedisDatabase.HashSet(key, batch.ToArray());
+                                cacheService.ResilientRedisResilientRedisDatabase.HashSet(key, batch.ToArray());
                                 batch.Clear();
                             }
                         }
@@ -193,7 +193,7 @@ namespace Jube.Migrations.Branches.GitHubIssueBranch118
 
                     if (batch.Count > 0)
                     {
-                        cacheService.RedisDatabase.HashSet(key, batch.ToArray());
+                        cacheService.ResilientRedisResilientRedisDatabase.HashSet(key, batch.ToArray());
                     }
                 }
                 catch (Exception ex)

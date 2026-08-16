@@ -28,7 +28,13 @@ namespace Jube.CLI.UserRegistry
 
             if (userRegistry != null)
             {
-                await repository.SetPasswordAsync(userRegistry.Id, HashPassword.GenerateHash(password, hash), DateTime.Now, token);
+                if (userRegistry.WirePasswordHash == 1)
+                {
+                    password = HashPassword.Sha256(password + userName);
+                }
+
+                await repository.SetPasswordAsync(userRegistry.Id, HashPassword.Argon2(password, hash),
+                    DateTime.UtcNow, userRegistry.WirePasswordHash == 1, token);
             }
             else
             {

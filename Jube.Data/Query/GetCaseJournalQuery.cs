@@ -20,18 +20,17 @@ namespace Jube.Data.Query
     using System.Threading;
     using System.Threading.Tasks;
     using Context;
+    using DynamicResultsSchema;
     using log4net;
     using Newtonsoft.Json.Linq;
     using Reporting;
 
-    public class GetCaseJournalQuery(DbContext dbContext, string user, ILog log, string reportConnectionString = null)
+    public class GetCaseJournalQuery(DbContext dbContext, string user, ILog log, bool parserAssertSelectOnly, string reportConnectionString = null)
     {
-        public async Task<List<Dictionary<string, object>>> ExecuteAsync(string key, string keyValue, Guid caseWorkflowGuid,
+        public async Task<GetCaseJournalQueryResultDto> ExecuteAsync(string key, string keyValue, Guid caseWorkflowGuid,
             int limit,
             int activationRuleCount, double responseElevation, CancellationToken token = default)
         {
-            var values = new List<Dictionary<string, object>>();
-
             var caseWorkflowXPathByCaseWorkflowIdQuery =
                 new GetCaseWorkflowXPathByCaseWorkflowIdQuery(dbContext, user);
 
@@ -64,11 +63,46 @@ namespace Jube.Data.Query
                 limit
             };
 
-            using var postgres = new Postgres(reportConnectionString ?? dbContext.ConnectionString, log);
+            using var postgres = new Postgres(reportConnectionString ?? dbContext.Connection.ConnectionString, log, parserAssertSelectOnly);
 
             await postgres.PrepareAsync(sql, tokens, token).ConfigureAwait(false);
 
             var records = (await postgres.ExecuteByOrderedParametersAsync(sql, tokens, token).ConfigureAwait(false)).ToList();
+
+            var schema = new Dictionary<string, string>
+            {
+                {
+                    "Id", "number"
+                },
+                {
+                    "Activation", "string"
+                },
+                {
+                    "EntityAnalysisModelInstanceEntryGuid", "string"
+                },
+                {
+                    "ReferenceDate", "date"
+                },
+                {
+                    "CreatedDate", "date"
+                },
+                {
+                    "ResponseElevation", "number"
+                },
+                {
+                    "EntryKeyValue", "string"
+                },
+                {
+                    "Tag", "array"
+                }
+            };
+
+            foreach (var xPath in xPaths)
+            {
+                schema.TryAdd(xPath.Name, "string");
+            }
+
+            var rows = new List<Dictionary<string, object>>();
 
             foreach (var record in records)
             {
@@ -79,25 +113,25 @@ namespace Jube.Data.Query
                 var value = new Dictionary<string, object>
                 {
                     {
-                        "Id", record["Id"]
+                        "Id", DynamicResultSchema.NormaliseRecordValue(record["Id"])
                     },
                     {
-                        "Activation", record["Activation"]
+                        "Activation", DynamicResultSchema.NormaliseRecordValue(record["Activation"])
                     },
                     {
-                        "EntityAnalysisModelInstanceEntryGuid", record["EntityAnalysisModelInstanceEntryGuid"]
+                        "EntityAnalysisModelInstanceEntryGuid", DynamicResultSchema.NormaliseRecordValue(record["EntityAnalysisModelInstanceEntryGuid"])
                     },
                     {
-                        "ReferenceDate", record["ReferenceDate"]
+                        "ReferenceDate", DynamicResultSchema.NormaliseRecordValue(record["ReferenceDate"])
                     },
                     {
-                        "CreatedDate", record["CreatedDate"]
+                        "CreatedDate", DynamicResultSchema.NormaliseRecordValue(record["CreatedDate"])
                     },
                     {
-                        "ResponseElevation", record["ResponseElevation"]
+                        "ResponseElevation", DynamicResultSchema.NormaliseRecordValue(record["ResponseElevation"])
                     },
                     {
-                        "EntryKeyValue", record["EntryKeyValue"]
+                        "EntryKeyValue", DynamicResultSchema.NormaliseRecordValue(record["EntryKeyValue"])
                     }
                 };
 
@@ -108,16 +142,29 @@ namespace Jube.Data.Query
                         var jToken = json.SelectToken(xPath.XPath);
                         if (jToken != null)
                         {
-                            var valueToken = jToken.Value<string>();
+                            object typedValue = jToken.Type switch
+                            {
+                                JTokenType.Integer => jToken.Value<long>(),
+                                JTokenType.Float => jToken.Value<double>(),
+                                JTokenType.Boolean => jToken.Value<bool>(),
+                                JTokenType.Null => null,
+                                JTokenType.Date => new DateTimeOffset(jToken.Value<DateTime>().ToUniversalTime(), TimeSpan.Zero),
+                                _ => jToken.Value<string>()
+                            };
 
-                            if (value.TryAdd(xPath.Name, valueToken))
+                            if (typedValue != null)
+                            {
+                                schema[xPath.Name] = DynamicResultSchema.ClrTypeToSchemaType(typedValue);
+                            }
+
+                            if (value.TryAdd(xPath.Name, typedValue))
                             {
                                 if (xPath.ConditionalRegularExpressionFormatting)
                                 {
                                     try
                                     {
+                                        var valueToken = jToken.Value<string>();
                                         var regex = new Regex(xPath.RegularExpression);
-
                                         var match = regex.Match(valueToken);
 
                                         if (match.Success)
@@ -134,10 +181,14 @@ namespace Jube.Data.Query
                                     }
                                     catch
                                     {
-                                        //ignored
+                                        // ignored
                                     }
                                 }
                             }
+                        }
+                        else
+                        {
+                            value.Add(xPath.Name, null);
                         }
                     }
                     catch
@@ -161,10 +212,21 @@ namespace Jube.Data.Query
                     value.Add("CellFormat", cellFormats);
                 }
 
-                values.Add(value);
+                value.Add("Tag", json["tag"] is JArray ? json["tag"] : new JArray());
+                rows.Add(value);
             }
 
-            return values;
+            return new GetCaseJournalQueryResultDto
+            {
+                Schema = schema,
+                Rows = rows
+            };
+        }
+
+        public class GetCaseJournalQueryResultDto
+        {
+            public Dictionary<string, string> Schema { get; set; }
+            public List<Dictionary<string, object>> Rows { get; set; }
         }
 
         private class GetCaseJournalQueryBoldLineDto

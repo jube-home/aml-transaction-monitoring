@@ -17,36 +17,44 @@ namespace Jube.App
     using System.Collections.Concurrent;
     using System.Net;
     using System.Security.Claims;
-    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
+    using ApiTokensCache;
     using Cache;
     using Cache.Redis.Callback;
     using Code;
     using Code.Jube.WebApp.Code;
     using Code.signalr;
     using Code.WatcherDispatch;
+    using Data.Context;
+    using Data.Poco;
+    using Data.Repository;
     using DynamicEnvironment;
     using Engine;
     using Engine.Helpers;
     using FluentMigrator.Runner;
+    using HttpHeaders;
     using log4net;
-    using Microsoft.AspNetCore.Authentication.JwtBearer;
-    using Microsoft.AspNetCore.Authentication.Negotiate;
+    using Microsoft.AspNetCore.Authentication.OpenIdConnect;
     using Microsoft.AspNetCore.Builder;
+    using Microsoft.AspNetCore.DataProtection;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.AspNetCore.Http;
+    using Microsoft.AspNetCore.HttpOverrides;
     using Microsoft.AspNetCore.Identity;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
-    using Microsoft.IdentityModel.Tokens;
+    using Microsoft.IdentityModel.Protocols.OpenIdConnect;
     using Microsoft.OpenApi.Models;
+    using Middlewares;
     using Middlewares.Extensions;
+    using Middlewares.Models;
     using Migrations.Baseline;
     using Newtonsoft.Json.Serialization;
     using Npgsql;
     using RabbitMQ.Client;
+    using StackExchange.Redis;
     using TaskCancellation;
     using TaskCancellation.Interfaces;
 
@@ -74,15 +82,36 @@ namespace Jube.App
             var cacheService = AddSingletonForCacheService(services, callbacks, Int32.Parse(dynamicEnvironment.AppSettings("CallbackTimeout") ?? "10000"),
                 taskCoordinator, dynamicEnvironment, log);
 
+            AddSingletonForTokensCache(services, log, dynamicEnvironment, cacheService, taskCoordinator);
+
             var rabbitMqConnection = AddSingletonForRabbitMqConnection(services, dynamicEnvironment, log);
 
             AddSingletonForEngine(services, dynamicEnvironment, log, rabbitMqConnection, cacheService, contractResolver, taskCoordinator);
             AddSingletonForIdentity(services);
-            ConfigureAuthentication(services, dynamicEnvironment);
+            ConfigureAuthentication(services, dynamicEnvironment, log);
+
+
+
             AddGenericServicesRequired(services, dynamicEnvironment);
+            AddDataProtection(services, dynamicEnvironment);
             AddSwagger(services);
             AddSingletonRelayToBeInstantiatedInConfigureServices(services, dynamicEnvironment);
+            GetHttpHeadersFromDatabaseAndCreateSingleton(services, dynamicEnvironment, log, taskCoordinator);
             WriteWelcomeMessageToConsole();
+        }
+
+        private static void GetHttpHeadersFromDatabaseAndCreateSingleton(IServiceCollection services, DynamicEnvironment dynamicEnvironment, ILog log, TaskCoordinator taskCoordinator)
+        {
+
+            services.AddSingleton(new HttpHeadersFromDatabase(dynamicEnvironment.AppSettings("ConnectionString"), log, taskCoordinator.CancellationToken));
+        }
+
+        private static void AddSingletonForTokensCache(IServiceCollection services, ILog log, DynamicEnvironment dynamicEnvironment, CacheService cacheService, TaskCoordinator taskCoordinator)
+        {
+
+            var apiTokensCache = new ApiTokensCache(log, dynamicEnvironment, cacheService);
+            _ = taskCoordinator.RunAsync("InstantiateApiTokensCache", _ => apiTokensCache.StartAsync(taskCoordinator));
+            services.AddSingleton(apiTokensCache);
         }
 
         private static TaskCoordinator AddSingletonForTaskCoordinator(IServiceCollection services, ICancellationTokenProvider cancellationTokenProvider)
@@ -166,9 +195,22 @@ namespace Jube.App
             services.AddEndpointsApiExplorer();
         }
 
+        private static void AddDataProtection(IServiceCollection services, DynamicEnvironment dynamicEnvironment)
+        {
+            if (!dynamicEnvironment.AppSettings("DataProtectionRedisBackplane").Equals("True", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            var redisConnection = ConnectionMultiplexer.Connect(dynamicEnvironment.AppSettings("RedisConnectionString"));
+
+            services.AddDataProtection()
+                .PersistKeysToStackExchangeRedis(redisConnection, "Jube:DataProtection:Keys")
+                .SetApplicationName("Jube");
+        }
+
         private static void AddSingletonForIdentity(IServiceCollection services)
         {
-
             services.AddTransient<IUserStore<ApplicationUser>, UserStore>();
             services.AddTransient<IRoleStore<ApplicationRole>, RoleStore>();
             services.AddIdentity<ApplicationUser, ApplicationRole>().AddDefaultTokenProviders();
@@ -176,7 +218,6 @@ namespace Jube.App
 
         private static void AddSwagger(IServiceCollection services)
         {
-
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo
@@ -184,76 +225,221 @@ namespace Jube.App
                     Title = "Jube.App.Api",
                     Version = "v1"
                 });
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT",
+                    In = ParameterLocation.Header,
+                    Description = "Enter your JWT token after \"Bearer\", e.g. \"Bearer eyJhbGci...\""
+                });
+
+                c.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
+                {
+                    Name = "x-api-key",
+                    Type = SecuritySchemeType.ApiKey,
+                    In = ParameterLocation.Header,
+                    Description = "Enter your API key.  Obtain this by creating an API Key under a user in the application."
+                });
                 c.CustomSchemaIds(type => type.FullName);
                 c.OperationFilter<AuthorizationHeaderParameterOperationFilter>();
             });
         }
 
-        private static void ConfigureAuthentication(IServiceCollection services, DynamicEnvironment dynamicEnvironment)
+        private static void ConfigureAuthentication(IServiceCollection services, DynamicEnvironment dynamicEnvironment, ILog log)
         {
             var jwtValidAudience = dynamicEnvironment.AppSettings("JWTValidAudience");
             var jwtValidIssuer = dynamicEnvironment.AppSettings("JWTValidIssuer");
             var jwtKey = dynamicEnvironment.AppSettings("JWTKey");
 
+            var authBuilder = services.AddAuthentication(options =>
+                {
+                    options.DefaultAuthenticateScheme = "Hybrid";
+                    options.DefaultChallengeScheme = "Hybrid";
+                    options.DefaultScheme = "Hybrid";
+                })
+                .AddScheme<HybridAuthOptions, HybridAuthHandler>("Hybrid", options =>
+                {
+                    options.JwtKey = jwtKey;
+                    options.JwtValidIssuer = jwtValidIssuer;
+                    options.JwtValidAudience = jwtValidAudience;
+                });
+
             if (dynamicEnvironment.AppSettings("NegotiateAuthentication")
                 .Equals("True", StringComparison.OrdinalIgnoreCase))
             {
-                services.AddAuthentication(NegotiateDefaults.AuthenticationScheme)
-                    .AddNegotiate();
-
-                services.AddAuthorization(options => { options.FallbackPolicy = options.DefaultPolicy; });
+                authBuilder.AddNegotiate();
             }
-            else
+
+            if (dynamicEnvironment.AppSettings("OAuthAuthentication")
+                .Equals("True", StringComparison.OrdinalIgnoreCase))
             {
-                services.AddAuthentication(options =>
+                log.Info("Initializing OpenID Connect / OAuth authentication handlers.");
+
+                authBuilder.AddOpenIdConnect("OAuth", options =>
                 {
-                    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-                    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-                }).AddJwtBearer(options =>
-                {
-                    options.UseSecurityTokenValidators = false;
-                    options.SaveToken = true;
-                    options.AutomaticRefreshInterval = TimeSpan.FromMinutes(5);
-                    options.RequireHttpsMetadata = false;
-                    options.TokenValidationParameters = new TokenValidationParameters
+                    options.Authority = dynamicEnvironment.AppSettings("OAuthAuthority");
+                    options.ClientId = dynamicEnvironment.AppSettings("OAuthClientId");
+                    options.ClientSecret = dynamicEnvironment.AppSettings("OAuthClientSecret");
+                    options.ResponseType = OpenIdConnectResponseType.Code;
+                    options.UsePkce = true;
+                    options.SaveTokens = false;
+                    options.GetClaimsFromUserInfoEndpoint = true;
+                    options.Scope.Add("openid");
+                    options.Scope.Add("profile");
+                    options.Scope.Add("email");
+                    options.CorrelationCookie.Path = "/";
+                    options.NonceCookie.Path = "/";
+                    options.CallbackPath = new PathString("/signin-oidc");
+                    options.CorrelationCookie.SameSite = SameSiteMode.None;
+                    options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
+                    options.NonceCookie.SameSite = SameSiteMode.None;
+                    options.NonceCookie.SecurePolicy = CookieSecurePolicy.Always;
+
+                    if (dynamicEnvironment.AppSettings("OAuthForceGet")
+                        .Equals("True", StringComparison.OrdinalIgnoreCase))
                     {
-                        ClockSkew = TimeSpan.Zero,
-                        NameClaimType = ClaimTypes.Name,
-                        ValidateIssuer = true,
-                        ValidateAudience = true,
-                        ValidAudience = jwtValidAudience,
-                        ValidIssuer = jwtValidIssuer,
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
-                    };
-                    options.Events = new JwtBearerEvents
+                        options.ResponseMode = OpenIdConnectResponseMode.Query;
+                        log.Info("OIDC ResponseMode explicitly forced to HTTP GET (Query).");
+                    }
+                    else
                     {
-                        OnTokenValidated = context =>
+                        options.ResponseMode = OpenIdConnectResponseMode.FormPost;
+                    }
+
+                    options.Events = new OpenIdConnectEvents
+                    {
+                        OnAuthenticationFailed = context =>
                         {
-                            if (DateTime.UtcNow.AddMinutes(10) < context.SecurityToken.ValidTo)
-                            {
-                                return Task.CompletedTask;
-                            }
+                            log.Error($"OIDC Authentication Failed. Error: {context.Exception.Message}", context.Exception);
+                            return Task.CompletedTask;
+                        },
 
-                            var token = Jwt.CreateToken(context.Principal?.Identity?.Name,
-                                jwtKey,
-                                jwtValidIssuer,
-                                jwtValidAudience
-                            );
+                        OnRemoteFailure = context =>
+                        {
+                            log.Warn($"OIDC Remote Failure encountered. Failure Message: {context.Failure?.Message}");
 
-                            var cookieOptions = new CookieOptions
-                            {
-                                Expires = DateTime.Now.AddMinutes(15),
-                                HttpOnly = true
-                            };
-
-                            context.Response.Headers.Append("authentication",
-                                token);
-
-                            context.Response.Cookies.Append("authentication", token
-                                , cookieOptions);
+                            context.Response.Redirect("/Account/Login");
+                            context.HandleResponse();
 
                             return Task.CompletedTask;
+                        },
+
+                        OnRedirectToIdentityProvider = context =>
+                        {
+                            log.Debug($"Redirecting to Entra ID. Redirect URI constructed by app: {context.ProtocolMessage.RedirectUri}");
+                            return Task.CompletedTask;
+                        },
+
+                        OnTicketReceived = async context =>
+                        {
+                            log.Info("OAuth Ticket received from identity provider. Commencing claim parsing.");
+
+                            var userName = context?.Principal?.Identity?.Name
+                                           ?? context?.Principal?.FindFirstValue(ClaimTypes.Name)
+                                           ?? context?.Principal?.FindFirstValue("preferred_username")
+                                           ?? context?.Principal?.FindFirstValue(ClaimTypes.Email)
+                                           ?? context?.Principal?.FindFirstValue("name")
+                                           ?? context?.Principal?.FindFirstValue("email")
+                                           ?? context?.Principal?.FindFirstValue(ClaimTypes.Upn)
+                                           ?? context?.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                            if (String.IsNullOrEmpty(userName))
+                            {
+                                log.Error("OAuth ticket parsing aborted: No usable identity claim found in Principal payload.");
+                                context?.Fail("OAuth ticket contained no usable identity claim.");
+                                return;
+                            }
+
+                            log.Info($"Parsed username '{userName}' from claims token. Validating user in database registry.");
+
+                            DbContext dbContext;
+                            try
+                            {
+                                dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(
+                                    dynamicEnvironment.AppSettings("ConnectionString"), log);
+                            }
+                            catch (Exception ex)
+                            {
+                                log.Error($"Critical exception establishing database context for '{userName}': {ex.Message}", ex);
+                                context.Fail("Internal server error validating identity.");
+                                return;
+                            }
+
+                            try
+                            {
+                                var userRegistryRepository = new UserRegistryRepository(dbContext);
+                                var userRegistry = await userRegistryRepository.GetByUserNameAsync(userName);
+
+                                if (userRegistry == null)
+                                {
+                                    log.Warn($"Authentication Denied: User '{userName}' does not exist in Jube database.");
+                                    context.Fail("User does not exist in Jube.");
+                                    return;
+                                }
+
+                                if (userRegistry.Active != 1)
+                                {
+                                    log.Warn($"Authentication Denied: User '{userName}' exists but account status is inactive (Active flag: {userRegistry.Active}).");
+                                    context.Fail("User does not exist in Jube.");
+                                    return;
+                                }
+
+                                var rawRemoteIp = context.HttpContext.Connection.RemoteIpAddress?.ToString();
+
+                                var userLoginRepository = new UserLoginRepository(dbContext, userName);
+
+                                var userLogin = new UserLogin
+                                {
+                                    RemoteIp = rawRemoteIp,
+                                    LocalIp = context.HttpContext.Connection.LocalIpAddress?.ToString(),
+                                    UserAgent = context.HttpContext.Request.Headers["User-Agent"].ToString(),
+                                    Failed = 0,
+                                    AuthenticationTypeId = 3
+                                };
+
+                                await userLoginRepository.InsertAsync(userLogin);
+                                log.Info($"Login audit trail inserted for user '{userName}' from IP: {rawRemoteIp}.");
+
+                                var forcedRedirect = dynamicEnvironment.AppSettings("OAuthForceRedirect");
+                                string targetRedirectUri;
+
+                                if (!String.IsNullOrWhiteSpace(forcedRedirect))
+                                {
+                                    if (Uri.TryCreate(forcedRedirect, UriKind.Absolute, out var forcedUri))
+                                    {
+                                        targetRedirectUri = forcedUri.ToString();
+                                        log.Info($"OAuthForceRedirect override active. Redirect target forced to: {targetRedirectUri}");
+                                    }
+                                    else
+                                    {
+                                        log.Warn($"OAuthForceRedirect value '{forcedRedirect}' is not a valid absolute URI. Ignoring override.");
+                                        targetRedirectUri = context.Properties?.RedirectUri ?? "/";
+                                    }
+                                }
+                                else
+                                {
+                                    targetRedirectUri = context.Properties?.RedirectUri ?? "/";
+                                }
+
+                                log.Info($"User '{userName}' verified. Target UI path destination: {targetRedirectUri}");
+
+                                AuthenticationCookieIssuer.IssueAuthenticationCookies(context.Response, dynamicEnvironment, userName);
+
+                                context.Response.Redirect(targetRedirectUri);
+                                context.HandleResponse();
+                            }
+                            catch (Exception ex)
+                            {
+                                log.Error($"Critical exception during User OIDC Post-Ticket Processing for '{userName}': {ex.Message}", ex);
+                                context.Fail("Internal server error validating identity.");
+                            }
+                            finally
+                            {
+                                await dbContext.CloseAsync();
+                                await dbContext.DisposeAsync();
+                            }
                         }
                     };
                 });
@@ -301,11 +487,29 @@ namespace Jube.App
             return callbacks;
         }
 
-
         private static CacheService AddSingletonForCacheService(IServiceCollection services,
             ConcurrentDictionary<Guid, TaskCompletionSource<Callback>> callbacks, int callbackTimeout,
             TaskCoordinator taskCoordinator, DynamicEnvironment dynamicEnvironment, ILog log)
         {
+            var lruJournalMaxAgeInterval = dynamicEnvironment.AppSettings("LruJournalMaxAgeInterval");
+            var lruJournalMaxAgeValue = dynamicEnvironment.AppSettings("LruJournalMaxAgeValue");
+
+            if (!Double.TryParse(lruJournalMaxAgeValue, out var value))
+            {
+                value = 1;
+            }
+
+            var lruJournalMaxAgeTimeSpan = lruJournalMaxAgeInterval switch
+            {
+                "n" =>
+                    TimeSpan.FromMinutes(value),
+                "h" =>
+                    TimeSpan.FromHours(value),
+                _ => TimeSpan.FromDays(value)
+            };
+
+            var activationRuleIdempotency = dynamicEnvironment.AppSettings("ActivationRuleIdempotency").Equals("True", StringComparison.OrdinalIgnoreCase);
+
             var cacheService =
                 ConnectToRedis(dynamicEnvironment.AppSettings("RedisConnectionString"),
                     dynamicEnvironment.AppSettings("ConnectionString"),
@@ -317,6 +521,9 @@ namespace Jube.App
                     dynamicEnvironment.AppSettings("RedisMessagePackCompression").Equals("True", StringComparison.OrdinalIgnoreCase),
                     dynamicEnvironment.AppSettings("RedisStorePayloadCountsAndBytes").Equals("True", StringComparison.OrdinalIgnoreCase),
                     dynamicEnvironment.AppSettings("RedisPublishSubscribeEvents").Equals("True", StringComparison.OrdinalIgnoreCase),
+                    dynamicEnvironment.AppSettings("RedisHsetOffloadToPostgres").Equals("True", StringComparison.OrdinalIgnoreCase),
+                    lruJournalMaxAgeTimeSpan,
+                    activationRuleIdempotency,
                     log);
 
             if (dynamicEnvironment.AppSettings("EnableMigration").Equals("True", StringComparison.OrdinalIgnoreCase))
@@ -324,7 +531,7 @@ namespace Jube.App
                 RunFluentMigrator(dynamicEnvironment, cacheService, log);
             }
 
-            cacheService.InstantiateRepositoriesTask = taskCoordinator.RunAsync("InstantiateRepositoriesAsync", _ => cacheService.InstantiateRepositoriesAsync(taskCoordinator));
+            cacheService.InstantiateRepositoriesTask = taskCoordinator.RunAsync("InstantiateRepositoriesAsync", _ => cacheService.StartAsync(taskCoordinator));
 
             services.AddSingleton(cacheService);
 
@@ -449,7 +656,10 @@ namespace Jube.App
             long localCacheBytes,
             bool messagePackCompression,
             bool storePayloadCountsAndBytes,
-            bool publishSubscribe, ILog log)
+            bool publishSubscribe, bool hsetOffload,
+            TimeSpan maxLruAge,
+            bool activationRuleIdempotency,
+            ILog log)
         {
             const int retryRedisConnectionRetry = 10;
             for (var i = 0; i < retryRedisConnectionRetry; i++)
@@ -459,7 +669,7 @@ namespace Jube.App
                     if (log.IsInfoEnabled)
                     {
                         log.Info("Start: Is going to make a connection to Redis Endpoints string showing " +
-                                 "endpoints and port seperated by :,  then combined seperated by comma " +
+                                 "endpoints and port separated by :,  then combined separated by comma " +
                                  "for example localhost:1234,localhost4321.  Value for parsing is " +
                                  redisConnectionString + "");
                     }
@@ -468,7 +678,8 @@ namespace Jube.App
                         postgresConnectionString, callbacks,
                         callbackTimeout,
                         localCache, localCacheFill,
-                        localCacheBytes, messagePackCompression, storePayloadCountsAndBytes, publishSubscribe, log);
+                        localCacheBytes, messagePackCompression, storePayloadCountsAndBytes,
+                        publishSubscribe, hsetOffload, maxLruAge, activationRuleIdempotency, log);
 
                     if (log.IsInfoEnabled)
                     {
@@ -502,12 +713,54 @@ namespace Jube.App
         {
             try
             {
+                if (dynamicEnvironment.AppSettings("UseForwardedHeaders").Equals("True", StringComparison.OrdinalIgnoreCase))
+                {
+                    var startupOptions = new ForwardedHeadersOptions
+                    {
+                        ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+                    };
+
+                    startupOptions.KnownNetworks.Clear();
+                    startupOptions.KnownProxies.Clear();
+
+                    app.UseForwardedHeaders(startupOptions);
+                }
+
                 if (env.IsDevelopment())
                 {
                     app.UseDeveloperExceptionPage();
                 }
 
+                app.UseWhen(
+                    httpContext =>
+                        !httpContext.Request.Path.StartsWithSegments("/api/invoke", StringComparison.OrdinalIgnoreCase),
+                    appBuilder => appBuilder.UseExceptionHandler("/Error")
+                );
+
+                app.UseWhen(
+                    httpContext =>
+                        !httpContext.Request.Path.StartsWithSegments("/api/invoke", StringComparison.OrdinalIgnoreCase),
+                    appBuilder =>
+                        appBuilder
+                            .UseHsts()
+                );
+
+                app.UseWhen(
+                    httpContext =>
+                        !httpContext.Request.Path.StartsWithSegments("/api/invoke", StringComparison.OrdinalIgnoreCase),
+                    appBuilder => appBuilder.UseHttpsRedirection()
+                );
+
                 app.UseRouting();
+
+                app.UseAuthentication();
+                app.UseAuthorization();
+
+                app.UseWhen(
+                    httpContext =>
+                        !httpContext.Request.Path.StartsWithSegments("/api/invoke", StringComparison.OrdinalIgnoreCase),
+                    appBuilder => appBuilder.UseMiddleware<TokenRefreshMiddleware>()
+                );
 
                 var lifetime = app.ApplicationServices.GetRequiredService<IHostApplicationLifetime>();
                 app.UseWhen(context => context.Request.Path.StartsWithSegments("/api") &&
@@ -526,26 +779,6 @@ namespace Jube.App
                 app.UseWhen(
                     httpContext =>
                         !httpContext.Request.Path.StartsWithSegments("/api/invoke", StringComparison.OrdinalIgnoreCase),
-                    appBuilder => appBuilder.UseHttpsRedirection()
-                );
-
-                app.UseWhen(
-                    httpContext =>
-                        !httpContext.Request.Path.StartsWithSegments("/api/invoke", StringComparison.OrdinalIgnoreCase),
-                    appBuilder => appBuilder.UseExceptionHandler("/Error")
-                );
-
-                app.UseWhen(
-                    httpContext =>
-                        !httpContext.Request.Path.StartsWithSegments("/api/invoke", StringComparison.OrdinalIgnoreCase),
-                    appBuilder =>
-                        appBuilder
-                            .UseHsts()// The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-                );
-
-                app.UseWhen(
-                    httpContext =>
-                        !httpContext.Request.Path.StartsWithSegments("/api/invoke", StringComparison.OrdinalIgnoreCase),
                     appBuilder => appBuilder.UseStatusCodePages(context =>
 
                     {
@@ -559,7 +792,7 @@ namespace Jube.App
 
                         if (!request.Path.StartsWithSegments("/api"))
                         {
-                            response.Redirect("/Account/Login");
+                            response.Redirect($"/Account/Login?RedirectUrl={Uri.EscapeDataString(request.Path + request.QueryString)}");
                         }
 
                         return Task.CompletedTask;
@@ -569,7 +802,7 @@ namespace Jube.App
                 app.UseWhen(
                     httpContext =>
                         !httpContext.Request.Path.StartsWithSegments("/api/invoke", StringComparison.OrdinalIgnoreCase),
-                    appBuilder => appBuilder.UseTransposeJwtFromCookieToHeaderMiddleware()
+                    appBuilder => appBuilder.UseResponseHttpHeadersMiddleware()
                 );
 
                 app.UseWhen(
@@ -594,18 +827,6 @@ namespace Jube.App
                     httpContext =>
                         !httpContext.Request.Path.StartsWithSegments("/api/invoke", StringComparison.OrdinalIgnoreCase),
                     appBuilder => appBuilder.UseSwaggerUI()
-                );
-
-                app.UseWhen(
-                    httpContext =>
-                        !httpContext.Request.Path.StartsWithSegments("/api/invoke", StringComparison.OrdinalIgnoreCase),
-                    appBuilder => appBuilder.UseAuthentication()
-                );
-
-                app.UseWhen(
-                    httpContext =>
-                        !httpContext.Request.Path.StartsWithSegments("/api/invoke", StringComparison.OrdinalIgnoreCase),
-                    appBuilder => appBuilder.UseAuthorization()
                 );
 
                 app.UseEndpoints(endpoints =>

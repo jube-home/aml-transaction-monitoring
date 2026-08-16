@@ -39,7 +39,7 @@ namespace Jube.Data.Repository
         {
             model.CreatedUser = userName ?? model.CreatedUser;
             model.Guid = model.Guid == Guid.Empty ? Guid.NewGuid() : model.Guid;
-            model.CreatedDate = DateTime.Now;
+            model.CreatedDate = DateTime.UtcNow;
             model.TenantRegistryId = tenantRegistryId;
             model.Id = await dbContext.InsertWithInt32IdentityAsync(model, token: token);
 
@@ -49,7 +49,7 @@ namespace Jube.Data.Repository
         public async Task<Export> UpdateAsync(Export model, CancellationToken token = default)
         {
             model.CreatedUser = userName;
-            model.CreatedDate = DateTime.Now;
+            model.CreatedDate = DateTime.UtcNow;
             model.TenantRegistryId = tenantRegistryId;
 
             await dbContext.UpdateAsync(model, token: token);

@@ -38,9 +38,14 @@ namespace Jube.Data.Query
             var suppressions = await dbContext.EntityAnalysisModelSuppression
                 .Where(w => w.SuppressionKey == suppressionKey && w.SuppressionKeyValue == suppressionKeyValue
                                                                && (w.Deleted == 0 || w.Deleted == null)
+                                                               && (w.DeleteExpiryDate == null || w.DeleteExpiryDate > DateTime.UtcNow)
                                                                && w.EntityAnalysisModel.TenantRegistryId ==
                                                                tenantRegistryId)
-                .Select(s => s.EntityAnalysisModelGuid).ToListAsync(token: token);
+                .Select(s => new
+                {
+                    s.EntityAnalysisModelGuid,
+                    s.DeleteExpiryDate
+                }).ToListAsync(token: token);
 
             var models = await
                 (from m in dbContext.EntityAnalysisModel
@@ -54,11 +59,18 @@ namespace Jube.Data.Query
                     select m).Distinct().ToListAsync(token);
 
             var responses = models
-                .Select(model => new Dto
+                .Select(model =>
                 {
-                    Name = model.Name,
-                    EntityAnalysisModelGuid = model.Guid,
-                    Suppression = suppressions.Contains(model.Guid)
+                    var suppression = suppressions.FirstOrDefault(s => s.EntityAnalysisModelGuid == model.Guid);
+                    return new Dto
+                    {
+                        Name = model.Name,
+                        EntityAnalysisModelGuid = model.Guid,
+                        Suppression = suppression != null,
+                        DeleteExpiryDate = suppression?.DeleteExpiryDate == null
+                            ? null
+                            : new DateTimeOffset(DateTime.SpecifyKind(suppression.DeleteExpiryDate.Value, DateTimeKind.Utc))
+                    };
                 }).ToList();
 
             return responses;
@@ -70,6 +82,7 @@ namespace Jube.Data.Query
 
             public Guid EntityAnalysisModelGuid { get; set; }
             public bool Suppression { get; set; }
+            public DateTimeOffset? DeleteExpiryDate { get; set; }
         }
     }
 }

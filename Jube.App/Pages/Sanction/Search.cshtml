@@ -11,14 +11,16 @@
  * see <https://www.gnu.org/licenses/>.
  *@
 @page
-@model Jube.App.Pages.Sanction.Search
+@model Search
 @{
     Layout = "Shared/_Layout";
 }
+
 @section Scripts
 {
     <script src="/js/Sanction/Search.js"></script>
 }
+
 <div class="fCStyle">
     <table id="ParamsTable" class="tTStyle">
         <tr>
@@ -26,7 +28,8 @@
                 <label for="MultiPartString">Multipart String</label>
             </td>
             <td>
-                <input type="text" id="MultiPartString" class="k-textbox k-textboxmedium" name="MultiPartString"><span class="k-invalid-msg" data-for="MultiPartString"></span>
+                <input type="text" id="MultiPartString" class="k-textbox k-textboxmedium" name="MultiPartString"><span
+                    class="k-invalid-msg" data-for="MultiPartString"></span>
             </td>
         </tr>
         <tr>
@@ -34,7 +37,23 @@
                 <label for="Distance">Distance</label>
             </td>
             <td style="padding-bottom: 30px;">
-                <div id="Distance" class="slider"></div>
+                <div id="Distance" class="slider" style="width: 400px;"></div>
+            </td>
+        </tr>
+        <tr>
+            <td class="DescriptionCell-Style">
+                <label for="MaxDistanceRatio">Max Distance Ratio</label>
+            </td>
+            <td style="padding-bottom: 30px;">
+                <div id="MaxDistanceRatio" class="slider" style="width: 400px;"></div>
+            </td>
+        </tr>
+        <tr>
+            <td class="DescriptionCell-Style">
+                <label for="MaxCoverageRatio">Max Coverage Ratio</label>
+            </td>
+            <td style="padding-bottom: 30px;">
+                <div id="MaxCoverageRatio" class="slider" style="width: 400px;"></div>
             </td>
         </tr>
     </table>
@@ -42,4 +61,12 @@
         <input type="button" id="Check" value="Check">
     </div>
     <div id="Sanctions"></div>
+    <div class="topPaddedGeneral">
+        <label>Total Aggregation</label>
+        <div id="AggregationsTotal"></div>
+    </div>
+    <div class="topPaddedGeneral">
+        <label>Aggregation by Source</label>
+        <div id="AggregationsBySource"></div>
+    </div>
 </div>

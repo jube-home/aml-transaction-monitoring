@@ -17,14 +17,15 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions
     using System.Threading.Tasks;
     using Cache;
     using Exceptions;
+    using TaskCancellation.TaskHelper;
 
     public static class ReferenceDateExtensions
     {
         public static async Task<Context> CheckIntegrityAndUpsertAsync(this Context context, CacheService cacheService)
         {
-            var referenceDate = await cacheService.CacheReferenceDate.GetReferenceDateAsync(context.EntityAnalysisModel.Instance.Id, context.EntityAnalysisModel.Instance.Guid).ConfigureAwait(false);
+            var referenceDate = await cacheService.CacheReferenceDateRepository.GetReferenceDateAsync(context.EntityAnalysisModel.Instance.Id, context.EntityAnalysisModel.Instance.Guid).ConfigureAwait(false);
 
-            if (context.EntityAnalysisModelInstanceEntryPayload.ReferenceDate > DateTime.Now)
+            if (context.EntityAnalysisModelInstanceEntryPayload.ReferenceDate > DateTime.UtcNow)
             {
                 throw new ReferenceDateInFutureException();
             }
@@ -34,8 +35,10 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions
                 return context;
             }
 
-            await cacheService.CacheReferenceDate.UpsertReferenceDateAsync(context.EntityAnalysisModel.Instance.TenantRegistryId,
-                context.EntityAnalysisModel.Instance.Guid, context.EntityAnalysisModelInstanceEntryPayload.ReferenceDate).ConfigureAwait(false);
+            context.PendingWriteTasks.Add(TaskHelper.MeasureTaskTimeAndMemoryAllocatedAsync(TaskType.UpsertReferenceDateAsync,
+                async () => await
+                    cacheService.CacheReferenceDateRepository.UpsertReferenceDateAsync(context.EntityAnalysisModel.Instance.TenantRegistryId,
+                        context.EntityAnalysisModel.Instance.Guid, context.EntityAnalysisModelInstanceEntryPayload.ReferenceDate)));
 
             return context;
         }

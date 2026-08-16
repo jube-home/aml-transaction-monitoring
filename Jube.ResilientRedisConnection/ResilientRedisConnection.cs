@@ -17,79 +17,28 @@ namespace Jube.ResilientRedisConnection
     using Polly;
     using StackExchange.Redis;
 
-    public class ResilientRedisConnection : IDisposable
+    public class ResilientRedisConnection(IConnectionMultiplexer multiplexer, string connectionString, bool hsetOffload, ILog log)
+        : IDisposable
     {
-        private readonly IConnectionMultiplexer multiplexer;
 
-        public ResilientRedisConnection(IConnectionMultiplexer multiplexer, ILog log, int maxRetries = 5)
-        {
-            this.multiplexer = multiplexer ?? throw new ArgumentNullException(nameof(multiplexer));
-
-            var circuitBreaker = Policy
-                .Handle<RedisConnectionException>()
-                .Or<RedisTimeoutException>()
-                .Or<RedisServerException>(ex =>
-                    ex.Message.Contains("LOADING", StringComparison.OrdinalIgnoreCase) ||
-                    ex.Message.Contains("MASTERDOWN", StringComparison.OrdinalIgnoreCase))
-                .CircuitBreakerAsync(5, TimeSpan.FromSeconds(30));
-
-            var fullRetry = Policy
-                .Handle<RedisConnectionException>()
-                .Or<RedisTimeoutException>()
-                .Or<RedisServerException>(ex =>
-                    ex.Message.Contains("LOADING", StringComparison.OrdinalIgnoreCase) ||
-                    ex.Message.Contains("MASTERDOWN", StringComparison.OrdinalIgnoreCase) ||
-                    ex.Message.Contains("CLUSTERDOWN", StringComparison.OrdinalIgnoreCase) ||
-                    ex.Message.Contains("TRYAGAIN", StringComparison.OrdinalIgnoreCase))
-                .Or<RedisException>(ex =>
-                    ex.Message.Contains("No connection is available", StringComparison.OrdinalIgnoreCase) ||
-                    ex.Message.Contains("multiplexer is not connected", StringComparison.OrdinalIgnoreCase))
-                .WaitAndRetryAsync(
-                    maxRetries,
-                    attempt => TimeSpan.FromSeconds(Math.Min(Math.Pow(2, attempt), 10)) +
-                               TimeSpan.FromMilliseconds(Random.Shared.Next(0, 500)),
-                    (ex, _, count, _) =>
-                    {
-                        if (count == maxRetries)
-                        {
-                            log.Warn($"Redis Retry threshold hit: {count}/{maxRetries}. {ex.Message}");
-                        }
-                    });
-
-            var connectionRetry = Policy
-                .Handle<RedisConnectionException>()
-                .Or<RedisServerException>(ex =>
-                    ex.Message.Contains("READONLY", StringComparison.OrdinalIgnoreCase) ||
-                    ex.Message.Contains("TRYAGAIN", StringComparison.OrdinalIgnoreCase))
-                .Or<RedisException>(ex =>
-                    ex.Message.Contains("No connection is available", StringComparison.OrdinalIgnoreCase))
-                .WaitAndRetryAsync(
-                    maxRetries,
-                    attempt => TimeSpan.FromSeconds(Math.Min(Math.Pow(2, attempt), 10)) +
-                               TimeSpan.FromMilliseconds(Random.Shared.Next(0, 500)),
-                    (ex, _, count, _) =>
-                    {
-                        if (count == maxRetries)
-                        {
-                            log.Warn($"Redis Retry threshold hit: {count}/{maxRetries}. {ex.Message}");
-                        }
-                    }
-                );
-
-            IdempotentPolicy = Policy.WrapAsync(circuitBreaker, fullRetry);
-            NonIdempotentPolicy = Policy.WrapAsync(circuitBreaker, connectionRetry);
-        }
-        private IAsyncPolicy IdempotentPolicy { get; }
-        private IAsyncPolicy NonIdempotentPolicy { get; }
+        // NoOpAsync: satisfies ResilientRedisDatabase's IAsyncPolicy dependency without the
+        // circuit breaker / retry machinery. ExecuteAsync just invokes the delegate directly -
+        // no shared circuit state, no lock, no WrapAsync nesting, no extra Task layer per call.
+        // Connection-level resilience (reconnect, failover) is left to SE.Redis's multiplexer,
+        // which already handles it via ConnectRetry / ReconnectRetryPolicy / AbortOnConnectFail.
+        // the wrapper has been kept for future use and logging opportunities.
+        private static readonly IAsyncPolicy NoOpPolicy = Policy.NoOpAsync();
+        private readonly string connectionString = connectionString ?? throw new ArgumentNullException(nameof(connectionString));
+        private readonly IConnectionMultiplexer multiplexer = multiplexer ?? throw new ArgumentNullException(nameof(multiplexer));
 
         public void Dispose()
         {
             multiplexer.Dispose();
         }
 
-        public ResilientRedisDatabase GetDatabase(int db = -1)
+        public IHybridResilientRedisDatabase GetDatabase(int db = -1)
         {
-            return new ResilientRedisDatabase(multiplexer.GetDatabase(db), IdempotentPolicy, NonIdempotentPolicy);
+            return new ResilientRedisDatabase(multiplexer.GetDatabase(db), NoOpPolicy, NoOpPolicy, connectionString, log, hsetOffload);
         }
     }
 }

@@ -67,13 +67,13 @@ namespace Jube.DynamicEnvironment
                     "EnableEntityModel", "True"
                 },
                 {
-                    "ArchiverPersistThreads", "1"
+                    "ArchiverPersistThreads", "4"
                 },
                 {
                     "ModelInvokeAsynchronousThreads", "1"
                 },
                 {
-                    "BulkCopyThreshold", "100"
+                    "BulkCopyThreshold", "1000"
                 },
                 {
                     "ActivationWatcherBulkCopyThreshold", "100"
@@ -142,7 +142,7 @@ namespace Jube.DynamicEnvironment
                     "UseMockDataExhaustive", "True"
                 },
                 {
-                    "SanctionLoaderWait", "60000"
+                    "SanctionLoaderWait", "3600000"
                 },
                 {
                     "EnableSanctionLoader", "False"
@@ -238,7 +238,7 @@ namespace Jube.DynamicEnvironment
                     "WaitPollFromActivationWatcherTable", "5000"
                 },
                 {
-                    "WaitTtlCounterDecrement", "60000"
+                    "WaitTtlCounterDecrement", "1000"
                 },
                 {
                     "RedisConnectionString", "localhost"
@@ -251,6 +251,9 @@ namespace Jube.DynamicEnvironment
                 },
                 {
                     "WaitCachePrune", "10000"
+                },
+                {
+                    "WaitHashCacheAssemblyObservability", "60000"
                 },
                 {
                     "EnableSandbox", "False"
@@ -286,7 +289,7 @@ namespace Jube.DynamicEnvironment
                     "RedisMessagePackCompression", "True"
                 },
                 {
-                    "RedisStorePayloadCountsAndBytes", "True"
+                    "RedisStorePayloadCountsAndBytes", "False"
                 },
                 {
                     "RedisPublishSubscribeEvents", "False"
@@ -310,10 +313,118 @@ namespace Jube.DynamicEnvironment
                     "PartialResponseMessageSerialisation", "True"
                 },
                 {
-                    "RedisBackplane", "False"
+                    "RedisBackplane", "True"
+                },
+                {
+                    "DataProtectionRedisBackplane", "True"
                 },
                 {
                     "SecretsPath", ""
+                },
+                {
+                    "JempFileLegacyEncryptionFallback", "True"
+                },
+                {
+                    "ApiHmacKey", null
+                },
+                {
+                    "RedisHsetOffloadToPostgres", "False"
+                },
+                {
+                    "SecureHttpCookie", "False"
+                },
+                {
+                    "ElementSymmetricEncryptionKey", "SuperSecretEncryptionKeyGoesHere"
+                },
+                {
+                    "ParserAssertSelectOnly", "True"
+                },
+                {
+                    "EnableMultifactorAuthentication", "False"
+                },
+                {
+                    "MultifactorAuthenticationEndpoint", "http://localhost:5001/api/mfa"
+                },
+                {
+                    "MultifactorAuthenticationApplicationId", "MyApplicationGuidOrSomeSuch"
+                },
+                {
+                    "MultifactorAuthenticationClientKey", "SomethingSecretForTheClientKeyHeader"
+                },
+                {
+                    "PasswordAttempts", "3"
+                },
+                {
+                    "CacheTtlDeleteLimit", "1000"
+                },
+                {
+                    "TtlCounterEntryDeleteLimit", "1000"
+                },
+                {
+                    "PasswordAsymmetricEncryption", "False"
+                },
+                {
+                    "PasswordAsymmetricEncryptionPrivateKey", null
+                },
+                {
+                    "PasswordAsymmetricEncryptionPublicKey", null
+                },
+                {
+                    "SessionCookie", "True"
+                },
+                {
+                    "AssumeLocalDateInPayloadExtraction", "True"
+                },
+                {
+                    "ActivationRuleIdempotency", "False"
+                },
+                {
+                    "LruJournalMaxAgeInterval", "h"
+                },
+                {
+                    "LruJournalMaxAgeValue", "1"
+                },
+                {
+                    "WaitLruJournalPrune", "10000"
+                },
+                {
+                    "SMTPUseDefaultCredentials", "False"
+                },
+                {
+                    "SMTPEnableSsl", "True"
+                },
+                {
+                    "OutboundHttpRsaAmCertificateBypass", "False"
+                },
+                {
+                    "OutboundHttpRsaAmCertificateThumbprint", null
+                },
+                {
+                    "OAuthAuthentication", "False"
+                },
+                {
+                    "OAuthAuthority", null
+                },
+                {
+                    "OAuthClientId", null
+                },
+                {
+                    "OAuthClientSecret", null
+                },
+                {
+                    "OAuthForceRedirect", null
+                },
+                {
+                    "OAuthForceGet", "False"
+                },
+                {
+                    "SanctionsLevenshteinMaxDistanceRatio", "0.3"
+                },
+                {
+                    "SanctionsLevenshteinMaxCoverageRatio", "2.0"
+                },
+                {
+                    "UseForwardedHeaders", "True"
                 }
             };
 
@@ -379,6 +490,7 @@ namespace Jube.DynamicEnvironment
             ValidateConnectionString();
             ValidateJwtKey();
             ValidatePasswordHashingKey();
+            ValidatePasswordAsymmetricEncryptionKeys();
         }
 
         public ILog Log { get; set; }
@@ -567,6 +679,24 @@ namespace Jube.DynamicEnvironment
             if (String.IsNullOrEmpty(appSettings["JWTKey"]))
             {
                 throw new Exception("Missing JWTKey in Environment Variables.");
+            }
+        }
+
+        private void ValidatePasswordAsymmetricEncryptionKeys()
+        {
+            if (!appSettings["PasswordAsymmetricEncryption"].Equals("True", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            if (String.IsNullOrEmpty(appSettings["PasswordAsymmetricEncryptionPrivateKey"]) ||
+                String.IsNullOrEmpty(appSettings["PasswordAsymmetricEncryptionPublicKey"]))
+            {
+                throw new Exception(
+                    "PasswordAsymmetricEncryption is True but PasswordAsymmetricEncryptionPrivateKey and/or " +
+                    "PasswordAsymmetricEncryptionPublicKey are not set in Environment Variables. Generate a " +
+                    "fresh RSA keypair for this environment and set both - do not reuse a keypair from " +
+                    "documentation or another environment.");
             }
         }
 

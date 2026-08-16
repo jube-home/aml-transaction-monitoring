@@ -23,5 +23,6 @@ namespace Jube.Service.Dto.Authentication
         public string? LocalIp { get; set; }
         public string? UserAgent { get; set; }
         public bool PasswordChangeState { get; set; }
+        public string? Mfa { get; set; }
     }
 }

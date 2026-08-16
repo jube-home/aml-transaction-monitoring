@@ -51,7 +51,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                 {
                     Guid = context.EntityAnalysisModels.EntityAnalysisInstanceGuid,
                     Instance = Dns.GetHostName(),
-                    CreatedDate = DateTime.Now
+                    CreatedDate = DateTime.UtcNow
                 };
 
                 if (context.Services.Log.IsDebugEnabled)

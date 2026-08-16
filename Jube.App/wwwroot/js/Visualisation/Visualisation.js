@@ -174,9 +174,8 @@ function Run() {
                         break;
                     case 4:
                         // noinspection JSJQueryEfficiency
-                        const dateControl = $("#P" + param.id)
-                            .data("kendoDateTimePicker");
-                        value = kendo.toString(dateControl.value(), "s");
+                        const dateControl = $("#P" + param.id).data("kendoDateTimePicker");
+                        value = dateControl.value()?.toISOString() ?? null;
                         break;
                     case 5:
                         // noinspection JSJQueryEfficiency

@@ -42,6 +42,7 @@ namespace Jube.App.Validators
             RuleFor(p => p.HttpEndpoint).NotEmpty();
             RuleFor(p => p.ReportTable).NotNull();
             RuleFor(p => p.ResponsePayload).NotNull();
+            RuleFor(p => p.Priority).GreaterThanOrEqualTo(0);
         }
     }
 }

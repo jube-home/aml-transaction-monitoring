@@ -11,14 +11,15 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using FluentMigrator;
-using Jube.Data.Security;
-
 namespace Jube.Migrations.Baseline
 {
+    using System;
+    using Data.Security;
+    using DynamicEnvironment;
+    using FluentMigrator;
+
     [Migration(20220705082300)]
-    public class AddUserRegistryTableIndex(DynamicEnvironment.DynamicEnvironment dynamicEnvironment) : Migration
+    public class AddUserRegistryTableIndex(DynamicEnvironment dynamicEnvironment) : Migration
     {
         public override void Up()
         {
@@ -55,13 +56,13 @@ namespace Jube.Migrations.Baseline
                 RoleRegistryId = 1,
                 Name = "Administrator",
                 Email = "sink@jube.io",
-                Password = HashPassword.GenerateHash("Administrator", dynamicEnvironment.AppSettings("PasswordHashingKey")),
-                PasswordExpiryDate = DateTime.Now,
+                Password = HashPassword.Argon2("Administrator", dynamicEnvironment.AppSettings("PasswordHashingKey")),
+                PasswordExpiryDate = DateTime.UtcNow,
                 Active = 1,
                 CreatedUser = "Administrator",
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 Version = 1,
-                PasswordCreatedDate = DateTime.Now
+                PasswordCreatedDate = DateTime.UtcNow
             };
 
             Insert.IntoTable("UserRegistry").Row(userRegistryEntry);

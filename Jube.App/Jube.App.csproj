@@ -20,9 +20,11 @@
         <PackageReference Include="Isopoh.Cryptography.Argon2" Version="1.1.12"/>
         <PackageReference Include="linq2db" Version="3.6.0"/>
         <PackageReference Include="linq2db.AspNet" Version="3.6.0"/>
-        <PackageReference Include="log4net" Version="2.0.14"/>
+        <PackageReference Include="log4net" Version="3.3.1"/>
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.14"/>
         <PackageReference Include="Microsoft.AspNetCore.Authentication.Negotiate" Version="6.0.8"/>
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="9.0.18"/>
+        <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="9.0.13"/>
         <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="9.0.11"/>
         <PackageReference Include="Microsoft.AspNetCore.SignalR.Common" Version="6.0.6"/>
         <PackageReference Include="Microsoft.AspNetCore.SignalR.StackExchangeRedis" Version="9.0.13"/>
@@ -42,7 +44,7 @@
         <PackageReference Include="RabbitMQ.Client" Version="6.2.1"/>
         <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="6.2.3"/>
         <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="6.2.3"/>
-        <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.3.0"/>
+        <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.1.7"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -75,13 +77,16 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\Jube.ApiTokensCache\Jube.ApiTokensCache.csproj"/>
         <ProjectReference Include="..\Jube.Cache\Jube.Cache.csproj"/>
         <ProjectReference Include="..\Jube.Data\Jube.Data.csproj"/>
         <ProjectReference Include="..\Jube.DynamicEnvironment\Jube.DynamicEnvironment.csproj"/>
         <ProjectReference Include="..\Jube.Engine\Jube.Engine.csproj"/>
+        <ProjectReference Include="..\Jube.HttpHeaders\Jube.HttpHeaders.csproj"/>
         <ProjectReference Include="..\Jube.Migrations\Jube.Migrations.csproj"/>
         <ProjectReference Include="..\Jube.Parser\Jube.Parser.csproj"/>
         <ProjectReference Include="..\Jube.Preservation\Jube.Preservation.csproj"/>
+        <ProjectReference Include="..\Jube.Mfa\Jube.Mfa.csproj"/>
         <ProjectReference Include="..\Jube.Service\Jube.Service.csproj"/>
         <ProjectReference Include="..\Jube.TaskCancellation\Jube.TaskCancellation.csproj"/>
         <ProjectReference Include="..\Jube.Validations\Jube.Validations.csproj"/>

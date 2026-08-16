@@ -152,10 +152,10 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions
                     ttlCounter.TtlCounterValue * -1),
                 "y" => context.EntityAnalysisModelInstanceEntryPayload.ReferenceDate.AddYears(
                     ttlCounter.TtlCounterValue * -1),
-                _ => default(DateTime)
+                _ => context.EntityAnalysisModelInstanceEntryPayload.ReferenceDate
             };
 
-            var count = await cacheService.CacheTtlCounterEntryRepository.GetAggregationAsync(
+            var count = await cacheService.CacheTtlCounterEntryRepository.GetAggregationPreferReplicaAsync(
                 context.EntityAnalysisModel.Instance.TenantRegistryId,
                 context.EntityAnalysisModel.Instance.Guid,
                 ttlCounter.Guid,

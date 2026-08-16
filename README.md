@@ -135,15 +135,33 @@ workflows, and ML configurations.
 A Docker Compose file is available (`docker-compose.yml`) to quickly set up and orchestrate an installation of Jube,
 provided Docker is installed. Jube can be up and running in minutes with the following shell script:
 
+This base `docker-compose.yml` install is for evaluation and development only - it is **not** intended for
+production use. It runs a single node with secrets passed as plain shell Environment Variables and Postgres
+connected as superuser. Production deployments should instead follow the
+[Deploying with Jube Cluster](https://jube-home.github.io/aml-fraud-transaction-monitoring/GettingStarted/DeployingWithJubeCluster)
+documentation, which covers a load-balanced, highly available, clustered deployment with robust secret management.
+
 ```shell
 git clone https://github.com/jube-home/aml-fraud-transaction-monitoring
 cd aml-fraud-transaction-monitoring
 export DockerComposePostgresPassword='SuperSecretPasswordToChangeForPg'
-export DockerComposeRabbitMQPassword='SuperSecretPasswordToChangeForAmqp'
 export DockerComposeJWTKey='IMPORTANT:_ChangeThisKey_~%pvif3KRo!3Mkm1oMC50TvAPi%{mUt<9sBm>DPjGZyfYYWssseVrNUqLQE}mz{L_UsingThisKeyIsDangerous'
+export DockerComposeApiHmacKey='IMPORTANT:_ChangeThisKey_~%pvif3KRo!3Mkm1oMC50TvAPi%{mUt<9sBm>DPjGZyfYYWssseVrNUqLQE}mz{L_UsingThisKeyIsDangerous'
 export DockerComposePasswordHashingKey='IMPORTANT:_ChangeThisKey_~%pvif3KRo!3Mkm1oMC50TvAPi%{mUt<9sBm>DPjGZyfYYWssseVrNUqLQE}mz{L_UsingThisKeyIsDangerous'
+export DockerComposeElementSymmetricEncryptionKey='IMPORTANT:_ChangeThisKey_~%pvif3KRo!3Mkm1oMC50TvAPi%{mUt<9sBm>DPjGZyfYYWssseVrNUqLQE}mz{L_UsingThisKeyIsDangerous'
 docker compose up -d
 ```
+
+Every value above must be changed from the example shown - these are placeholders, not defaults you can leave in
+place. None of them are hardcoded in `docker-compose.yml` itself: `DockerComposePostgresPassword` bootstraps the
+bundled `postgres` container's own superuser password, and is packed by `docker-compose.yml` into the
+otherwise-static `ConnectionString`/`ReportConnectionString` values, so it's the one value you set once and it's
+used consistently everywhere it's needed. See
+[Environment Variables](docs/Concepts/EnvironmentVariables/index.md) for what `JWTKey`, `ApiHmacKey`,
+`PasswordHashingKey`, and `ElementSymmetricEncryptionKey` do - leaving `ElementSymmetricEncryptionKey` at its
+placeholder means any value encrypted via the Inline Script AES helper (see
+[Field Level Encryption](docs/Concepts/FieldEncryption/index.md)) is trivially reversible by anyone with a copy of
+this documentation.
 
 Copy and paste the full block of shell script above into the terminal. The Jube software will be cloned locally:
 
@@ -152,7 +170,7 @@ Copy and paste the full block of shell script above into the terminal. The Jube 
 The software will be built locally after it has been cloned (Jube is not available in Docker Hub, and is
 instead built from source). Once the Jube Docker image has been built, Docker Compose will ensure that the remaining
 dependencies in the form of
-Postgres, RabbitMQ and Redis are available, and then orchestrate:
+Postgres and Redis are available, and then orchestrate:
 
 ![Building and Starting](BuildingAndStarting.png)
 
@@ -183,9 +201,7 @@ on deploying and configuring Jube effectively.
 
 ## Support
 
-🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
-💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
-developer.
+🚀 Get to pre-production in weeks, not months, with private [training](https://www.jube.io/jube-training) direct from Jube's developer — real sovereignty, zero vendor lock-in.
 
 ---
 

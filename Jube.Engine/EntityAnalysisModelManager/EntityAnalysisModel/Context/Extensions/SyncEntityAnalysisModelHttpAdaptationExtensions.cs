@@ -42,12 +42,12 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                     if (context.Services.Log.IsDebugEnabled)
                     {
                         context.Services.Log.Debug(
-                            $"Entity Start: Executing EntityAnalysisModelHttpAdaptationRepository.GetByEntityAnalysisModelId for entity model key of {key}.");
+                            $"Entity Start: Executing EntityAnalysisModelHttpAdaptationRepository.GetByEntityAnalysisModelIdOrderByPriority for entity model key of {key}.");
                     }
 
-                    var records = await repository.GetByEntityAnalysisModelIdOrderByIdAsync(key, context.Services.CancellationToken).ConfigureAwait(false);
+                    var records = await repository.GetByEntityAnalysisModelIdOrderByPriorityAsync(key, context.Services.CancellationToken).ConfigureAwait(false);
 
-                    var shadowEntityAnalysisModelAdaptations = new Dictionary<int, EntityAnalysisModelHttpAdaptation>();
+                    var shadowEntityAnalysisModelAdaptations = new List<EntityAnalysisModelHttpAdaptation>();
                     foreach (var record in records)
                     {
                         context.Services.CancellationToken.ThrowIfCancellationRequested();
@@ -140,6 +140,27 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                                 }
                             }
 
+                            if (!record.Priority.HasValue)
+                            {
+                                entityAnalysisModelAdaptation.Priority = 0;
+
+                                if (context.Services.Log.IsDebugEnabled)
+                                {
+                                    context.Services.Log.Debug(
+                                        $"Entity Start: Model {key} and Adaptation {entityAnalysisModelAdaptation.Id} set DEFAULT Priority as {entityAnalysisModelAdaptation.Priority}.");
+                                }
+                            }
+                            else
+                            {
+                                entityAnalysisModelAdaptation.Priority = record.Priority.Value;
+
+                                if (context.Services.Log.IsDebugEnabled)
+                                {
+                                    context.Services.Log.Debug(
+                                        $"Entity Start: Model {key} and Adaptation {entityAnalysisModelAdaptation.Id} set Priority as {entityAnalysisModelAdaptation.Priority}.");
+                                }
+                            }
+
                             if (record.HttpEndpoint == null)
                             {
                                 entityAnalysisModelAdaptation.HttpEndpoint = "";
@@ -171,9 +192,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                                 }
                             }
 
-                            shadowEntityAnalysisModelAdaptations.Add(
-                                entityAnalysisModelAdaptation.Id,
-                                entityAnalysisModelAdaptation);
+                            shadowEntityAnalysisModelAdaptations.Add(entityAnalysisModelAdaptation);
 
                             if (context.Services.Log.IsDebugEnabled)
                             {
@@ -219,6 +238,10 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 context.Services.Log.Error($"SyncEntityAnalysisModelHttpAdaptationAsync: has produced an error {ex}");
+
+                await new EntityAnalysisModelSynchronisationErrorRepository(context.Services.DbContext)
+                    .InsertAsync(EntityAnalysisModelSynchronisationErrorRepository.EntityAnalysisModelSynchronisationErrorStepEnum.HttpAdaptation, ex.ToString(),
+                        context.Services.CancellationToken).ConfigureAwait(false);
             }
 
             return context;

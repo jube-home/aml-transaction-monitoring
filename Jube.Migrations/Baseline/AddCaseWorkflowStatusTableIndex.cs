@@ -11,11 +11,11 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using FluentMigrator;
-
 namespace Jube.Migrations.Baseline
 {
+    using System;
+    using FluentMigrator;
+
     [Migration(20220429124916)]
     public class AddCaseWorkflowStatusTableIndex : Migration
     {
@@ -58,7 +58,7 @@ namespace Jube.Migrations.Baseline
                 Name = "First Line Review",
                 Active = 1,
                 Priority = 5,
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 CreatedUser = "Administrator",
                 Version = 1,
                 ForeColor = "#260080",
@@ -71,7 +71,7 @@ namespace Jube.Migrations.Baseline
                 Name = "Supervisor Review",
                 Active = 1,
                 Priority = 4,
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 CreatedUser = "Administrator",
                 Version = 1,
                 ForeColor = "#260080",
@@ -84,7 +84,7 @@ namespace Jube.Migrations.Baseline
                 Name = "Restricted",
                 Active = 1,
                 Priority = 3,
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 CreatedUser = "Administrator",
                 Version = 1,
                 ForeColor = "#260080",
@@ -97,7 +97,7 @@ namespace Jube.Migrations.Baseline
                 Name = "Fraudulent",
                 Active = 1,
                 Priority = 4,
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 CreatedUser = "Administrator",
                 Version = 1,
                 ForeColor = "#260080",
@@ -110,7 +110,7 @@ namespace Jube.Migrations.Baseline
                 Name = "Reported",
                 Active = 1,
                 Priority = 1,
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 CreatedUser = "Administrator",
                 Version = 1,
                 ForeColor = "#260080",

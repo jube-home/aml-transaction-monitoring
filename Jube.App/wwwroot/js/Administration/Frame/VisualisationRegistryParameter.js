@@ -77,13 +77,9 @@ function getDefaultValueStyle() {
             value = defaultValueString.val();
             break;
         case "2":
-            value = defaultValueNumeric.data("kendoNumericTextBox").value().toString();
-            break;
         case "3":
-            value = defaultValueNumeric.data("kendoNumericTextBox").value().toString();
-            break;
         case "4":
-            value = defaultValueNumeric.data("kendoNumericTextBox").value().toString();
+            value = (defaultValueNumeric.data("kendoNumericTextBox").value() || 0).toString();
             break;
         case "5":
             if (defaultValueCheckbox.prop("checked")) {
@@ -120,16 +116,14 @@ if (typeof id === "undefined") {
 
             dataType.data("kendoDropDownList").value(data.dataTypeId);
 
+            setDefaultValueStyle();
+
             switch (data.dataTypeId) {
                 case 1:
                     defaultValueString.val(data.defaultValue);
                     break;
                 case 2:
-                    defaultValueNumeric.data("kendoNumericTextBox").value(data.defaultValue);
-                    break;
                 case 3:
-                    defaultValueNumeric.data("kendoNumericTextBox").value(data.defaultValue);
-                    break;
                 case 4:
                     defaultValueNumeric.data("kendoNumericTextBox").value(data.defaultValue);
                     break;
@@ -142,7 +136,6 @@ if (typeof id === "undefined") {
                     break;
             }
 
-            setDefaultValueStyle();
             ReadyExisting(data);
         });
 }

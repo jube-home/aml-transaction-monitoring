@@ -27,9 +27,9 @@ namespace Jube.App.Middlewares.Extensions
             return builder.UseMiddleware<RequestTrackingMiddleware>();
         }
 
-        public static void UseTransposeJwtFromCookieToHeaderMiddleware(this IApplicationBuilder app)
+        public static IApplicationBuilder UseResponseHttpHeadersMiddleware(this IApplicationBuilder app)
         {
-            app.UseMiddleware<TransposeJwtFromCookieToHeaderMiddleware>();
+            return app.UseMiddleware<ResponseHttpHeadersMiddleware>();
         }
     }
 }

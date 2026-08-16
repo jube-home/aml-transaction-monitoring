@@ -15,6 +15,8 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ActivationRul
 {
     using System;
     using System.Text;
+    using System.Threading.Tasks;
+    using Cache;
     using EntityAnalysisModelManager.EntityAnalysisModel.Models.Models;
     using Models;
     using Models.Payload.EntityAnalysisModelInstanceEntryPayload.Extensions;
@@ -23,14 +25,39 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions.ActivationRul
 
     public static class ActivationRuleNotificationExtensions
     {
-        public static void ActivationRuleNotification(this Context context, EntityAnalysisModelActivationRule evaluateActivationRule,
-            bool suppressed, IModel rabbitMqChannel)
+        public static async Task ActivationRuleNotificationAsync(this Context context, EntityAnalysisModelActivationRule evaluateActivationRule,
+            bool suppressed, IModel rabbitMqChannel, CacheService cacheService)
         {
             if (context.Environment.AppSettings("EnableNotification").Equals("True", StringComparison.OrdinalIgnoreCase))
             {
                 if (suppressed || !evaluateActivationRule.EnableNotification || context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelReprocessingRuleInstanceId.HasValue)
                 {
                     return;
+                }
+
+                if (context.Environment.AppSettings("ActivationRuleIdempotency").Equals("True", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (!await cacheService.CacheActivationCaseIdempotencyRepository.CheckAndClaimIdempotencyAsync(context.EntityAnalysisModel.Instance.TenantRegistryId,
+                            context.EntityAnalysisModel.Instance.Guid,
+                            context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid,
+                            evaluateActivationRule.Guid))
+                    {
+                        if (context.Log.IsInfoEnabled)
+                        {
+                            context.Log.Info(
+                                $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid}, model {context.EntityAnalysisModel.Instance.Id} and activation rule guid {evaluateActivationRule.Guid} has failed notification idempotency check.");
+                        }
+
+                        return;
+                    }
+                }
+                else
+                {
+                    if (context.Log.IsInfoEnabled)
+                    {
+                        context.Log.Info(
+                            $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid}, model {context.EntityAnalysisModel.Instance.Id} and activation rule guid {evaluateActivationRule.Guid} won't check ActivationRuleIdempotency.");
+                    }
                 }
 
                 var notification = new Notification

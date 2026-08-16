@@ -11,45 +11,25 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-namespace Jube.Extensions;
-
-public static class DateTimeExtensions
+namespace Jube.Extensions
 {
-    public static long ToUnixTimeMilliSeconds(this DateTime dateTime)
+    public static class DateTimeExtensions
     {
-        var dto = new DateTimeOffset(dateTime
-            .ToUniversalTime());
-        return dto.ToUnixTimeMilliseconds();
-    }
+        public static long ToUnixTimeMilliSeconds(this DateTime dateTime)
+        {
+            var dto = new DateTimeOffset(dateTime
+                .ToUniversalTime());
+            return dto.ToUnixTimeMilliseconds();
+        }
 
-    public static DateTime FromUnixTimeMilliSeconds(this long timestamp)
-    {
-        return DateTimeOffset.FromUnixTimeMilliseconds(timestamp)
-            .DateTime.ToLocalTime();
-    }
+        public static DateTime FromUnixTimeMilliSeconds(this long timestamp)
+        {
+            return DateTimeOffset.FromUnixTimeMilliseconds(timestamp).UtcDateTime;
+        }
 
-    public static DateTime Floor(this DateTime dateTime, TimeSpan interval)
-    {
-        return dateTime.AddTicks(-(dateTime.Ticks % interval.Ticks));
-    }
-
-    public static DateTime Ceiling(this DateTime dateTime, TimeSpan interval)
-    {
-        var overflow = dateTime.Ticks % interval.Ticks;
-
-        return overflow == 0 ? dateTime : dateTime.AddTicks(interval.Ticks - overflow);
-    }
-
-    public static DateTime Round(this DateTime dateTime, TimeSpan interval)
-    {
-        var halfIntervalTicks = (interval.Ticks + 1) >> 1;
-
-        return dateTime.AddTicks(halfIntervalTicks - (dateTime.Ticks + halfIntervalTicks) % interval.Ticks);
-    }
-
-    public static string ToUnixTime(this DateTime dateTime)
-    {
-        var dto = new DateTimeOffset(dateTime.ToUniversalTime());
-        return dto.ToUnixTimeSeconds().ToString();
+        public static DateTime Floor(this DateTime dateTime, TimeSpan interval)
+        {
+            return dateTime.AddTicks(-(dateTime.Ticks % interval.Ticks));
+        }
     }
 }

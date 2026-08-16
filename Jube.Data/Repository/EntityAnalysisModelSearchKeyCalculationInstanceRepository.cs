@@ -36,7 +36,7 @@ namespace Jube.Data.Repository
             return dbContext.EntityAnalysisModelSearchKeyCalculationInstance
                 .Where(d => d.Id == id)
                 .Set(s => s.DistinctValuesCount, distinctValuesCount)
-                .Set(s => s.DistinctValuesUpdatedDate, DateTime.Now)
+                .Set(s => s.DistinctValuesUpdatedDate, DateTime.UtcNow)
                 .UpdateAsync(token);
         }
 
@@ -46,7 +46,7 @@ namespace Jube.Data.Repository
             return dbContext.EntityAnalysisModelSearchKeyCalculationInstance
                 .Where(d => d.Id == id)
                 .Set(s => s.ExpiredSearchKeyCacheCount, expiredSearchKeyCacheCount)
-                .Set(s => s.ExpiredSearchKeyCacheDate, DateTime.Now)
+                .Set(s => s.ExpiredSearchKeyCacheDate, DateTime.UtcNow)
                 .UpdateAsync(token);
         }
 
@@ -56,7 +56,7 @@ namespace Jube.Data.Repository
             return dbContext.EntityAnalysisModelSearchKeyCalculationInstance
                 .Where(d => d.Id == id)
                 .Set(s => s.DistinctValuesProcessedValuesCount, distinctValuesProcessedValuesCount)
-                .Set(s => s.DistinctValuesProcessedValuesUpdatedDate, DateTime.Now)
+                .Set(s => s.DistinctValuesProcessedValuesUpdatedDate, DateTime.UtcNow)
                 .UpdateAsync(token);
         }
 
@@ -65,7 +65,7 @@ namespace Jube.Data.Repository
             return dbContext.EntityAnalysisModelSearchKeyCalculationInstance
                 .Where(d => d.Id == id)
                 .Set(s => s.Completed, (byte)1)
-                .Set(s => s.CompletedDate, DateTime.Now)
+                .Set(s => s.CompletedDate, DateTime.UtcNow)
                 .UpdateAsync(token);
         }
     }

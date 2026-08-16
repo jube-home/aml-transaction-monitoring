@@ -13,7 +13,7 @@
 
 namespace Jube.Data.Repository
 {
-    using System.Collections.Generic;
+    using System.Collections.Concurrent;
     using System.Threading;
     using System.Threading.Tasks;
     using Context;
@@ -22,7 +22,7 @@ namespace Jube.Data.Repository
 
     public class CacheTtlCounterEntryRemovalBatchEntryRepository(DbContext dbContext)
     {
-        public Task BulkCopyAsync(List<CacheTtlCounterEntryRemovalBatchEntry> cacheTtlCounterEntryRemovalBatchEntryList, CancellationToken token = default)
+        public Task BulkCopyAsync(ConcurrentBag<CacheTtlCounterEntryRemovalBatchEntry> cacheTtlCounterEntryRemovalBatchEntryList, CancellationToken token = default)
         {
             return dbContext.BulkCopyAsync(cacheTtlCounterEntryRemovalBatchEntryList, token);
         }

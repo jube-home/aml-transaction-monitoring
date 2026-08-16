@@ -11,11 +11,11 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using FluentMigrator;
-
 namespace Jube.Migrations.Baseline
 {
+    using System;
+    using FluentMigrator;
+
     [Migration(20220429124917)]
     public class AddCaseWorkflowTableIndex : Migration
     {
@@ -51,7 +51,7 @@ namespace Jube.Migrations.Baseline
                 Active = 1,
                 Version = 1,
                 EntityAnalysisModelId = 1,
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 CreatedUser = "Administrator",
                 EnableVisualisation = 1,
                 VisualisationRegistryId = 2

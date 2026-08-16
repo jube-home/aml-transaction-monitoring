@@ -11,11 +11,11 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using FluentMigrator;
-
 namespace Jube.Migrations.Baseline
 {
+    using System;
+    using FluentMigrator;
+
     [Migration(20220429124951)]
     public class AddEntityAnalysisModelTtlCounterTableIndex : Migration
     {
@@ -50,7 +50,7 @@ namespace Jube.Migrations.Baseline
                 Name = "TtlCounterAll",
                 EntityAnalysisModelId = 1,
                 Active = 1,
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 CreatedUser = "Administrator",
                 Version = 1,
                 TtlCounterInterval = "h",

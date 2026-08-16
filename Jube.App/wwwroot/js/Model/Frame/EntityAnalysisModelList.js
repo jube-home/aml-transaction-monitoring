@@ -71,7 +71,8 @@ function LoadList() {
                     return JSON.stringify({
                         id: options.models[0].id,
                         entityAnalysisModelListId: id,
-                        listValue: options.models[0].listValue
+                        listValue: options.models[0].listValue,
+                        deleteExpiryDate: options.models[0].deleteExpiryDate
                     });
                 } else if (operation === "destroy") {
                     return {
@@ -81,7 +82,8 @@ function LoadList() {
                 } else if (operation === "create") {
                     return JSON.stringify({
                         entityAnalysisModelListId: id,
-                        listValue: options.models[0].listValue
+                        listValue: options.models[0].listValue,
+                        deleteExpiryDate: options.models[0].deleteExpiryDate
                     });
                 }
             }
@@ -93,13 +95,14 @@ function LoadList() {
                 fields: {
                     id: {editable: false, nullable: true},
                     listValue: "listValue",
-                    entityAnalysisModelListId: "entityAnalysisModelListId"
+                    entityAnalysisModelListId: "entityAnalysisModelListId",
+                    deleteExpiryDate: {type: "date", defaultValue: null}
                 }
             }
         }
     });
 
-    $("#listView").kendoListView({
+    const listView = $("#listView").kendoListView({
         dataSource: dataSource,
         remove: function (e) {
             if (!confirm("Are you sure you want to delete?")) {
@@ -109,6 +112,8 @@ function LoadList() {
         template: kendo.template($("#template").html()),
         editTemplate: kendo.template($("#editTemplate").html())
     }).data("kendoListView");
+
+    WireListViewValidation(listView, dataSource);
 
     $("#ListValuesDiv").show();
 }

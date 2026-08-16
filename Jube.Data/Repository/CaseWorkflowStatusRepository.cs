@@ -55,22 +55,24 @@ namespace Jube.Data.Repository
         {
             return await dbContext.CaseWorkflowStatus
                 .Where(w => w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
+                            && (w.CaseWorkflow.EntityAnalysisModel.Deleted == 0 || w.CaseWorkflow.EntityAnalysisModel.Deleted == null)// Added
+                            && (w.CaseWorkflow.Deleted == 0 || w.CaseWorkflow.Deleted == null)
                             && w.Active == 1
                             && w.CaseWorkflowId == casesWorkflowId
                             && dbContext.CaseWorkflowStatusRole
                                 .Where(r => r.CaseWorkflowStatusGuid == w.Guid
                                             && (r.Deleted == 0 || r.Deleted == null))
                                 .Any(r => dbContext.RoleRegistry
-                                    .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                                    .Where(rr => rr.Guid == r.RoleRegistryGuid && (rr.Deleted == 0 || rr.Deleted == null))
                                     .Any(rr => dbContext.UserRegistry
-                                        .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                                        .Any(u => u.RoleRegistryGuid == rr.Guid && u.Name == userName)))
                             && dbContext.CaseWorkflowRole
                                 .Where(r => r.CaseWorkflowGuid == w.CaseWorkflow.Guid
                                             && (r.Deleted == 0 || r.Deleted == null))
                                 .Any(r => dbContext.RoleRegistry
-                                    .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                                    .Where(rr => rr.Guid == r.RoleRegistryGuid && (rr.Deleted == 0 || rr.Deleted == null))
                                     .Any(rr => dbContext.UserRegistry
-                                        .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                                        .Any(u => u.RoleRegistryGuid == rr.Guid && u.Name == userName)))
                             && (w.Deleted == 0 || w.Deleted == null)
                 ).ToListAsync(token);
         }
@@ -79,25 +81,27 @@ namespace Jube.Data.Repository
         {
             return await dbContext.CaseWorkflowStatus
                 .Where(w => w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
-                            && w.Active == 1
-                            && w.CaseWorkflow.Guid == casesWorkflowGuid
                             && (w.CaseWorkflow.EntityAnalysisModel.Deleted == 0 ||
                                 w.CaseWorkflow.EntityAnalysisModel.Deleted == null)
+                            && (w.CaseWorkflow.Deleted == 0 || w.CaseWorkflow.Deleted == null)
+                            && w.Active == 1
+                            && w.CaseWorkflow.Guid == casesWorkflowGuid
+                            && (w.Deleted == 0 || w.Deleted == null)
                             && dbContext.CaseWorkflowStatusRole
                                 .Where(r => r.CaseWorkflowStatusGuid == w.Guid
                                             && (r.Deleted == 0 || r.Deleted == null))
                                 .Any(r => dbContext.RoleRegistry
-                                    .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                                    .Where(rr => rr.Guid == r.RoleRegistryGuid && (rr.Deleted == 0 || rr.Deleted == null))
                                     .Any(rr => dbContext.UserRegistry
-                                        .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                                        .Any(u => u.RoleRegistryGuid == rr.Guid && u.Name == userName)))
                             && dbContext.CaseWorkflowRole
                                 .Where(r => r.CaseWorkflowGuid == w.CaseWorkflow.Guid
                                             && (r.Deleted == 0 || r.Deleted == null))
                                 .Any(r => dbContext.RoleRegistry
-                                    .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                                    .Where(rr => rr.Guid == r.RoleRegistryGuid && (rr.Deleted == 0 || rr.Deleted == null))
                                     .Any(rr => dbContext.UserRegistry
-                                        .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
-                            && (w.Deleted == 0 || w.Deleted == null)).ToListAsync(token);
+                                        .Any(u => u.RoleRegistryGuid == rr.Guid && u.Name == userName)))
+                ).ToListAsync(token);
         }
 
         public async Task<IEnumerable<CaseWorkflowStatus>> GetByCasesWorkflowIdOrderByIdAsync(int casesWorkflowId, CancellationToken token = default)
@@ -155,7 +159,7 @@ namespace Jube.Data.Repository
         {
             model.CreatedUser = userName ?? model.CreatedUser;
             model.Guid = model.Guid == Guid.Empty ? Guid.NewGuid() : model.Guid;
-            model.CreatedDate = DateTime.Now;
+            model.CreatedDate = DateTime.UtcNow;
             model.Version = 1;
             model.Id = await dbContext.InsertWithInt32IdentityAsync(model, token: token);
             return model;
@@ -179,7 +183,7 @@ namespace Jube.Data.Repository
             model.Version = existing.Version + 1;
             model.Guid = existing.Guid;
             model.CreatedUser = userName;
-            model.CreatedDate = DateTime.Now;
+            model.CreatedDate = DateTime.UtcNow;
 
             await dbContext.UpdateAsync(model, token: token);
 
@@ -204,7 +208,7 @@ namespace Jube.Data.Repository
                             && (d.Locked == 0 || d.Locked == null)
                             && (d.Deleted == 0 || d.Deleted == null))
                 .Set(s => s.Deleted, Convert.ToByte(1))
-                .Set(s => s.DeletedDate, DateTime.Now)
+                .Set(s => s.DeletedDate, DateTime.UtcNow)
                 .Set(s => s.DeletedUser, userName)
                 .UpdateAsync(token);
 
@@ -221,7 +225,7 @@ namespace Jube.Data.Repository
                             && (d.Deleted == 0 || d.Deleted == null))
                 .Set(s => s.ImportId, importId)
                 .Set(s => s.Deleted, Convert.ToByte(1))
-                .Set(s => s.DeletedDate, DateTime.Now)
+                .Set(s => s.DeletedDate, DateTime.UtcNow)
                 .UpdateAsync(token);
         }
     }

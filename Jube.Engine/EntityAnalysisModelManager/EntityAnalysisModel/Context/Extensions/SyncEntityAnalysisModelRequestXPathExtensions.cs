@@ -316,7 +316,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                                         $"Entity Start: Entity Model {key} and Response Payload {entityAnalysisModelRequestXPath.Id} set Cache value as {entityAnalysisModelRequestXPath.Cache}.");
                                 }
                             }
-                            
+
                             if (!record.CacheIndexId.HasValue)
                             {
                                 entityAnalysisModelRequestXPath.CacheIndexId = record.Id;
@@ -337,7 +337,28 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                                         $"Entity Start: Entity Model {key} and Response Payload {entityAnalysisModelRequestXPath.Id} set Cache Index Id value as {entityAnalysisModelRequestXPath.CacheIndexId}.");
                                 }
                             }
-                            
+
+                            if (!record.EncryptionId.HasValue)
+                            {
+                                entityAnalysisModelRequestXPath.EncryptionId = 0;
+
+                                if (context.Services.Log.IsDebugEnabled)
+                                {
+                                    context.Services.Log.Debug(
+                                        $"Entity Start: Entity Model {key} and Response Payload {entityAnalysisModelRequestXPath.Id} set DEFAULT Encryption Id value as {entityAnalysisModelRequestXPath.EncryptionId}.");
+                                }
+                            }
+                            else
+                            {
+                                entityAnalysisModelRequestXPath.EncryptionId = record.EncryptionId.Value;
+
+                                if (context.Services.Log.IsDebugEnabled)
+                                {
+                                    context.Services.Log.Debug(
+                                        $"Entity Start: Entity Model {key} and Response Payload {entityAnalysisModelRequestXPath.Id} set Encryption Id value as {entityAnalysisModelRequestXPath.EncryptionId}.");
+                                }
+                            }
+
                             if (!record.EnableSuppression.HasValue)
                             {
                                 entityAnalysisModelRequestXPath.EnableSuppression = false;
@@ -627,6 +648,10 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 context.Services.Log.Error($"SyncEntityAnalysisModelRequestXPathAsync: has produced an error {ex}");
+
+                await new EntityAnalysisModelSynchronisationErrorRepository(context.Services.DbContext)
+                    .InsertAsync(EntityAnalysisModelSynchronisationErrorRepository.EntityAnalysisModelSynchronisationErrorStepEnum.RequestXPath, ex.ToString(),
+                        context.Services.CancellationToken).ConfigureAwait(false);
             }
         }
     }

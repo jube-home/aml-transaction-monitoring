@@ -1,0 +1,122 @@
+scope: postgres-cluster
+name: patroni3
+
+restapi:
+  listen: 0.0.0.0:8008
+  connect_address: patroni3:8008
+
+etcd3:
+  hosts: etcd1:2379,etcd2:2379,etcd3:2379,etcd4:2379,etcd5:2379
+
+bootstrap:
+  post_bootstrap: /post_bootstrap.sh
+  dcs:
+    ttl: 30
+    loop_wait: 5
+    retry_timeout: 10
+    # 32MB - excludes a standby that's fallen too far behind from being an automatic-failover candidate at
+    # all, favouring "wait" or "pick a better candidate" over promoting something meaningfully behind.
+    maximum_lag_on_failover: 33554432
+    # Failover safety, not commit latency: Patroni always designates a synchronous standby and will only
+    # promote one it knows had fully received what the old primary had committed, so automatic failover
+    # cannot silently lose a transaction. Paired with synchronous_commit "off" below - COMMIT itself doesn't
+    # wait on the standby's network ack, only failover promotion does.
+    synchronous_mode: true
+    # The primary keeps accepting writes even if the synchronous standby is temporarily unreachable, rather
+    # than the whole cluster refusing writes because one designated standby is briefly down.
+    synchronous_mode_strict: false
+    postgresql:
+      # Lets a demoted former primary rejoin the cluster as a standby by rewinding just the diverged WAL,
+      # rather than requiring a full new basebackup - faster recovery after a failover.
+      use_pg_rewind: true
+      # Replication slots mean a standby that briefly disconnects (a restart, a network blip) doesn't need a
+      # full resync - the primary retains the WAL it needs. max_slot_wal_keep_size below caps how much a
+      # *permanently* dead standby's slot can hold before Postgres reclaims the space anyway.
+      use_slots: true
+      parameters:
+        wal_level: replica
+        max_wal_senders: 10
+        wal_sender_timeout: 60s
+        wal_receiver_timeout: 60s
+        wal_keep_size: 1GB
+        max_slot_wal_keep_size: 4GB
+        max_replication_slots: 10
+        max_wal_size: 2GB
+        min_wal_size: 512MB
+        # Spreads checkpoint I/O smoothly across most of the interval rather than bursting it.
+        checkpoint_timeout: 15min
+        checkpoint_completion_target: 0.9
+        shared_buffers: 1GB
+        maintenance_work_mem: 256MB
+        effective_cache_size: 3GB
+        work_mem: 16MB
+        # A client's COMMIT returns as soon as the local WAL write completes, without waiting for the
+        # synchronous standby's acknowledgement over the network - see synchronous_mode above for how
+        # failover safety is still guaranteed separately from this.
+        synchronous_commit: "off"
+        wal_buffers: 64MB
+        # Trades a small amount of CPU for meaningfully less WAL volume to write and ship.
+        wal_compression: lz4
+        wal_writer_delay: 200ms
+        # Briefly batches concurrent commits (microseconds) so their WAL flushes can be amortised together
+        # under load - a classic high-throughput OLTP tuning, appropriate for a continuous stream of
+        # transaction-monitoring writes rather than occasional writes.
+        commit_delay: 1000
+        commit_siblings: 10
+        autovacuum_max_workers: 3
+        autovacuum_naptime: 15s
+        autovacuum_vacuum_cost_delay: 2ms
+        # Tuned meaningfully more aggressive than Postgres's defaults (an order of magnitude larger) - a
+        # high-insert-rate workload accumulates dead tuples and stale statistics faster than the defaults
+        # assume, and letting either lag invites both bloat and poor query plans.
+        autovacuum_vacuum_scale_factor: 0.01
+        autovacuum_analyze_scale_factor: 0.005
+        # Continuously ships WAL to pgBackRest for point-in-time recovery; archive_timeout below bounds the
+        # maximum window of committed-but-not-yet-archived data if archiving somehow stalled.
+        archive_mode: "on"
+        archive_command: 'pgbackrest --lock-path=/var/lib/postgresql/tmp/pgbackrest-lock --stanza=postgres-cluster archive-push %p'
+        archive_timeout: 60s
+  initdb:
+    - encoding: UTF8
+    - data-checksums
+
+  pg_hba:
+    # Patroni inter-node replication — overlay subnet only
+    - host replication replicator 10.0.1.0/24 scram-sha-256
+    # Patroni rewind — needs superuser access between nodes
+    - host all postgres 10.0.1.0/24 scram-sha-256
+    # Application traffic — overlay subnet only
+    - host all all 10.0.1.0/24 scram-sha-256
+    # Local unix socket — Patroni itself needs this. Scoping every network rule above to 10.0.1.0/24 is
+    # defence in depth underneath "all traffic must flow through HAProxy", so a misconfiguration elsewhere
+    # still can't accept a Postgres connection from outside the cluster's own network. This "trust" line only
+    # ever applies to the socket inside a given container - unreachable without already having exec access to
+    # that specific container - which is what makes the password wipeout recovery procedure both possible and
+    # safe (see "Total Postgres Password Wipeout Recovery" in the deployment doc): the trust boundary it
+    # relies on is equivalent to already having host/container access, not a network-open door.
+    - local all all trust
+
+postgresql:
+  listen: 0.0.0.0:5432
+  connect_address: patroni3:5432
+  data_dir: /var/lib/postgresql/data/pgdata
+  pgpass: /home/postgres/.pgpass
+  authentication:
+    replication:
+      username: replicator
+    superuser:
+      username: postgres
+  parameters:
+    unix_socket_directories: '/var/run/postgresql'
+    listen_addresses: '*'
+    port: 5432
+    archive_mode: "on"
+    archive_command: 'pgbackrest --lock-path=/var/lib/postgresql/tmp/pgbackrest-lock --stanza=postgres-cluster archive-push %p'
+    archive_timeout: 60s
+  recovery_conf:
+    restore_command: 'pgbackrest --lock-path=/var/lib/postgresql/tmp/pgbackrest-lock --stanza=postgres-cluster archive-get %f "%p"'
+
+log:
+  level: WARNING
+  format: '%(asctime)s %(levelname)s: %(message)s'
+  max_queue_size: 1000

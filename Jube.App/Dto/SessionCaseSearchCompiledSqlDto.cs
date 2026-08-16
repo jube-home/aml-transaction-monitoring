@@ -11,10 +11,10 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-
 namespace Jube.App.Dto
 {
+    using System;
+
     public class SessionCaseSearchCompiledSqlDto
     {
         public int Id { get; set; }
@@ -27,9 +27,9 @@ namespace Jube.App.Dto
         public Guid CaseWorkflowGuid { get; set; }
         public Guid? CaseWorkflowFilterGuid { get; set; }
         public string CreatedUser { get; set; }
-        public DateTime CreatedDate { get; set; }
+        public DateTimeOffset? CreatedDate { get; set; }
         public byte Rebuild { get; set; }
-        public DateTime RebuildDate { get; set; }
+        public DateTimeOffset? RebuildDate { get; set; }
         public bool NotFound { get; set; }
     }
 }

@@ -11,11 +11,11 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using FluentMigrator;
-
 namespace Jube.Migrations.Baseline
 {
+    using System;
+    using FluentMigrator;
+
     [Migration(20220611123500)]
     public class AddCaseWorkflowActionTableIndex : Migration
     {
@@ -54,7 +54,7 @@ namespace Jube.Migrations.Baseline
                 Name = "Call Customer",
                 CaseWorkflowId = 1,
                 Active = 1,
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 CreatedUser = "Administrator",
                 Version = 1
             });
@@ -64,7 +64,7 @@ namespace Jube.Migrations.Baseline
                 Name = "Email Customer",
                 CaseWorkflowId = 1,
                 Active = 1,
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 CreatedUser = "Administrator",
                 Version = 1
             });
@@ -74,7 +74,7 @@ namespace Jube.Migrations.Baseline
                 Name = "Escalation",
                 CaseWorkflowId = 1,
                 Active = 1,
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 CreatedUser = "Administrator",
                 Version = 1
             });
@@ -84,7 +84,7 @@ namespace Jube.Migrations.Baseline
                 Name = "General Action",
                 CaseWorkflowId = 1,
                 Active = 1,
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 CreatedUser = "Administrator",
                 Version = 1
             });

@@ -6,9 +6,7 @@ parent: Models
 grand_parent: Configuration
 ---
 
-🚀 Speed up implementation with hands-on, face-to-face [training](https://www.jube.io/jube-training) from the developer.
-💬 Join the [Jube WhatsApp Public Support Group](https://whatsapp.com/channel/0029Vb7HM7yICVfihDH17H2P) to chat with the
-developer.
+🚀 Get to pre-production in weeks, not months, with private [training](https://www.jube.io/jube-training) direct from Jube's developer — real sovereignty, zero vendor lock-in.
 
 # Gateway Rules
 Gateway Rules are pre-filtering and sampling to reduce the transaction volume eligible for the processing by more intensive functions that perhaps follow.
@@ -19,9 +17,10 @@ Transactions will only proceed to the subsequent steps in model processing in th
 
 The page exists to create Gateway Rules, which are VB.net code fragments, to be compiled into the engine during synchronisation.  Gateway Rules accept data objects and tests the code fragment for equality,  expecting a return of True on match, or otherwise False.  The Builder and Coder the following data:
 
-| Value   | Description                                                                                       |
-|---------|---------------------------------------------------------------------------------------------------|
-| Payload | The fields created in the Request XPath page, Inline Functions and Inline Scripts (if allocated). |
+| Value      | Description                                                                                       |
+|------------|-----------------------------------------------------------------------------------------------------|
+| Payload    | The fields created in the Request XPath page, Inline Functions and Inline Scripts (if allocated). |
+| Dictionary | Values resolved from any configured Dictionary against the current Payload, accessed as `Dictionary.Name`. |
 
 To add a new Gateway rule,  click on the Model in the tree towards the left hand side:
 

@@ -37,7 +37,7 @@ namespace Jube.App.Dto
         public Guid CaseWorkflowStatusGuid { get; set; }
         public double ActivationSample { get; set; }
         public long ActivationCounter { get; set; }
-        public DateTime ActivationCounterDate { get; set; }
+        public DateTimeOffset? ActivationCounterDate { get; set; }
         public long EvaluationCounter { get; set; }
         public string ResponseElevationRedirect { get; set; }
         public byte ReviewStatusId { get; set; }
@@ -60,13 +60,14 @@ namespace Jube.App.Dto
         public bool EnableSuppression { get; set; }
         public Guid EntityAnalysisModelGuidTtlCounter { get; set; }
         public string ResponseElevationKey { get; set; }
+        public double Priority { get; set; }
         public int Id { get; set; }
         public string CreatedUser { get; set; }
-        public DateTime CreatedDate { get; set; }
+        public DateTimeOffset? CreatedDate { get; set; }
         public string UpdatedUser { get; set; }
-        public DateTime UpdatedDate { get; set; }
+        public DateTimeOffset? UpdatedDate { get; set; }
         public int Version { get; set; }
         public string DeletedUser { get; set; }
-        public DateTime DeletedDate { get; set; }
+        public DateTimeOffset? DeletedDate { get; set; }
     }
 }

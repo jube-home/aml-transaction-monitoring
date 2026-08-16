@@ -39,9 +39,14 @@ namespace Jube.Data.Query
                 .Where(w => w.SuppressionKey == suppressionKey && w.SuppressionKeyValue == suppressionKeyValue
                                                                && w.EntityAnalysisModelGuid == entityAnalysisModelGuid
                                                                && (w.Deleted == 0 || w.Deleted == null)
+                                                               && (w.DeleteExpiryDate == null || w.DeleteExpiryDate > DateTime.UtcNow)
                                                                && w.EntityAnalysisModel.TenantRegistryId ==
                                                                tenantRegistryId)
-                .Select(s => s.EntityAnalysisModelActivationRuleName).ToListAsync(token);
+                .Select(s => new
+                {
+                    s.EntityAnalysisModelActivationRuleName,
+                    s.DeleteExpiryDate
+                }).ToListAsync(token);
 
             var models = await
                 (from m in dbContext.EntityAnalysisModel
@@ -50,6 +55,7 @@ namespace Jube.Data.Query
                     join r in dbContext.EntityAnalysisModelActivationRule
                         on m.Id equals r.EntityAnalysisModelId
                     where x.EnableSuppression == 1
+                          && r.EnableSuppression == 1
                           && (x.Deleted == 0 || x.Deleted == null)
                           && (m.Deleted == 0 || m.Deleted == null)
                           && (r.Deleted == 0 || r.Deleted == null)
@@ -64,12 +70,19 @@ namespace Jube.Data.Query
                     }).Distinct().ToListAsync(token);
 
             var responses = models
-                .Select(model => new Dto
+                .Select(model =>
                 {
-                    Name = model.Name,
-                    EntityAnalysisModelGuid = model.Guid,
-                    EntityAnalysisModelActivationRuleSuppressionId = model.Id,
-                    Suppression = suppressions.Contains(model.Name)
+                    var suppression = suppressions.FirstOrDefault(s => s.EntityAnalysisModelActivationRuleName == model.Name);
+                    return new Dto
+                    {
+                        Name = model.Name,
+                        EntityAnalysisModelGuid = model.Guid,
+                        EntityAnalysisModelActivationRuleSuppressionId = model.Id,
+                        Suppression = suppression != null,
+                        DeleteExpiryDate = suppression?.DeleteExpiryDate == null
+                            ? null
+                            : new DateTimeOffset(DateTime.SpecifyKind(suppression.DeleteExpiryDate.Value, DateTimeKind.Utc))
+                    };
                 }).ToList();
 
             return responses;
@@ -81,6 +94,7 @@ namespace Jube.Data.Query
             public bool Suppression { get; set; }
             public int EntityAnalysisModelActivationRuleSuppressionId { get; set; }
             public Guid EntityAnalysisModelGuid { get; set; }
+            public DateTimeOffset? DeleteExpiryDate { get; set; }
         }
     }
 }

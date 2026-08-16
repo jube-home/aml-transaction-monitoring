@@ -11,11 +11,11 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using Jube.App.Dto.Interfaces;
-
 namespace Jube.App.Dto
 {
+    using System;
+    using Interfaces;
+
     public class EntityAnalysisModelsListDto : IUpdated
     {
         public Guid EntityAnalysisModelGuid { get; set; }
@@ -23,12 +23,12 @@ namespace Jube.App.Dto
         public bool Locked { get; set; }
         public bool Active { get; set; }
         public int Id { get; set; }
-        public DateTime CreatedDate { get; set; }
+        public DateTimeOffset? CreatedDate { get; set; }
         public string UpdatedUser { get; set; }
-        public DateTime UpdatedDate { get; set; }
+        public DateTimeOffset? UpdatedDate { get; set; }
         public string CreatedUser { get; set; }
         public int Version { get; set; }
         public string DeletedUser { get; set; }
-        public DateTime DeletedDate { get; set; }
+        public DateTimeOffset? DeletedDate { get; set; }
     }
 }

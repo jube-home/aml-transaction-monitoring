@@ -11,11 +11,11 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using FluentMigrator;
-
 namespace Jube.Migrations.Baseline
 {
+    using System;
+    using FluentMigrator;
+
     [Migration(20220429124930)]
     public class AddEntityAnalysisModelGatewayRuleTableIndex : Migration
     {
@@ -63,7 +63,7 @@ namespace Jube.Migrations.Baseline
                 BuilderRuleScript = builderRuleScript,
                 Json = json,
                 Name = "CurrencyAmountAllGreaterThan0.",
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 MaxResponseElevation = 10,
                 CoderRuleScript = "Return = True",
                 RuleScriptTypeId = 1,

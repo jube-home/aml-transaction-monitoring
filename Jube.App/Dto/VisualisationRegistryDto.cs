@@ -11,17 +11,17 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-
 namespace Jube.App.Dto
 {
+    using System;
+
     public class VisualisationRegistryDto
     {
         public int Id { get; set; }
         public string Description { get; set; }
         public bool Active { get; set; }
         public bool Locked { get; set; }
-        public DateTime CreatedDate { get; set; }
+        public DateTimeOffset? CreatedDate { get; set; }
         public string CreatedUser { get; set; }
         public string Name { get; set; }
         public bool ShowInDirectory { get; set; }

@@ -40,6 +40,9 @@ namespace Jube.Data.Query
             return await dbContext.CaseWorkflowXPath
                 .Where(w =>
                     w.CaseWorkflow.Guid == caseWorkflowGuid
+                    && (w.CaseWorkflow.Deleted == 0 || w.CaseWorkflow.Deleted == null)
+                    && (w.CaseWorkflow.EntityAnalysisModel.Deleted == 0 ||
+                        w.CaseWorkflow.EntityAnalysisModel.Deleted == null)
                     && w.Active == 1
                     && (w.Deleted == 0 || w.Deleted == null)
                     && w.CaseWorkflow.EntityAnalysisModel.TenantRegistryId == tenantRegistryId
@@ -47,16 +50,16 @@ namespace Jube.Data.Query
                         .Where(r => r.CaseWorkflowXPathGuid == w.Guid
                                     && (r.Deleted == 0 || r.Deleted == null))
                         .Any(r => dbContext.RoleRegistry
-                            .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                            .Where(rr => rr.Guid == r.RoleRegistryGuid && (rr.Deleted == 0 || rr.Deleted == null))
                             .Any(rr => dbContext.UserRegistry
-                                .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                                .Any(u => u.RoleRegistryGuid == rr.Guid && u.Name == userName)))
                     && dbContext.CaseWorkflowRole
                         .Where(r => r.CaseWorkflowGuid == w.CaseWorkflow.Guid
                                     && (r.Deleted == 0 || r.Deleted == null))
                         .Any(r => dbContext.RoleRegistry
-                            .Where(rr => rr.Guid == r.RoleRegistryGuid)
+                            .Where(rr => rr.Guid == r.RoleRegistryGuid && (rr.Deleted == 0 || rr.Deleted == null))
                             .Any(rr => dbContext.UserRegistry
-                                .Any(u => u.RoleRegistryId == rr.Id && u.Name == userName)))
+                                .Any(u => u.RoleRegistryGuid == rr.Guid && u.Name == userName)))
                 )
                 .Select(s => new Dto
                 {

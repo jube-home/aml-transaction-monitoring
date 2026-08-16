@@ -18,6 +18,7 @@ var validationFail = "There is invalid data in the form. Please check fields and
 var enableSuppression = $("#EnableSuppression").kendoSwitch();
 var visible = $("#Visible").kendoSwitch();
 var enableReprocessing = $("#EnableReprocessing").kendoSwitch();
+var resetButton = $("#Reset").kendoButton().hide();
 
 var enableCaseWorkflow = $("#EnableCaseWorkflow").kendoSwitch({
     change: function () {
@@ -124,9 +125,9 @@ const responseElevationBackColor = $('#ResponseElevationBackColor').kendoColorPi
 var responseElevation = $("#ResponseElevation").kendoNumericTextBox();
 
 var priority = $("#Priority").kendoNumericTextBox({
-    format: "n1",
-    decimals: 1,
-    step: 0.1
+    format: "n3",
+    decimals: 3,
+    step: 0.001
 });
 
 var bypassSuspendSample = $("#BypassSuspendSample").kendoSlider({
@@ -143,52 +144,58 @@ var bypassSuspendValue = $("#BypassSuspendValue").kendoNumericTextBox({
 });
 
 function ExpandCollapseCases() {
+    const $caseWorkflowTable = $("#CaseWorkflowTable");
     if ($('#EnableCaseWorkflow').prop('checked')) {
-        $("#CaseWorkflowTable").show();
+        $caseWorkflowTable.show();
     } else {
-        $("#CaseWorkflowTable").hide();
+        $caseWorkflowTable.hide();
     }
     ExpandCollapseCasesBypass();
 }
 
 function ExpandCollapseCasesBypass() {
+    const $bypassSuspendTable = $("#BypassSuspendTable");
     if ($('#EnableBypass').prop('checked')) {
-        $("#BypassSuspendTable").show();
+        $bypassSuspendTable.show();
     } else {
-        $("#BypassSuspendTable").hide();
+        $bypassSuspendTable.hide();
     }
 }
 
 function ExpandCollapseResponseElevation() {
+    const $responseElevationTable = $("#ResponseElevationTable");
     if ($('#EnableResponseElevation').prop('checked')) {
-        $("#ResponseElevationTable").show();
+        $responseElevationTable.show();
     } else {
-        $("#ResponseElevationTable").hide();
+        $responseElevationTable.hide();
     }
     ExpandCollapseResponseElevationActivationWatcher();
 }
 
 function ExpandCollapseResponseElevationActivationWatcher() {
+    const $sendToActivationWatcherTable = $("#SendToActivationWatcherTable");
     if ($('#SendToActivationWatcher').prop('checked')) {
-        $("#SendToActivationWatcherTable").show();
+        $sendToActivationWatcherTable.show();
     } else {
-        $("#SendToActivationWatcherTable").hide();
+        $sendToActivationWatcherTable.hide();
     }
 }
 
 function ExpandCollapseNotification() {
+    const $notificationTable = $("#NotificationTable");
     if ($('#EnableNotification').prop('checked')) {
-        $("#NotificationTable").show();
+        $notificationTable.show();
     } else {
-        $("#NotificationTable").hide();
+        $notificationTable.hide();
     }
 }
 
 function ExpandCollapseTTLCounter() {
+    const $tTLCounterTable = $("#TTLCounterTable");
     if ($('#EnableTTLCounter').prop('checked')) {
-        $("#TTLCounterTable").show();
+        $tTLCounterTable.show();
     } else {
-        $("#TTLCounterTable").hide();
+        $tTLCounterTable.hide();
     }
 }
 
@@ -400,7 +407,6 @@ function Ready() {
         ExpandCollapseResponseElevation();
         ExpandCollapseCasesBypass();
         ExpandCollapseCases();
-        OverrideSetTable();
     } else {
         $.get(endpoint + "/" + id,
             function (data) {
@@ -511,6 +517,7 @@ function Ready() {
 
                 $("#Counters").html(`${data.activationCounter} / ${data.evaluationCounter} (${percent}%)`);
                 $("#LastCounters").html(new Date(data.activationCounterDate));
+                resetButton.show();
 
                 ReadyExisting(data);
 
@@ -520,7 +527,6 @@ function Ready() {
                 ExpandCollapseResponseElevation();
                 ExpandCollapseCasesBypass();
                 ExpandCollapseCases();
-                OverrideSetTable();
             });
     }
 }
@@ -563,6 +569,25 @@ $(function () {
                 Update(endpoint, GetData(), "id", parentKeyName);
             } else {
                 $("#ErrorMessage").html(validationFail);
+            }
+        });
+});
+
+$(function () {
+    resetButton
+        .click(function () {
+            if (confirm('Are you sure you want to reset the counters?')) {
+                $.ajax({
+                    url: endpoint + "/" + id + "/Reset",
+                    type: "POST",
+                    success: function () {
+                        $("#Counters").html("0 / 0 (0%)");
+                        $("#LastCounters").html("");
+                    },
+                    error: function () {
+                        $("#ErrorMessage").html(processingFailed);
+                    }
+                });
             }
         });
 });

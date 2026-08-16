@@ -26,7 +26,9 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
     using Interfaces;
     using Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Models.Models;
     using Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Models.Models.EntityAnalysisModelInlineScript;
+    using Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Models.Models.EntityAnalysisModelInlineScript.EntityAnalysisModelInlineScriptPropertyAttribute;
     using Jube.Engine.EntityAnalysisModelManager.Helpers;
+    using Jube.Engine.Models;
     using Parser.Compiler;
 
     public static class SyncEntityAnalysisInlineScriptsExtensions
@@ -85,7 +87,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                     }
 
                     if ((!inlineScript.CreatedDate.HasValue ||
-                         !(Convert.ToDateTime(record.CreatedDate) > inlineScript.CreatedDate)) &&
+                         !(DateTime.SpecifyKind(Convert.ToDateTime(record.CreatedDate), DateTimeKind.Utc) > inlineScript.CreatedDate)) &&
                         inlineScript.CreatedDate.HasValue)
                     {
                         continue;
@@ -149,6 +151,9 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                         SetupInlineScriptDelegates(inlineScript);
                         SetupEvents(inlineScript);
 
+                        await repository.UpdateCompileStatusAsync(record.Id, true, null,
+                            context.Services.CancellationToken).ConfigureAwait(false);
+
                         if (context.Services.Log.IsDebugEnabled)
                         {
                             context.Services.Log.Debug(
@@ -211,8 +216,13 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                             SetupEvents(inlineScript);
 
                             context.EntityAnalysisModels.EntityAnalysisModelInlineScripts.Add(inlineScript);
-                            context.Caching.HashCacheAssembly.Add(inlineScriptHash, compile.CompiledAssembly);
+                            context.Caching.HashCacheAssembly.TryAdd(inlineScriptHash, compile.CompiledAssembly);
+                            context.Caching.HashCacheAssemblyMetadata.TryAdd(inlineScriptHash,
+                                new HashCacheAssemblyPayload(compile.CompiledAssemblyBytes, compile.CompiledAssemblyBinary, inlineScript.InlineScriptCode));
                             compiled = true;
+
+                            await repository.UpdateCompileStatusAsync(record.Id, true, null,
+                                context.Services.CancellationToken).ConfigureAwait(false);
 
                             if (context.Services.Log.IsDebugEnabled)
                             {
@@ -227,6 +237,9 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                                 context.Services.Log.Error(
                                     $"Entity Start: Could not compile inline script: {inlineScript.Id} with error: {error.ToString()}.");
                             }
+
+                            await repository.UpdateCompileStatusAsync(record.Id, false, compile.ErrorsSummary,
+                                context.Services.CancellationToken).ConfigureAwait(false);
 
                             compiled = false;
                         }
@@ -251,6 +264,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                                 Latitude = p.GetCustomAttribute<Latitude>() != null,
                                 Longitude = p.GetCustomAttribute<Longitude>() != null,
                                 ResponsePayload = p.GetCustomAttribute<ResponsePayload>() != null,
+                                CacheIndexId = p.GetCustomAttribute<CacheIndex>()?.Id,
                                 GetValueDelegate = CompileGetValueDelegate(p),
                                 PropertyType = Nullable.GetUnderlyingType(p.PropertyType) ?? p.PropertyType
                             };
@@ -298,6 +312,9 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                 {
                     context.Services.Log.Error(
                         $"Entity Start: Inline script with the id of {record.Id} has created an error {ex}.");
+
+                    await repository.UpdateCompileStatusAsync(record.Id, false, ex.Message,
+                        context.Services.CancellationToken).ConfigureAwait(false);
                 }
             }
 
@@ -308,7 +325,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
 
             return context;
         }
-        
+
         private static void SetupEvents(EntityAnalysisModelInlineScript inlineScript)
         {
 
@@ -351,7 +368,7 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
 
             inlineScript.EntityAnalysisModelInlineScriptEvents = shadowEntityAnalysisModelInlineScriptEventsToBeSorted.OrderBy(o => o.Priority).ToList();
         }
-        
+
         private static Func<object> CompileActivatorDelegate(EntityAnalysisModelInlineScript inlineScript)
         {
 
@@ -363,14 +380,14 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
             ).Compile();
         }
 
-        private static Func<object, Jube.Engine.EntityAnalysisModelInvoke.Context.Context, Task<bool>> CompileMethodDelegate(Type type, MethodInfo methodInfo)
+        private static Func<object, EntityAnalysisModelInvoke.Context.Context, Task<bool>> CompileMethodDelegate(Type type, MethodInfo methodInfo)
         {
             var instanceParam = Expression.Parameter(typeof(object), "instance");
-            var contextParam = Expression.Parameter(typeof(Jube.Engine.EntityAnalysisModelInvoke.Context.Context), "context");
+            var contextParam = Expression.Parameter(typeof(EntityAnalysisModelInvoke.Context.Context), "context");
             var castInstance = Expression.Convert(instanceParam, type);
             var methodCall = Expression.Call(castInstance, methodInfo, contextParam);
 
-            return Expression.Lambda<Func<object, Jube.Engine.EntityAnalysisModelInvoke.Context.Context, Task<bool>>>(
+            return Expression.Lambda<Func<object, EntityAnalysisModelInvoke.Context.Context, Task<bool>>>(
                 methodCall,
                 instanceParam,
                 contextParam
@@ -419,16 +436,21 @@ namespace Jube.Engine.EntityAnalysisModelManager.EntityAnalysisModel.Context.Ext
                 .Select(a => a.Location)
                 .ToArray();
 
+            var alwaysInclude = new[]
+            {
+                ResolveDependencyPath(context, "Jube.Cryptography.dll")
+            };
+
             if (String.IsNullOrEmpty(dependencies))
             {
-                return baseArray;
+                return baseArray.Concat(alwaysInclude).ToArray();
             }
 
             var additionalDeps = dependencies.Split(",".ToCharArray())
                 .Select(file => ResolveDependencyPath(context, file))
                 .ToArray();
 
-            return baseArray.Concat(additionalDeps).ToArray();
+            return baseArray.Concat(alwaysInclude).Concat(additionalDeps).ToArray();
         }
 
         private static string ResolveDependencyPath(Context context, string file)

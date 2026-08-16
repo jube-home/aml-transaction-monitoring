@@ -35,12 +35,12 @@ namespace Jube.App.Dto
         public string NotificationSubject { get; set; }
         public string NotificationBody { get; set; }
         public int Id { get; set; }
-        public DateTime CreatedDate { get; set; }
+        public DateTimeOffset? CreatedDate { get; set; }
         public string UpdatedUser { get; set; }
-        public DateTime UpdatedDate { get; set; }
+        public DateTimeOffset? UpdatedDate { get; set; }
         public string CreatedUser { get; set; }
         public int Version { get; set; }
         public string DeletedUser { get; set; }
-        public DateTime DeletedDate { get; set; }
+        public DateTimeOffset? DeletedDate { get; set; }
     }
 }

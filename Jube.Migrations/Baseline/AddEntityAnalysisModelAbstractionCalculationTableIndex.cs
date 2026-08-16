@@ -11,11 +11,11 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using FluentMigrator;
-
 namespace Jube.Migrations.Baseline
 {
+    using System;
+    using FluentMigrator;
+
     [Migration(20220429124924)]
     public class AddEntityAnalysisModelAbstractionCalculationTableIndex : Migration
     {
@@ -56,7 +56,7 @@ namespace Jube.Migrations.Baseline
                 Active = 1,
                 AbstractionCalculationTypeId = 5,
                 Version = 1,
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 CreatedUser = "Administrator",
                 ResponsePayload = 1,
                 FunctionScript = functionScript

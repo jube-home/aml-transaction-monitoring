@@ -68,7 +68,7 @@ namespace Jube.Data.Repository
         public async Task<CaseNote> InsertAsync(CaseNote model, CancellationToken token = default)
         {
             model.CreatedUser = userName;
-            model.CreatedDate = DateTime.Now;
+            model.CreatedDate = DateTime.UtcNow;
             model.Id = await dbContext.InsertWithInt32IdentityAsync(model, token: token).ConfigureAwait(false);
             return model;
         }

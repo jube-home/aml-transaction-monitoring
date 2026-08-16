@@ -55,7 +55,7 @@ namespace Jube.Data.Query
                             d.Id ==
                             query.Id)
                         .Set(s => s.StatusId, Convert.ToByte(1))
-                        .Set(s => s.UpdatedDate, DateTime.Now)
+                        .Set(s => s.UpdatedDate, DateTime.UtcNow)
                         .UpdateAsync(token).ConfigureAwait(false);
                 }
 

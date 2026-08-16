@@ -70,7 +70,7 @@ namespace Jube.Data.Repository
         public async Task<EntityAnalysisModelReprocessingRule> InsertAsync(EntityAnalysisModelReprocessingRule model, CancellationToken token = default)
         {
             model.CreatedUser = userName;
-            model.CreatedDate = DateTime.Now;
+            model.CreatedDate = DateTime.UtcNow;
             model.Version = 1;
             model.Id = await dbContext.InsertWithInt32IdentityAsync(model, token: token);
             return model;
@@ -91,7 +91,7 @@ namespace Jube.Data.Repository
 
             model.Version = existing.Version + 1;
             model.CreatedUser = userName;
-            model.CreatedDate = DateTime.Now;
+            model.CreatedDate = DateTime.UtcNow;
             model.Id = existing.Id;
 
             var id = await dbContext
@@ -112,7 +112,7 @@ namespace Jube.Data.Repository
                             && (d.Locked == 0 || d.Locked == null)
                             && (d.Deleted == 0 || d.Deleted == null))
                 .Set(s => s.Deleted, Convert.ToByte(1))
-                .Set(s => s.DeletedDate, DateTime.Now)
+                .Set(s => s.DeletedDate, DateTime.UtcNow)
                 .Set(s => s.DeletedUser, userName)
                 .UpdateAsync(token);
 

@@ -21,16 +21,29 @@ namespace Jube.Data.Repository
     using Context;
     using LinqToDB;
     using LinqToDB.Data;
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
     using Poco;
 
     public class ArchiveRepository(DbContext dbContext)
     {
-        public Task<Archive> GetByEntityAnalysisModelInstanceEntryGuidAndEntityAnalysisModelIdAsync(Guid guid,
-            int entityAnalysisModelId, CancellationToken token = default)
+        public async Task<Archive> UpdateTagsByEntityAnalysisModelInstanceEntryGuidAsync(
+            Guid entityAnalysisModelInstanceEntryGuid,
+            string[] tags,
+            CancellationToken token = default)
         {
-            return dbContext.Archive.FirstOrDefaultAsync(w =>
-                w.EntityAnalysisModelInstanceEntryGuid == guid
-                && w.EntityAnalysisModelId == entityAnalysisModelId, token);
+            var archive = await dbContext.Archive.FirstOrDefaultAsync(w =>
+                              w.EntityAnalysisModelInstanceEntryGuid == entityAnalysisModelInstanceEntryGuid, token)
+                          ?? throw new InvalidOperationException(
+                              $"No archive record found for {entityAnalysisModelInstanceEntryGuid}.");
+
+            var jObject = JObject.Parse(archive.Json);
+            jObject["tag"] = new JArray([..tags]);
+            archive.Json = jObject.ToString(Formatting.None);
+
+            await dbContext.UpdateAsync(archive, token: token);
+
+            return archive;
         }
 
         public async Task UpdateAsync(Archive model, CancellationToken token = default)
@@ -46,7 +59,7 @@ namespace Jube.Data.Repository
 
             model.Id = existing.Id;
             model.Version = existing.Version + 1;
-            model.CreatedDate = DateTime.Now;
+            model.CreatedDate = DateTime.UtcNow;
 
             await dbContext.UpdateAsync(existing, token: token);
 

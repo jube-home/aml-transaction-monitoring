@@ -52,9 +52,9 @@ namespace Jube.Migrations.Branches.GitHubIssueBranch6
                         continue;
                     }
 
-                    if (cacheService.RedisDatabase != null)
+                    if (cacheService.ResilientRedisResilientRedisDatabase != null)
                     {
-                        cacheService.RedisDatabase.KeyRename(key, newKey);
+                        cacheService.ResilientRedisResilientRedisDatabase.KeyRename(key, newKey);
                     }
                 }
                 catch (Exception ex)

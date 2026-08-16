@@ -14,12 +14,9 @@
 namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions
 {
     using System;
-    using System.Collections.Generic;
     using System.Diagnostics;
     using System.Threading.Tasks;
-    using Data.Poco;
-    using Newtonsoft.Json;
-    using EntityAnalysisModelHttpAdaptation=EntityAnalysisModelManager.EntityAnalysisModel.Models.Models.EntityAnalysisModelHttpAdaptation;
+    using HttpAdaptations;
 
     public static class HttpAdaptationsExtensions
     {
@@ -48,133 +45,37 @@ namespace Jube.Engine.EntityAnalysisModelInvoke.Context.Extensions
 
         private static async Task IterateAndProcessAsync(Context context)
         {
-            foreach (var (adaptationKey, modelAdaptation) in context.EntityAnalysisModel.Collections.EntityAnalysisModelAdaptations)
+            foreach (var modelAdaptation in context.EntityAnalysisModel.Collections.EntityAnalysisModelAdaptations)
             {
                 try
                 {
-                    var totalKeys = CalculateTotalKeys(context);
-                    var jsonForPlumber = new Dictionary<string, object>(totalKeys);
-
                     if (context.Log.IsInfoEnabled)
                     {
                         context.Log.Info(
-                            $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} is evaluating {adaptationKey} has finished allocating the Data collection for R Plumber POST.");
+                            $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} is evaluating {modelAdaptation.Id} is about to serialise the Entity Analysis Model Instance Entry Payload for the HTTP Adaptation POST.");
                     }
 
-                    AddAbstractions(context, jsonForPlumber, adaptationKey);
-                    AddTtlCounters(context, jsonForPlumber, adaptationKey);
-                    AddExtractionCalculations(context, jsonForPlumber, adaptationKey);
+                    var adaptation = await context.RecallHttpEndpointAsync(modelAdaptation,
+                        context.EntityAnalysisModel.JsonSerializationHelper.DefaultJsonSerializerSettingsSettings).ConfigureAwait(false);
 
-                    if (context.Log.IsInfoEnabled)
+                    context.EntityAnalysisModelInstanceEntryPayload.HttpAdaptation[modelAdaptation.Name] = adaptation;
+
+                    if (adaptation.IsSuppressed && context.Log.IsInfoEnabled)
                     {
                         context.Log.Info(
-                            $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} is evaluating {adaptationKey} has finished allocating and created JSON for R Plumber:{jsonForPlumber}.");
+                            $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} is evaluating {modelAdaptation.Id} and the HTTP Adaptation response for {modelAdaptation.Name} is suppressed (Error: {adaptation.Error ?? "none"}); Value will read as null to any rule evaluating it.");
                     }
 
-                    var adaptationSimulation = await RecallHttpEndpointAsync(context, modelAdaptation, jsonForPlumber, adaptationKey, context.EntityAnalysisModel.JsonSerializationHelper.DefaultJsonSerializerSettingsSettings).ConfigureAwait(false);
-
-                    context.EntityAnalysisModelInstanceEntryPayload.HttpAdaptation[modelAdaptation.Name] = adaptationSimulation;
-                    AddToArchiveKeysDictionary(context, modelAdaptation, adaptationSimulation, adaptationKey);
+                    context.ArchiveHttpAdaptation(modelAdaptation);
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
                     if (context.Log.IsInfoEnabled)
                     {
                         context.Log.Info(
-                            $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} is evaluating {adaptationKey} produced an error {ex}.");
+                            $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} is evaluating {modelAdaptation.Id} produced an error {ex}.");
                     }
                 }
-            }
-        }
-
-        private static int CalculateTotalKeys(Context context)
-        {
-            var totalKeys = context.EntityAnalysisModel.Collections.ModelAbstractionRules.Count + context.EntityAnalysisModel.Collections.ModelTtlCounters.Count + context.EntityAnalysisModel.Collections.EntityAnalysisModelAbstractionCalculations.Count;
-            return totalKeys;
-        }
-
-        private static void AddToArchiveKeysDictionary(Context context, EntityAnalysisModelHttpAdaptation modelAdaptation, double adaptationSimulation, int adaptationKey)
-        {
-            if (!modelAdaptation.ReportTable || context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelReprocessingRuleInstanceId.HasValue)
-            {
-                return;
-            }
-
-            context.EntityAnalysisModelInstanceEntryPayload.ArchiveKeys.Add(new ArchiveKey
-            {
-                ProcessingTypeId = 9,
-                Key = modelAdaptation.Name,
-                KeyValueFloat = adaptationSimulation,
-                EntityAnalysisModelInstanceEntryGuid = context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid
-            });
-
-            if (context.Log.IsInfoEnabled)
-            {
-                context.Log.Info(
-                    $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} is evaluating {adaptationKey} has called R Plumber with a response of {adaptationSimulation} and has added it to the SQL report payload.");
-            }
-        }
-
-        private static async Task<double> RecallHttpEndpointAsync(Context context,
-            EntityAnalysisModelHttpAdaptation modelAdaptation,
-            Dictionary<string, object> jsonForPlumber, int adaptationKey, JsonSerializerSettings jsonSerializerSettings)
-        {
-            var adaptationSimulation = await modelAdaptation.PostAsync(jsonForPlumber, jsonSerializerSettings, context.Log).ConfigureAwait(false);
-
-            if (context.Log.IsInfoEnabled)
-            {
-                context.Log.Info(
-                    $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} is evaluating {adaptationKey} has called R Plumber with a response of {adaptationSimulation}.");
-            }
-
-            return adaptationSimulation;
-        }
-
-        private static void AddExtractionCalculations(Context context, Dictionary<string, object> jsonForPlumber, int adaptationKey)
-        {
-            foreach (var kvp in context.EntityAnalysisModelInstanceEntryPayload.AbstractionCalculation)
-            {
-                if (!jsonForPlumber.ContainsKey(kvp.Key))
-                {
-                    jsonForPlumber[kvp.Key] = kvp.Value;
-                }
-            }
-
-            if (context.Log.IsInfoEnabled)
-            {
-                context.Log.Info(
-                    $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} is evaluating {adaptationKey} has finished allocating the Abstraction Calculations for R Plumber POST.");
-            }
-        }
-
-        private static void AddTtlCounters(Context context, Dictionary<string, object> jsonForPlumber, int adaptationKey)
-        {
-            foreach (var kvp in context.EntityAnalysisModelInstanceEntryPayload.TtlCounter)
-            {
-                if (!jsonForPlumber.ContainsKey(kvp.Key))
-                {
-                    jsonForPlumber[kvp.Key] = kvp.Value;
-                }
-            }
-
-            if (context.Log.IsInfoEnabled)
-            {
-                context.Log.Info(
-                    $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} is evaluating {adaptationKey} has finished allocating the TTL Counters for R Plumber POST.");
-            }
-        }
-
-        private static void AddAbstractions(Context context, Dictionary<string, object> jsonForPlumber, int adaptationKey)
-        {
-            foreach (var kvp in context.EntityAnalysisModelInstanceEntryPayload.Abstraction)
-            {
-                jsonForPlumber[kvp.Key] = kvp.Value;
-            }
-
-            if (context.Log.IsInfoEnabled)
-            {
-                context.Log.Info(
-                    $"Entity Invoke: GUID {context.EntityAnalysisModelInstanceEntryPayload.EntityAnalysisModelInstanceEntryGuid} and model {context.EntityAnalysisModel.Instance.Id} is evaluating {adaptationKey} has finished allocating the Abstractions for R Plumber POST.");
             }
         }
     }

@@ -11,11 +11,11 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using FluentMigrator;
-
 namespace Jube.Migrations.Baseline
 {
+    using System;
+    using FluentMigrator;
+
     [Migration(20220430125452)]
     public class AddUserInTenantTableIndex : Migration
     {
@@ -34,7 +34,7 @@ namespace Jube.Migrations.Baseline
             {
                 User = "Administrator",
                 TenantRegistryId = 1,
-                SwitchedDate = DateTime.Now,
+                SwitchedDate = DateTime.UtcNow,
                 SwitchedUser = "Administrator"
             });
         }

@@ -33,11 +33,6 @@
     <link rel="stylesheet" href="/kendo/styles/kendo.silver.min.css"/>
     <script src="/kendo/js/jquery.min.js"></script>
     <script src="/kendo/js/kendo.all.min.js"></script>
-    <script>
-        $(document).ready(function () {
-            $("#menu").kendoMenu();
-        });
-    </script>
     @await RenderSectionAsync("Scripts", false).ConfigureAwait(false)
 </head>
 <body>
@@ -370,6 +365,7 @@
                                 </ul>
                             </li>
                         }
+
                         @if (permissionValidation.Validate(new[]
                                  {
                                      26
@@ -377,6 +373,16 @@
                         {
                             <li>
                                 <a href='/Tree?Page=Reprocessing'>Reprocessing</a>
+                            </li>
+                        }
+
+                        @if (permissionValidation.Validate(new[]
+                                 {
+                                     40
+                                 }))
+                        {
+                            <li>
+                                <a href='/Model/EntityAnalysisModelSample'>Sample</a>
                             </li>
                         }
                     </ul>
@@ -457,7 +463,7 @@
                                     {
                                         <li>
                                             <a href='/Tree?Page=VisualisationRegistryDatasource'>Visualisations
-                                                Datasources</a>
+                                                Datasource</a>
                                         </li>
                                     }
                                 </ul>
@@ -542,6 +548,13 @@
                             </li>
                         }
 
+                        @if (landlord)
+                        {
+                            <li>
+                                <a href='/Administration/SanctionsLoader'>Sanctions Loader</a>
+                            </li>
+                        }
+
                         @if (permissionValidation.Validate(new[]
                                  {
                                      38
@@ -558,9 +571,13 @@
             <li>
                 Account
                 <ul>
-                    <li>
-                        <a href="/Account/ChangePassword">Change Password</a>
-                    </li>
+                    @if (!DynamicEnvironment.AppSettings("OAuthAuthentication").Equals("True", StringComparison.CurrentCultureIgnoreCase)
+                         && !DynamicEnvironment.AppSettings("NegotiateAuthentication").Equals("True", StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        <li>
+                            <a href="/Account/ChangePassword">Change Password</a>
+                        </li>
+                    }
 
                     <li>
                         <a href="/Account/Logout">Logout</a>
@@ -574,54 +591,120 @@
     @RenderBody()
 </main>
 <footer>
-    @if (landlord)
+    @if (User.Identity is { IsAuthenticated: true } && landlord)
     {
         <div class="tenantSwitcher">
             <input id="Tenant"/>
         </div>
     }
     <div class="footerCopyright">
-        Jube&#8482;. &copy; Jube Holdings Limited 2022 to present.
+        Jube&#8482;. &copy; Jube Holdings Limited 2022 to present. &nbsp;|&nbsp; Session expires in: <span
+            id="session-countdown">--:--</span>
     </div>
 </footer>
-<script>
-    @if (landlord)
-    {
-        <text>
-            $("#Tenant").kendoDropDownList({
-                dataTextField: 'name',
-                dataValueField: 'id',
-                select: onSelect,
-                dataBound: onDataBound,
-                dataSource: {
-                    type: 'json',
-                    transport: {
-                        read: '/api/TenantRegistry'
-                    }
+
+@if (User.Identity is { IsAuthenticated: true })
+{
+    <script>
+        @if (landlord)
+        {
+            <text>
+                function onDataBound() {
+                    $.get("/api/UserInTenant/GetCurrentTenantRegistry", function (data) {
+                        $("#Tenant").data("kendoDropDownList").value(data.tenantRegistryId);
+                    });
                 }
-            });
 
-            function onDataBound() {
-                $.get("/api/UserInTenant/GetCurrentTenantRegistry", function (data) {
-                    $("#Tenant").data("kendoDropDownList").value(data.tenantRegistryId);
+                function onSelect(e) {
+                    const dataItem = this.dataItem(e.item.index());
+                    $.ajax({
+                        url: '/api/UserInTenant',
+                        type: 'PUT',
+                        data: {
+                            tenantRegistryId: dataItem.id
+                        },
+                        success: function () {
+                            window.location.reload();
+                        }
+                    });
+                }
+
+                $(document).ready(function () {
+                    $("#Tenant").kendoDropDownList({
+                        dataTextField: 'name',
+                        dataValueField: 'id',
+                        filter: 'contains',
+                        select: onSelect,
+                        dataBound: onDataBound,
+                        dataSource: {
+                            serverFiltering: true,
+                            transport: {
+                                read: '/api/TenantRegistry/ByFilter'
+                            }
+                        }
+                    });
                 });
+            </text>
+        }
+
+        $(document).ready(function () {
+            $("#menu").kendoMenu();
+        });
+
+        (function () {
+            const pollInterval = 10_000;
+            const RedirectLogoutCleanly = '/Account/Logout';
+
+            function getCookie(name) {
+                const match = document.cookie.match(
+                    new RegExp('(?:^|; )' + name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '=([^;]*)')
+                );
+                return match ? decodeURIComponent(match[1]) : null;
             }
 
-            function onSelect(e) {
-                const dataItem = this.dataItem(e.item.index());
-                $.ajax({
-                    url: '/api/UserInTenant',
-                    type: 'PUT',
-                    data: {
-                        tenantRegistryId: dataItem.id
-                    },
-                    success: function () {
-                        window.location.reload();
-                    }
-                });
+            function updateCountdown(msRemaining) {
+                const countdown = document.getElementById('session-countdown');
+                if (!countdown) return;
+                if (msRemaining <= 0) {
+                    countdown.textContent = '00:00';
+                    return;
+                }
+                const totalSeconds = Math.floor(msRemaining / 1000);
+                const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+                const seconds = (totalSeconds % 60).toString().padStart(2, '0');
+                countdown.textContent = minutes + ':' + seconds;
             }
-        </text>
-    }
-</script>
+
+            let expiresAt = null;
+
+            function checkExpiry() {
+                const raw = getCookie('authentication-expiry');
+
+                if (!raw) {
+                    window.location.href = RedirectLogoutCleanly;
+                    return;
+                }
+
+                expiresAt = new Date(raw).getTime();
+                const msRemaining = expiresAt - Date.now();
+
+                updateCountdown(msRemaining);
+
+                if (msRemaining <= 1000) {
+                    window.location.href = RedirectLogoutCleanly;
+                }
+            }
+
+            setInterval(checkExpiry, pollInterval);
+            checkExpiry();
+
+            setInterval(function () {
+                if (expiresAt !== null) {
+                    updateCountdown(expiresAt - Date.now());
+                }
+            }, 1_000);
+        })();
+    </script>
+}
 </body>
 </html>
