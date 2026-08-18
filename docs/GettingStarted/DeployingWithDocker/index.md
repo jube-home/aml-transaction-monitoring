@@ -54,7 +54,7 @@ The export-then-`docker compose up` pattern above passes secrets as plain shell 
 which is fine for local evaluation but not how a real deployment should hand over credentials.
 `Jube.Cluster/secrets-init.sh`
 now provides this for the clustered Docker Swarm deployment - see [Creating
-Secrets](../DeployingWithJubeCluster/index.html#creating-secrets) - generating random credentials and an RSA keypair
+Secrets](../DeployingWithJubeCluster/DeploymentRunbook/index.html#creating-secrets) - generating random credentials and an RSA keypair
 and loading them into Swarm's own secret store, resolved at container start via Jube's own `SecretsPath`/`[@Key@]`
 Docker Secrets tokenisation already documented in
 [Environment Variables](../../Concepts/EnvironmentVariables/index.html). That script relies on `docker secret
