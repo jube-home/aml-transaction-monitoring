@@ -130,8 +130,7 @@ namespace Jube.App.Controllers.Session
             model.SelectSqlSearch = "select " + String.Join(",", columnsSelect);
 
             model.WhereSql = "from \"Case\",\"CaseWorkflow\",\"EntityAnalysisModel\",\"TenantRegistry\"," +
-                             "\"CaseWorkflowStatus\",\"UserInTenant\",\"CaseWorkflowRole\",\"CaseWorkflowStatusRole\"," +
-                             "(select \"RoleRegistry\".\"Guid\" from \"RoleRegistry\",\"UserRegistry\" where \"RoleRegistry\".\"Guid\" = \"UserRegistry\".\"RoleRegistryGuid\" and (\"RoleRegistry\".\"Deleted\" = 0 or \"RoleRegistry\".\"Deleted\" IS NULL) and \"UserRegistry\".\"Name\" = (@" + positionUser + ")) \"RoleRegistry\"" +
+                             "\"CaseWorkflowStatus\",\"UserInTenant\"" +
                              " where \"EntityAnalysisModel\".\"Id\" = \"CaseWorkflow\".\"EntityAnalysisModelId\"" +
                              " and \"EntityAnalysisModel\".\"TenantRegistryId\" = \"TenantRegistry\".\"Id\"" +
                              " and \"UserInTenant\".\"TenantRegistryId\" = \"TenantRegistry\".\"Id\"" +
@@ -140,8 +139,22 @@ namespace Jube.App.Controllers.Session
                              " and (\"CaseWorkflowStatus\".\"Deleted\" = 0" +
                              " or \"CaseWorkflowStatus\".\"Deleted\" IS null) ) and " + filterRule.Sql +
                              " and (\"CaseWorkflow\".\"Guid\" = uuid(@" + positionCaseWorkflowGuid + ") " +
-                             " and (\"CaseWorkflowRole\".\"CaseWorkflowGuid\" = \"CaseWorkflow\".\"Guid\" and \"CaseWorkflowRole\".\"RoleRegistryGuid\" = \"RoleRegistry\".\"Guid\" and (\"CaseWorkflowRole\".\"Deleted\" = 0 or \"CaseWorkflowRole\".\"Deleted\" IS NULL)) " +
-                             " and (\"CaseWorkflowStatusRole\".\"CaseWorkflowStatusGuid\" = \"CaseWorkflowStatus\".\"Guid\" and \"CaseWorkflowStatusRole\".\"RoleRegistryGuid\" = \"RoleRegistry\".\"Guid\" and (\"CaseWorkflowStatusRole\".\"Deleted\" = 0 or \"CaseWorkflowStatusRole\".\"Deleted\" IS NULL)) " +
+                             " and exists (select 1 from \"CaseWorkflowRole\",\"RoleRegistry\",\"UserRegistry\"" +
+                             " where \"CaseWorkflowRole\".\"CaseWorkflowGuid\" = \"CaseWorkflow\".\"Guid\"" +
+                             " and \"CaseWorkflowRole\".\"RoleRegistryGuid\" = \"RoleRegistry\".\"Guid\"" +
+                             " and (\"CaseWorkflowRole\".\"Deleted\" = 0 or \"CaseWorkflowRole\".\"Deleted\" IS NULL)" +
+                             " and \"RoleRegistry\".\"Guid\" = \"UserRegistry\".\"RoleRegistryGuid\"" +
+                             " and \"RoleRegistry\".\"TenantRegistryId\" = \"TenantRegistry\".\"Id\"" +
+                             " and (\"RoleRegistry\".\"Deleted\" = 0 or \"RoleRegistry\".\"Deleted\" IS NULL)" +
+                             " and \"UserRegistry\".\"Name\" = (@" + positionUser + ")) " +
+                             " and exists (select 1 from \"CaseWorkflowStatusRole\",\"RoleRegistry\",\"UserRegistry\"" +
+                             " where \"CaseWorkflowStatusRole\".\"CaseWorkflowStatusGuid\" = \"CaseWorkflowStatus\".\"Guid\"" +
+                             " and \"CaseWorkflowStatusRole\".\"RoleRegistryGuid\" = \"RoleRegistry\".\"Guid\"" +
+                             " and (\"CaseWorkflowStatusRole\".\"Deleted\" = 0 or \"CaseWorkflowStatusRole\".\"Deleted\" IS NULL)" +
+                             " and \"RoleRegistry\".\"Guid\" = \"UserRegistry\".\"RoleRegistryGuid\"" +
+                             " and \"RoleRegistry\".\"TenantRegistryId\" = \"TenantRegistry\".\"Id\"" +
+                             " and (\"RoleRegistry\".\"Deleted\" = 0 or \"RoleRegistry\".\"Deleted\" IS NULL)" +
+                             " and \"UserRegistry\".\"Name\" = (@" + positionUser + ")) " +
                              " and (\"CaseWorkflow\".\"Deleted\" = 0 or \"CaseWorkflow\".\"Deleted\" is null))" +
                              " and \"UserInTenant\".\"User\" = (@" + positionUser + ")";
 
