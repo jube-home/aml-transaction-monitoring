@@ -26,12 +26,12 @@ namespace Jube.Cryptography
 
         public JempAesEncryption(string password, string salt, bool legacyFallbackEnabled = false)
         {
-            using var keyDerivationFunction =
-                new Rfc2898DeriveBytes(password, Encoding.UTF8.GetBytes(salt), 100_000, HashAlgorithmName.SHA256);
+            var saltBytes = Encoding.UTF8.GetBytes(salt);
+            var derived = Rfc2898DeriveBytes.Pbkdf2(password, saltBytes, 100_000, HashAlgorithmName.SHA256, 48);
 
-            key = keyDerivationFunction.GetBytes(32);// 256-bit key
-            passwordDerivedLegacyIv = keyDerivationFunction.GetBytes(16);
-            this.salt = Encoding.UTF8.GetBytes(salt);
+            key = derived[..32];
+            passwordDerivedLegacyIv = derived[32..48];
+            this.salt = saltBytes;
             this.legacyFallbackEnabled = legacyFallbackEnabled;
         }
 

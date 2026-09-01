@@ -156,7 +156,7 @@ namespace Jube.Cache.Redis
                     return;
                 }
 
-                var guid = Guid.Parse(value);
+                var guid = Guid.Parse(value.ToString());
                 Callbacks.TryRemove(guid, out _);
             }
             catch (Exception ex)

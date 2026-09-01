@@ -11,69 +11,43 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-namespace Jube.Cryptography
+namespace Jube.Cryptography;
+
+using System.Security.Cryptography;
+using System.Text;
+
+public enum IvMode
 {
-    using System.Security.Cryptography;
-    using System.Text;
+    Random,
+    Deterministic
+}
 
-    public enum IvMode
+public class AesEncryption(string key, IvMode ivMode = IvMode.Random)
+{
+    public IvMode IvMode { get; } = ivMode;
+
+    private readonly byte[] key =
+        Rfc2898DeriveBytes.Pbkdf2(key, Encoding.UTF8.GetBytes(key), 100_000, HashAlgorithmName.SHA256, 32);
+
+    public string Encrypt(string plainText, IvMode encryptIvMode)
     {
-        Random,
-        Deterministic
-    }
+        using var aes = Aes.Create();
+        aes.Key = key;
 
-    public class AesEncryption
-    {
-        private readonly IvMode ivMode;
-        private readonly byte[] key;
-
-        public AesEncryption(string key, IvMode ivMode = IvMode.Random)
+        if (encryptIvMode == IvMode.Deterministic)
         {
-            using var kdf = new Rfc2898DeriveBytes(key, Encoding.UTF8.GetBytes(key), 100_000, HashAlgorithmName.SHA256);
-            this.key = kdf.GetBytes(32);
-            this.ivMode = ivMode;
+            aes.IV = SHA256.HashData(Encoding.UTF8.GetBytes(plainText))[..16];
         }
 
-        public string Encrypt(string plainText)
+        using var ms = new MemoryStream();
+        ms.Write(aes.IV);
+
+        using (var cs = new CryptoStream(ms, aes.CreateEncryptor(), CryptoStreamMode.Write))
+        using (var sw = new StreamWriter(cs))
         {
-            return Encrypt(plainText, ivMode);
+            sw.Write(plainText);
         }
 
-        public string Encrypt(string plainText, IvMode encryptIvMode)
-        {
-            using var aes = Aes.Create();
-            aes.Key = key;
-
-            if (encryptIvMode == IvMode.Deterministic)
-            {
-                aes.IV = SHA256.HashData(Encoding.UTF8.GetBytes(plainText))[..16];
-            }
-
-            using var ms = new MemoryStream();
-            ms.Write(aes.IV);
-
-            using (var cs = new CryptoStream(ms, aes.CreateEncryptor(), CryptoStreamMode.Write))
-            using (var sw = new StreamWriter(cs))
-            {
-                sw.Write(plainText);
-            }
-
-            return Convert.ToBase64String(ms.ToArray());
-        }
-
-        public string Decrypt(string base64CipherText)
-        {
-            var buffer = Convert.FromBase64String(base64CipherText);
-
-            using var aes = Aes.Create();
-            aes.Key = key;
-            aes.IV = buffer[..16];
-
-            using var ms = new MemoryStream(buffer, 16, buffer.Length - 16);
-            using var cs = new CryptoStream(ms, aes.CreateDecryptor(), CryptoStreamMode.Read);
-            using var sr = new StreamReader(cs);
-
-            return sr.ReadToEnd();
-        }
+        return Convert.ToBase64String(ms.ToArray());
     }
 }

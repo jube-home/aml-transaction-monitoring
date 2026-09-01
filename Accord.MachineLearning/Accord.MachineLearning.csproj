@@ -3,7 +3,7 @@
     <PropertyGroup>
         <AssemblyName>Accord.MachineLearning</AssemblyName>
         <RootNamespace>Accord.MachineLearning</RootNamespace>
-        <TargetFramework>net9.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     </PropertyGroup>
 
