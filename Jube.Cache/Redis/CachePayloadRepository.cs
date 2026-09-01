@@ -206,7 +206,7 @@ namespace Jube.Cache.Redis
                         bulkInsertEntries.Add(new CachePayloadRemovalBatchEntry
                         {
                             CachePayloadRemovalBatchId = cachePayloadRemovalBatch.Id,
-                            EntityAnalysisModelGuid = Guid.Parse(expiredSortedSetEntry.Element),
+                            EntityAnalysisModelGuid = Guid.Parse(expiredSortedSetEntry.Element.ToString()),
                             ReferenceDate = ((long)expiredSortedSetEntry.Score).FromUnixTimeMilliSeconds()
                         });
 

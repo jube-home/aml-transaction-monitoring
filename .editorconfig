@@ -1,0 +1,19 @@
+root = true
+
+[*.cs]
+dotnet_naming_style.camel_case.capitalization  = camel_case
+dotnet_naming_style.pascal_case.capitalization = pascal_case
+dotnet_naming_symbols.constant_fields.applicable_kinds       = field
+dotnet_naming_symbols.constant_fields.required_modifiers     = const
+dotnet_naming_rule.constants_are_pascal_case.symbols         = constant_fields
+dotnet_naming_rule.constants_are_pascal_case.style           = pascal_case
+dotnet_naming_rule.constants_are_pascal_case.severity        = suggestion
+dotnet_naming_symbols.non_public_fields.applicable_kinds            = field
+dotnet_naming_symbols.non_public_fields.applicable_accessibilities  = private, internal, private_protected
+dotnet_naming_rule.non_public_fields_are_camel_case.symbols         = non_public_fields
+dotnet_naming_rule.non_public_fields_are_camel_case.style           = camel_case
+dotnet_naming_rule.non_public_fields_are_camel_case.severity        = suggestion
+
+[Accord.*/**.cs]
+dotnet_naming_rule.constants_are_pascal_case.severity        = none
+dotnet_naming_rule.non_public_fields_are_camel_case.severity = none

@@ -42,7 +42,6 @@ namespace Jube.App
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.HttpOverrides;
     using Microsoft.AspNetCore.Identity;
-    using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
     using Microsoft.IdentityModel.Protocols.OpenIdConnect;
@@ -60,13 +59,6 @@ namespace Jube.App
 
     public class Startup
     {
-        public Startup(IConfiguration configuration)
-        {
-            Configuration = configuration;
-        }
-
-        private IConfiguration Configuration { get; }
-
         public void ConfigureServices(IServiceCollection services)
         {
             var cancellationTokenProvider = AddSingletonForCancellationToken(services);
@@ -720,7 +712,7 @@ namespace Jube.App
                         ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
                     };
 
-                    startupOptions.KnownNetworks.Clear();
+                    startupOptions.KnownIPNetworks.Clear();
                     startupOptions.KnownProxies.Clear();
 
                     app.UseForwardedHeaders(startupOptions);

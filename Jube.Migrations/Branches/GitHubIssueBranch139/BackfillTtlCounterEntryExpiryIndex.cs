@@ -66,7 +66,7 @@ namespace Jube.Migrations.Branches.GitHubIssueBranch139
 
             foreach (var hashEntry in cacheService.ResilientRedisResilientRedisDatabase.HashScan(redisKey))
             {
-                if (!Int64.TryParse(hashEntry.Name, out var timestamp))
+                if (!long.TryParse(hashEntry.Name.ToString(), out var timestamp))
                 {
                     continue;
                 }

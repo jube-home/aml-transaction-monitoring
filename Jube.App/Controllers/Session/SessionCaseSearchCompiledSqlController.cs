@@ -15,6 +15,7 @@ namespace Jube.App.Controllers.Session
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Net;
     using System.Threading;
     using System.Threading.Tasks;
@@ -28,7 +29,6 @@ namespace Jube.App.Controllers.Session
     using Dto;
     using Dto.Mapping;
     using DynamicEnvironment;
-    using FluentMigrator.Runner;
     using FluentValidation;
     using FluentValidation.Results;
     using log4net;
@@ -120,7 +120,7 @@ namespace Jube.App.Controllers.Session
 
                 var tokens = JsonConvert.DeserializeObject<List<object>>(model.FilterTokens);
 
-                var sw = new StopWatch();
+                var sw = new Stopwatch();
                 sw.Start();
 
                 var value = await postgres.ExecuteByOrderedParametersAsync(model.SelectSqlSearch
@@ -134,7 +134,7 @@ namespace Jube.App.Controllers.Session
                 {
                     SessionCaseSearchCompiledSqlId = model.Id,
                     Records = value.Count,
-                    ResponseTime = sw.ElapsedTime().Milliseconds
+                    ResponseTime = sw.Elapsed.Milliseconds
                 };
 
                 var sessionCaseSearchCompiledSqlExecutionRepository =

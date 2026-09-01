@@ -15,11 +15,11 @@ namespace Jube.Data.Query.CaseQuery
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Threading;
     using System.Threading.Tasks;
     using Context;
     using Dto;
-    using FluentMigrator.Runner;
     using log4net;
     using Newtonsoft.Json;
     using Poco;
@@ -59,7 +59,7 @@ namespace Jube.Data.Query.CaseQuery
 
             var tokens = JsonConvert.DeserializeObject<List<object>>(modelCompiled.FilterTokens);
 
-            var sw = new StopWatch();
+            var sw = new Stopwatch();
             sw.Start();
 
             using var postgres = new Postgres(reportConnectionString, log, parserAssertSelectOnly);
@@ -80,7 +80,7 @@ namespace Jube.Data.Query.CaseQuery
                 {
                     SessionCaseSearchCompiledSqlId = modelCompiled.Id,
                     Records = 1,
-                    ResponseTime = sw.ElapsedTime().Milliseconds
+                    ResponseTime = sw.Elapsed.Milliseconds
                 };
 
                 await sessionCaseSearchCompiledSqlExecutionRepository.InsertAsync(modelInsertNotFound, token);
@@ -97,7 +97,7 @@ namespace Jube.Data.Query.CaseQuery
             {
                 SessionCaseSearchCompiledSqlId = modelCompiled.Id,
                 Records = 1,
-                ResponseTime = sw.ElapsedTime().Milliseconds
+                ResponseTime = sw.Elapsed.Milliseconds
             };
 
             await sessionCaseSearchCompiledSqlExecutionRepository.InsertAsync(modelInsertFound, token);

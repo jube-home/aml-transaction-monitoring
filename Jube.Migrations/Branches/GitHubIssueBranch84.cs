@@ -228,7 +228,7 @@ namespace Jube.Migrations.Branches
         private void RenameHashKeyForCorrectGuidFormat(HashEntry hashEntry, string redisKeyPayloadCount)
         {
 
-            var guid = Guid.Parse(hashEntry.Name);
+            var guid = Guid.Parse(hashEntry.Name.ToString());
             cacheService.ResilientRedisResilientRedisDatabase?.HashSet(redisKeyPayloadCount, guid.ToString("N"), hashEntry.Value);
             cacheService.ResilientRedisResilientRedisDatabase?.HashDelete(redisKeyPayloadCount, hashEntry.Name);
         }
