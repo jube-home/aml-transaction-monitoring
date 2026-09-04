@@ -15,8 +15,8 @@ namespace Jube.App.Code
 {
     using System;
     using DynamicEnvironment;
+    using Jube.Dto.Authentication;
     using Microsoft.AspNetCore.Http;
-    using Service.Dto.Authentication;
 
     public static class AuthenticationCookieIssuer
     {

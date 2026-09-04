@@ -11,6 +11,8 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
+using Jube.Service.Reactivity.Interfaces;
+
 namespace Jube.App
 {
     using System;
@@ -23,17 +25,19 @@ namespace Jube.App
     using Cache;
     using Cache.Redis.Callback;
     using Code;
-    using Code.Jube.WebApp.Code;
+    using Code.ServiceChange;
     using Code.signalr;
     using Code.WatcherDispatch;
     using Data.Context;
     using Data.Poco;
     using Data.Repository;
     using DynamicEnvironment;
+    using Endpoints;
     using Engine;
     using Engine.Helpers;
     using FluentMigrator.Runner;
     using HttpHeaders;
+    using Jube.Service.Reactivity;
     using log4net;
     using Microsoft.AspNetCore.Authentication.OpenIdConnect;
     using Microsoft.AspNetCore.Builder;
@@ -52,6 +56,9 @@ namespace Jube.App
     using Migrations.Baseline;
     using Newtonsoft.Json.Serialization;
     using Npgsql;
+    using OpenTelemetry.Metrics;
+    using OpenTelemetry.Resources;
+    using OpenTelemetry.Trace;
     using RabbitMQ.Client;
     using StackExchange.Redis;
     using TaskCancellation;
@@ -81,15 +88,58 @@ namespace Jube.App
             AddSingletonForEngine(services, dynamicEnvironment, log, rabbitMqConnection, cacheService, contractResolver, taskCoordinator);
             AddSingletonForIdentity(services);
             ConfigureAuthentication(services, dynamicEnvironment, log);
-
-
-
             AddGenericServicesRequired(services, dynamicEnvironment);
             AddDataProtection(services, dynamicEnvironment);
             AddSwagger(services);
             AddSingletonRelayToBeInstantiatedInConfigureServices(services, dynamicEnvironment);
+            AddSingletonForServiceChangeBus(services, dynamicEnvironment, cacheService);
+            AddOpenTelemetry(services, dynamicEnvironment);
             GetHttpHeadersFromDatabaseAndCreateSingleton(services, dynamicEnvironment, log, taskCoordinator);
             WriteWelcomeMessageToConsole();
+        }
+
+        private static void AddSingletonForServiceChangeBus(IServiceCollection services,
+            DynamicEnvironment dynamicEnvironment, CacheService cacheService)
+        {
+            if (!dynamicEnvironment.AppSettings("EnableServiceChangeStream").Equals("True", StringComparison.OrdinalIgnoreCase))
+            {
+                services.AddSingleton<IServiceChangeBus, NullServiceChangeBus>();
+                return;
+            }
+
+            if (dynamicEnvironment.AppSettings("RedisBackplane").Equals("True", StringComparison.OrdinalIgnoreCase))
+            {
+                services.AddSingleton<IServiceChangeBus>(new RedisServiceChangeBus(cacheService.ConnectionMultiplexer));
+            }
+            else
+            {
+                services.AddSingleton<IServiceChangeBus, InProcessServiceChangeBus>();
+            }
+
+            services.AddSingleton<ServiceChangeRelay>();
+        }
+
+        private static void AddOpenTelemetry(IServiceCollection services, DynamicEnvironment dynamicEnvironment)
+        {
+            if (!dynamicEnvironment.AppSettings("EnableOpenTelemetry").Equals("True", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            services.AddOpenTelemetry()
+                .ConfigureResource(r => r.AddService(serviceName: "Jube.App",
+                    serviceVersion: typeof(Startup).Assembly.GetName().Version?.ToString()))
+                .WithTracing(t => t
+                    .AddSource(Service.Observability.ServiceDiagnostics.Name)
+                    .AddAspNetCoreInstrumentation(o => o.Filter = ctx =>
+                        !ctx.Request.Path.StartsWithSegments("/api/invoke", StringComparison.OrdinalIgnoreCase))
+                    .AddHttpClientInstrumentation()
+                    .AddOtlpExporter())
+                .WithMetrics(m => m
+                    .AddMeter(Service.Observability.ServiceDiagnostics.Name)
+                    .AddAspNetCoreInstrumentation()
+                    .AddRuntimeInstrumentation()
+                    .AddOtlpExporter());
         }
 
         private static void GetHttpHeadersFromDatabaseAndCreateSingleton(IServiceCollection services, DynamicEnvironment dynamicEnvironment, ILog log, TaskCoordinator taskCoordinator)
@@ -164,6 +214,7 @@ namespace Jube.App
         {
 
             services.AddAuthorization();
+            services.AddLocalization();
             services.AddRazorPages();
             services.AddHttpContextAccessor();
             services.AddControllers().AddNewtonsoftJson(options =>
@@ -745,6 +796,11 @@ namespace Jube.App
 
                 app.UseRouting();
 
+                app.UseRequestLocalization(new RequestLocalizationOptions()
+                    .SetDefaultCulture("en")
+                    .AddSupportedCultures("en")
+                    .AddSupportedUICultures("en"));
+
                 app.UseAuthentication();
                 app.UseAuthorization();
 
@@ -826,9 +882,12 @@ namespace Jube.App
                     endpoints.MapRazorPages();
                     endpoints.MapControllers();
                     endpoints.MapHub<WatcherHub>("/watcherHub");
+                    endpoints.MapHub<ServiceChangeHub>("/serviceChangeHub");
+                    endpoints.MapEntityAnalysisModelEndpoints();
                 });
 
                 await app.StartRelayAsync().ConfigureAwait(false);
+                await app.StartServiceChangeRelayAsync().ConfigureAwait(false);
                 await app.StartEngineAsync().ConfigureAwait(false);
             }
             catch (Exception ex)

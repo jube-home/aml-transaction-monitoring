@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="PermissionDenied" xml:space="preserve">
+    <value>You do not have permission to perform this action.</value>
+  </data>
+  <data name="NotAuthenticated" xml:space="preserve">
+    <value>You must be signed in to a tenant to perform this action.</value>
+  </data>
+  <data name="NameRequired" xml:space="preserve">
+    <value>A name is required.</value>
+  </data>
+  <data name="NameMaxLength" xml:space="preserve">
+    <value>The name must be {0} characters or fewer.</value>
+  </data>
+  <data name="NameAlreadyExists" xml:space="preserve">
+    <value>This name already exists.</value>
+  </data>
+  <!-- ReSharper disable once NotOverriddenInSpecificCulture -->
+  <data name="EntryXPathRequired" xml:space="preserve">
+    <value>An entry XPath (JSONPath) is required.</value>
+  </data>
+  <data name="EntryXPathMaxLength" xml:space="preserve">
+    <value>The entry XPath must be {0} characters or fewer.</value>
+  </data>
+  <data name="ReferenceDateXPathRequired" xml:space="preserve">
+    <value>A reference date XPath (JSONPath) is required unless the reference date payload location is set to Now.</value>
+  </data>
+  <data name="ReferenceDateXPathMaxLength" xml:space="preserve">
+    <value>The reference date XPath must be {0} characters or fewer.</value>
+  </data>
+  <data name="EntryNameRequired" xml:space="preserve">
+    <value>An entry name is required.</value>
+  </data>
+  <data name="EntryNameMaxLength" xml:space="preserve">
+    <value>The entry name must be {0} characters or fewer.</value>
+  </data>
+  <data name="ReferenceDateNameRequired" xml:space="preserve">
+    <value>A reference date name is required.</value>
+  </data>
+  <data name="ReferenceDateNameMaxLength" xml:space="preserve">
+    <value>The reference date name must be {0} characters or fewer.</value>
+  </data>
+  <data name="ReferenceDatePayloadLocationTypeIdInvalid" xml:space="preserve">
+    <value>The reference date payload location must be Body or Now.</value>
+  </data>
+  <data name="CacheFetchLimitRange" xml:space="preserve">
+    <value>The cache fetch limit must be zero or greater.</value>
+  </data>
+  <data name="CacheTtlIntervalInvalid" xml:space="preserve">
+    <value>The cache TTL interval must be Seconds, Minutes, Hours or Days.</value>
+  </data>
+  <data name="CacheTtlIntervalValueRange" xml:space="preserve">
+    <value>The cache TTL interval value must be zero or greater.</value>
+  </data>
+  <data name="MaxResponseElevationRange" xml:space="preserve">
+    <value>The maximum response elevation must be zero or greater.</value>
+  </data>
+  <data name="MaxResponseElevationIntervalInvalid" xml:space="preserve">
+    <value>The response elevation limit interval must be Seconds, Minutes, Hours or Days.</value>
+  </data>
+  <data name="MaxResponseElevationValueRange" xml:space="preserve">
+    <value>The response elevation limit value must be zero or greater.</value>
+  </data>
+  <data name="MaxResponseElevationThresholdRange" xml:space="preserve">
+    <value>The response elevation limit threshold must be zero or greater.</value>
+  </data>
+  <data name="MaxActivationWatcherIntervalInvalid" xml:space="preserve">
+    <value>The Activation Watcher limit interval must be Seconds, Minutes, Hours or Days.</value>
+  </data>
+  <data name="MaxActivationWatcherValueRange" xml:space="preserve">
+    <value>The Activation Watcher limit value must be zero or greater.</value>
+  </data>
+  <data name="MaxActivationWatcherThresholdRange" xml:space="preserve">
+    <value>The Activation Watcher limit threshold must be zero or greater.</value>
+  </data>
+  <data name="ActivationWatcherSampleRange" xml:space="preserve">
+    <value>The Activation Watcher sample rate must be between 0 and 1.</value>
+  </data>
+</root>

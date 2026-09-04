@@ -79,5 +79,14 @@ namespace Jube.Data.Repository
             return await dbContext.UserInTenant.Where(w =>
                 w.TenantRegistryId == userInTenant.TenantRegistryId).ToListAsync(token);
         }
+
+        public static Task<int?> GetTenantRegistryIdAsync(DbContext dbContext, string userName,
+            CancellationToken token = default)
+        {
+            return dbContext.UserInTenant
+                .Where(w => w.User == userName)
+                .Select(s => (int?)s.TenantRegistryId)
+                .FirstOrDefaultAsync(token);
+        }
     }
 }

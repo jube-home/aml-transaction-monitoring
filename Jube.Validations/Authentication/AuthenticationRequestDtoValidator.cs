@@ -15,7 +15,7 @@ namespace Jube.Validations.Authentication
 {
     using DynamicEnvironment;
     using FluentValidation;
-    using Service.Dto.Authentication;
+    using Jube.Dto.Authentication;
 
     public class AuthenticationRequestDtoValidator : AbstractValidator<AuthenticationRequestDto>
     {

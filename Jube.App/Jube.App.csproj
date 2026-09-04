@@ -6,7 +6,6 @@
         <UserSecretsId>aspnet-JubeUI-1585BC54-1CED-470E-AC35-2C7E8B27EE1F</UserSecretsId>
         <CopyRefAssembliesToPublishDirectory>false</CopyRefAssembliesToPublishDirectory>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-        <LangVersion>9</LangVersion>
         <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
     </PropertyGroup>
 
@@ -35,6 +34,11 @@
         <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="3.1.10"/>
         <PackageReference Include="Microsoft.Extensions.Logging.Log4Net.AspNetCore" Version="6.0.0"/>
         <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.10.9"/>
+        <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.18.0"/>
+        <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.18.0"/>
+        <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.18.0"/>
+        <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.18.0"/>
+        <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.18.0"/>
         <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.14.15">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -80,6 +84,7 @@
         <ProjectReference Include="..\Jube.Cache\Jube.Cache.csproj"/>
         <ProjectReference Include="..\Jube.Data\Jube.Data.csproj"/>
         <ProjectReference Include="..\Jube.DynamicEnvironment\Jube.DynamicEnvironment.csproj"/>
+        <ProjectReference Include="..\Jube.Dto\Jube.Dto.csproj"/>
         <ProjectReference Include="..\Jube.Engine\Jube.Engine.csproj"/>
         <ProjectReference Include="..\Jube.HttpHeaders\Jube.HttpHeaders.csproj"/>
         <ProjectReference Include="..\Jube.Migrations\Jube.Migrations.csproj"/>

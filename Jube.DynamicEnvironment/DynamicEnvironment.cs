@@ -425,6 +425,12 @@ namespace Jube.DynamicEnvironment
                 },
                 {
                     "UseForwardedHeaders", "True"
+                },
+                {
+                    "EnableOpenTelemetry", "False"
+                },
+                {
+                    "EnableServiceChangeStream", "False"
                 }
             };
 

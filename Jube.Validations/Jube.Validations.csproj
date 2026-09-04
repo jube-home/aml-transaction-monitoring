@@ -12,6 +12,7 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="FluentValidation" Version="10.3.6"/>
+        <PackageReference Include="Microsoft.Extensions.Localization.Abstractions" Version="10.0.0"/>
         <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.14.15">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -19,7 +20,10 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Jube.Service\Jube.Service.csproj"/>
+        <ProjectReference Include="..\Jube.Data\Jube.Data.csproj"/>
+        <ProjectReference Include="..\Jube.Dto\Jube.Dto.csproj"/>
+        <ProjectReference Include="..\Jube.DynamicEnvironment\Jube.DynamicEnvironment.csproj"/>
+        <ProjectReference Include="..\Jube.Resources\Jube.Resources.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

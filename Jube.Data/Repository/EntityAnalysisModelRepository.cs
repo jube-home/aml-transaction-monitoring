@@ -110,8 +110,10 @@ namespace Jube.Data.Repository
             }
 
             model.TenantRegistryId = tenantRegistryId;
-            model.CreatedUser = userName;
-            model.CreatedDate = DateTime.UtcNow;
+            model.CreatedUser = existing.CreatedUser;
+            model.CreatedDate = existing.CreatedDate;
+            model.UpdatedUser = userName;
+            model.UpdatedDate = DateTime.UtcNow;
             model.Version = existing.Version + 1;
             model.Guid = existing.Guid;
 

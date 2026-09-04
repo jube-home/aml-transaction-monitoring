@@ -3,6 +3,15 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+# Claude Code project settings (skills, including /controller-migration) -- local tooling, not project source
+/.claude/
+
+# /controller-migration skill working notes (report.md / commit.md), regenerated each run
+.migration/
+
+# Local dev test settings (DB-backed Jube.Tests connection string) -- machine-specific, never committed
+.runsettings
+
 # User-specific files
 *.rsuser
 *.suo
