@@ -12,7 +12,7 @@
  */
 
 using FluentValidation;
-using Jube.Service.Dto.Authentication;
+using Jube.Dto.Authentication;
 
 namespace Jube.Validations.Authentication
 {

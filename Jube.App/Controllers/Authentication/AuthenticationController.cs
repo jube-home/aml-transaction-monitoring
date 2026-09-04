@@ -22,6 +22,7 @@ namespace Jube.App.Controllers.Authentication
     using Data.Context;
     using Dto;
     using DynamicEnvironment;
+    using Jube.Dto.Authentication;
     using log4net;
     using Mfa;
     using Mfa.Rsa;
@@ -30,7 +31,6 @@ namespace Jube.App.Controllers.Authentication
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
     using Service.Authentication;
-    using Service.Dto.Authentication;
     using Service.Exceptions.Authentication;
     using Validations.Authentication;
 
@@ -348,7 +348,7 @@ namespace Jube.App.Controllers.Authentication
             var request = new MfaVerificationRequest
             {
                 SubjectName = userName,
-                Factors = new[] { new MfaFactor { MethodId = "SECURID", Value = otp } }
+                Factors = [new MfaFactor { MethodId = "SECURID", Value = otp }]
             };
 
             return mfaProvider.VerifyAsync(request, token);

@@ -13,6 +13,8 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="FluentAssertions" Version="6.12.0"/>
+        <PackageReference Include="Microsoft.Extensions.Diagnostics.Testing" Version="10.9.0"/>
+        <PackageReference Include="Microsoft.Extensions.Localization" Version="10.0.0"/>
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1"/>
         <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.14.15">
             <PrivateAssets>all</PrivateAssets>
@@ -27,6 +29,15 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Jube.Data\Jube.Data.csproj"/>
+        <ProjectReference Include="..\Jube.Dto\Jube.Dto.csproj"/>
+        <ProjectReference Include="..\Jube.DynamicEnvironment\Jube.DynamicEnvironment.csproj"/>
+        <ProjectReference Include="..\Jube.Resources\Jube.Resources.csproj"/>
+        <ProjectReference Include="..\Jube.Service\Jube.Service.csproj"/>
+        <ProjectReference Include="..\Jube.Validations\Jube.Validations.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

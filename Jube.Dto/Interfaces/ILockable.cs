@@ -11,18 +11,11 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-namespace Jube.Service.Dto.Authentication
+namespace Jube.Dto.Interfaces
 {
-    public class AuthenticationRequestDto
+    public interface ILockable
     {
-        public string? UserName { get; set; }
-        public string? Password { get; set; }
-        public string? NewPassword { get; set; }
-        public string? RepeatNewPassword { get; set; }
-        public string? RemoteIp { get; set; }
-        public string? LocalIp { get; set; }
-        public string? UserAgent { get; set; }
-        public bool PasswordChangeState { get; set; }
-        public string? Mfa { get; set; }
+        // ReSharper disable once UnusedMemberInSuper.Global
+        bool Locked { get; set; }
     }
 }

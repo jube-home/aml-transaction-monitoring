@@ -11,11 +11,17 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-namespace Jube.Service.Dto.Authentication
+// ReSharper disable UnusedMember.Global
+namespace Jube.Dto.Forms
 {
-    public class AuthenticationResponseDto
+    using System;
+
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]
+    public sealed class VisibleWhenAttribute(string property, params object[] values) : Attribute
     {
-        public string? Token { get; set; }
-        public DateTime Expiration { get; set; }
+        public string Property { get; } = property;
+        public object[] Values { get; } = values;
+        public ConditionOp Op { get; init; } = ConditionOp.Equals;
+        public string MatchMode { get; init; } = "all";
     }
 }

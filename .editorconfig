@@ -14,6 +14,33 @@ dotnet_naming_rule.non_public_fields_are_camel_case.symbols         = non_public
 dotnet_naming_rule.non_public_fields_are_camel_case.style           = camel_case
 dotnet_naming_rule.non_public_fields_are_camel_case.severity        = suggestion
 
+# House style: block-scoped namespaces everywhere (IDE0160/IDE0161) -- declared silently so
+# Rider/dotnet format won't nag either direction, they just won't offer to convert to file-scoped.
+csharp_style_namespace_declarations = block_scoped:silent
+
+# House style: cross-project usings written inside a nested namespace (e.g. Jube.Service.<Area>
+# referencing Jube.Dto.<Area>/Jube.Data.Poco.<Area>) are always the fully-qualified path from
+# 'Jube' -- never a short relative form, and never 'global::'. A fully-qualified 'Jube.X.Y' using
+# resolves unambiguously as long as no namespace in the solution nests a literal 'Jube' segment
+# under another Jube.* namespace (verified true -- the one pre-existing exception,
+# Jube.App.Code's nested `namespace Jube.WebApp.Code` in StartEngine.cs, was flattened rather than
+# worked around). Where the bare leaf type name itself would collide with the enclosing namespace's
+# own leaf segment (e.g. the EntityAnalysisModel POCO vs. the Jube.Service.EntityAnalysisModel
+# namespace), alias it instead (`using ModelPoco = Jube.Data.Poco.EntityAnalysisModel;`).
+# Tell Rider/ReSharper 'global::' is unnecessary here so it doesn't suggest adding it back, and
+# that fully-qualified names are preferred at nested scope so it doesn't shorten them either.
+resharper_csharp_can_use_global_alias            = false
+resharper_csharp_qualified_using_at_nested_scope = true
+
 [Accord.*/**.cs]
 dotnet_naming_rule.constants_are_pascal_case.severity        = none
 dotnet_naming_rule.non_public_fields_are_camel_case.severity = none
+# Vendored code -- not ours to impose a namespace/global:: house style on.
+csharp_style_namespace_declarations              = unset
+resharper_csharp_can_use_global_alias            = unset
+resharper_csharp_qualified_using_at_nested_scope = unset
+
+[{Jube.Dictionary,Jube.Cache}/**.cs]
+# Pre-existing, unrelated use of 'global::' (e.g. global::System.DateTime in extension-method
+# files) predates this convention -- leave Rider's default behaviour alone here.
+resharper_csharp_can_use_global_alias = unset

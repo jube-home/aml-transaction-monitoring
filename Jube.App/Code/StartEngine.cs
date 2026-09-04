@@ -13,27 +13,24 @@
 
 namespace Jube.App.Code
 {
-    namespace Jube.WebApp.Code
+    using System.Threading.Tasks;
+    using Engine;
+    using Microsoft.AspNetCore.Builder;
+    using Microsoft.Extensions.DependencyInjection;
+
+    public static class EngineExtension
     {
-        using System.Threading.Tasks;
-        using Engine;
-        using Microsoft.AspNetCore.Builder;
-        using Microsoft.Extensions.DependencyInjection;
-
-        public static class EngineExtension
+        public static async Task StartEngineAsync(this IApplicationBuilder app)
         {
-            public static async Task StartEngineAsync(this IApplicationBuilder app)
+            using var scope = app.ApplicationServices.CreateScope();
+            var engine = scope.ServiceProvider.GetService<Engine>();
+
+            if (engine == null)
             {
-                using var scope = app.ApplicationServices.CreateScope();
-                var engine = scope.ServiceProvider.GetService<Engine>();
-
-                if (engine == null)
-                {
-                    return;
-                }
-
-                await engine.StartAsync().ConfigureAwait(false);
+                return;
             }
+
+            await engine.StartAsync().ConfigureAwait(false);
         }
     }
 }

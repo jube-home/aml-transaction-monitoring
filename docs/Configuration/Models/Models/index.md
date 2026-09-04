@@ -144,6 +144,16 @@ The table as follows gives an introduction to each parameter:
 | Enable Activation Watcher: Threshold       | Given Enable Activation Watcher the time value to be used in conjunction with the interval that the number of Response Elevation will be counting in (e.g. 1)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | 1000                                 |
 | Enable Activation Watcher: Sample          | The Activation Watcher is intended to provide for a streaming overview of the proportions of risk. Given Enable Activation Watcher a random sample determining the selection to the Activation Watcher.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | 100%                                 |
 
+### Validation
+
+- Model Name, Entry Name and Reference Date Name are required and limited to 256 characters.
+- Entry XPath and Reference Date XPath are required and limited to 1024 characters, except that Reference Date XPath
+  is not required when Reference Date Payload Location is set to Now.
+- Reference Date Payload Location must be Body or Now.
+- Cache TTL Interval, and (only when their respective Enable switch is on) Response Elevation Limit Interval and
+  Activation Watcher Interval, must be one of Seconds, Minutes, Hours or Days.
+- Activation Watcher Sample must be between 0 and 1, and is only validated when Enable Activation Watcher is on.
+
 The incorrect configuration of Response Elevation and Limits is one of the more common reasons why Response Elevations
 may be zero, even though they are set to a value in an Activation Rule.
 

@@ -11,11 +11,19 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-namespace Jube.Service.Dto.Authentication
+// ReSharper disable RedundantAttributeUsageProperty
+// ReSharper disable UnusedMember.Global
+namespace Jube.Dto.Forms
 {
-    public class ChangePasswordRequestDto
+    using System;
+
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+    public sealed class LookupAttribute(string source) : Attribute
     {
-        public string? Password { get; set; }
-        public string? NewPassword { get; set; }
+        public string Source { get; } = source;
+        public string TextField { get; init; } = "name";
+        public string ValueField { get; init; } = "guid";
+        public string? ParentField { get; init; }
+        public bool AllowEmpty { get; init; }
     }
 }
