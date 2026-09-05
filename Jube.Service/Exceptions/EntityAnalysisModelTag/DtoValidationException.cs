@@ -11,24 +11,24 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-namespace Jube.App.Dto
-{
-    using System;
-    using Interfaces;
+using FluentValidation.Results;
 
-    public class EntityAnalysisModelTagDto : IUpdated
+namespace Jube.Service.Exceptions.EntityAnalysisModelTag
+{
+    public sealed class DtoValidationException(ValidationResult result)
+        : ServiceException(BuildMessage(result))
     {
-        public int EntityAnalysisModelId { get; set; }
-        public string Name { get; set; }
-        public bool Locked { get; set; }
-        public bool Active { get; set; }
-        public int Id { get; set; }
-        public DateTimeOffset? CreatedDate { get; set; }
-        public string UpdatedUser { get; set; }
-        public DateTimeOffset? UpdatedDate { get; set; }
-        public string CreatedUser { get; set; }
-        public int Version { get; set; }
-        public string DeletedUser { get; set; }
-        public DateTimeOffset? DeletedDate { get; set; }
+        public override string Code => "ValidationFailed";
+
+        public ValidationResult Result { get; } = result;
+
+        private static string BuildMessage(ValidationResult result)
+        {
+            var first = result.Errors.FirstOrDefault();
+
+            return first != null
+                ? $"{first.PropertyName}: {first.ErrorMessage}"
+                : "Validation failed.";
+        }
     }
 }
