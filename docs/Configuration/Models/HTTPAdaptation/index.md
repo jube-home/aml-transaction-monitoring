@@ -35,8 +35,8 @@ The HTTP Adaptation accepts the following parameters:
 
 | Value         | Description                                                                                                                                                                                                                        | Example                                    |
 |---------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------|
-| HTTP Endpoint | Using the prefix specified in the HttpAdaptationUrl Environment Variable in concatenation with remainder of the URL for the HTTP Endpoint to POST to.  Assume no "/" terminating the HttpAdaptationUrl Environment Variable value. | /api/invoke/ExampleFraudScoreLocalEndpoint |
-| Priority      | Ascending execution order among the adaptations on a model, to support boosting/model chaining - a lower Priority adaptation is recalled first, and its result is available to a later one via the request body. Defaults to 0. | 0.1                                         |
+| HTTP Endpoint | Using the prefix specified in the HttpAdaptationUrl Environment Variable in concatenation with remainder of the URL for the HTTP Endpoint to POST to.  Assume no "/" terminating the HttpAdaptationUrl Environment Variable value, so this value must itself begin with "/". Required, up to 2048 characters. | /api/invoke/ExampleFraudScoreLocalEndpoint |
+| Priority      | Ascending execution order among the adaptations on a model, to support boosting/model chaining - a lower Priority adaptation is recalled first, and its result is available to a later one via the request body. Defaults to 0. Must be zero or greater. | 0.1                                         |
 
 In this example an endpoint is available for the purpose of echoing back the Square Root of the ResponseCodeEqual0Volume Abstraction Rule Value at https://localhost:5001/api/invoke/ExampleFraudScoreLocalEndpoint.  Complete the page as follows:
 
