@@ -11,19 +11,10 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
-// ReSharper disable UnusedMemberInSuper.Global
-
-namespace Jube.Dto.Interfaces
+namespace Jube.Service.Exceptions.EntityAnalysisModelRequestXPath
 {
-    public interface IUpdated
+    public sealed class NotFoundException(string message, Exception? inner = null) : ServiceException(message, inner)
     {
-        public int Id { get; set; }
-        public string? CreatedUser { get; set; }
-        public DateTimeOffset? CreatedDate { get; set; }
-        public string? UpdatedUser { get; set; }
-        public DateTimeOffset? UpdatedDate { get; set; }
-        public int Version { get; set; }
-        public string? DeletedUser { get; set; }
-        public DateTimeOffset? DeletedDate { get; set; }
+        public override string Code => "NotFound";
     }
 }

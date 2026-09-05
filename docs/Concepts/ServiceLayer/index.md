@@ -112,6 +112,9 @@ speculatively.
 | `IRuleBuilderJson` | `Json`, `BuilderRuleScript`                                                                               | The jQuery QueryBuilder shape used by every rule-authoring field across the platform (Abstraction Rules, Activation Rules, and others).                          |
 
 `EntityAnalysisModelDto` currently implements `IUpdated, IActivatable, ILockable, IGuidIdentified`.
+`EntityAnalysisModelRequestXPathDto` implements `IUpdated, IActivatable, ILockable, ITreeChild` — the first real adopter
+of `ITreeChild`, since each row is a child of a Model (`EntityAnalysisModelId`, declared via
+`[FormKeys(Parent = nameof(EntityAnalysisModelId))]` rather than the interface itself).
 
 ## Agentic AI tooling
 

@@ -11,59 +11,56 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
+using System;
+using System.Collections.Concurrent;
+using System.Net;
+using System.Security.Claims;
+using System.Threading;
+using System.Threading.Tasks;
+using FluentMigrator.Runner;
+using Jube.App.Code;
+using Jube.App.Code.ServiceChange;
+using Jube.App.Code.signalr;
+using Jube.App.Code.WatcherDispatch;
+using Jube.App.Endpoints;
+using Jube.App.Middlewares;
+using Jube.App.Middlewares.Extensions;
+using Jube.App.Middlewares.Models;
+using Jube.Cache;
+using Jube.Cache.Redis.Callback;
+using Jube.Data.Context;
+using Jube.Data.Poco;
+using Jube.Data.Repository;
+using Jube.Engine.Helpers;
+using Jube.HttpHeaders;
+using Jube.Migrations.Baseline;
+using Jube.Service.Observability;
+using Jube.Service.Reactivity;
 using Jube.Service.Reactivity.Interfaces;
+using Jube.TaskCancellation;
+using Jube.TaskCancellation.Interfaces;
+using log4net;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using Microsoft.OpenApi.Models;
+using Newtonsoft.Json.Serialization;
+using Npgsql;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using RabbitMQ.Client;
+using StackExchange.Redis;
 
 namespace Jube.App
 {
-    using System;
-    using System.Collections.Concurrent;
-    using System.Net;
-    using System.Security.Claims;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using ApiTokensCache;
-    using Cache;
-    using Cache.Redis.Callback;
-    using Code;
-    using Code.ServiceChange;
-    using Code.signalr;
-    using Code.WatcherDispatch;
-    using Data.Context;
-    using Data.Poco;
-    using Data.Repository;
-    using DynamicEnvironment;
-    using Endpoints;
-    using Engine;
-    using Engine.Helpers;
-    using FluentMigrator.Runner;
-    using HttpHeaders;
-    using Jube.Service.Reactivity;
-    using log4net;
-    using Microsoft.AspNetCore.Authentication.OpenIdConnect;
-    using Microsoft.AspNetCore.Builder;
-    using Microsoft.AspNetCore.DataProtection;
-    using Microsoft.AspNetCore.Hosting;
-    using Microsoft.AspNetCore.Http;
-    using Microsoft.AspNetCore.HttpOverrides;
-    using Microsoft.AspNetCore.Identity;
-    using Microsoft.Extensions.DependencyInjection;
-    using Microsoft.Extensions.Hosting;
-    using Microsoft.IdentityModel.Protocols.OpenIdConnect;
-    using Microsoft.OpenApi.Models;
-    using Middlewares;
-    using Middlewares.Extensions;
-    using Middlewares.Models;
-    using Migrations.Baseline;
-    using Newtonsoft.Json.Serialization;
-    using Npgsql;
-    using OpenTelemetry.Metrics;
-    using OpenTelemetry.Resources;
-    using OpenTelemetry.Trace;
-    using RabbitMQ.Client;
-    using StackExchange.Redis;
-    using TaskCancellation;
-    using TaskCancellation.Interfaces;
-
     public class Startup
     {
         public void ConfigureServices(IServiceCollection services)
@@ -78,14 +75,16 @@ namespace Jube.App
 
             var callbacks = AddSingletonForCallbacks(services);
 
-            var cacheService = AddSingletonForCacheService(services, callbacks, Int32.Parse(dynamicEnvironment.AppSettings("CallbackTimeout") ?? "10000"),
+            var cacheService = AddSingletonForCacheService(services, callbacks,
+                int.Parse(dynamicEnvironment.AppSettings("CallbackTimeout") ?? "10000"),
                 taskCoordinator, dynamicEnvironment, log);
 
             AddSingletonForTokensCache(services, log, dynamicEnvironment, cacheService, taskCoordinator);
 
             var rabbitMqConnection = AddSingletonForRabbitMqConnection(services, dynamicEnvironment, log);
 
-            AddSingletonForEngine(services, dynamicEnvironment, log, rabbitMqConnection, cacheService, contractResolver, taskCoordinator);
+            AddSingletonForEngine(services, dynamicEnvironment, log, rabbitMqConnection, cacheService, contractResolver,
+                taskCoordinator);
             AddSingletonForIdentity(services);
             ConfigureAuthentication(services, dynamicEnvironment, log);
             AddGenericServicesRequired(services, dynamicEnvironment);
@@ -99,64 +98,63 @@ namespace Jube.App
         }
 
         private static void AddSingletonForServiceChangeBus(IServiceCollection services,
-            DynamicEnvironment dynamicEnvironment, CacheService cacheService)
+            DynamicEnvironment.DynamicEnvironment dynamicEnvironment, CacheService cacheService)
         {
-            if (!dynamicEnvironment.AppSettings("EnableServiceChangeStream").Equals("True", StringComparison.OrdinalIgnoreCase))
+            if (!dynamicEnvironment.AppSettings("EnableServiceChangeStream")
+                    .Equals("True", StringComparison.OrdinalIgnoreCase))
             {
                 services.AddSingleton<IServiceChangeBus, NullServiceChangeBus>();
                 return;
             }
 
             if (dynamicEnvironment.AppSettings("RedisBackplane").Equals("True", StringComparison.OrdinalIgnoreCase))
-            {
                 services.AddSingleton<IServiceChangeBus>(new RedisServiceChangeBus(cacheService.ConnectionMultiplexer));
-            }
             else
-            {
                 services.AddSingleton<IServiceChangeBus, InProcessServiceChangeBus>();
-            }
 
             services.AddSingleton<ServiceChangeRelay>();
         }
 
-        private static void AddOpenTelemetry(IServiceCollection services, DynamicEnvironment dynamicEnvironment)
+        private static void AddOpenTelemetry(IServiceCollection services,
+            DynamicEnvironment.DynamicEnvironment dynamicEnvironment)
         {
-            if (!dynamicEnvironment.AppSettings("EnableOpenTelemetry").Equals("True", StringComparison.OrdinalIgnoreCase))
-            {
-                return;
-            }
+            if (!dynamicEnvironment.AppSettings("EnableOpenTelemetry")
+                    .Equals("True", StringComparison.OrdinalIgnoreCase)) return;
 
             services.AddOpenTelemetry()
-                .ConfigureResource(r => r.AddService(serviceName: "Jube.App",
+                .ConfigureResource(r => r.AddService("Jube.App",
                     serviceVersion: typeof(Startup).Assembly.GetName().Version?.ToString()))
                 .WithTracing(t => t
-                    .AddSource(Service.Observability.ServiceDiagnostics.Name)
+                    .AddSource(ServiceDiagnostics.Name)
                     .AddAspNetCoreInstrumentation(o => o.Filter = ctx =>
                         !ctx.Request.Path.StartsWithSegments("/api/invoke", StringComparison.OrdinalIgnoreCase))
                     .AddHttpClientInstrumentation()
                     .AddOtlpExporter())
                 .WithMetrics(m => m
-                    .AddMeter(Service.Observability.ServiceDiagnostics.Name)
+                    .AddMeter(ServiceDiagnostics.Name)
                     .AddAspNetCoreInstrumentation()
                     .AddRuntimeInstrumentation()
                     .AddOtlpExporter());
         }
 
-        private static void GetHttpHeadersFromDatabaseAndCreateSingleton(IServiceCollection services, DynamicEnvironment dynamicEnvironment, ILog log, TaskCoordinator taskCoordinator)
+        private static void GetHttpHeadersFromDatabaseAndCreateSingleton(IServiceCollection services,
+            DynamicEnvironment.DynamicEnvironment dynamicEnvironment, ILog log, TaskCoordinator taskCoordinator)
         {
-
-            services.AddSingleton(new HttpHeadersFromDatabase(dynamicEnvironment.AppSettings("ConnectionString"), log, taskCoordinator.CancellationToken));
+            services.AddSingleton(new HttpHeadersFromDatabase(dynamicEnvironment.AppSettings("ConnectionString"), log,
+                taskCoordinator.CancellationToken));
         }
 
-        private static void AddSingletonForTokensCache(IServiceCollection services, ILog log, DynamicEnvironment dynamicEnvironment, CacheService cacheService, TaskCoordinator taskCoordinator)
+        private static void AddSingletonForTokensCache(IServiceCollection services, ILog log,
+            DynamicEnvironment.DynamicEnvironment dynamicEnvironment, CacheService cacheService,
+            TaskCoordinator taskCoordinator)
         {
-
-            var apiTokensCache = new ApiTokensCache(log, dynamicEnvironment, cacheService);
+            var apiTokensCache = new ApiTokensCache.ApiTokensCache(log, dynamicEnvironment, cacheService);
             _ = taskCoordinator.RunAsync("InstantiateApiTokensCache", _ => apiTokensCache.StartAsync(taskCoordinator));
             services.AddSingleton(apiTokensCache);
         }
 
-        private static TaskCoordinator AddSingletonForTaskCoordinator(IServiceCollection services, ICancellationTokenProvider cancellationTokenProvider)
+        private static TaskCoordinator AddSingletonForTaskCoordinator(IServiceCollection services,
+            ICancellationTokenProvider cancellationTokenProvider)
         {
             var taskCoordinator = new TaskCoordinator(cancellationTokenProvider);
             services.AddSingleton(taskCoordinator);
@@ -172,7 +170,6 @@ namespace Jube.App
 
         private static void WriteWelcomeMessageToConsole()
         {
-
             Console.WriteLine(@"Copyright (C) 2022-present Jube Holdings Limited.");
             Console.WriteLine(@"");
             Console.WriteLine(@"This software is Jube.  Welcome.");
@@ -200,19 +197,18 @@ namespace Jube.App
             Console.WriteLine();
         }
 
-        private static void AddSingletonRelayToBeInstantiatedInConfigureServices(IServiceCollection services, DynamicEnvironment dynamicEnvironment)
+        private static void AddSingletonRelayToBeInstantiatedInConfigureServices(IServiceCollection services,
+            DynamicEnvironment.DynamicEnvironment dynamicEnvironment)
         {
-            if (!dynamicEnvironment.AppSettings("StreamingActivationWatcher").Equals("True", StringComparison.OrdinalIgnoreCase))
-            {
-                return;
-            }
+            if (!dynamicEnvironment.AppSettings("StreamingActivationWatcher")
+                    .Equals("True", StringComparison.OrdinalIgnoreCase)) return;
 
             services.AddSingleton<Relay>();
         }
 
-        private static void AddGenericServicesRequired(IServiceCollection services, DynamicEnvironment dynamicEnvironment)
+        private static void AddGenericServicesRequired(IServiceCollection services,
+            DynamicEnvironment.DynamicEnvironment dynamicEnvironment)
         {
-
             services.AddAuthorization();
             services.AddLocalization();
             services.AddRazorPages();
@@ -227,25 +223,21 @@ namespace Jube.App
             services.AddMvc();
 
             if (dynamicEnvironment.AppSettings("RedisBackplane").Equals("True", StringComparison.OrdinalIgnoreCase))
-            {
                 services.AddSignalR().AddStackExchangeRedis(dynamicEnvironment.AppSettings("RedisConnectionString"));
-            }
             else
-            {
                 services.AddSignalR();
-            }
 
             services.AddEndpointsApiExplorer();
         }
 
-        private static void AddDataProtection(IServiceCollection services, DynamicEnvironment dynamicEnvironment)
+        private static void AddDataProtection(IServiceCollection services,
+            DynamicEnvironment.DynamicEnvironment dynamicEnvironment)
         {
-            if (!dynamicEnvironment.AppSettings("DataProtectionRedisBackplane").Equals("True", StringComparison.OrdinalIgnoreCase))
-            {
-                return;
-            }
+            if (!dynamicEnvironment.AppSettings("DataProtectionRedisBackplane")
+                    .Equals("True", StringComparison.OrdinalIgnoreCase)) return;
 
-            var redisConnection = ConnectionMultiplexer.Connect(dynamicEnvironment.AppSettings("RedisConnectionString"));
+            var redisConnection =
+                ConnectionMultiplexer.Connect(dynamicEnvironment.AppSettings("RedisConnectionString"));
 
             services.AddDataProtection()
                 .PersistKeysToStackExchangeRedis(redisConnection, "Jube:DataProtection:Keys")
@@ -283,14 +275,16 @@ namespace Jube.App
                     Name = "x-api-key",
                     Type = SecuritySchemeType.ApiKey,
                     In = ParameterLocation.Header,
-                    Description = "Enter your API key.  Obtain this by creating an API Key under a user in the application."
+                    Description =
+                        "Enter your API key.  Obtain this by creating an API Key under a user in the application."
                 });
                 c.CustomSchemaIds(type => type.FullName);
                 c.OperationFilter<AuthorizationHeaderParameterOperationFilter>();
             });
         }
 
-        private static void ConfigureAuthentication(IServiceCollection services, DynamicEnvironment dynamicEnvironment, ILog log)
+        private static void ConfigureAuthentication(IServiceCollection services,
+            DynamicEnvironment.DynamicEnvironment dynamicEnvironment, ILog log)
         {
             var jwtValidAudience = dynamicEnvironment.AppSettings("JWTValidAudience");
             var jwtValidIssuer = dynamicEnvironment.AppSettings("JWTValidIssuer");
@@ -311,9 +305,7 @@ namespace Jube.App
 
             if (dynamicEnvironment.AppSettings("NegotiateAuthentication")
                 .Equals("True", StringComparison.OrdinalIgnoreCase))
-            {
                 authBuilder.AddNegotiate();
-            }
 
             if (dynamicEnvironment.AppSettings("OAuthAuthentication")
                 .Equals("True", StringComparison.OrdinalIgnoreCase))
@@ -355,7 +347,8 @@ namespace Jube.App
                     {
                         OnAuthenticationFailed = context =>
                         {
-                            log.Error($"OIDC Authentication Failed. Error: {context.Exception.Message}", context.Exception);
+                            log.Error($"OIDC Authentication Failed. Error: {context.Exception.Message}",
+                                context.Exception);
                             return Task.CompletedTask;
                         },
 
@@ -371,7 +364,8 @@ namespace Jube.App
 
                         OnRedirectToIdentityProvider = context =>
                         {
-                            log.Debug($"Redirecting to Entra ID. Redirect URI constructed by app: {context.ProtocolMessage.RedirectUri}");
+                            log.Debug(
+                                $"Redirecting to Entra ID. Redirect URI constructed by app: {context.ProtocolMessage.RedirectUri}");
                             return Task.CompletedTask;
                         },
 
@@ -388,14 +382,16 @@ namespace Jube.App
                                            ?? context?.Principal?.FindFirstValue(ClaimTypes.Upn)
                                            ?? context?.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
 
-                            if (String.IsNullOrEmpty(userName))
+                            if (string.IsNullOrEmpty(userName))
                             {
-                                log.Error("OAuth ticket parsing aborted: No usable identity claim found in Principal payload.");
+                                log.Error(
+                                    "OAuth ticket parsing aborted: No usable identity claim found in Principal payload.");
                                 context?.Fail("OAuth ticket contained no usable identity claim.");
                                 return;
                             }
 
-                            log.Info($"Parsed username '{userName}' from claims token. Validating user in database registry.");
+                            log.Info(
+                                $"Parsed username '{userName}' from claims token. Validating user in database registry.");
 
                             DbContext dbContext;
                             try
@@ -405,7 +401,9 @@ namespace Jube.App
                             }
                             catch (Exception ex)
                             {
-                                log.Error($"Critical exception establishing database context for '{userName}': {ex.Message}", ex);
+                                log.Error(
+                                    $"Critical exception establishing database context for '{userName}': {ex.Message}",
+                                    ex);
                                 context.Fail("Internal server error validating identity.");
                                 return;
                             }
@@ -417,14 +415,16 @@ namespace Jube.App
 
                                 if (userRegistry == null)
                                 {
-                                    log.Warn($"Authentication Denied: User '{userName}' does not exist in Jube database.");
+                                    log.Warn(
+                                        $"Authentication Denied: User '{userName}' does not exist in Jube database.");
                                     context.Fail("User does not exist in Jube.");
                                     return;
                                 }
 
                                 if (userRegistry.Active != 1)
                                 {
-                                    log.Warn($"Authentication Denied: User '{userName}' exists but account status is inactive (Active flag: {userRegistry.Active}).");
+                                    log.Warn(
+                                        $"Authentication Denied: User '{userName}' exists but account status is inactive (Active flag: {userRegistry.Active}).");
                                     context.Fail("User does not exist in Jube.");
                                     return;
                                 }
@@ -448,16 +448,18 @@ namespace Jube.App
                                 var forcedRedirect = dynamicEnvironment.AppSettings("OAuthForceRedirect");
                                 string targetRedirectUri;
 
-                                if (!String.IsNullOrWhiteSpace(forcedRedirect))
+                                if (!string.IsNullOrWhiteSpace(forcedRedirect))
                                 {
                                     if (Uri.TryCreate(forcedRedirect, UriKind.Absolute, out var forcedUri))
                                     {
                                         targetRedirectUri = forcedUri.ToString();
-                                        log.Info($"OAuthForceRedirect override active. Redirect target forced to: {targetRedirectUri}");
+                                        log.Info(
+                                            $"OAuthForceRedirect override active. Redirect target forced to: {targetRedirectUri}");
                                     }
                                     else
                                     {
-                                        log.Warn($"OAuthForceRedirect value '{forcedRedirect}' is not a valid absolute URI. Ignoring override.");
+                                        log.Warn(
+                                            $"OAuthForceRedirect value '{forcedRedirect}' is not a valid absolute URI. Ignoring override.");
                                         targetRedirectUri = context.Properties?.RedirectUri ?? "/";
                                     }
                                 }
@@ -466,16 +468,20 @@ namespace Jube.App
                                     targetRedirectUri = context.Properties?.RedirectUri ?? "/";
                                 }
 
-                                log.Info($"User '{userName}' verified. Target UI path destination: {targetRedirectUri}");
+                                log.Info(
+                                    $"User '{userName}' verified. Target UI path destination: {targetRedirectUri}");
 
-                                AuthenticationCookieIssuer.IssueAuthenticationCookies(context.Response, dynamicEnvironment, userName);
+                                AuthenticationCookieIssuer.IssueAuthenticationCookies(context.Response,
+                                    dynamicEnvironment, userName);
 
                                 context.Response.Redirect(targetRedirectUri);
                                 context.HandleResponse();
                             }
                             catch (Exception ex)
                             {
-                                log.Error($"Critical exception during User OIDC Post-Ticket Processing for '{userName}': {ex.Message}", ex);
+                                log.Error(
+                                    $"Critical exception during User OIDC Post-Ticket Processing for '{userName}': {ex.Message}",
+                                    ex);
                                 context.Fail("Internal server error validating identity.");
                             }
                             finally
@@ -490,39 +496,40 @@ namespace Jube.App
         }
 
         private static void AddSingletonForEngine(IServiceCollection services
-            , DynamicEnvironment dynamicEnvironment, ILog log, IConnection rabbitMqConnection,
-            CacheService cacheService, JsonSerializationHelper jsonSerializationHelper, ITaskCoordinator taskCoordinator)
+            , DynamicEnvironment.DynamicEnvironment dynamicEnvironment, ILog log, IConnection rabbitMqConnection,
+            CacheService cacheService, JsonSerializationHelper jsonSerializationHelper,
+            ITaskCoordinator taskCoordinator)
         {
-            if (!dynamicEnvironment.AppSettings("EnableEngine").Equals("True", StringComparison.OrdinalIgnoreCase))
-            {
-                return;
-            }
+            if (!dynamicEnvironment.AppSettings("EnableEngine")
+                    .Equals("True", StringComparison.OrdinalIgnoreCase)) return;
 
-            var engine = new Engine(dynamicEnvironment, log, rabbitMqConnection, cacheService, jsonSerializationHelper, taskCoordinator, dynamicEnvironment.AppSettings("ReportConnectionString"));
+            var engine = new Engine.Engine(dynamicEnvironment, log, rabbitMqConnection, cacheService,
+                jsonSerializationHelper, taskCoordinator, dynamicEnvironment.AppSettings("ReportConnectionString"));
 
             services.AddSingleton(engine);
         }
 
-        private static IConnection AddSingletonForRabbitMqConnection(IServiceCollection services, DynamicEnvironment dynamicEnvironment, ILog log)
+        private static IConnection AddSingletonForRabbitMqConnection(IServiceCollection services,
+            DynamicEnvironment.DynamicEnvironment dynamicEnvironment, ILog log)
         {
-
             IConnection rabbitMqConnection = null;
             if (dynamicEnvironment.AppSettings("AMQP").Equals("True", StringComparison.OrdinalIgnoreCase))
             {
-                rabbitMqConnection = ConnectToRabbitMqChannel(services, log, dynamicEnvironment.AppSettings("AMQPUri"), Int32.Parse(dynamicEnvironment.AppSettings("AMQPHeartbeatSeconds") ?? "30"));
+                rabbitMqConnection = ConnectToRabbitMqChannel(services, log, dynamicEnvironment.AppSettings("AMQPUri"),
+                    int.Parse(dynamicEnvironment.AppSettings("AMQPHeartbeatSeconds") ?? "30"));
             }
             else
             {
                 if (log.IsInfoEnabled)
-                {
                     log.Info(
                         "Start: No connection to AMQP is being made.  AMQP will be bypassed throughout the application.");
-                }
             }
+
             return rabbitMqConnection;
         }
 
-        private static ConcurrentDictionary<Guid, TaskCompletionSource<Callback>> AddSingletonForCallbacks(IServiceCollection services)
+        private static ConcurrentDictionary<Guid, TaskCompletionSource<Callback>> AddSingletonForCallbacks(
+            IServiceCollection services)
         {
             var callbacks = new ConcurrentDictionary<Guid, TaskCompletionSource<Callback>>();
             services.AddSingleton(callbacks);
@@ -532,15 +539,12 @@ namespace Jube.App
 
         private static CacheService AddSingletonForCacheService(IServiceCollection services,
             ConcurrentDictionary<Guid, TaskCompletionSource<Callback>> callbacks, int callbackTimeout,
-            TaskCoordinator taskCoordinator, DynamicEnvironment dynamicEnvironment, ILog log)
+            TaskCoordinator taskCoordinator, DynamicEnvironment.DynamicEnvironment dynamicEnvironment, ILog log)
         {
             var lruJournalMaxAgeInterval = dynamicEnvironment.AppSettings("LruJournalMaxAgeInterval");
             var lruJournalMaxAgeValue = dynamicEnvironment.AppSettings("LruJournalMaxAgeValue");
 
-            if (!Double.TryParse(lruJournalMaxAgeValue, out var value))
-            {
-                value = 1;
-            }
+            if (!double.TryParse(lruJournalMaxAgeValue, out var value)) value = 1;
 
             var lruJournalMaxAgeTimeSpan = lruJournalMaxAgeInterval switch
             {
@@ -551,7 +555,8 @@ namespace Jube.App
                 _ => TimeSpan.FromDays(value)
             };
 
-            var activationRuleIdempotency = dynamicEnvironment.AppSettings("ActivationRuleIdempotency").Equals("True", StringComparison.OrdinalIgnoreCase);
+            var activationRuleIdempotency = dynamicEnvironment.AppSettings("ActivationRuleIdempotency")
+                .Equals("True", StringComparison.OrdinalIgnoreCase);
 
             var cacheService =
                 ConnectToRedis(dynamicEnvironment.AppSettings("RedisConnectionString"),
@@ -560,31 +565,34 @@ namespace Jube.App
                     callbackTimeout,
                     dynamicEnvironment.AppSettings("LocalCache").Equals("True", StringComparison.OrdinalIgnoreCase),
                     dynamicEnvironment.AppSettings("LocalCacheFill").Equals("True", StringComparison.OrdinalIgnoreCase),
-                    Int64.Parse(dynamicEnvironment.AppSettings("LocalCacheBytes")),
-                    dynamicEnvironment.AppSettings("RedisMessagePackCompression").Equals("True", StringComparison.OrdinalIgnoreCase),
-                    dynamicEnvironment.AppSettings("RedisStorePayloadCountsAndBytes").Equals("True", StringComparison.OrdinalIgnoreCase),
-                    dynamicEnvironment.AppSettings("RedisPublishSubscribeEvents").Equals("True", StringComparison.OrdinalIgnoreCase),
-                    dynamicEnvironment.AppSettings("RedisHsetOffloadToPostgres").Equals("True", StringComparison.OrdinalIgnoreCase),
+                    long.Parse(dynamicEnvironment.AppSettings("LocalCacheBytes")),
+                    dynamicEnvironment.AppSettings("RedisMessagePackCompression")
+                        .Equals("True", StringComparison.OrdinalIgnoreCase),
+                    dynamicEnvironment.AppSettings("RedisStorePayloadCountsAndBytes")
+                        .Equals("True", StringComparison.OrdinalIgnoreCase),
+                    dynamicEnvironment.AppSettings("RedisPublishSubscribeEvents")
+                        .Equals("True", StringComparison.OrdinalIgnoreCase),
+                    dynamicEnvironment.AppSettings("RedisHsetOffloadToPostgres")
+                        .Equals("True", StringComparison.OrdinalIgnoreCase),
                     lruJournalMaxAgeTimeSpan,
                     activationRuleIdempotency,
                     log);
 
             if (dynamicEnvironment.AppSettings("EnableMigration").Equals("True", StringComparison.OrdinalIgnoreCase))
-            {
                 RunFluentMigrator(dynamicEnvironment, cacheService, log);
-            }
 
-            cacheService.InstantiateRepositoriesTask = taskCoordinator.RunAsync("InstantiateRepositoriesAsync", _ => cacheService.StartAsync(taskCoordinator));
+            cacheService.InstantiateRepositoriesTask = taskCoordinator.RunAsync("InstantiateRepositoriesAsync",
+                _ => cacheService.StartAsync(taskCoordinator));
 
             services.AddSingleton(cacheService);
 
             return cacheService;
         }
 
-        private static DynamicEnvironment AddSingletonForDynamicEnvironmentAndLogging(IServiceCollection services, out ILog log)
+        private static DynamicEnvironment.DynamicEnvironment AddSingletonForDynamicEnvironmentAndLogging(
+            IServiceCollection services, out ILog log)
         {
-
-            var dynamicEnvironment = new DynamicEnvironment();
+            var dynamicEnvironment = new DynamicEnvironment.DynamicEnvironment();
             log = dynamicEnvironment.Log;
 
             services.AddSingleton(log);
@@ -594,7 +602,6 @@ namespace Jube.App
 
         private static JsonSerializationHelper AddSingletonForJsonSerializationHelper(IServiceCollection services)
         {
-
             var jsonSerializationHelper = new JsonSerializationHelper();
             services.AddSingleton(jsonSerializationHelper);
             return jsonSerializationHelper;
@@ -604,13 +611,9 @@ namespace Jube.App
         {
             const int retryConnectionToPostgres = 10;
             for (var i = 0; i < retryConnectionToPostgres; i++)
-            {
                 try
                 {
-                    if (log.IsInfoEnabled)
-                    {
-                        log.Info("Is attempting a connection validation for Postgres.");
-                    }
+                    if (log.IsInfoEnabled) log.Info("Is attempting a connection validation for Postgres.");
 
                     var connection = new NpgsqlConnection(connectionString);
                     var command = new NpgsqlCommand("select true");
@@ -619,25 +622,19 @@ namespace Jube.App
                     command.ExecuteNonQuery();
                     connection.Close();
 
-                    if (log.IsInfoEnabled)
-                    {
-                        log.Info("Postgres connection validated.");
-                    }
+                    if (log.IsInfoEnabled) log.Info("Postgres connection validated.");
 
                     return;
                 }
                 catch (Exception ex)
                 {
                     if (log.IsInfoEnabled)
-                    {
                         log.Info($"Could not connect to Postgres after {i} attempts for {ex.Message}.");
-                    }
 
- #pragma warning disable VSTHRD002
+#pragma warning disable VSTHRD002
                     Task.Delay(6000).Wait();
- #pragma warning restore VSTHRD002
+#pragma warning restore VSTHRD002
                 }
-            }
 
             throw new Exception($"Could not connect to Postgres after {retryConnectionToPostgres}.");
         }
@@ -647,14 +644,11 @@ namespace Jube.App
         {
             const int retryRabbitMqConnection = 10;
             for (var i = 0; i < retryRabbitMqConnection; i++)
-            {
                 try
                 {
                     if (log.IsInfoEnabled)
-                    {
                         log.Info("Start: Is going to make a connection to AMQP Uri " +
                                  amqpUrl + "");
-                    }
 
                     var uri = new Uri(amqpUrl);
                     var rabbitMqConnectionFactory = new ConnectionFactory
@@ -665,10 +659,7 @@ namespace Jube.App
                     var rabbitMqConnection = rabbitMqConnectionFactory.CreateConnection();
                     services.AddSingleton(rabbitMqConnection);
 
-                    if (log.IsInfoEnabled)
-                    {
-                        log.Info("Start: Has made a connection to AMQP Uri " + amqpUrl + "");
-                    }
+                    if (log.IsInfoEnabled) log.Info("Start: Has made a connection to AMQP Uri " + amqpUrl + "");
 
                     services.AddSingleton(rabbitMqConnection);
 
@@ -677,16 +668,13 @@ namespace Jube.App
                 catch (Exception ex)
                 {
                     if (log.IsInfoEnabled)
-                    {
                         log.Info($"Start: Error making a connection to AMQP Uri after {i} attempts " +
                                  amqpUrl + " with error " + ex);
-                    }
 
- #pragma warning disable VSTHRD002
+#pragma warning disable VSTHRD002
                     Task.Delay(3000).Wait();
- #pragma warning restore VSTHRD002
+#pragma warning restore VSTHRD002
                 }
-            }
 
             throw new Exception($"Could not connect to RabbitMQ after {retryRabbitMqConnection} attempts.");
         }
@@ -706,16 +694,13 @@ namespace Jube.App
         {
             const int retryRedisConnectionRetry = 10;
             for (var i = 0; i < retryRedisConnectionRetry; i++)
-            {
                 try
                 {
                     if (log.IsInfoEnabled)
-                    {
                         log.Info("Start: Is going to make a connection to Redis Endpoints string showing " +
                                  "endpoints and port separated by :,  then combined separated by comma " +
                                  "for example localhost:1234,localhost4321.  Value for parsing is " +
                                  redisConnectionString + "");
-                    }
 
                     var cacheService = new CacheService(redisConnectionString,
                         postgresConnectionString, callbacks,
@@ -724,39 +709,34 @@ namespace Jube.App
                         localCacheBytes, messagePackCompression, storePayloadCountsAndBytes,
                         publishSubscribe, hsetOffload, maxLruAge, activationRuleIdempotency, log);
 
-                    if (log.IsInfoEnabled)
-                    {
-                        log.Info("Connected to Redis.  Returning connection for startup.");
-                    }
+                    if (log.IsInfoEnabled) log.Info("Connected to Redis.  Returning connection for startup.");
 
                     return cacheService;
                 }
                 catch (Exception ex)
                 {
                     if (log.IsInfoEnabled)
-                    {
                         log.Info($"Can't make a connection to Redis after {i} attempt(s) for {ex.Message}.");
-                    }
 
- #pragma warning disable VSTHRD002
+#pragma warning disable VSTHRD002
                     Task.Delay(1500).Wait();
- #pragma warning restore VSTHRD002
+#pragma warning restore VSTHRD002
                 }
-            }
 
             throw new Exception($"Could not connect to Redis after {retryRedisConnectionRetry} attempts.");
         }
 
- #pragma warning disable AsyncFixer03
- #pragma warning disable VSTHRD100
+#pragma warning disable AsyncFixer03
+#pragma warning disable VSTHRD100
         public async void Configure(IApplicationBuilder app, IWebHostEnvironment env,
- #pragma warning restore VSTHRD100
- #pragma warning restore AsyncFixer03
-            DynamicEnvironment dynamicEnvironment, ILog log)
+#pragma warning restore VSTHRD100
+#pragma warning restore AsyncFixer03
+            DynamicEnvironment.DynamicEnvironment dynamicEnvironment, ILog log)
         {
             try
             {
-                if (dynamicEnvironment.AppSettings("UseForwardedHeaders").Equals("True", StringComparison.OrdinalIgnoreCase))
+                if (dynamicEnvironment.AppSettings("UseForwardedHeaders")
+                    .Equals("True", StringComparison.OrdinalIgnoreCase))
                 {
                     var startupOptions = new ForwardedHeadersOptions
                     {
@@ -769,10 +749,7 @@ namespace Jube.App
                     app.UseForwardedHeaders(startupOptions);
                 }
 
-                if (env.IsDevelopment())
-                {
-                    app.UseDeveloperExceptionPage();
-                }
+                if (env.IsDevelopment()) app.UseDeveloperExceptionPage();
 
                 app.UseWhen(
                     httpContext =>
@@ -833,15 +810,11 @@ namespace Jube.App
                         var request = context.HttpContext.Request;
                         var response = context.HttpContext.Response;
 
-                        if (response.StatusCode != (int)HttpStatusCode.Unauthorized)
-                        {
-                            return Task.CompletedTask;
-                        }
+                        if (response.StatusCode != (int)HttpStatusCode.Unauthorized) return Task.CompletedTask;
 
                         if (!request.Path.StartsWithSegments("/api"))
-                        {
-                            response.Redirect($"/Account/Login?RedirectUrl={Uri.EscapeDataString(request.Path + request.QueryString)}");
-                        }
+                            response.Redirect(
+                                $"/Account/Login?RedirectUrl={Uri.EscapeDataString(request.Path + request.QueryString)}");
 
                         return Task.CompletedTask;
                     })
@@ -884,6 +857,7 @@ namespace Jube.App
                     endpoints.MapHub<WatcherHub>("/watcherHub");
                     endpoints.MapHub<ServiceChangeHub>("/serviceChangeHub");
                     endpoints.MapEntityAnalysisModelEndpoints();
+                    endpoints.MapEntityAnalysisModelRequestXPathEndpoints();
                 });
 
                 await app.StartRelayAsync().ConfigureAwait(false);
@@ -896,7 +870,7 @@ namespace Jube.App
             }
         }
 
-        private static void RunFluentMigrator(DynamicEnvironment dynamicEnvironment,
+        private static void RunFluentMigrator(DynamicEnvironment.DynamicEnvironment dynamicEnvironment,
             CacheService cacheService, ILog log)
         {
             string connectionString;
@@ -908,10 +882,7 @@ namespace Jube.App
             {
                 connectionString = dynamicEnvironment.AppSettings("ConnectionString");
 
-                if (log.IsWarnEnabled)
-                {
-                    log.Warn("No MigrationConnectionString Environment Variable available.");
-                }
+                if (log.IsWarnEnabled) log.Warn("No MigrationConnectionString Environment Variable available.");
             }
 
             var serviceCollection = new ServiceCollection().AddFluentMigratorCore()
@@ -929,35 +900,30 @@ namespace Jube.App
             runner.MigrateUp();
         }
 
-        private void ConfigureThreadPool(DynamicEnvironment dynamicEnvironment, ILog log)
+        private void ConfigureThreadPool(DynamicEnvironment.DynamicEnvironment dynamicEnvironment, ILog log)
         {
             if (dynamicEnvironment.AppSettings("ThreadPoolManualControl")
                 .Equals("True", StringComparison.OrdinalIgnoreCase))
             {
-                ThreadPool.SetMinThreads(Int32.Parse(dynamicEnvironment.AppSettings("MinThreadPoolThreads")),
-                    Int32.Parse(dynamicEnvironment.AppSettings("MinThreadPoolThreads")));
+                ThreadPool.SetMinThreads(int.Parse(dynamicEnvironment.AppSettings("MinThreadPoolThreads")),
+                    int.Parse(dynamicEnvironment.AppSettings("MinThreadPoolThreads")));
 
                 if (log.IsDebugEnabled)
-                {
                     log.Debug(
                         $"Start: Set the min threads to {dynamicEnvironment.AppSettings("MinThreadPoolThreads")} from the configuration file.");
-                }
 
-                ThreadPool.SetMaxThreads(Int32.Parse(dynamicEnvironment.AppSettings("MaxThreadPoolThreads")),
-                    Int32.Parse(dynamicEnvironment.AppSettings("MaxThreadPoolThreads")));
+                ThreadPool.SetMaxThreads(int.Parse(dynamicEnvironment.AppSettings("MaxThreadPoolThreads")),
+                    int.Parse(dynamicEnvironment.AppSettings("MaxThreadPoolThreads")));
 
                 if (log.IsDebugEnabled)
-                {
                     log.Debug(
-                        $"Start: Set the max threads to {Int32.Parse(dynamicEnvironment.AppSettings("MaxThreadPoolThreads"))} from the configuration file.");
-                }
+                        $"Start: Set the max threads to {int.Parse(dynamicEnvironment.AppSettings("MaxThreadPoolThreads"))} from the configuration file.");
             }
             else
             {
                 if (log.IsDebugEnabled)
-                {
-                    log.Debug("Start: No manual thread pool parameters have been set will configure based on CPU count and certain other estimates.");
-                }
+                    log.Debug(
+                        "Start: No manual thread pool parameters have been set will configure based on CPU count and certain other estimates.");
 
                 var logicalCores = Environment.ProcessorCount;
                 var workerThreads = logicalCores * 2;
