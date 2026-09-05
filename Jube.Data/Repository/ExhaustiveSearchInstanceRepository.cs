@@ -62,7 +62,10 @@ namespace Jube.Data.Repository
         public async Task<IEnumerable<ExhaustiveSearchInstance>> GetAsync(CancellationToken token = default)
         {
             return await dbContext.ExhaustiveSearchInstance
-                .Where(w => w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId).ToListAsync(token).ConfigureAwait(false);
+                .Where(w =>
+                    (w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                    && (w.Deleted == 0 || w.Deleted == null))
+                .ToListAsync(token).ConfigureAwait(false);
         }
 
         public async Task<IEnumerable<ExhaustiveSearchInstance>> GetByEntityAnalysisModelIdOrderByIdAsync(int entityAnalysisModelId, CancellationToken token = default)
