@@ -6,7 +6,8 @@ parent: Models
 grand_parent: Configuration
 ---
 
-🚀 Get to pre-production in weeks, not months, with private [training](https://www.jube.io/jube-training) direct from Jube's developer — real sovereignty, zero vendor lock-in.
+🚀 Get to pre-production in weeks, not months, with private [training](https://www.jube.io/jube-training) direct from
+Jube's developer — real sovereignty, zero vendor lock-in.
 
 # Request XPath
 
@@ -122,7 +123,12 @@ The Request XPath accepts the following parameter:
 | Search Key: Cache: TTL Interval Value       | The Cache Key TTL Interval Value is the date interval taken together with Cache Key TTL Interval Type and is how long a distinct Search Key,  once calculated,  should live before being purged from the Cache.                                                                                                                                                                                                                                                                                                                                                                                                                                   | 1             |
 | Data Type                                   | The datatype of the data being extracted from the HTTP Request.  The datatype specified is important as it effects the types of predication that can happen in the rules.  Possible values are: String (Text and General Data); Integer (Numbers without any decimal places); Float (Numbers with decimal places); Date (Date and Time); Boolean (True or False); Latitude and Longitude (which are Float in effect).                                                                                                                                                                                                                             | String        |
 | Encryption                                  | Only shown for String fields. Encrypt the extracted value before it is stored and archived - see [Field Level Encryption](../../../Concepts/FieldEncryption/index.html) for the None/Deterministic/Random options and how to choose between them.                                                                                                                                                                                                                                                                                                                                                                                                 | Deterministic |
-| Default                                     | The default value to be used in the event the XPath returns a null token.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | "Empty"       | 
+| Default                                     | The default value to be used in the event the XPath returns a null token. Required; for a Date field it must be an integer number of days offset from now.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | "Empty"       | 
+
+Name and XPath are required (256 and 1024 characters respectively, at most); Name must be unique within the Model
+(case-insensitive). The TTL Interval, Cache Interval and Cache TTL Interval fields under Search Key and Search Key:
+Cache above are only validated -- and only need to be supplied -- when Search Key (and, for the Cache sub-fields, Search
+Key: Cache) is switched on.
 
 Complete the fields with the values as follows, being certain to set the Response Payload flag to ensure that the
 extract value is returned for testing:

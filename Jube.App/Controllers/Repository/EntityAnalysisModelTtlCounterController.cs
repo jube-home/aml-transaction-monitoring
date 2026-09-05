@@ -11,30 +11,29 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
+using System;
+using System.Collections.Generic;
+using System.Net;
+using System.Threading;
+using System.Threading.Tasks;
+using AutoMapper;
+using FluentValidation;
+using FluentValidation.Results;
+using Jube.App.Code;
+using Jube.App.Dto;
+using Jube.App.Dto.Mapping;
+using Jube.App.Validators;
+using Jube.Data.Context;
+using Jube.Data.Poco;
+using Jube.Data.Repository;
+using log4net;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging.Abstractions;
+
 namespace Jube.App.Controllers.Repository
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Net;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using AutoMapper;
-    using Code;
-    using Data.Context;
-    using Data.Poco;
-    using Data.Repository;
-    using Dto;
-    using Dto.Mapping;
-    using DynamicEnvironment;
-    using FluentValidation;
-    using FluentValidation.Results;
-    using log4net;
-    using Microsoft.AspNetCore.Authorization;
-    using Microsoft.AspNetCore.Http;
-    using Microsoft.AspNetCore.Mvc;
-    using Microsoft.Extensions.Logging.Abstractions;
-    using Validators;
-
     [Route("api/[controller]")]
     [Produces("application/json")]
     [Authorize]
@@ -49,15 +48,14 @@ namespace Jube.App.Controllers.Repository
         private readonly IValidator<EntityAnalysisModelTtlCounterDto> validator;
 
         public EntityAnalysisModelTtlCounterController(ILog log,
-            IHttpContextAccessor httpContextAccessor, DynamicEnvironment dynamicEnvironment)
+            IHttpContextAccessor httpContextAccessor, DynamicEnvironment.DynamicEnvironment dynamicEnvironment)
         {
             if (httpContextAccessor.HttpContext?.User.Identity != null)
-            {
                 userName = httpContextAccessor.HttpContext.User.Identity.Name;
-            }
 
             this.log = log;
-            dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(dynamicEnvironment.AppSettings("ConnectionString"), log);
+            dbContext = DataConnectionDbContext.GetResilientDbContextDataConnection(
+                dynamicEnvironment.AppSettings("ConnectionString"), log);
             permissionValidation = new PermissionValidation(dbContext, userName, log);
 
             var config = new MapperConfiguration(cfg =>
@@ -65,7 +63,8 @@ namespace Jube.App.Controllers.Repository
                 cfg.CreateMap<EntityAnalysisModelTtlCounterDto, EntityAnalysisModelTtlCounter>();
                 cfg.CreateMap<EntityAnalysisModelTtlCounter, EntityAnalysisModelTtlCounterDto>();
                 cfg.CreateMap<DateTime?, DateTimeOffset?>().ConvertUsing<NullableDateTimeToDateTimeOffsetConverter>();
-                cfg.CreateMap<DateTime, DateTimeOffset>().ConvertUsing(src => new DateTimeOffset(DateTime.SpecifyKind(src, DateTimeKind.Utc)));
+                cfg.CreateMap<DateTime, DateTimeOffset>().ConvertUsing(src =>
+                    new DateTimeOffset(DateTime.SpecifyKind(src, DateTimeKind.Utc)));
             }, NullLoggerFactory.Instance);
 
             mapper = new Mapper(config);
@@ -85,7 +84,8 @@ namespace Jube.App.Controllers.Repository
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<EntityAnalysisModelTtlCounterDto>>> GetAsync(CancellationToken token = default)
+        public async Task<ActionResult<List<EntityAnalysisModelTtlCounterDto>>> GetAsync(
+            CancellationToken token = default)
         {
             try
             {
@@ -93,9 +93,7 @@ namespace Jube.App.Controllers.Repository
                     {
                         12
                     }))
-                {
                     return Forbid();
-                }
 
                 return Ok(mapper.Map<List<EntityAnalysisModelTtlCounterDto>>(await repository.GetAsync(token)));
             }
@@ -107,7 +105,8 @@ namespace Jube.App.Controllers.Repository
         }
 
         [HttpGet("ByEntityAnalysisModelId/{id:int}")]
-        public async Task<ActionResult<List<EntityAnalysisModelTtlCounterDto>>> GetByEntityAnalysisModelIdAsync(int id, CancellationToken token = default)
+        public async Task<ActionResult<List<EntityAnalysisModelTtlCounterDto>>> GetByEntityAnalysisModelIdAsync(int id,
+            CancellationToken token = default)
         {
             try
             {
@@ -115,9 +114,7 @@ namespace Jube.App.Controllers.Repository
                     {
                         12, 17
                     }))
-                {
                     return Forbid();
-                }
 
                 return Ok(mapper.Map<List<EntityAnalysisModelTtlCounterDto>>(
                     await repository.GetByEntityAnalysisModelIdOrderByIdAsync(id, token).ConfigureAwait(false)));
@@ -130,7 +127,8 @@ namespace Jube.App.Controllers.Repository
         }
 
         [HttpGet("ByEntityAnalysisModelGuid/{guid:guid}")]
-        public async Task<ActionResult<List<EntityAnalysisModelTtlCounterDto>>> GetByEntityAnalysisModelGuidAsync(Guid guid, CancellationToken token = default)
+        public async Task<ActionResult<List<EntityAnalysisModelTtlCounterDto>>> GetByEntityAnalysisModelGuidAsync(
+            Guid guid, CancellationToken token = default)
         {
             try
             {
@@ -138,9 +136,7 @@ namespace Jube.App.Controllers.Repository
                     {
                         12, 17
                     }))
-                {
                     return Forbid();
-                }
 
                 return Ok(mapper.Map<List<EntityAnalysisModelTtlCounterDto>>(
                     await repository.GetByEntityAnalysisModelGuidAsync(guid, token)));
@@ -153,7 +149,8 @@ namespace Jube.App.Controllers.Repository
         }
 
         [HttpGet("{id:int}")]
-        public async Task<ActionResult<EntityAnalysisModelTtlCounterDto>> GetByIdAsync(int id, CancellationToken token = default)
+        public async Task<ActionResult<EntityAnalysisModelTtlCounterDto>> GetByIdAsync(int id,
+            CancellationToken token = default)
         {
             try
             {
@@ -161,9 +158,7 @@ namespace Jube.App.Controllers.Repository
                     {
                         12
                     }))
-                {
                     return Forbid();
-                }
 
                 return Ok(mapper.Map<EntityAnalysisModelTtlCounterDto>(await repository.GetByIdAsync(id, token)));
             }
@@ -177,7 +172,8 @@ namespace Jube.App.Controllers.Repository
         [HttpPost]
         [ProducesResponseType(typeof(EntityAnalysisModelTtlCounterDto), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ValidationResult), (int)HttpStatusCode.BadRequest)]
-        public async Task<ActionResult<EntityAnalysisModelTtlCounterDto>> CreateAsync([FromBody] EntityAnalysisModelTtlCounterDto model, CancellationToken token = default)
+        public async Task<ActionResult<EntityAnalysisModelTtlCounterDto>> CreateAsync(
+            [FromBody] EntityAnalysisModelTtlCounterDto model, CancellationToken token = default)
         {
             try
             {
@@ -185,15 +181,11 @@ namespace Jube.App.Controllers.Repository
                     {
                         12
                     }))
-                {
                     return Forbid();
-                }
 
                 var results = await validator.ValidateAsync(model, token);
                 if (results.IsValid)
-                {
                     return Ok(await repository.InsertAsync(mapper.Map<EntityAnalysisModelTtlCounter>(model), token));
-                }
 
                 return BadRequest(results);
             }
@@ -207,7 +199,7 @@ namespace Jube.App.Controllers.Repository
         [HttpPut]
         [ProducesResponseType(typeof(EntityAnalysisModelTtlCounterDto), (int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ValidationResult), (int)HttpStatusCode.BadRequest)]
-        public async Task<ActionResult<EntityAnalysisModelRequestXPathDto>> UpdateAsync(
+        public async Task<ActionResult<EntityAnalysisModelTtlCounterDto>> UpdateAsync(
             [FromBody] EntityAnalysisModelTtlCounterDto model, CancellationToken token = default)
         {
             try
@@ -216,15 +208,11 @@ namespace Jube.App.Controllers.Repository
                     {
                         12
                     }))
-                {
                     return Forbid();
-                }
 
                 var results = await validator.ValidateAsync(model, token);
                 if (results.IsValid)
-                {
                     return Ok(await repository.UpdateAsync(mapper.Map<EntityAnalysisModelTtlCounter>(model), token));
-                }
 
                 return BadRequest(results);
             }
@@ -241,7 +229,8 @@ namespace Jube.App.Controllers.Repository
 
         [HttpDelete]
         [Route("{id:int}")]
-        public async Task<ActionResult<List<EntityAnalysisModelTtlCounterDto>>> DeleteAsync(int id, CancellationToken token = default)
+        public async Task<ActionResult<List<EntityAnalysisModelTtlCounterDto>>> DeleteAsync(int id,
+            CancellationToken token = default)
         {
             try
             {
@@ -249,9 +238,7 @@ namespace Jube.App.Controllers.Repository
                     {
                         12
                     }))
-                {
                     return Forbid();
-                }
 
                 await repository.DeleteAsync(id, token);
                 return Ok();

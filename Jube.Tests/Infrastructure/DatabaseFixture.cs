@@ -11,16 +11,16 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using Jube.Data.Context;
+using Jube.Data.Poco;
+using LinqToDB;
+using Xunit;
+
 namespace Jube.Test.Infrastructure
 {
-    using System;
-    using System.Linq;
-    using System.Threading.Tasks;
-    using Jube.Data.Context;
-    using Jube.Data.Poco;
-    using LinqToDB;
-    using Xunit;
-
     // ReSharper disable once ClassNeverInstantiated.Global
     public sealed class DatabaseFixture : IAsyncLifetime
     {
@@ -33,9 +33,6 @@ namespace Jube.Test.Infrastructure
             "Host=localhost;Port=5432;Database=postgres;Username=postgres;Password=SuperSecretPasswordToChangeForPg;Pooling=true;Minimum Pool Size=0;Maximum Pool Size=100;";
 
         public SeedData Seed { get; private set; } = null!;
-
-        public DbContext GetDbContext() =>
-            DataConnectionDbContext.GetResilientDbContextDataConnection(ConnectionString, TestLog.NoOp);
 
         public async Task InitializeAsync()
         {
@@ -96,26 +93,31 @@ namespace Jube.Test.Infrastructure
                 .DeleteAsync().ConfigureAwait(false);
         }
 
+        public DbContext GetDbContext()
+        {
+            return DataConnectionDbContext.GetResilientDbContextDataConnection(ConnectionString, TestLog.NoOp);
+        }
+
         private static async Task<SeedData> SeedAsync(DbContext dbContext)
         {
-            const int readWriteModelSpec = 6;
+            int[] readWriteSpecs = [2, 6, 7, 12, 13];
 
             var suffix = Guid.NewGuid().ToString("N")[..8];
-            var tenantAId = await InsertTenantAsync(dbContext, $"{Prefix}TenantA{suffix}", landlord: false)
+            var tenantAId = await InsertTenantAsync(dbContext, $"{Prefix}TenantA{suffix}", false)
                 .ConfigureAwait(false);
-            var tenantBId = await InsertTenantAsync(dbContext, $"{Prefix}TenantB{suffix}", landlord: false)
+            var tenantBId = await InsertTenantAsync(dbContext, $"{Prefix}TenantB{suffix}", false)
                 .ConfigureAwait(false);
-            var landlordTenantId = await InsertTenantAsync(dbContext, $"{Prefix}TenantL{suffix}", landlord: true)
+            var landlordTenantId = await InsertTenantAsync(dbContext, $"{Prefix}TenantL{suffix}", true)
                 .ConfigureAwait(false);
             var roleWithPermissionAId =
                 await InsertRoleAsync(dbContext, $"{Prefix}RoleWithPermissionA{suffix}", tenantAId,
-                    [readWriteModelSpec]).ConfigureAwait(false);
+                    readWriteSpecs).ConfigureAwait(false);
             var roleWithoutPermissionAId =
                 await InsertRoleAsync(dbContext, $"{Prefix}RoleWithoutPermissionA{suffix}", tenantAId, [])
                     .ConfigureAwait(false);
             var roleWithPermissionBId =
                 await InsertRoleAsync(dbContext, $"{Prefix}RoleWithPermissionB{suffix}", tenantBId,
-                    [readWriteModelSpec]).ConfigureAwait(false);
+                    readWriteSpecs).ConfigureAwait(false);
             var landlordRoleId = await InsertRoleAsync(dbContext, $"{Prefix}RoleLandlord{suffix}", landlordTenantId, [])
                 .ConfigureAwait(false);
             var userWithPermission = $"{Prefix}UserWithPermission{suffix}";
@@ -161,8 +163,9 @@ namespace Jube.Test.Infrastructure
                 $"{Prefix}UnknownUser{suffix}");
         }
 
-        private static Task<int> InsertTenantAsync(DbContext dbContext, string name, bool landlord) =>
-            dbContext.InsertWithInt32IdentityAsync(new TenantRegistry
+        private static Task<int> InsertTenantAsync(DbContext dbContext, string name, bool landlord)
+        {
+            return dbContext.InsertWithInt32IdentityAsync(new TenantRegistry
             {
                 Name = name,
                 Active = 1,
@@ -173,6 +176,7 @@ namespace Jube.Test.Infrastructure
                 CreatedDate = DateTime.UtcNow,
                 CreatedUser = Prefix
             });
+        }
 
         private static async Task<int> InsertRoleAsync(DbContext dbContext, string name, int tenantRegistryId,
             int[] specs)
@@ -192,7 +196,6 @@ namespace Jube.Test.Infrastructure
             }).ConfigureAwait(false);
 
             foreach (var spec in specs)
-            {
                 await dbContext.InsertAsync(new RoleRegistryPermission
                 {
                     Guid = Guid.NewGuid(),
@@ -205,7 +208,6 @@ namespace Jube.Test.Infrastructure
                     CreatedDate = DateTime.UtcNow,
                     CreatedUser = Prefix
                 }).ConfigureAwait(false);
-            }
 
             return roleId;
         }

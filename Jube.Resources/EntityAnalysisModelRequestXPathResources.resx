@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+    <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="root"
+                xmlns="">
+        <xsd:element name="root" msdata:IsDataSet="true">
+            <xsd:complexType>
+                <xsd:choice maxOccurs="unbounded">
+                    <xsd:element name="data">
+                        <xsd:complexType>
+                            <xsd:sequence>
+                                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1"/>
+                            </xsd:sequence>
+                            <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1"/>
+                            <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3"/>
+                            <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4"/>
+                        </xsd:complexType>
+                    </xsd:element>
+                </xsd:choice>
+            </xsd:complexType>
+        </xsd:element>
+    </xsd:schema>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>2.0</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral,
+            PublicKeyToken=b77a5c561934e089
+        </value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral,
+            PublicKeyToken=b77a5c561934e089
+        </value>
+    </resheader>
+    <data name="PermissionDenied" xml:space="preserve">
+    <value>You do not have permission to perform this action.</value>
+  </data>
+    <data name="NotAuthenticated" xml:space="preserve">
+    <value>You must be signed in to a tenant to perform this action.</value>
+  </data>
+    <data name="EntityAnalysisModelIdInvalid" xml:space="preserve">
+    <value>A valid Model is required.</value>
+  </data>
+    <data name="NameRequired" xml:space="preserve">
+    <value>A name is required.</value>
+  </data>
+    <data name="NameMaxLength" xml:space="preserve">
+    <value>The name must be {0} characters or fewer.</value>
+  </data>
+    <data name="NameAlreadyExists" xml:space="preserve">
+    <value>This name already exists.</value>
+  </data>
+    <data name="DataTypeIdInvalid" xml:space="preserve">
+    <value>The data type must be String, Integer, Float, Date, Boolean, Latitude or Longitude.</value>
+  </data>
+    <data name="XPathRequired" xml:space="preserve">
+    <value>An XPath (JSONPath) is required.</value>
+  </data>
+    <data name="XPathMaxLength" xml:space="preserve">
+    <value>The XPath must be {0} characters or fewer.</value>
+  </data>
+    <data name="DefaultValueRequired" xml:space="preserve">
+    <value>A default value is required.</value>
+  </data>
+    <data name="DefaultValueMaxLength" xml:space="preserve">
+    <value>The default value must be {0} characters or fewer.</value>
+  </data>
+    <data name="DefaultValueDateOffsetInvalid" xml:space="preserve">
+    <value>The default value for a Date field must be an integer number of days offset from now.</value>
+  </data>
+    <data name="EncryptionIdInvalid" xml:space="preserve">
+    <value>The encryption option must be None, Deterministic or Random.</value>
+  </data>
+    <data name="SearchKeyTtlIntervalInvalid" xml:space="preserve">
+    <value>The search key TTL interval must be Seconds, Minutes, Hours or Days.</value>
+  </data>
+    <data name="SearchKeyTtlIntervalValueRange" xml:space="preserve">
+    <value>The search key TTL interval value must be zero or greater.</value>
+  </data>
+    <data name="SearchKeyFetchLimitRange" xml:space="preserve">
+    <value>The search key fetch limit must be zero or greater.</value>
+  </data>
+    <data name="SearchKeyCacheIntervalInvalid" xml:space="preserve">
+    <value>The search key cache interval must be Seconds, Minutes, Hours or Days.</value>
+  </data>
+    <data name="SearchKeyCacheValueRange" xml:space="preserve">
+    <value>The search key cache interval value must be zero or greater.</value>
+  </data>
+    <data name="SearchKeyCacheFetchLimitRange" xml:space="preserve">
+    <value>The search key cache fetch limit must be zero or greater.</value>
+  </data>
+    <data name="SearchKeyCacheTtlIntervalInvalid" xml:space="preserve">
+    <value>The search key cache TTL interval must be Seconds, Minutes, Hours or Days.</value>
+  </data>
+    <data name="SearchKeyCacheTtlValueRange" xml:space="preserve">
+    <value>The search key cache TTL interval value must be zero or greater.</value>
+  </data>
+</root>

@@ -11,20 +11,20 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using AutoMapper;
+using Jube.Data.Context;
+using Jube.Data.Poco;
+using LinqToDB;
+using Microsoft.Extensions.Logging.Abstractions;
+
 namespace Jube.Data.Repository
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Data;
-    using System.Linq;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using AutoMapper;
-    using Context;
-    using LinqToDB;
-    using Microsoft.Extensions.Logging.Abstractions;
-    using Poco;
-
     public class EntityAnalysisModelRequestXPathRepository
     {
         private readonly DbContext dbContext;
@@ -50,7 +50,8 @@ namespace Jube.Data.Repository
             this.tenantRegistryId = tenantRegistryId;
         }
 
-        public Task<EntityAnalysisModelRequestXpath> GetByNameEntityAnalysisModelIdAsync(string name, int entityAnalysisModelId, CancellationToken token = default)
+        public Task<EntityAnalysisModelRequestXpath> GetByNameEntityAnalysisModelIdAsync(string name,
+            int entityAnalysisModelId, CancellationToken token = default)
         {
             return dbContext.EntityAnalysisModelRequestXpath
                 .FirstOrDefaultAsync(f =>
@@ -68,7 +69,8 @@ namespace Jube.Data.Repository
                     && (w.Deleted == 0 || w.Deleted == null)).ToListAsync(token);
         }
 
-        public async Task<IEnumerable<EntityAnalysisModelRequestXpath>> GetByEntityAnalysisModelIdOrderByIdAsync(int entityAnalysisModelId, CancellationToken token = default)
+        public async Task<IEnumerable<EntityAnalysisModelRequestXpath>> GetByEntityAnalysisModelIdOrderByIdAsync(
+            int entityAnalysisModelId, CancellationToken token = default)
         {
             return await dbContext.EntityAnalysisModelRequestXpath
                 .Where(w =>
@@ -78,7 +80,8 @@ namespace Jube.Data.Repository
                 .OrderBy(o => o.Id).ToListAsync(token).ConfigureAwait(false);
         }
 
-        public async Task<IEnumerable<EntityAnalysisModelRequestXpath>> GetByEntityAnalysisModelIdOrderByNameAsync(int entityAnalysisModelId, CancellationToken token = default)
+        public async Task<IEnumerable<EntityAnalysisModelRequestXpath>> GetByEntityAnalysisModelIdOrderByNameAsync(
+            int entityAnalysisModelId, CancellationToken token = default)
         {
             return await dbContext.EntityAnalysisModelRequestXpath
                 .Where(w =>
@@ -88,7 +91,9 @@ namespace Jube.Data.Repository
                 .OrderBy(o => o.Name).ToListAsync(token).ConfigureAwait(false);
         }
 
-        public async Task<IEnumerable<EntityAnalysisModelRequestXpath>> GetByEntityAnalysisModelIdOrderByNameCacheOnlyAsync(int entityAnalysisModelId, CancellationToken token = default)
+        public async Task<IEnumerable<EntityAnalysisModelRequestXpath>>
+            GetByEntityAnalysisModelIdOrderByNameCacheOnlyAsync(int entityAnalysisModelId,
+                CancellationToken token = default)
         {
             return await dbContext.EntityAnalysisModelRequestXpath
                 .Where(w =>
@@ -99,7 +104,8 @@ namespace Jube.Data.Repository
                 .OrderBy(o => o.Name).ToListAsync(token).ConfigureAwait(false);
         }
 
-        public async Task<IEnumerable<EntityAnalysisModelRequestXpath>> GetBySuppressionKeysAsync(CancellationToken token = default)
+        public async Task<IEnumerable<EntityAnalysisModelRequestXpath>> GetBySuppressionKeysAsync(
+            CancellationToken token = default)
         {
             return await dbContext.EntityAnalysisModelRequestXpath
                 .Where(w =>
@@ -108,7 +114,8 @@ namespace Jube.Data.Repository
                     && w.EnableSuppression == 1 && (w.Deleted == 0 || w.Deleted == null)).ToListAsync(token);
         }
 
-        public async Task<IEnumerable<EntityAnalysisModelRequestXpath>> GetByCasesWorkflowIdAsync(int casesWorkflowId, CancellationToken token = default)
+        public async Task<IEnumerable<EntityAnalysisModelRequestXpath>> GetByCasesWorkflowIdAsync(int casesWorkflowId,
+            CancellationToken token = default)
         {
             var query =
                 from x in dbContext.EntityAnalysisModelRequestXpath
@@ -125,10 +132,12 @@ namespace Jube.Data.Repository
         public async Task<IEnumerable<EntityAnalysisModelRequestXpath>> GetByEntityAnalysisModelIdByDataTypeAsync(
             int entityAnalysisModelId, CancellationToken token = default, params int[] dataTypeIds)
         {
+            var dataTypeIdsList = dataTypeIds.ToList();
+
             return await dbContext.EntityAnalysisModelRequestXpath
                 .Where(w =>
                     (w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
-                    && dataTypeIds.Contains(w.DataTypeId.Value)
+                    && dataTypeIdsList.Contains(w.DataTypeId.GetValueOrDefault())
                     && w.EntityAnalysisModelId == entityAnalysisModelId && (w.Deleted == 0 || w.Deleted == null))
                 .ToListAsync(token);
         }
@@ -140,13 +149,15 @@ namespace Jube.Data.Repository
                 && w.Id == id && (w.Deleted == 0 || w.Deleted == null), token);
         }
 
-        public async Task<EntityAnalysisModelRequestXpath> InsertIncrementCacheIndexIdAsync(EntityAnalysisModelRequestXpath model, CancellationToken token = default)
+        public async Task<EntityAnalysisModelRequestXpath> InsertIncrementCacheIndexIdAsync(
+            EntityAnalysisModelRequestXpath model, CancellationToken token = default)
         {
             await using var transaction = await dbContext.BeginTransactionAsync(IsolationLevel.Serializable, token);
             try
             {
                 var cacheIndexId = await dbContext.EntityAnalysisModelRequestXpath
-                    .Where(w => (w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                    .Where(w => (w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId ||
+                                 !tenantRegistryId.HasValue)
                                 && w.EntityAnalysisModel.Id == model.EntityAnalysisModelId
                     ).MaxAsync(m => m.CacheIndexId, token) ?? 0;
 
@@ -167,7 +178,8 @@ namespace Jube.Data.Repository
             }
         }
 
-        public async Task<EntityAnalysisModelRequestXpath> InsertAsync(EntityAnalysisModelRequestXpath model, CancellationToken token = default)
+        public async Task<EntityAnalysisModelRequestXpath> InsertAsync(EntityAnalysisModelRequestXpath model,
+            CancellationToken token = default)
         {
             model.CreatedUser = userName ?? model.CreatedUser;
             model.Guid = model.Guid == Guid.Empty ? Guid.NewGuid() : model.Guid;
@@ -178,18 +190,17 @@ namespace Jube.Data.Repository
             return model;
         }
 
-        public async Task<EntityAnalysisModelRequestXpath> UpdateAsync(EntityAnalysisModelRequestXpath model, CancellationToken token = default)
+        public async Task<EntityAnalysisModelRequestXpath> UpdateAsync(EntityAnalysisModelRequestXpath model,
+            CancellationToken token = default)
         {
             var existing = await dbContext.EntityAnalysisModelRequestXpath
-                .FirstOrDefaultAsync(w => w.Id
-                                          == model.Id
-                                          && (w.Deleted == 0 || w.Deleted == null)
-                                          && (w.Locked == 0 || w.Locked == null), token);
+                .FirstOrDefaultAsync(w =>
+                    (w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                    && w.Id == model.Id
+                    && (w.Deleted == 0 || w.Deleted == null)
+                    && (w.Locked == 0 || w.Locked == null), token);
 
-            if (existing == null)
-            {
-                throw new KeyNotFoundException();
-            }
+            if (existing == null) throw new KeyNotFoundException();
 
             model.Version = existing.Version + 1;
             model.Guid = existing.Guid;
@@ -199,10 +210,9 @@ namespace Jube.Data.Repository
 
             await dbContext.UpdateAsync(model, token: token);
 
-            var mapper = new Mapper(new MapperConfiguration(cfg =>
-            {
-                cfg.CreateMap<EntityAnalysisModelRequestXpath, EntityAnalysisModelRequestXpathVersion>();
-            }, NullLoggerFactory.Instance));
+            var mapper = new Mapper(new MapperConfiguration(
+                cfg => { cfg.CreateMap<EntityAnalysisModelRequestXpath, EntityAnalysisModelRequestXpathVersion>(); },
+                NullLoggerFactory.Instance));
 
             var audit = mapper.Map<EntityAnalysisModelRequestXpathVersion>(existing);
             audit.EntityAnalysisModelRequestXpathId = existing.Id;
@@ -225,13 +235,11 @@ namespace Jube.Data.Repository
                 .Set(s => s.DeletedUser, userName)
                 .UpdateAsync(token);
 
-            if (records == 0)
-            {
-                throw new KeyNotFoundException();
-            }
+            if (records == 0) throw new KeyNotFoundException();
         }
 
-        public Task DeleteByTenantRegistryIdOutsideOfInstanceAsync(int tenantRegistryIdOutsideOfInstance, int importId, CancellationToken token = default)
+        public Task DeleteByTenantRegistryIdOutsideOfInstanceAsync(int tenantRegistryIdOutsideOfInstance, int importId,
+            CancellationToken token = default)
         {
             return dbContext.EntityAnalysisModelRequestXpath
                 .Where(d =>

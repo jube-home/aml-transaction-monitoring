@@ -21,20 +21,19 @@ namespace Jube.Service.Agent.ServiceToolCatalogue
         {
             get
             {
-                if (all != null)
-                {
-                    return all;
-                }
+                if (all != null) return all;
 
                 var tools = new List<ServiceToolDescriptor>();
-                
+
                 AddEntityAnalysisModel(tools);
+                AddEntityAnalysisModelRequestXPath(tools);
                 all = tools;
-                
+
                 return all;
             }
         }
 
         static partial void AddEntityAnalysisModel(List<ServiceToolDescriptor> tools);
+        static partial void AddEntityAnalysisModelRequestXPath(List<ServiceToolDescriptor> tools);
     }
 }
