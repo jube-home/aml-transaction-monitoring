@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+    <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"
+                id="root"
+                xmlns="">
+        <xsd:element name="root" msdata:IsDataSet="true">
+            <xsd:complexType>
+                <xsd:choice maxOccurs="unbounded">
+                    <xsd:element name="data">
+                        <xsd:complexType>
+                            <xsd:sequence>
+                                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1"/>
+                            </xsd:sequence>
+                            <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1"/>
+                            <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3"/>
+                            <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4"/>
+                        </xsd:complexType>
+                    </xsd:element>
+                </xsd:choice>
+            </xsd:complexType>
+        </xsd:element>
+    </xsd:schema>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>2.0</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral,
+            PublicKeyToken=b77a5c561934e089
+        </value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral,
+            PublicKeyToken=b77a5c561934e089
+        </value>
+    </resheader>
+    <data name="PermissionDenied" xml:space="preserve">
+    <value>You do not have permission to perform this action.</value>
+  </data>
+    <data name="NotAuthenticated" xml:space="preserve">
+    <value>You must be signed in to a tenant to perform this action.</value>
+  </data>
+    <data name="EntityAnalysisModelIdInvalid" xml:space="preserve">
+    <value>A valid Model is required.</value>
+  </data>
+    <data name="NameRequired" xml:space="preserve">
+    <value>A name is required.</value>
+  </data>
+    <data name="NameMaxLength" xml:space="preserve">
+    <value>The name must be {0} characters or fewer.</value>
+  </data>
+    <data name="NameAlreadyExists" xml:space="preserve">
+    <value>This name already exists.</value>
+  </data>
+    <data name="AbstractionCalculationTypeIdInvalid" xml:space="preserve">
+    <value>The calculation type must be Add, Subtract, Divide, Multiply or Coder.</value>
+  </data>
+    <data name="EntityAnalysisModelAbstractionNameLeftRequired" xml:space="preserve">
+    <value>A left-hand Abstraction Rule is required unless the calculation type is Coder.</value>
+  </data>
+    <data name="EntityAnalysisModelAbstractionNameRightRequired" xml:space="preserve">
+    <value>A right-hand Abstraction Rule is required unless the calculation type is Coder.</value>
+  </data>
+    <data name="FunctionScriptRequired" xml:space="preserve">
+    <value>A function script is required when the calculation type is Coder.</value>
+  </data>
+    <data name="FunctionScriptMaxLength" xml:space="preserve">
+    <value>The function script must be {0} characters or fewer.</value>
+  </data>
+</root>

@@ -11,6 +11,8 @@ grand_parent: Configuration
 # Abstraction Calculation
 An Abstraction Calculation compares one Abstraction Rule return value to another using reasonably simple arithmetic or functions based on VB .Net code fragments.  For example,  it is useful to take two values,  dividing one by another to create a ratio, which is oftentimes quite helpful in machine learning.
 
+The name is required and limited to 256 characters, and must be unique within the Model. For the Add, Subtract, Divide and Multiply calculation types, the Abstraction Left and Abstraction Right values are required; for the Coder calculation type, the Coder function fragment is required instead, and is limited to 65,536 characters.
+
 The page is available by navigating through the menu as Models > Abstraction >> Abstraction Calculation:
 
 ![Image](TopOfTreeForAbstractionCalculation.png)

@@ -864,6 +864,7 @@ namespace Jube.App
                     endpoints.MapEntityAnalysisModelSanctionEndpoints();
                     endpoints.MapEntityAnalysisModelTagEndpoints();
                     endpoints.MapEntityAnalysisModelAbstractionRuleEndpoints();
+                    endpoints.MapEntityAnalysisModelAbstractionCalculationEndpoints();
                 });
 
                 await app.StartRelayAsync().ConfigureAwait(false);
