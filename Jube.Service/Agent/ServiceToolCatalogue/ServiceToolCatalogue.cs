@@ -32,6 +32,7 @@ namespace Jube.Service.Agent.ServiceToolCatalogue
                 AddEntityAnalysisModelGatewayRule(tools);
                 AddEntityAnalysisModelSanction(tools);
                 AddEntityAnalysisModelTag(tools);
+                AddEntityAnalysisModelAbstractionRule(tools);
                 all = tools;
 
                 return all;
@@ -45,5 +46,6 @@ namespace Jube.Service.Agent.ServiceToolCatalogue
         static partial void AddEntityAnalysisModelGatewayRule(List<ServiceToolDescriptor> tools);
         static partial void AddEntityAnalysisModelSanction(List<ServiceToolDescriptor> tools);
         static partial void AddEntityAnalysisModelTag(List<ServiceToolDescriptor> tools);
+        static partial void AddEntityAnalysisModelAbstractionRule(List<ServiceToolDescriptor> tools);
     }
 }
