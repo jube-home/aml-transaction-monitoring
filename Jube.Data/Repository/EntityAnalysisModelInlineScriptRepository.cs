@@ -11,19 +11,19 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using AutoMapper;
+using Jube.Data.Context;
+using Jube.Data.Poco;
+using LinqToDB;
+using Microsoft.Extensions.Logging.Abstractions;
+
 namespace Jube.Data.Repository
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using AutoMapper;
-    using Context;
-    using LinqToDB;
-    using Microsoft.Extensions.Logging.Abstractions;
-    using Poco;
-
     public class EntityAnalysisModelInlineScriptRepository
     {
         private readonly DbContext dbContext;
@@ -49,7 +49,8 @@ namespace Jube.Data.Repository
             this.dbContext = dbContext;
         }
 
-        public Task<EntityAnalysisModelInlineScript> GetByNameEntityAnalysisModelIdAsync(string name, int entityAnalysisModelId, CancellationToken token = default)
+        public Task<EntityAnalysisModelInlineScript> GetByNameEntityAnalysisModelIdAsync(string name,
+            int entityAnalysisModelId, CancellationToken token = default)
         {
             return dbContext.EntityAnalysisModelInlineScript
                 .FirstOrDefaultAsync(f =>
@@ -62,11 +63,13 @@ namespace Jube.Data.Repository
         public async Task<IEnumerable<EntityAnalysisModelInlineScript>> GetAsync(CancellationToken token = default)
         {
             return await dbContext.EntityAnalysisModelInlineScript
-                .Where(w => w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                .Where(w => (w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                            && (w.Deleted == 0 || w.Deleted == null))
                 .ToListAsync(token);
         }
 
-        public async Task<IEnumerable<EntityAnalysisModelInlineScript>> GetByEntityAnalysisModelIdOrderByIdAsync(int entityAnalysisModelId, CancellationToken token = default)
+        public async Task<IEnumerable<EntityAnalysisModelInlineScript>> GetByEntityAnalysisModelIdOrderByIdAsync(
+            int entityAnalysisModelId, CancellationToken token = default)
         {
             return await dbContext.EntityAnalysisModelInlineScript
                 .Where(w => (w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
@@ -75,7 +78,8 @@ namespace Jube.Data.Repository
                 .OrderBy(o => o.Id).ToListAsync(token).ConfigureAwait(false);
         }
 
-        public async Task<IEnumerable<EntityAnalysisModelInlineScript>> GetByEntityAnalysisModelIdOrderByNameAsync(int entityAnalysisModelId, CancellationToken token = default)
+        public async Task<IEnumerable<EntityAnalysisModelInlineScript>> GetByEntityAnalysisModelIdOrderByNameAsync(
+            int entityAnalysisModelId, CancellationToken token = default)
         {
             return await dbContext.EntityAnalysisModelInlineScript
                 .Where(w => (w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
@@ -91,7 +95,8 @@ namespace Jube.Data.Repository
                 && w.Id == id && (w.Deleted == 0 || w.Deleted == null), token);
         }
 
-        public async Task<EntityAnalysisModelInlineScript> InsertAsync(EntityAnalysisModelInlineScript model, CancellationToken token = default)
+        public async Task<EntityAnalysisModelInlineScript> InsertAsync(EntityAnalysisModelInlineScript model,
+            CancellationToken token = default)
         {
             model.CreatedUser = userName ?? model.CreatedUser;
             model.Guid = model.Guid == Guid.Empty ? Guid.NewGuid() : model.Guid;
@@ -101,18 +106,17 @@ namespace Jube.Data.Repository
             return model;
         }
 
-        public async Task<EntityAnalysisModelInlineScript> UpdateAsync(EntityAnalysisModelInlineScript model, CancellationToken token = default)
+        public async Task<EntityAnalysisModelInlineScript> UpdateAsync(EntityAnalysisModelInlineScript model,
+            CancellationToken token = default)
         {
             var existing = await dbContext.EntityAnalysisModelInlineScript
-                .FirstOrDefaultAsync(w => w.Id
-                                          == model.Id
+                .FirstOrDefaultAsync(w => (w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId ||
+                                           !tenantRegistryId.HasValue)
+                                          && w.Id == model.Id
                                           && (w.Deleted == 0 || w.Deleted == null)
                                           && (w.Locked == 0 || w.Locked == null), token);
 
-            if (existing == null)
-            {
-                throw new KeyNotFoundException();
-            }
+            if (existing == null) throw new KeyNotFoundException();
 
             model.Version = existing.Version + 1;
             model.Guid = existing.Guid;
@@ -121,10 +125,9 @@ namespace Jube.Data.Repository
 
             await dbContext.UpdateAsync(model, token: token);
 
-            var mapper = new Mapper(new MapperConfiguration(cfg =>
-            {
-                cfg.CreateMap<EntityAnalysisModelInlineScript, EntityAnalysisModelInlineScriptVersion>();
-            }, NullLoggerFactory.Instance));
+            var mapper = new Mapper(new MapperConfiguration(
+                cfg => { cfg.CreateMap<EntityAnalysisModelInlineScript, EntityAnalysisModelInlineScriptVersion>(); },
+                NullLoggerFactory.Instance));
 
             var audit = mapper.Map<EntityAnalysisModelInlineScriptVersion>(existing);
             audit.EntityAnalysisModelInlineScriptId = existing.Id;
@@ -147,13 +150,11 @@ namespace Jube.Data.Repository
                 .Set(s => s.DeletedUser, userName)
                 .UpdateAsync(token);
 
-            if (records == 0)
-            {
-                throw new KeyNotFoundException();
-            }
+            if (records == 0) throw new KeyNotFoundException();
         }
 
-        public Task DeleteByTenantRegistryIdOutsideOfInstanceAsync(int tenantRegistryIdOutsideOfInstance, int importId, CancellationToken token = default)
+        public Task DeleteByTenantRegistryIdOutsideOfInstanceAsync(int tenantRegistryIdOutsideOfInstance, int importId,
+            CancellationToken token = default)
         {
             return dbContext.EntityAnalysisModelInlineScript
                 .Where(d =>
