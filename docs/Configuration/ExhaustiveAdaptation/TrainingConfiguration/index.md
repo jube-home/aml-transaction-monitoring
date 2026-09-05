@@ -60,6 +60,13 @@ The page accepts the following parameters:
 | Class Definition                            | A switch to indicate that the class should be defined by a filter of records in the archive table whereby a match on the filter will return positive class.                                                                                                                       | True          |
 | Class Definition: Archive Filter            | The filter to apply to the Archive table to define positive class. The filter will also be used to negate the sample of negative class.                                                                                                                                           | Tag Fraud = 1 |
 
+Class Anomaly Threshold: Anomaly Probability must be between 0 and 1 (a percentage such as 2% is entered as 0.02).
+When Class Definition is switched on, the Archive Filter is required -- an Exhaustive Adaptation cannot be saved with
+Class Definition enabled and no filter defined.
+
+An Exhaustive Adaptation can only be edited while it is still in status Awaiting Server -- once the background engine
+has picked it up for training it becomes read-only for the remainder of its lifecycle.
+
 Complete the parameters to training a model based confirmed fraud via Tag, as follows:
 
 ![ExampleExhaustive.png](ExampleExhaustive.png)
