@@ -124,6 +124,11 @@ its `BuilderRuleScript`/`Json` pair backs the same jQuery QueryBuilder widget th
 use, and both properties (plus the sibling `RuleScriptTypeId`/`CoderRuleScript` fields the interface doesn't cover) are
 marked `[Editor("RuleBuilder")]` so the generic form defers the whole group to the bespoke rule-authoring control
 rather than rendering individual inputs.
+`EntityAnalysisModelSanctionDto` is a fourth `ITreeChild` adopter and a second real `[Lookup]` use, but with a shape
+`[Lookup]` wasn't originally designed for: its `MultipartStringDataName` field is a value-and-label-are-the-same-string
+picker against the (still unmigrated) `GetEntityAnalysisPotentialMultiPartStringNames` query, so `TextField` and
+`ValueField` both point at the same bare `value` property rather than an id/name pair —
+`[Lookup("/api/GetEntityAnalysisPotentialMultiPartStringNames", TextField = "value", ValueField = "value", ParentField = nameof(EntityAnalysisModelId))]`.
 
 ## Agentic AI tooling
 
