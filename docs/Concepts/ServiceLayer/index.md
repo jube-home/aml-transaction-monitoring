@@ -115,6 +115,10 @@ speculatively.
 `EntityAnalysisModelRequestXPathDto` implements `IUpdated, IActivatable, ILockable, ITreeChild` — the first real adopter
 of `ITreeChild`, since each row is a child of a Model (`EntityAnalysisModelId`, declared via
 `[FormKeys(Parent = nameof(EntityAnalysisModelId))]` rather than the interface itself).
+`EntityAnalysisModelInlineScriptDto` is a second `ITreeChild` adopter, and the first real use of `[Lookup]`: its
+`EntityAnalysisInlineScriptId` field is a reference picker against the (still unmigrated) `EntityAnalysisInlineScript`
+area, an id-keyed lookup rather than the attribute's guid-keyed default —
+`[Lookup("/api/EntityAnalysisInlineScript", TextField = "name", ValueField = "id")]`.
 
 ## Agentic AI tooling
 

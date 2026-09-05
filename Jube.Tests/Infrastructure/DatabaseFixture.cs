@@ -100,7 +100,7 @@ namespace Jube.Test.Infrastructure
 
         private static async Task<SeedData> SeedAsync(DbContext dbContext)
         {
-            int[] readWriteSpecs = [2, 6, 7, 8, 12, 13];
+            int[] readWriteSpecs = [2, 6, 7, 8, 9, 12, 13];
 
             var suffix = Guid.NewGuid().ToString("N")[..8];
             var tenantAId = await InsertTenantAsync(dbContext, $"{Prefix}TenantA{suffix}", false)
