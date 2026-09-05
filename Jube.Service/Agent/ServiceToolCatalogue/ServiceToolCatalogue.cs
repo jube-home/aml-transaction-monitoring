@@ -29,6 +29,7 @@ namespace Jube.Service.Agent.ServiceToolCatalogue
                 AddEntityAnalysisModelRequestXPath(tools);
                 AddEntityAnalysisModelInlineFunction(tools);
                 AddEntityAnalysisModelInlineScript(tools);
+                AddEntityAnalysisModelGatewayRule(tools);
                 all = tools;
 
                 return all;
@@ -39,5 +40,6 @@ namespace Jube.Service.Agent.ServiceToolCatalogue
         static partial void AddEntityAnalysisModelRequestXPath(List<ServiceToolDescriptor> tools);
         static partial void AddEntityAnalysisModelInlineFunction(List<ServiceToolDescriptor> tools);
         static partial void AddEntityAnalysisModelInlineScript(List<ServiceToolDescriptor> tools);
+        static partial void AddEntityAnalysisModelGatewayRule(List<ServiceToolDescriptor> tools);
     }
 }

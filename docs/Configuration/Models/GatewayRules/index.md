@@ -33,6 +33,9 @@ The parameters for the Gateway Rule are described as follows:
 | Gateway Sample         | A percentage value,  between 0% and 100%, representing the sample that should be allowed through to subsequent processing.  The sample will only be taken in the event that the Rule returns as true.  For example,  if the Gateway Sample is set to 20%,  it would imply that only 20% of the matching transactions will be passed through for subsequent processing.                                                                                                                  | 100%    |
 | Max Response Elevation | Upon a Gateway Rule Matching,  the Maximum Response Elevation is set such to provide some risk management to the magnitude of the Response Elevation.  For example,  if the Response Elevation is used to instruct a bid,  the open-boundedness could be cause for alarm. This value is the largest response elevation that may be responded,  with any values exceeding this value being truncated to this value.  Keep in mind that there are similar limits at the model level also. | 10      |
 
+The Gateway Rule name is required and limited to 256 characters; the Builder/Coder rule scripts are each limited to
+65,536 characters.
+
 Complete the form as above parameters and with an example rule that ensures that the AmountUSD is greater than 0:
 
 ![Image](GatewayRuleAmountUSD.png)

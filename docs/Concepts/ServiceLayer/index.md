@@ -119,6 +119,11 @@ of `ITreeChild`, since each row is a child of a Model (`EntityAnalysisModelId`, 
 `EntityAnalysisInlineScriptId` field is a reference picker against the (still unmigrated) `EntityAnalysisInlineScript`
 area, an id-keyed lookup rather than the attribute's guid-keyed default —
 `[Lookup("/api/EntityAnalysisInlineScript", TextField = "name", ValueField = "id")]`.
+`EntityAnalysisModelGatewayRuleDto` is a third `ITreeChild` adopter and the first real adopter of `IRuleBuilderJson`:
+its `BuilderRuleScript`/`Json` pair backs the same jQuery QueryBuilder widget the Abstraction and Activation Rule pages
+use, and both properties (plus the sibling `RuleScriptTypeId`/`CoderRuleScript` fields the interface doesn't cover) are
+marked `[Editor("RuleBuilder")]` so the generic form defers the whole group to the bespoke rule-authoring control
+rather than rendering individual inputs.
 
 ## Agentic AI tooling
 
