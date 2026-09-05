@@ -23,7 +23,7 @@ Click on the top of tree node to create a new Tag:
 
 ![Image](EmptyTag.png)
 
-There are no parameters beyond the common parameters, the Tag is taken to be the Name.
+There are no parameters beyond the common parameters, the Tag is taken to be the Name. The name is required and limited to 256 characters, and must be unique within the Model.
 
 Complete the page as follows:
 
