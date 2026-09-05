@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+    <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"
+                id="root"
+                xmlns="">
+        <xsd:element name="root" msdata:IsDataSet="true">
+            <xsd:complexType>
+                <xsd:choice maxOccurs="unbounded">
+                    <xsd:element name="data">
+                        <xsd:complexType>
+                            <xsd:sequence>
+                                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1"/>
+                            </xsd:sequence>
+                            <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1"/>
+                            <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3"/>
+                            <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4"/>
+                        </xsd:complexType>
+                    </xsd:element>
+                </xsd:choice>
+            </xsd:complexType>
+        </xsd:element>
+    </xsd:schema>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>2.0</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral,
+            PublicKeyToken=b77a5c561934e089
+        </value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral,
+            PublicKeyToken=b77a5c561934e089
+        </value>
+    </resheader>
+    <data name="PermissionDenied" xml:space="preserve">
+    <value>You do not have permission to perform this action.</value>
+  </data>
+    <data name="NotAuthenticated" xml:space="preserve">
+    <value>You must be signed in to a tenant to perform this action.</value>
+  </data>
+    <data name="EntityAnalysisModelIdInvalid" xml:space="preserve">
+    <value>A valid Model is required.</value>
+  </data>
+    <data name="NameRequired" xml:space="preserve">
+    <value>A name is required.</value>
+  </data>
+    <data name="NameMaxLength" xml:space="preserve">
+    <value>The name must be {0} characters or fewer.</value>
+  </data>
+    <data name="NameAlreadyExists" xml:space="preserve">
+    <value>This name already exists.</value>
+  </data>
+    <data name="RuleScriptTypeIdInvalid" xml:space="preserve">
+    <value>The rule script type must be either Builder or Coder.</value>
+  </data>
+    <data name="BuilderRuleScriptRequired" xml:space="preserve">
+    <value>A rule script is required.</value>
+  </data>
+    <data name="BuilderRuleScriptMaxLength" xml:space="preserve">
+    <value>The rule script must be {0} characters or fewer.</value>
+  </data>
+    <data name="JsonRequired" xml:space="preserve">
+    <value>A rule builder definition is required.</value>
+  </data>
+    <data name="CoderRuleScriptRequired" xml:space="preserve">
+    <value>A Coder rule script is required.</value>
+  </data>
+    <data name="CoderRuleScriptMaxLength" xml:space="preserve">
+    <value>The Coder rule script must be {0} characters or fewer.</value>
+  </data>
+    <data name="SearchKeyRequired" xml:space="preserve">
+    <value>A search key is required when Search is enabled.</value>
+  </data>
+    <data name="SearchValueRange" xml:space="preserve">
+    <value>The search value cannot be negative.</value>
+  </data>
+    <data name="SearchIntervalInvalid" xml:space="preserve">
+    <value>The search interval must be Seconds, Minutes, Hours or Days.</value>
+  </data>
+    <data name="SearchFunctionTypeIdInvalid" xml:space="preserve">
+    <value>The function type is not recognised.</value>
+  </data>
+    <data name="SearchFunctionKeyRequired" xml:space="preserve">
+    <value>A function key is required for this function type.</value>
+  </data>
+    <data name="OffsetTypeIdInvalid" xml:space="preserve">
+    <value>The offset type must be First, Last, Skip First or Take Last.</value>
+  </data>
+    <data name="OffsetValueRange" xml:space="preserve">
+    <value>The offset value cannot be negative.</value>
+  </data>
+</root>
