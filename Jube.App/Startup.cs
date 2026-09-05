@@ -858,6 +858,7 @@ namespace Jube.App
                     endpoints.MapHub<ServiceChangeHub>("/serviceChangeHub");
                     endpoints.MapEntityAnalysisModelEndpoints();
                     endpoints.MapEntityAnalysisModelRequestXPathEndpoints();
+                    endpoints.MapEntityAnalysisModelInlineFunctionEndpoints();
                 });
 
                 await app.StartRelayAsync().ConfigureAwait(false);
