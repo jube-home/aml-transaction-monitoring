@@ -11,20 +11,20 @@
  * see <https://www.gnu.org/licenses/>.
  */
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Threading;
+using System.Threading.Tasks;
+using AutoMapper;
+using Jube.Data.Context;
+using Jube.Data.Poco;
+using LinqToDB;
+using Microsoft.Extensions.Logging.Abstractions;
+
 namespace Jube.Data.Repository
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Net;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using AutoMapper;
-    using Context;
-    using LinqToDB;
-    using Microsoft.Extensions.Logging.Abstractions;
-    using Poco;
-
     public class EntityAnalysisModelGatewayRuleRepository
     {
         private readonly DbContext dbContext;
@@ -50,7 +50,8 @@ namespace Jube.Data.Repository
             this.dbContext = dbContext;
         }
 
-        public Task<EntityAnalysisModelGatewayRule> GetByNameEntityAnalysisModelIdAsync(string name, int entityAnalysisModelId, CancellationToken token = default)
+        public Task<EntityAnalysisModelGatewayRule> GetByNameEntityAnalysisModelIdAsync(string name,
+            int entityAnalysisModelId, CancellationToken token = default)
         {
             return dbContext.EntityAnalysisModelGatewayRule
                 .FirstOrDefaultAsync(f =>
@@ -64,11 +65,13 @@ namespace Jube.Data.Repository
         {
             return await dbContext.EntityAnalysisModelGatewayRule
                 .Where(w =>
-                    w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                    (w.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
+                    && (w.Deleted == 0 || w.Deleted == null))
                 .ToListAsync(token).ConfigureAwait(false);
         }
 
-        public async Task<IEnumerable<EntityAnalysisModelGatewayRule>> GetByEntityAnalysisModelIdOrderByIdAsync(int entityAnalysisModelId, CancellationToken token = default)
+        public async Task<IEnumerable<EntityAnalysisModelGatewayRule>> GetByEntityAnalysisModelIdOrderByIdAsync(
+            int entityAnalysisModelId, CancellationToken token = default)
         {
             return await dbContext.EntityAnalysisModelGatewayRule
                 .Where(w =>
@@ -78,7 +81,8 @@ namespace Jube.Data.Repository
                 .OrderBy(o => o.Id).ToListAsync(token).ConfigureAwait(false);
         }
 
-        public async Task<IEnumerable<EntityAnalysisModelGatewayRule>> GetByEntityAnalysisModelIdOrderByPriorityAsync(int entityAnalysisModelId, CancellationToken token = default)
+        public async Task<IEnumerable<EntityAnalysisModelGatewayRule>> GetByEntityAnalysisModelIdOrderByPriorityAsync(
+            int entityAnalysisModelId, CancellationToken token = default)
         {
             return await dbContext.EntityAnalysisModelGatewayRule
                 .Where(w =>
@@ -95,7 +99,8 @@ namespace Jube.Data.Repository
                 && w.Id == id && (w.Deleted == 0 || w.Deleted == null), token);
         }
 
-        public async Task<EntityAnalysisModelGatewayRule> InsertAsync(EntityAnalysisModelGatewayRule model, CancellationToken token = default)
+        public async Task<EntityAnalysisModelGatewayRule> InsertAsync(EntityAnalysisModelGatewayRule model,
+            CancellationToken token = default)
         {
             model.CreatedUser = userName ?? model.CreatedUser;
             model.Guid = model.Guid == Guid.Empty ? Guid.NewGuid() : model.Guid;
@@ -105,7 +110,8 @@ namespace Jube.Data.Repository
             return model;
         }
 
-        public async Task<EntityAnalysisModelGatewayRule> UpdateAsync(EntityAnalysisModelGatewayRule model, CancellationToken token = default)
+        public async Task<EntityAnalysisModelGatewayRule> UpdateAsync(EntityAnalysisModelGatewayRule model,
+            CancellationToken token = default)
         {
             var existing = await dbContext.EntityAnalysisModelGatewayRule
                 .FirstOrDefaultAsync(w => w.Id
@@ -115,10 +121,7 @@ namespace Jube.Data.Repository
                                           && (w.Deleted == 0 || w.Deleted == null)
                                           && (w.Locked == 0 || w.Locked == null), token);
 
-            if (existing == null)
-            {
-                throw new KeyNotFoundException();
-            }
+            if (existing == null) throw new KeyNotFoundException();
 
             model.Version = existing.Version + 1;
             model.Guid = existing.Guid;
@@ -127,10 +130,9 @@ namespace Jube.Data.Repository
 
             await dbContext.UpdateAsync(model, token: token);
 
-            var mapper = new Mapper(new MapperConfiguration(cfg =>
-            {
-                cfg.CreateMap<EntityAnalysisModelGatewayRule, EntityAnalysisModelGatewayRuleVersion>();
-            }, NullLoggerFactory.Instance));
+            var mapper = new Mapper(new MapperConfiguration(
+                cfg => { cfg.CreateMap<EntityAnalysisModelGatewayRule, EntityAnalysisModelGatewayRuleVersion>(); },
+                NullLoggerFactory.Instance));
 
             var audit = mapper.Map<EntityAnalysisModelGatewayRuleVersion>(existing);
             audit.EntityAnalysisModelGatewayRuleId = existing.Id;
@@ -140,7 +142,8 @@ namespace Jube.Data.Repository
             return model;
         }
 
-        public async Task UpdateCounterAsync(int id, long evaluationCounter, long activationCounter, DateTime activationCounterDate, CancellationToken token = default)
+        public async Task UpdateCounterAsync(int id, long evaluationCounter, long activationCounter,
+            DateTime activationCounterDate, CancellationToken token = default)
         {
             await dbContext.BeginTransactionAsync(token).ConfigureAwait(false);
             try
@@ -159,7 +162,8 @@ namespace Jube.Data.Repository
                     .UpdateAsync(token).ConfigureAwait(false);
 
                 await new EntityAnalysisModelGatewayRuleCounterHistoryRepository(dbContext)
-                    .InsertAsync(id, evaluationCounter, activationCounter, Dns.GetHostName(), token).ConfigureAwait(false);
+                    .InsertAsync(id, evaluationCounter, activationCounter, Dns.GetHostName(), token)
+                    .ConfigureAwait(false);
 
                 await dbContext.CommitTransactionAsync(token).ConfigureAwait(false);
             }
@@ -181,13 +185,11 @@ namespace Jube.Data.Repository
                 .Set(s => s.EvaluationCounter, 0L)
                 .UpdateAsync(token).ConfigureAwait(false);
 
-            if (records == 0)
-            {
-                throw new KeyNotFoundException();
-            }
+            if (records == 0) throw new KeyNotFoundException();
         }
 
-        public Task UpdateCompileStatusAsync(int id, bool compiled, string compileError, CancellationToken token = default)
+        public Task UpdateCompileStatusAsync(int id, bool compiled, string compileError,
+            CancellationToken token = default)
         {
             return dbContext.EntityAnalysisModelGatewayRule
                 .Where(d => (d.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
@@ -197,9 +199,9 @@ namespace Jube.Data.Repository
                 .UpdateAsync(token);
         }
 
-        public Task DeleteAsync(int id, CancellationToken token = default)
+        public async Task DeleteAsync(int id, CancellationToken token = default)
         {
-            return dbContext.EntityAnalysisModelGatewayRule
+            var records = await dbContext.EntityAnalysisModelGatewayRule
                 .Where(d =>
                     (d.EntityAnalysisModel.TenantRegistryId == tenantRegistryId || !tenantRegistryId.HasValue)
                     && d.Id == id
@@ -208,10 +210,13 @@ namespace Jube.Data.Repository
                 .Set(s => s.Deleted, Convert.ToByte(1))
                 .Set(s => s.DeletedDate, DateTime.UtcNow)
                 .Set(s => s.DeletedUser, userName)
-                .UpdateAsync(token);
+                .UpdateAsync(token).ConfigureAwait(false);
+
+            if (records == 0) throw new KeyNotFoundException();
         }
 
-        public Task DeleteByTenantRegistryIdOutsideOfInstanceAsync(int tenantRegistryIdOutsideOfInstance, int importId, CancellationToken token = default)
+        public Task DeleteByTenantRegistryIdOutsideOfInstanceAsync(int tenantRegistryIdOutsideOfInstance, int importId,
+            CancellationToken token = default)
         {
             return dbContext.EntityAnalysisModelGatewayRule
                 .Where(d =>
