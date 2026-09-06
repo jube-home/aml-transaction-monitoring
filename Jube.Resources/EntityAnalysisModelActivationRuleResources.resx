@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+    <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"
+                id="root"
+                xmlns="">
+        <xsd:element name="root" msdata:IsDataSet="true">
+            <xsd:complexType>
+                <xsd:choice maxOccurs="unbounded">
+                    <xsd:element name="data">
+                        <xsd:complexType>
+                            <xsd:sequence>
+                                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1"/>
+                            </xsd:sequence>
+                            <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1"/>
+                            <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3"/>
+                            <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4"/>
+                        </xsd:complexType>
+                    </xsd:element>
+                </xsd:choice>
+            </xsd:complexType>
+        </xsd:element>
+    </xsd:schema>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>2.0</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral,
+            PublicKeyToken=b77a5c561934e089
+        </value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral,
+            PublicKeyToken=b77a5c561934e089
+        </value>
+    </resheader>
+    <data name="PermissionDenied" xml:space="preserve">
+    <value>You do not have permission to perform this action.</value>
+  </data>
+    <data name="NotAuthenticated" xml:space="preserve">
+    <value>You must be signed in to a tenant to perform this action.</value>
+  </data>
+    <data name="PermissionDeniedApproveByReview" xml:space="preserve">
+    <value>Can't update to Approved by Review without permission.</value>
+  </data>
+    <data name="EntityAnalysisModelIdInvalid" xml:space="preserve">
+    <value>A valid Model is required.</value>
+  </data>
+    <data name="NameRequired" xml:space="preserve">
+    <value>A name is required.</value>
+  </data>
+    <data name="NameMaxLength" xml:space="preserve">
+    <value>The name must be {0} characters or fewer.</value>
+  </data>
+    <data name="NameAlreadyExists" xml:space="preserve">
+    <value>This name already exists.</value>
+  </data>
+    <data name="ReviewStatusIdInvalid" xml:space="preserve">
+    <value>The review status is not recognised.</value>
+  </data>
+    <data name="RuleScriptTypeIdInvalid" xml:space="preserve">
+    <value>The rule script type must be either Builder or Coder.</value>
+  </data>
+    <data name="BuilderRuleScriptRequired" xml:space="preserve">
+    <value>A rule script is required.</value>
+  </data>
+    <data name="BuilderRuleScriptMaxLength" xml:space="preserve">
+    <value>The rule script must be {0} characters or fewer.</value>
+  </data>
+    <data name="JsonRequired" xml:space="preserve">
+    <value>A rule builder definition is required.</value>
+  </data>
+    <data name="CoderRuleScriptRequired" xml:space="preserve">
+    <value>A Coder rule script is required.</value>
+  </data>
+    <data name="CoderRuleScriptMaxLength" xml:space="preserve">
+    <value>The Coder rule script must be {0} characters or fewer.</value>
+  </data>
+    <data name="CaseWorkflowGuidRequired" xml:space="preserve">
+    <value>A Case Workflow is required when Cases is enabled.</value>
+  </data>
+    <data name="CaseWorkflowStatusGuidRequired" xml:space="preserve">
+    <value>A Case Workflow Status is required when Cases is enabled.</value>
+  </data>
+    <data name="CaseKeyRequired" xml:space="preserve">
+    <value>A Case Key is required when Cases is enabled.</value>
+  </data>
+    <data name="CaseKeyMaxLength" xml:space="preserve">
+    <value>The Case Key must be {0} characters or fewer.</value>
+  </data>
+    <data name="BypassSuspendSampleRange" xml:space="preserve">
+    <value>The bypass suspend sample must be between 0 and 1.</value>
+  </data>
+    <data name="BypassSuspendIntervalInvalid" xml:space="preserve">
+    <value>The bypass suspend interval must be Minutes, Hours, Days or Months.</value>
+  </data>
+    <data name="BypassSuspendValueRange" xml:space="preserve">
+    <value>The bypass suspend value cannot be negative.</value>
+  </data>
+    <data name="ResponseElevationRange" xml:space="preserve">
+    <value>The response elevation cannot be negative.</value>
+  </data>
+    <data name="ResponseElevationContentMaxLength" xml:space="preserve">
+    <value>The response elevation content must be {0} characters or fewer.</value>
+  </data>
+    <data name="ResponseElevationRedirectMaxLength" xml:space="preserve">
+    <value>The response elevation redirect must be {0} characters or fewer.</value>
+  </data>
+    <data name="ResponseElevationKeyRequired" xml:space="preserve">
+    <value>A response elevation key is required when sending to the Activation Watcher.</value>
+  </data>
+    <data name="ResponseElevationForeColorRequired" xml:space="preserve">
+    <value>A fore colour is required when sending to the Activation Watcher.</value>
+  </data>
+    <data name="ResponseElevationForeColorInvalid" xml:space="preserve">
+    <value>The fore colour must be a hex value, for example #0000FF.</value>
+  </data>
+    <data name="ResponseElevationBackColorRequired" xml:space="preserve">
+    <value>A back colour is required when sending to the Activation Watcher.</value>
+  </data>
+    <data name="ResponseElevationBackColorInvalid" xml:space="preserve">
+    <value>The back colour must be a hex value, for example #FF0000.</value>
+  </data>
+    <data name="NotificationTypeIdInvalid" xml:space="preserve">
+    <value>The notification type must be Email or SMS.</value>
+  </data>
+    <data name="NotificationDestinationRequired" xml:space="preserve">
+    <value>A notification destination is required when Notification is enabled.</value>
+  </data>
+    <data name="NotificationDestinationMaxLength" xml:space="preserve">
+    <value>The notification destination must be {0} characters or fewer.</value>
+  </data>
+    <data name="NotificationSubjectMaxLength" xml:space="preserve">
+    <value>The notification subject must be {0} characters or fewer.</value>
+  </data>
+    <data name="NotificationBodyMaxLength" xml:space="preserve">
+    <value>The notification body must be {0} characters or fewer.</value>
+  </data>
+    <data name="EntityAnalysisModelGuidTtlCounterRequired" xml:space="preserve">
+    <value>A Model is required when Increment TTL Counter is enabled.</value>
+  </data>
+    <data name="EntityAnalysisModelTtlCounterGuidRequired" xml:space="preserve">
+    <value>A TTL Counter is required when Increment TTL Counter is enabled.</value>
+  </data>
+    <data name="ActivationSampleRange" xml:space="preserve">
+    <value>The activation sample must be between 0 and 1.</value>
+  </data>
+    <data name="PriorityRange" xml:space="preserve">
+    <value>The priority cannot be negative.</value>
+  </data>
+</root>

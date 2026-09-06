@@ -100,7 +100,8 @@ namespace Jube.Test.Infrastructure
 
         private static async Task<SeedData> SeedAsync(DbContext dbContext)
         {
-            int[] readWriteSpecs = [2, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 37];
+            int[] readWriteSpecs = [2, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 37, 41];
+            var readWriteSpecsNoApproveByReview = readWriteSpecs.Where(s => s != 41).ToArray();
 
             var suffix = Guid.NewGuid().ToString("N")[..8];
             var tenantAId = await InsertTenantAsync(dbContext, $"{Prefix}TenantA{suffix}", false)
@@ -115,6 +116,9 @@ namespace Jube.Test.Infrastructure
             var roleWithoutPermissionAId =
                 await InsertRoleAsync(dbContext, $"{Prefix}RoleWithoutPermissionA{suffix}", tenantAId, [])
                     .ConfigureAwait(false);
+            var roleWithPermissionNoApproveByReviewAId =
+                await InsertRoleAsync(dbContext, $"{Prefix}RoleWithPermissionNoApproveByReviewA{suffix}", tenantAId,
+                    readWriteSpecsNoApproveByReview).ConfigureAwait(false);
             var roleWithPermissionBId =
                 await InsertRoleAsync(dbContext, $"{Prefix}RoleWithPermissionB{suffix}", tenantBId,
                     readWriteSpecs).ConfigureAwait(false);
@@ -122,6 +126,7 @@ namespace Jube.Test.Infrastructure
                 .ConfigureAwait(false);
             var userWithPermission = $"{Prefix}UserWithPermission{suffix}";
             var userWithoutPermission = $"{Prefix}UserWithoutPermission{suffix}";
+            var userWithPermissionNoApproveByReview = $"{Prefix}UserWithPermissionNoApproveByReview{suffix}";
             var userTenantB = $"{Prefix}UserTenantB{suffix}";
             var landlordUser = $"{Prefix}UserLandlord{suffix}";
             var userNoTenant = $"{Prefix}UserNoTenant{suffix}";
@@ -130,6 +135,9 @@ namespace Jube.Test.Infrastructure
                 .ConfigureAwait(false);
             var roleWithoutPermissionAGuid =
                 await InsertUserAsync(dbContext, userWithoutPermission, roleWithoutPermissionAId).ConfigureAwait(false);
+            var roleWithPermissionNoApproveByReviewAGuid =
+                await InsertUserAsync(dbContext, userWithPermissionNoApproveByReview,
+                    roleWithPermissionNoApproveByReviewAId).ConfigureAwait(false);
             var roleWithPermissionBGuid =
                 await InsertUserAsync(dbContext, userTenantB, roleWithPermissionBId).ConfigureAwait(false);
             var landlordRoleGuid = await InsertUserAsync(dbContext, landlordUser, landlordRoleId).ConfigureAwait(false);
@@ -142,6 +150,8 @@ namespace Jube.Test.Infrastructure
                 .ConfigureAwait(false);
             await dbContext.InsertAsync(new UserInTenant { User = userWithoutPermission, TenantRegistryId = tenantAId })
                 .ConfigureAwait(false);
+            await dbContext.InsertAsync(new UserInTenant
+                { User = userWithPermissionNoApproveByReview, TenantRegistryId = tenantAId }).ConfigureAwait(false);
             await dbContext.InsertAsync(new UserInTenant { User = userTenantB, TenantRegistryId = tenantBId })
                 .ConfigureAwait(false);
             await dbContext.InsertAsync(new UserInTenant { User = landlordUser, TenantRegistryId = landlordTenantId })
@@ -153,14 +163,15 @@ namespace Jube.Test.Infrastructure
 
             _ = roleWithPermissionAGuid;
             _ = roleWithoutPermissionAGuid;
+            _ = roleWithPermissionNoApproveByReviewAGuid;
             _ = roleWithPermissionBGuid;
             _ = landlordRoleGuid;
             _ = noTenantRoleGuid;
             _ = bothTenantsRoleGuid;
 
             return new SeedData(
-                userWithPermission, userWithoutPermission, userTenantB, landlordUser, userNoTenant, userBothTenants,
-                $"{Prefix}UnknownUser{suffix}");
+                userWithPermission, userWithoutPermission, userWithPermissionNoApproveByReview, userTenantB,
+                landlordUser, userNoTenant, userBothTenants, $"{Prefix}UnknownUser{suffix}");
         }
 
         private static Task<int> InsertTenantAsync(DbContext dbContext, string name, bool landlord)
@@ -241,6 +252,7 @@ namespace Jube.Test.Infrastructure
     public sealed record SeedData(
         string UserWithPermission,
         string UserWithoutPermission,
+        string UserWithPermissionNoApproveByReview,
         string UserTenantB,
         string LandlordUser,
         string UserNoTenant,

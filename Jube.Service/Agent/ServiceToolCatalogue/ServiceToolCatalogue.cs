@@ -36,6 +36,7 @@ namespace Jube.Service.Agent.ServiceToolCatalogue
                 AddEntityAnalysisModelAbstractionCalculation(tools);
                 AddEntityAnalysisModelHttpAdaptation(tools);
                 AddExhaustiveSearchInstance(tools);
+                AddEntityAnalysisModelActivationRule(tools);
                 all = tools;
 
                 return all;
@@ -53,5 +54,6 @@ namespace Jube.Service.Agent.ServiceToolCatalogue
         static partial void AddEntityAnalysisModelAbstractionCalculation(List<ServiceToolDescriptor> tools);
         static partial void AddEntityAnalysisModelHttpAdaptation(List<ServiceToolDescriptor> tools);
         static partial void AddExhaustiveSearchInstance(List<ServiceToolDescriptor> tools);
+        static partial void AddEntityAnalysisModelActivationRule(List<ServiceToolDescriptor> tools);
     }
 }
